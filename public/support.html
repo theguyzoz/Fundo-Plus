@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <title>Support — Fundo Plus</title>
+    <style>:root{--blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;--dark:#0f172a;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#ffffff;--surf:#f8fafc;--rad:12px}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}a{text-decoration:none;color:inherit}nav{position:sticky;top:0;z-index:100;background:#ffffffee;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 5%;display:flex;align-items:center;height:64px;gap:1rem}.nav-logo{display:flex;align-items:center;gap:.6rem;font-size:1.15rem;font-weight:900;color:var(--blue)}.nav-links{display:flex;gap:1.5rem;margin-left:2rem}.nav-links a{font-size:.88rem;color:var(--muted);font-weight:600;transition:.15s}.nav-links a.active,.nav-links a:hover{color:var(--blue)}.nav-right{margin-left:auto;display:flex;gap:.6rem;align-items:center}.btn{display:inline-flex;align-items:center;padding:.55rem 1.25rem;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;border:none;transition:.15s}.btn-ghost{background:0 0;color:var(--muted)}.btn-ghost:hover{background:var(--surf);color:var(--text)}.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue2)}.avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;flex-shrink:0}#auth-gate{display:none;min-height:80vh;align-items:center;justify-content:center;flex-direction:column;gap:1rem;text-align:center;padding:40px 20px}#auth-gate h2{font-size:1.4rem;font-weight:900}#auth-gate p{color:var(--muted);font-size:.9rem;max-width:360px}#auth-gate .gate-btns{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem}#support-page{display:none}.hero{background:linear-gradient(160deg,#eff6ff,#f0fdf4);padding:60px 5% 40px;text-align:center}.hero h1{font-size:clamp(1.8rem,3vw,2.8rem);font-weight:900;letter-spacing:-.8px;margin-bottom:.75rem}.hero p{font-size:.92rem;color:var(--muted)}.content{max-width:900px;margin:0 auto;padding:52px 5% 80px}.faq-grid{display:grid;grid-template-columns:1fr;gap:.75rem;margin-bottom:3rem}.faq-item{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden}.faq-q{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;cursor:pointer;font-weight:700;font-size:.92rem;gap:1rem}.faq-q:hover{background:#f1f5f9}.faq-q .arrow{flex-shrink:0;transition:transform .2s;font-size:.75rem;color:var(--muted)}.faq-a{display:none;padding:0 1.25rem 1rem;font-size:.88rem;color:#374151;line-height:1.7;border-top:1px solid var(--border)}.faq-item.open .faq-a{display:block}.faq-item.open .arrow{transform:rotate(180deg)}.contact-box{background:#fff;border:1px solid var(--border);border-radius:16px;padding:2rem;box-shadow:0 1px 3px rgba(37,99,235,.06)}.contact-box h2{font-size:1.2rem;font-weight:900;margin-bottom:.4rem}.contact-box p{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}.field{margin-bottom:1rem}label{display:block;font-size:.75rem;font-weight:700;color:var(--text);margin-bottom:.35rem;letter-spacing:.02em}input,select,textarea{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:.7rem 1rem;font-size:.92rem;color:var(--text);outline:0;transition:.15s;font-family:inherit;background:#fff}input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe}textarea{min-height:130px;resize:vertical}.submit-btn{width:100%;padding:.8rem;border:none;border-radius:9px;font-size:.95rem;font-weight:800;cursor:pointer;background:var(--blue);color:#fff;transition:.15s;margin-top:.25rem}.submit-btn:hover{background:var(--blue2)}.submit-btn:disabled{opacity:.5;cursor:not-allowed}.success-box{background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:1.25rem;text-align:center;display:none}.success-box .icon{font-size:2rem;margin-bottom:.5rem}.success-box h3{font-weight:900;color:#166534}.success-box p{font-size:.85rem;color:#16a34a}.quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:3rem}.quick-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);padding:1.25rem;display:flex;flex-direction:column;gap:.5rem;transition:.15s}.quick-card:hover{border-color:var(--blue);background:#eff6ff}.quick-card .qicon{font-size:1.5rem}.quick-card h3{font-size:.88rem;font-weight:800}.quick-card p{font-size:.78rem;color:var(--muted)}.burger{display:none;background:0 0;border:none;cursor:pointer;padding:6px;color:var(--text)}.mobile-menu{display:none;position:fixed;inset:0;background:#fff;z-index:200;flex-direction:column;padding:20px}.mobile-menu.open{display:flex}.mobile-menu .close{align-self:flex-end;background:0 0;border:none;font-size:1.5rem;cursor:pointer;padding:8px}.mobile-menu a{display:block;padding:14px 0;font-size:1.05rem;font-weight:600;color:var(--text);border-bottom:1px solid var(--border)}footer{background:var(--dark);color:#94a3b8;padding:3rem 5%;display:flex;flex-wrap:wrap;gap:2rem;justify-content:space-between}.footer-brand .name{font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:.4rem}.footer-brand p{font-size:.82rem}.footer-links h4{font-size:.8rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}.footer-links a{display:block;font-size:.82rem;color:#94a3b8;margin-bottom:.35rem}.footer-links a:hover{color:#fff}.footer-bottom{background:#0a0f1a;color:#475569;text-align:center;padding:1rem;font-size:.78rem}@media(max-width:640px){.nav-links{display:none}.burger{display:flex}}</style>
+
+    <script>!function(){const _fetch=window.fetch;window.fetch=async function(...args){const res=await _fetch(...args);if(403===res.status){const clone=res.clone();try{const d=await clone.json();if(d&&"BANNED"===d.code)return location.reload(),new Response("{}",{status:403})}catch{}}return res}}()</script>
+
+    <script>async function validateSession(opts={}){const{requireAuth:requireAuth=!0,onUser:onUser=null}=opts,token=localStorage.getItem("fp_session");if(!token)return requireAuth?(window.location.replace("/login"),null):null;try{const r=await fetch("/api/auth/me",{headers:{"x-session-token":token}});if(401===r.status){localStorage.clear();return requireAuth?(window.location.replace("/login"),null):null}if(403===r.status){const d=await r.json().catch(()=>({}));if("BANNED"===d.code)return location.reload(),null;return requireAuth?(window.location.replace("/login"),null):null}if(!r.ok)return requireAuth?(window.location.replace("/login"),null):null;const d=await r.json();return d.ok?(onUser&&onUser(d.user),d.user):(localStorage.clear(),requireAuth?(window.location.replace("/login"),null):null)}catch{return requireAuth?(window.location.replace("/login"),null):null}}</script>
+    </head>
+
+  <body>
+    <div class="mobile-menu" id="mobileMenu">
+      <button class="close" onclick="closeMobile()">✕</button>
+
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/community">Community</a>
+      <a href="/terms">Terms</a>
+      <a href="/support" style="color:var(--blue)">Support</a>
+      <span id="mobile-dash-link" style="display:none">
+        <a href="/~">Dashboard</a></span></div>
+
+        <nav>
+          <a class="nav-logo" href="/">
+            <img src="/images/logo.png" width="32" height="32" alt="Fundo Plus" style="border-radius:8px">
+              Fundo Plus</a>
+              <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+                <a href="/community">Community</a>
+                <a href="/terms">Terms</a>
+                <a href="/support" class="active">Support</a></div>
+
+                <div class="nav-right" id="nav-right">
+                  <a href="/login" class="btn btn-ghost">Sign In</a>
+                  <a href="/login" class="btn btn-primary">Get Started</a></div>
+
+                  <button class="burger" onclick="openMobile()" aria-label="Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                      <line x1="3" y1="6" x2="21" y2="6"/>
+                      <line x1="3" y1="12" x2="21" y2="12"/>
+                      <line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                  </nav>
+
+                  <div id="auth-gate" style="display:flex">
+                    <div>
+                      <div style="font-size:3rem;margin-bottom:1rem">🔒</div>
+
+                      <h2>Sign in to access Support</h2>
+
+                      <p>The Support page is only available to registered Fundo Plus users. Please sign in to continue.</p>
+
+                      <div class="gate-btns">
+                        <a href="/login?redirect=/support" class="btn btn-primary">Sign In</a>
+                        <a href="/login?redirect=/support" class="btn" style="background:var(--surf);border:1.5px solid var(--border);color:var(--text)">Create Account</a></div>
+                      </div>
+                    </div>
+
+                    <div id="support-page">
+                      <div class="hero">
+                        <h1>🛟 Support</h1>
+
+                        <p>Get help with Fundo Plus — check the FAQ or send us a message.</p>
+                      </div>
+
+                      <div class="content">
+                        <div class="quick-grid">
+                          <a class="quick-card" href="/~">
+                            <div class="qicon">🏠</div>
+
+                            <h3>Dashboard</h3>
+
+                            <p>Go back to your study dashboard</p>
+                          </a>
+                          <a class="quick-card" href="/community">
+                            <div class="qicon">💬</div>
+
+                            <h3>Community</h3>
+
+                            <p>Ask other students for help</p>
+                          </a>
+                          <a class="quick-card" href="https://wa.me/263717129736" target="_blank">
+                            <div class="qicon">📱</div>
+
+                            <h3>WhatsApp</h3>
+
+                            <p>Contact us directly on WhatsApp</p>
+                          </a>
+                          <a class="quick-card" href="mailto:support@fundo-plus.co.zw">
+                            <div class="qicon">📧</div>
+
+                            <h3>Email</h3>
+
+                            <p>support@fundo-plus.co.zw</p>
+                          </a></div>
+
+                          <h2 style="font-size:1.2rem;font-weight:900;margin-bottom:1rem">❓ Frequently Asked Questions</h2>
+
+                          <div class="faq-grid">
+                            <div class="faq-item">
+                              <div class="faq-q" onclick="toggleFaq(this)">How do I link my WhatsApp to Fundo Plus?
+                              <span class="arrow">▼</span></div>
+
+                              <div class="faq-a">Go to your Dashboard and click the <strong>WhatsApp</strong> tab in the sidebar. Click "Generate Link" to get a pairing message, then send that message to our WhatsApp bot number. Your account will be linked automatically within seconds.</div>
+                            </div>
+
+                            <div class="faq-item">
+                              <div class="faq-q" onclick="toggleFaq(this)">Why is Prok AI giving incorrect answers?
+                              <span class="arrow">▼</span></div>
+
+                              <div class="faq-a">Prok AI is powered by a large language model and can occasionally make mistakes — especially with very specific exam questions. Always verify important answers with your textbooks or teacher. You can also rephrase your question or ask for a step-by-step explanation to get a better response.</div>
+                            </div>
+
+                            <div class="faq-item">
+                              <div class="faq-q" onclick="toggleFaq(this)">How many messages can I send per day?
+                              <span class="arrow">▼</span></div>
+
+                              <div class="faq-a">Free accounts get 25 AI chat messages per day, 15 image generations, and 5 PDF exports. Limits reset at midnight UTC. A Pro plan with unlimited access is coming soon.</div>
+                            </div>
+
+                            <div class="faq-item">
+                              <div class="faq-q" onclick="toggleFaq(this)">My account was suspended — what do I do?
+                              <span class="arrow">▼</span></div>
+
+                              <div class="faq-a">If your account was suspended, you can submit an appeal from the login page or contact us using the form below. Please include your email address and a brief explanation of the situation.</div>
+                            </div>
+
+                            <div class="faq-item">
+                              <div class="faq-q" onclick="toggleFaq(this)">How do I delete my account?
+                              <span class="arrow">▼</span></div>
+
+                              <div class="faq-a">You can delete your account from
+                              <a href="/me" style="color:var(--blue);font-weight:600">Account Settings (/me)</a>. Deletion is permanent and removes all your data. If you have trouble, contact us using the form below.</div>
+                            </div>
+
+                            <div class="faq-item">
+                              <div class="faq-q" onclick="toggleFaq(this)">Can I use Fundo Plus without WhatsApp?
+                              <span class="arrow">▼</span></div>
+
+                              <div class="faq-a">Yes! The web platform (this site) gives you full access to Prok AI, quiz generation, past papers, and all features. WhatsApp linking is optional — it's provided so you can also use the bot from your phone without needing to open a browser.</div>
+                            </div>
+
+                            <div class="faq-item">
+                              <div class="faq-q" onclick="toggleFaq(this)">How do Skills and Syllabus work?
+                              <span class="arrow">▼</span></div>
+
+                              <div class="faq-a">The Skills section in your Dashboard lets the AI understand what subject and level you're studying. Upload or select a syllabus, and Prok AI will tailor its responses to that specific curriculum and topic. You can also use it to create focused project files for deep study sessions.</div>
+                            </div>
+                          </div>
+
+                          <div class="contact-box">
+                            <h2>📨 Send us a message</h2>
+
+                            <p>Can't find an answer? Fill in the form and we'll get back to you within 24 hours.</p>
+
+                            <div id="contact-success" class="success-box">
+                              <div class="icon">✅</div>
+
+                              <h3>Message sent!</h3>
+
+                              <p>We'll get back to you within 24 hours. Check your email for a confirmation.</p>
+                            </div>
+
+                            <div id="contact-form">
+                              <div class="field">
+                                <label>Category</label>
+                                <select id="category">
+                                  <option value="general">General Question</option>
+                                  <option value="account">Account / Login Issue</option>
+                                  <option value="ai">Prok AI Issue</option>
+                                  <option value="whatsapp">WhatsApp Pairing</option>
+                                  <option value="billing">Billing / Subscription</option>
+                                  <option value="bug">Bug Report</option>
+                                  <option value="other">Other</option></select>
+                                </div>
+
+                                <div class="field">
+                                  <label>Subject</label>
+                                  <input id="subject" placeholder="Briefly describe your issue…"></div>
+
+                                  <div class="field">
+                                    <label>Message</label>
+                                    <textarea id="message" placeholder="Describe your issue in detail. Include any error messages you saw."></textarea>
+                                  </div>
+
+                                  <button class="submit-btn" id="submit-btn" onclick="sendSupport()">Send Message →</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <footer>
+                            <div class="footer-brand">
+                              <div class="name">📚 Fundo Plus</div>
+
+                              <p>AI-powered education for Zimbabwe.<br>Built by XTech.</p>
+                            </div>
+
+                            <div class="footer-links">
+                              <h4>Platform</h4>
+
+                              <a href="/~">Dashboard</a>
+                              <a href="/about">About</a>
+                              <a href="/terms">Terms</a></div>
+
+                              <div class="footer-links">
+                                <h4>Help</h4>
+
+                                <a href="/community">Community</a>
+                                <a href="/support">Support</a>
+                                <a href="mailto:support@fundo-plus.co.zw">Email Us</a></div>
+                              </footer>
+
+                              <div class="footer-bottom">© 2025 Fundo Plus by XTech · Zimbabwe · All rights reserved</div>
+
+                              <script>const TOKEN=localStorage.getItem("fp_session");function showPage(user){document.getElementById("auth-gate").style.display="none",document.getElementById("support-page").style.display="block";const nr=document.getElementById("nav-right"),letter=(user.name||user.email||"?")[0].toUpperCase();nr.innerHTML=`
+                              <div class="avatar">${letter}</div>
+
+                              <a href="/~" class="btn btn-ghost" style="font-size:.82rem;">Dashboard</a>`}function showGate(){document.getElementById("auth-gate").style.display="flex",document.getElementById("support-page").style.display="none"}function toggleFaq(el){const item=el.closest(".faq-item"),isOpen=item.classList.contains("open");document.querySelectorAll(".faq-item.open").forEach(i=>i.classList.remove("open")),isOpen||item.classList.add("open")}async function sendSupport(){const subject=document.getElementById("subject").value.trim(),message=document.getElementById("message").value.trim(),category=document.getElementById("category").value;if(!subject||!message)return alert("Please fill in both Subject and Message.");const btn=document.getElementById("submit-btn");btn.disabled=!0,btn.textContent="Sending…";try{const r=await fetch("/api/support",{method:"POST",headers:{"Content-Type":"application/json","x-session-token":TOKEN||""},body:JSON.stringify({subject,message,category})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Failed to send");document.getElementById("contact-form").style.display="none",document.getElementById("contact-success").style.display="block"}catch(e){alert("Error sending message: "+e.message);btn.disabled=!1,btn.textContent="Send Message →"}}function openMobile(){document.getElementById("mobileMenu").classList.add("open")}function closeMobile(){document.getElementById("mobileMenu").classList.remove("open")}TOKEN&&fetch("/api/auth/me",{headers:{"x-session-token":TOKEN}}).then(r=>r.json()).then(d=>{d.ok?showPage(d.user):showGate()}).catch(()=>showGate())</script>
+                            </body>
+                          </html>

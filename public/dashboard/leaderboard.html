@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Leaderboard — Fundo Plus</title>
+  <style>
+    *,::after,::before{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f6f8ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:0 0 1rem;z-index:60;box-shadow:var(--sh);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+    .sb-logo{display:flex;align-items:center;gap:9px;padding:18px 16px 14px;border-bottom:1px solid var(--brd);font-size:1.05rem;font-weight:900;color:var(--acc)}
+    .sb-section{font-size:.65rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;padding:14px 16px 4px}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:1px 8px;border-radius:9px;cursor:pointer;font-size:.86rem;color:var(--mut);font-weight:600;text-decoration:none;transition:.12s}
+    .nav-item:hover{background:#eff6ff;color:var(--acc)}
+    .nav-item.active{background:#eff6ff;color:var(--acc);font-weight:700}
+    .nav-item svg{flex-shrink:0;opacity:.8}
+    .sb-bottom{margin-top:auto;border-top:1px solid var(--brd);padding-top:8px}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.3);z-index:55;backdrop-filter:blur(2px)}
+    .sidebar-overlay.show{display:block}
+    .topbar{position:fixed;top:0;left:228px;right:0;height:56px;background:#ffffffee;backdrop-filter:blur(10px);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:50;box-shadow:var(--sh)}
+    .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt)}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .avatar{width:32px;height:32px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;flex-shrink:0}
+    .ham{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--txt);flex-shrink:0}
+    .main{margin-left:228px;margin-top:56px;padding:28px 24px;min-height:calc(100vh - 56px)}
+    .back-link{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--mut);text-decoration:none;padding:6px 12px;border-radius:8px;border:1.5px solid var(--brd);background:var(--surf);transition:.12s;margin-bottom:16px}
+    .back-link:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}
+    .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+    .ph h1{font-size:1.35rem;font-weight:900}
+    .ph p{font-size:.82rem;color:var(--mut);margin-top:3px}
+    .card{background:var(--surf);border:1.5px solid var(--brd);border-radius:var(--rad);padding:22px;box-shadow:var(--sh)}
+    .filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+    .filters label{font-size:.78rem;font-weight:800;color:var(--mut);white-space:nowrap}
+    .exam-select{padding:7px 32px 7px 12px;border-radius:9px;border:1.5px solid var(--brd);background:var(--surf);font-size:.82rem;font-weight:700;color:var(--txt);cursor:pointer;outline:0;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;min-width:180px;transition:.12s}
+    .exam-select:focus,.exam-select:hover{border-color:var(--acc);color:var(--acc)}
+    .lb-table{width:100%;border-collapse:collapse}
+    .lb-table th{font-size:.68rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;padding:8px 14px;text-align:left;border-bottom:1.5px solid var(--brd)}
+    .lb-table td{padding:12px 14px;font-size:.86rem;border-bottom:1px solid var(--brd)}
+    .lb-table tr:last-child td{border-bottom:none}
+    .lb-table tr.me td{background:#eff6ff;font-weight:700}
+    .rank{font-weight:900;width:36px;text-align:center}
+    .rank-1{color:#d97706}.rank-2{color:#64748b}.rank-3{color:#b45309}
+    .uname{display:flex;align-items:center;gap:8px}
+    .uav{width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;flex-shrink:0}
+    .score-big{font-weight:800}
+    .score-sub{font-size:.76rem;color:var(--mut)}
+    .podium{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin-bottom:28px}
+    .pod{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .pod-av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff}
+    .pod-name{font-size:.75rem;font-weight:700;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+    .pod-pct{font-size:.78rem;font-weight:800}
+    .pod-bar{border-radius:8px 8px 0 0;width:56px;display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+    .pod-1 .pod-bar{background:#fef3c7;height:80px}.pod-1 .pod-av{background:#d97706;width:44px;height:44px;font-size:1rem}
+    .pod-2 .pod-bar{background:#f1f5f9;height:60px}.pod-2 .pod-av{background:#64748b;width:38px;height:38px;font-size:.9rem}
+    .pod-3 .pod-bar{background:#fef3c7;height:44px}.pod-3 .pod-av{background:#b45309;width:34px;height:34px;font-size:.85rem}
+    .empty{text-align:center;padding:48px;color:var(--mut);font-size:.86rem}
+    .spin{display:inline-block;width:18px;height:18px;border:2.5px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .btn{padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.12s}
+    .btn-ghost{background:var(--bg);color:var(--mut);border:1.5px solid var(--brd)}.btn-ghost:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}
+    @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}.topbar{left:0}.main{margin-left:0}.ham{display:flex}}
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo"><img src="/images/logo.png" width="26" height="26" style="border-radius:8px" alt="">Fundo Plus</div>
+  <div class="sb-section">Main</div>
+  <a class="nav-item" href="/~/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</a>
+  <a class="nav-item" href="/~/#chat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Prok AI Chat</a>
+  <div class="sb-section">Academics</div>
+  <a class="nav-item" href="/~/exam"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Exams</a>
+  <a class="nav-item active" href="/~/leaderboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Leaderboard</a>
+  <div class="sb-section">More</div>
+  <a class="nav-item" href="/~/more"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</a>
+  <div class="sb-bottom">
+    <a class="nav-item" href="/me"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>My Profile</a>
+    <a class="nav-item" href="#" onclick="doLogout();return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</a>
+  </div>
+</nav>
+<header class="topbar">
+  <button class="ham" onclick="toggleSb()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+  <span class="topbar-title">🏆 Leaderboard</span>
+  <div class="topbar-right">
+    <div class="avatar" id="av">?</div>
+    <span style="font-size:.82rem;font-weight:700;color:var(--mut)" id="uname"></span>
+  </div>
+</header>
+
+<main class="main">
+  <a class="back-link" href="/~/more">← Back to More</a>
+  <div class="ph">
+    <div><h1>🏆 Leaderboard</h1><p>Top performers across all ZIMSEC exams</p></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="loadBoard()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Refresh</button>
+      <a class="btn btn-ghost" href="/~/exam">← Exams</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="filters" id="exam-filters">
+      <label for="exam-select">Filter by exam:</label>
+      <select class="exam-select" id="exam-select" onchange="setExamFromSelect(this.value)">
+        <option value="all">All Exams</option>
+      </select>
+    </div>
+    <div id="podium-wrap"></div>
+    <div id="lb-body"><div class="empty"><span class="spin"></span> Loading…</div></div>
+  </div>
+</main>
+
+<script>
+const tok=localStorage.getItem('fp_session');
+let me=null,activeExam='all',allExams=[];
+async function api(m,u,b){
+  const o={method:m,headers:{'x-session-token':tok}};
+  if(b){o.headers['Content-Type']='application/json';o.body=JSON.stringify(b);}
+  const r=await fetch(u,o);const d=await r.json();
+  if(!r.ok)throw new Error(d.error||'Error');
+  return d;
+}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show')}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show')}
+async function doLogout(){try{await api('POST','/api/auth/logout')}catch{}localStorage.clear();location.href='/login'}
+
+async function loadExamList(){
+  try{const d=await api('GET','/api/zimsec/exams');allExams=d.exams||[];renderExamFilters();}catch{}
+}
+
+function renderExamFilters(){
+  const sel=document.getElementById('exam-select');
+  // preserve current selection
+  const cur=sel.value;
+  sel.innerHTML='<option value="all">All Exams</option>'+allExams.map(e=>`<option value="${e.id}">${e.title}</option>`).join('');
+  sel.value=cur&&allExams.find(e=>e.id===cur)?cur:'all';
+}
+
+function setExamFromSelect(id){
+  activeExam=id;
+  loadBoard();
+}
+
+function setExam(id){
+  activeExam=id;
+  const sel=document.getElementById('exam-select');
+  if(sel)sel.value=id;
+  loadBoard();
+}
+
+async function loadBoard(){
+  document.getElementById('lb-body').innerHTML='<div class="empty"><span class="spin"></span> Loading…</div>';
+  document.getElementById('podium-wrap').innerHTML='';
+  try{
+    const url='/api/zimsec/leaderboard/named'+(activeExam!=='all'?'?examId='+activeExam:'');
+    const d=await api('GET',url);
+    const board=d.leaderboard||[];
+    renderPodium(board);
+    renderTable(board);
+  }catch(e){document.getElementById('lb-body').innerHTML=`<div class="empty">⚠️ ${e.message}</div>`}
+}
+
+function renderPodium(board){
+  const wrap=document.getElementById('podium-wrap');
+  if(board.length<3){wrap.innerHTML='';return;}
+  const [first,second,third]=board;
+  const pod=(p,cls,h)=>`<div class="pod ${cls}">
+    <div class="pod-av" style="width:${h/1.8}px;height:${h/1.8}px;font-size:${h/36}rem">${(p.name||'?')[0].toUpperCase()}</div>
+    <div class="pod-name">${p.name}${p.isMe?' (You)':''}</div>
+    <div class="pod-pct">${p.pct}%</div>
+    <div class="pod-bar" style="height:${h}px">${cls==='pod-1'?'🥇':cls==='pod-2'?'🥈':'🥉'}</div>
+  </div>`;
+  wrap.innerHTML=`<div class="podium">${pod(second,'pod-2',60)}${pod(first,'pod-1',80)}${pod(third,'pod-3',44)}</div>`;
+}
+
+function renderTable(board){
+  if(!board.length){document.getElementById('lb-body').innerHTML='<div class="empty">🏆 No results yet. Be the first to complete an exam!</div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  const rows=board.map((e,i)=>{
+    const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const rnk=i<3?medals[i]:i+1;
+    return `<tr class="${e.isMe?'me':''}">
+      <td class="rank ${rc}">${rnk}</td>
+      <td><div class="uname"><div class="uav">${(e.name||'?')[0].toUpperCase()}</div><span>${e.name}${e.isMe?' <em style="color:var(--acc);font-style:normal">(You)</em>':''}</span></div></td>
+      <td><span class="score-big">${e.pct}%</span> <span class="score-sub">${e.score}/${e.total}</span></td>
+      <td style="font-size:.78rem;color:var(--mut)">${e.timeTaken?Math.floor(e.timeTaken/60)+'m '+e.timeTaken%60+'s':'—'}</td>
+      <td style="font-size:.75rem;color:var(--mut)">${new Date(e.submittedAt).toLocaleDateString()}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('lb-body').innerHTML=`<table class="lb-table"><thead><tr><th>#</th><th>Student</th><th>Score</th><th>Time</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+(async()=>{
+  if(!tok){location.href='/login';return;}
+  try{
+    const d=await api('GET','/api/auth/me');
+    if(!d.ok){location.href='/login';return;}
+    me=d.user;
+    const n=me.name||me.email||'S';
+    document.getElementById('av').textContent=n[0].toUpperCase();
+    document.getElementById('uname').textContent=n;
+    await loadExamList();
+    loadBoard();
+  }catch{location.href='/login';}
+})();
+</script>
+</body>
+</html>

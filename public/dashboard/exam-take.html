@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Taking Exam — Fundo Plus</title>
+  <style>
+    *,::after,::before{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f0f4ff;--surf:#fff;--brd:#dde5f7;--acc:#2563eb;--acc2:#1d4ed8;
+      --grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;
+      --warn:#f59e0b;--rad:14px;
+      --sh:0 2px 8px rgba(37,99,235,.08),0 8px 32px rgba(37,99,235,.07);
+    }
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+    /* ── Top exam bar ── */
+    .exambar{
+      position:fixed;top:0;left:0;right:0;height:58px;
+      background:#fff;border-bottom:1.5px solid var(--brd);
+      display:flex;align-items:center;padding:0 20px;gap:14px;z-index:100;
+      box-shadow:0 2px 12px rgba(37,99,235,.07);
+    }
+    .exambar-logo{display:flex;align-items:center;gap:8px;font-size:.92rem;font-weight:900;color:var(--acc)}
+    .exambar-title{font-size:.9rem;font-weight:800;color:var(--txt);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .exambar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .timer-pill{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:.85rem;font-weight:800;
+      background:#fffbeb;border:1.5px solid #fcd34d;color:#92400e;
+      border-radius:10px;padding:5px 14px;transition:.3s;
+    }
+    .timer-pill.danger{background:#fef2f2;border-color:#fca5a5;color:var(--red);animation:pulse .8s infinite}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+    .q-counter{font-size:.78rem;font-weight:700;color:var(--mut);white-space:nowrap}
+
+    /* ── Progress bar ── */
+    .prog-strip{position:fixed;top:58px;left:0;right:0;height:4px;background:var(--brd);z-index:99}
+    .prog-fill{height:100%;background:linear-gradient(90deg,var(--acc),#60a5fa);border-radius:0 2px 2px 0;transition:width .4s cubic-bezier(.4,0,.2,1)}
+
+    /* ── Main content ── */
+    .main{margin-top:62px;flex:1;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px 48px}
+    .q-wrap{width:100%;max-width:680px}
+
+    /* Question card */
+    .q-card{
+      background:var(--surf);border:1.5px solid var(--brd);border-radius:20px;
+      padding:32px 36px;box-shadow:var(--sh);
+      animation:slideIn .25s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .q-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
+      background:#eff6ff;color:var(--acc);border-radius:6px;padding:3px 10px;margin-bottom:14px;
+    }
+    .q-badge.sa-badge{background:#f3e8ff;color:#7c3aed}
+    .q-text{font-size:1.05rem;font-weight:700;line-height:1.6;color:var(--txt);margin-bottom:22px}
+
+    /* Options */
+    .opts{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+    .opt{
+      display:flex;align-items:center;gap:14px;
+      padding:13px 16px;border:1.5px solid var(--brd);border-radius:12px;
+      cursor:pointer;font-size:.9rem;color:var(--txt);font-weight:500;
+      transition:border-color .12s,background .12s,transform .1s;
+      user-select:none;
+    }
+    .opt:hover{border-color:#93c5fd;background:#f0f7ff;transform:translateX(3px)}
+    .opt.sel{border-color:var(--acc);background:#eff6ff;font-weight:700;color:var(--acc)}
+    .opt.sel .opt-letter{background:var(--acc);color:#fff;border-color:var(--acc)}
+    .opt-letter{
+      min-width:28px;height:28px;border-radius:50%;
+      border:1.5px solid var(--brd);background:var(--bg);
+      display:flex;align-items:center;justify-content:center;
+      font-size:.72rem;font-weight:900;color:var(--mut);flex-shrink:0;transition:.12s;
+    }
+
+    /* Short answer */
+    .sa-input{
+      width:100%;border:1.5px solid var(--brd);border-radius:12px;
+      padding:14px 16px;font-size:.9rem;font-family:inherit;
+      resize:vertical;min-height:110px;outline:0;background:#fafbff;
+      color:var(--txt);transition:border-color .12s;margin-bottom:24px;
+    }
+    .sa-input:focus{border-color:var(--acc);background:#fff}
+
+    /* Submit / Next btn */
+    .btn-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .btn{
+      padding:11px 28px;border-radius:10px;border:none;cursor:pointer;
+      font-size:.88rem;font-weight:800;display:inline-flex;align-items:center;gap:7px;transition:.12s;
+    }
+    .btn-acc{background:var(--acc);color:#fff}.btn-acc:hover{background:var(--acc2)}
+    .btn-acc:disabled{opacity:.5;cursor:not-allowed}
+    .btn-ghost{background:var(--bg);color:var(--mut);border:1.5px solid var(--brd)}.btn-ghost:hover{border-color:var(--acc);color:var(--acc)}
+    .btn-danger{background:#fef2f2;color:var(--red);border:1.5px solid #fca5a5}.btn-danger:hover{background:#fee2e2}
+    .skip-hint{font-size:.76rem;color:var(--mut);font-style:italic}
+
+    /* ── Result screen ── */
+    .result-wrap{text-align:center;padding:20px 0 36px}
+    .big-score{font-size:4rem;font-weight:900;color:var(--acc);line-height:1}
+    .grade-badge{display:inline-block;margin-top:16px;padding:9px 28px;border-radius:99px;font-size:1.4rem;font-weight:900}
+    .g-a{background:#dcfce7;color:#15803d}.g-b{background:#dbeafe;color:#1d4ed8}.g-c{background:#fffbeb;color:#92400e}.g-f{background:#fef2f2;color:#991b1b}
+    .review-section{margin-top:28px;text-align:left}
+    .rev-head{font-size:.85rem;font-weight:800;margin-bottom:16px;color:var(--txt)}
+    .rev-item{background:var(--surf);border:1.5px solid var(--brd);border-radius:14px;padding:18px 20px;margin-bottom:12px}
+    .rev-num{font-size:.66rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+    .rev-qtext{font-size:.88rem;font-weight:600;margin-bottom:10px;line-height:1.5}
+    .rev-opt{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:8px;font-size:.83rem;margin-bottom:5px}
+    .rev-opt.correct{background:#f0fdf4;border:1px solid #86efac;color:#15803d;font-weight:700}
+    .rev-opt.wrong{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
+    .ai-fb{margin-top:8px;padding:10px 13px;border-radius:9px;font-size:.81rem;line-height:1.55}
+    .ai-fb.ok{background:#f0fdf4;border:1px solid #86efac;color:#15803d}
+    .ai-fb.partial{background:#fffbeb;border:1px solid #fcd34d;color:#92400e}
+    .ai-fb.bad{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
+
+    /* ── Loading / error screens ── */
+    .center-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;text-align:center;padding:20px}
+    .spin{display:inline-block;width:36px;height:36px;border:3px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+
+    /* ── Blocked screen ── */
+    .blocked-card{background:#fff;border:2px solid #fca5a5;border-radius:20px;padding:40px 36px;max-width:460px;text-align:center}
+    .blocked-card h2{font-size:1.2rem;font-weight:900;color:var(--red);margin-bottom:10px}
+    .blocked-card p{font-size:.86rem;color:var(--mut);line-height:1.6}
+
+    @media(max-width:600px){
+      .q-card{padding:22px 18px;border-radius:16px}
+      .exambar-title{max-width:160px}
+      .main{padding:20px 12px 40px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<header class="exambar" id="exambar">
+  <div class="exambar-logo">
+    <img src="/images/logo.png" width="24" height="24" style="border-radius:7px" alt="">
+    Fundo+
+  </div>
+  <span class="exambar-title" id="exam-title">Loading exam…</span>
+  <div class="exambar-right">
+    <span id="exam-endtime" style="font-size:.75rem;color:var(--mut);font-weight:700;white-space:nowrap"></span>
+    <span class="timer-pill" id="timer-pill" style="display:none">⏱ --:--</span>
+    <span class="q-counter" id="q-counter"></span>
+  </div>
+</header>
+<div class="prog-strip"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+
+<main class="main" id="main">
+  <div class="center-screen"><div class="spin"></div><p style="color:var(--mut)">Loading exam…</p></div>
+</main>
+
+<script>
+const tok = localStorage.getItem('fp_session');
+const params = new URLSearchParams(location.search);
+const examId = params.get('id');
+
+let exam = null, questions = [], curIdx = 0, answers = {}, timerIv = null;
+let startedAt = null, examEndTs = null;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+async function api(m, u, b) {
+  const o = { method: m, headers: { 'x-session-token': tok } };
+  if (b) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(b); }
+  const r = await fetch(u, o);
+  const d = await r.json();
+  if (!r.ok) throw Object.assign(new Error(d.error || 'Error'), { status: r.status });
+  return d;
+}
+
+function setMain(html) { document.getElementById('main').innerHTML = html; }
+
+function updateProgress() {
+  const pct = questions.length ? (curIdx / questions.length) * 100 : 0;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('q-counter').textContent =
+    questions.length ? `Q ${Math.min(curIdx + 1, questions.length)} / ${questions.length}` : '';
+}
+
+// ── Exit / Unload guard ───────────────────────────────────────────────────────
+let examActive = false;
+let exitBanned = false;
+
+function markExitBanned(id) {
+  const key = 'fp_exam_exited';
+  const existing = JSON.parse(localStorage.getItem(key) || '[]');
+  if (!existing.includes(id)) { existing.push(id); localStorage.setItem(key, JSON.stringify(existing)); }
+}
+function isExitBanned(id) {
+  return JSON.parse(localStorage.getItem('fp_exam_exited') || '[]').includes(id);
+}
+
+function attachExitGuard() {
+  examActive = true;
+  window.addEventListener('beforeunload', onBeforeUnload);
+  document.addEventListener('visibilitychange', onVisibility);
+}
+function detachExitGuard() {
+  examActive = false;
+  window.removeEventListener('beforeunload', onBeforeUnload);
+  document.removeEventListener('visibilitychange', onVisibility);
+}
+function onBeforeUnload(e) {
+  if (!examActive) return;
+  markExitBanned(examId);
+  // Beacon to server — fires even during page unload
+  navigator.sendBeacon && navigator.sendBeacon(
+    `/api/zimsec/exams/${examId}/exit`,
+    new Blob([JSON.stringify({})], {type:'application/json'})
+  );
+  // Also try sync XHR as fallback
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `/api/zimsec/exams/${examId}/exit`, false);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.setRequestHeader('x-session-token', tok);
+    xhr.send('{}');
+  } catch {}
+  e.preventDefault();
+  e.returnValue = 'Leaving will permanently forfeit your exam attempt. Are you sure?';
+}
+function onVisibility() {
+  if (!examActive) return;
+  if (document.visibilityState === 'hidden') {
+    markExitBanned(examId);
+    // Call server exit ban via beacon
+    if (navigator.sendBeacon) {
+      const blob = new Blob([JSON.stringify({})], {type:'application/json'});
+      navigator.sendBeacon(`/api/zimsec/exams/${examId}/exit`, blob);
+    }
+  }
+}
+
+// ── Timer ─────────────────────────────────────────────────────────────────────
+function startTimer(durationMs) {
+  const pill = document.getElementById('timer-pill');
+  pill.style.display = 'inline-flex';
+  examEndTs = Date.now() + durationMs;
+
+  // Show the wall-clock end time next to the countdown
+  const endTimeStr = new Date(examEndTs).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('exam-endtime').textContent = `Closes ${endTimeStr}`;
+
+  // Danger threshold: 10% of duration or 5 minutes, whichever is larger
+  const dangerMs = Math.max(5 * 60000, durationMs * 0.1);
+
+  clearInterval(timerIv);
+  timerIv = setInterval(() => {
+    const diff = examEndTs - Date.now();
+    if (diff <= 0) {
+      clearInterval(timerIv);
+      pill.textContent = "⏱ Time's up!";
+      pill.classList.add('danger');
+      detachExitGuard();
+      autoSubmit();
+      return;
+    }
+    const m = Math.floor(diff / 60000), s = Math.floor((diff % 60000) / 1000);
+    pill.textContent = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
+    if (diff < dangerMs) pill.classList.add('danger'); else pill.classList.remove('danger');
+  }, 500);
+}
+
+// ── Load exam ─────────────────────────────────────────────────────────────────
+async function loadExam() {
+  if (!tok) { location.href = '/login'; return; }
+  if (!examId) { showError('No exam ID specified.'); return; }
+
+  // Client-side exit ban check (fast feedback before server confirms)
+  if (isExitBanned(examId)) {
+    showBlocked('You exited a previous attempt', 'Leaving an exam in progress permanently forfeits your attempt for this exam. Contact your teacher if you believe this is an error.');
+    return;
+  }
+
+  try {
+    const d = await api('GET', `/api/zimsec/exams/${examId}`);
+    exam = d.exam;
+    questions = d.questions;
+    startedAt = Date.now();
+
+    document.getElementById('exam-title').textContent = exam.title;
+    document.title = exam.title + ' — Fundo Plus';
+
+    // Timer: count from NOW for the full duration (not from scheduledAt)
+    startTimer((exam.durationMins || 60) * 60 * 1000);
+    attachExitGuard();
+    updateProgress();
+    renderQuestion();
+  } catch (e) {
+    if (e.status === 403) {
+      // Could be already submitted, exit banned on server, or timing
+      if (e.message.includes('already submitted') || e.message.includes('exited')) {
+        showBlocked('Exam access denied', e.message);
+      } else if (e.message.includes('not started')) {
+        showError('This exam has not started yet.');
+      } else if (e.message.includes('closed')) {
+        showError('The entry window for this exam has closed.');
+      } else {
+        showBlocked('Access denied', e.message);
+      }
+    } else {
+      showError(e.message);
+    }
+  }
+}
+
+// ── Render current question ───────────────────────────────────────────────────
+const LETTERS = ['A','B','C','D','E'];
+
+function renderQuestion() {
+  if (curIdx >= questions.length) { renderSubmitConfirm(); return; }
+  const q = questions[curIdx];
+  updateProgress();
+
+  const isSA = q.type === 'sa' || !q.options?.length;
+  const badge = isSA
+    ? `<div class="q-badge sa-badge">✍️ Short Answer · AI Marked</div>`
+    : `<div class="q-badge">Question ${curIdx + 1} of ${questions.length}</div>`;
+
+  let body = '';
+  if (isSA) {
+    body = `<textarea class="sa-input" id="sa-inp" placeholder="Type your answer here…">${answers[q.id] || ''}</textarea>`;
+  } else {
+    const opts = (q.options || []).map((o, i) => {
+      const letter = o.letter || LETTERS[i];
+      const text = o.text || o;
+      const sel = answers[q.id] === letter ? 'sel' : '';
+      return `<div class="opt ${sel}" onclick="selectOpt('${q.id}','${letter}',this)" data-letter="${letter}">
+        <div class="opt-letter">${letter}</div>
+        <span>${text}</span>
+      </div>`;
+    }).join('');
+    body = `<div class="opts" id="opts">${opts}</div>`;
+  }
+
+  const isLast = curIdx === questions.length - 1;
+  const btnLabel = isLast ? '✅ Submit Exam' : 'Next Question →';
+  const btnClass = isLast ? 'btn-acc' : 'btn-acc';
+
+  setMain(`<div class="q-wrap">
+    <div class="q-card">
+      ${badge}
+      <div class="q-text">${q.text}</div>
+      ${body}
+      <div class="btn-row">
+        <span class="skip-hint" id="skip-hint">${isSA ? 'Leave blank to skip' : 'Select an option above'}</span>
+        <button class="btn ${btnClass}" id="next-btn" onclick="nextQuestion('${q.id}','${isSA ? 'sa' : 'mcq'}')">${btnLabel}</button>
+      </div>
+    </div>
+  </div>`);
+
+  // Update skip hint live for SA
+  if (isSA) {
+    document.getElementById('sa-inp').addEventListener('input', function() {
+      document.getElementById('skip-hint').textContent = this.value.trim() ? '' : 'Leave blank to skip';
+    });
+    // Restore scroll
+    window.scrollTo(0, 0);
+  }
+}
+
+function selectOpt(qId, letter, el) {
+  answers[qId] = letter;
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  el.querySelector('.opt-letter').style.background = 'var(--acc)';
+  el.querySelector('.opt-letter').style.color = '#fff';
+  el.querySelector('.opt-letter').style.borderColor = 'var(--acc)';
+  document.getElementById('skip-hint').textContent = '';
+}
+
+function nextQuestion(qId, type) {
+  if (type === 'sa') {
+    const val = document.getElementById('sa-inp')?.value?.trim() || '';
+    if (val) answers[qId] = val;
+  }
+  // If MCQ and nothing selected, confirm skip
+  if (type === 'mcq' && !answers[qId]) {
+    if (!confirm('You haven\'t selected an answer. Skip this question?')) return;
+  }
+  curIdx++;
+  renderQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Submit confirm screen (final review before submitting) ───────────────────
+function renderSubmitConfirm() {
+  const answered = Object.keys(answers).length;
+  const unanswered = questions.length - answered;
+  updateProgress();
+
+  setMain(`<div class="q-wrap">
+    <div class="q-card" style="text-align:center;padding:40px 32px">
+      <div style="font-size:2.5rem;margin-bottom:12px">📋</div>
+      <h2 style="font-size:1.15rem;font-weight:900;margin-bottom:8px">Ready to submit?</h2>
+      <p style="font-size:.87rem;color:var(--mut);margin-bottom:22px;line-height:1.6">
+        You answered <strong>${answered}</strong> of <strong>${questions.length}</strong> questions.
+        ${unanswered > 0 ? `<br><span style="color:var(--warn)">⚠️ ${unanswered} question(s) left unanswered.</span>` : '<br><span style="color:var(--grn)">✅ All questions answered!</span>'}
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="curIdx=0;renderQuestion()">← Review Answers</button>
+        <button class="btn btn-acc" id="final-submit-btn" onclick="doSubmit()">✅ Submit Exam</button>
+      </div>
+    </div>
+  </div>`);
+}
+
+// ── Auto-submit when timer hits 0 ────────────────────────────────────────────
+function autoSubmit() {
+  setMain(`<div class="center-screen"><div class="spin"></div><p style="color:var(--mut)">Time's up! Submitting your answers…</p></div>`);
+  doSubmit(true);
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+async function doSubmit(auto = false) {
+  detachExitGuard();
+  clearInterval(timerIv);
+  document.getElementById('timer-pill').style.display = 'none';
+
+  const timeTaken = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
+
+  setMain(`<div class="center-screen"><div class="spin"></div>
+    <p style="font-weight:700">Submitting &amp; marking with AI…</p>
+    <p style="font-size:.82rem;color:var(--mut)">This may take a moment for short-answer questions.</p>
+  </div>`);
+
+  try {
+    const d = await api('POST', `/api/zimsec/exams/${examId}/submit`, { answers, timeTaken });
+    // Remove any exit ban now that we submitted cleanly
+    const key = 'fp_exam_exited';
+    const existing = JSON.parse(localStorage.getItem(key) || '[]').filter(id => id !== examId);
+    localStorage.setItem(key, JSON.stringify(existing));
+    renderResult(d);
+  } catch (e) {
+    setMain(`<div class="center-screen">
+      <div style="font-size:2rem">⚠️</div>
+      <p style="font-weight:700;color:var(--red)">Submit failed</p>
+      <p style="font-size:.84rem;color:var(--mut);max-width:320px">${e.message}</p>
+      ${!auto ? `<button class="btn btn-acc" style="margin-top:12px" onclick="doSubmit()">Retry</button>` : ''}
+    </div>`);
+  }
+}
+
+// ── Result screen ─────────────────────────────────────────────────────────────
+function renderResult(d) {
+  const pct = d.pct || 0;
+  const grade = pct >= 75 ? 'A' : pct >= 60 ? 'B' : pct >= 50 ? 'C' : 'F';
+  const gc = { A: 'g-a', B: 'g-b', C: 'g-c', F: 'g-f' }[grade];
+  const bd = d.breakdown || {};
+
+  const review = questions.map((q, i) => {
+    const b = bd[q.id]; if (!b) return '';
+    if (q.type === 'sa' || !q.options?.length) {
+      const sc = b.score || 0;
+      const pctS = Math.round(sc * 100);
+      const cls = sc >= 0.8 ? 'ok' : sc >= 0.4 ? 'partial' : 'bad';
+      return `<div class="rev-item">
+        <div class="rev-num">Q${i+1} · AI Marked</div>
+        <div class="rev-qtext">${q.text}</div>
+        <div style="background:#f8faff;border-radius:8px;padding:9px 12px;font-size:.82rem;margin-bottom:8px;border:1px solid var(--brd)"><em>Your answer:</em> ${answers[q.id] || '<em>No answer</em>'}</div>
+        <div class="ai-fb ${cls}"><strong>${sc >= 0.8 ? '✅ Good answer' : sc >= 0.4 ? '⚡ Partial credit (' + pctS + '%)' : '❌ Incorrect'}</strong> — ${b.explanation || ''}</div>
+      </div>`;
+    }
+    const opts = (q.options || []).map((o, oi) => {
+      const letter = o.letter || LETTERS[oi]; const text = o.text || o;
+      const isCorrect = String(b.correct_answer || '').toUpperCase() === letter;
+      const isGiven = String(b.given || '').toUpperCase() === letter;
+      let cls = '';
+      if (isCorrect) cls = 'correct';
+      else if (isGiven && !b.correct) cls = 'wrong';
+      if (!cls) return '';
+      return `<div class="rev-opt ${cls}"><strong>${letter}.</strong> ${text}</div>`;
+    }).join('');
+    return `<div class="rev-item">
+      <div class="rev-num">Q${i+1} · ${b.correct ? '✅ Correct' : '❌ Wrong'}</div>
+      <div class="rev-qtext">${q.text}</div>
+      ${opts}
+    </div>`;
+  }).join('');
+
+  document.getElementById('prog-fill').style.width = '100%';
+  document.getElementById('q-counter').textContent = 'Complete!';
+
+  setMain(`<div class="q-wrap">
+    <div class="q-card">
+      <div class="result-wrap">
+        <div class="big-score">${pct}%</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--mut);margin-top:8px">${d.score} / ${d.total} marks</div>
+        <div class="grade-badge ${gc}">Grade ${grade}</div>
+        ${d.aiMarked ? `<p style="font-size:.76rem;color:var(--mut);margin-top:10px">🤖 ${d.aiMarked}</p>` : ''}
+      </div>
+      ${review ? `<div class="review-section"><div class="rev-head">📝 Question Review</div>${review}</div>` : ''}
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px">
+        <a class="btn btn-ghost" href="/~/exam">← Back to Exams</a>
+        <a class="btn btn-acc" href="/~/leaderboard">🏆 Leaderboard</a>
+      </div>
+    </div>
+  </div>`);
+}
+
+// ── Blocked / error screens ───────────────────────────────────────────────────
+function showBlocked(title, msg) {
+  setMain(`<div class="center-screen">
+    <div class="blocked-card">
+      <div style="font-size:2.5rem;margin-bottom:10px">🚫</div>
+      <h2>${title}</h2>
+      <p>${msg}</p>
+      <a class="btn btn-ghost" href="/~/exam" style="margin-top:20px;display:inline-flex">← Back to Exams</a>
+    </div>
+  </div>`);
+}
+function showError(msg) {
+  setMain(`<div class="center-screen">
+    <div style="font-size:2rem">⚠️</div>
+    <p style="font-weight:700;color:var(--red)">${msg}</p>
+    <a class="btn btn-ghost" href="/~/exam" style="margin-top:12px">← Back to Exams</a>
+  </div>`);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+if (!tok) { location.href = '/login'; } else { loadExam(); }
+</script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Fundo Plus — Project Generator</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false})"></script>
+  <style>
+    *,::after,::before{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f6f8ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+    .topbar{background:#ffffffee;backdrop-filter:blur(10px);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;height:56px;gap:12px;position:sticky;top:0;z-index:50}
+    .topbar a{color:var(--acc);font-weight:700;text-decoration:none;font-size:.88rem}
+    .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt);margin-left:8px}
+    .main{max-width:800px;margin:0 auto;padding:28px 20px}
+    .page-title{font-size:1.4rem;font-weight:900;margin-bottom:4px}
+    .page-sub{font-size:.84rem;color:var(--mut);margin-bottom:24px}
+    .card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rad);padding:22px;box-shadow:var(--sh);margin-bottom:20px}
+    .card h3{font-size:.95rem;font-weight:800;margin-bottom:6px}
+    .card p{font-size:.82rem;color:var(--mut);margin-bottom:14px;line-height:1.6}
+    label{display:block;font-size:.75rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;margin-top:12px}
+    label:first-of-type{margin-top:0}
+    select,input[type=text]{width:100%;border:1.5px solid var(--brd);border-radius:8px;padding:9px 12px;font-size:.86rem;color:var(--txt);background:#fff;outline:0;font-family:inherit}
+    select:focus,input:focus{border-color:var(--acc)}
+    textarea{width:100%;min-height:100px;border:1.5px solid var(--brd);border-radius:8px;padding:10px;font-size:.85rem;color:var(--txt);resize:vertical;outline:0;background:var(--bg);font-family:inherit}
+    textarea:focus{border-color:var(--acc)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:140px}
+    .btn-acc{padding:10px 22px;background:var(--acc);border:none;border-radius:9px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;transition:.12s}
+    .btn-acc:hover{background:var(--acc2)}
+    .btn-acc:disabled{opacity:.5;cursor:not-allowed}
+    .btn-out{padding:9px 18px;background:var(--surf);border:1.5px solid var(--brd);border-radius:9px;color:var(--mut);font-weight:700;font-size:.85rem;cursor:pointer}
+    .btn-out:hover{border-color:var(--acc);color:var(--acc)}
+    .btn-grn{padding:9px 18px;background:var(--grn);border:none;border-radius:9px;color:#fff;font-weight:700;font-size:.85rem;cursor:pointer}
+    .btn-grn:hover{background:#15803d}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .output-box{background:var(--bg);border:1px solid var(--brd);border-radius:10px;padding:18px;font-size:.84rem;line-height:1.8;white-space:pre-wrap;max-height:500px;overflow-y:auto;font-family:inherit}
+    .status-bar{padding:10px 14px;border-radius:8px;font-size:.83rem;margin-bottom:12px;display:none}
+    .status-bar.loading{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;display:block}
+    .status-bar.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;display:block}
+    .status-bar.err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;display:block}
+    .usage-badge{background:#f1f5f9;border-radius:8px;padding:8px 12px;font-size:.78rem;color:var(--mut);display:inline-block;margin-bottom:16px}
+    .usage-badge span{font-weight:900;color:var(--acc)}
+    .template-section{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:16px;font-size:.8rem;color:#92400e;line-height:1.5}
+    .template-section strong{display:block;font-size:.85rem;margin-bottom:4px;color:#78350f}
+    @media(max-width:600px){.actions{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/~">← Dashboard</a>
+    <span class="topbar-title">🗂️ Project Generator</span>
+  </div>
+
+  <div class="main">
+    <div class="page-title">🗂️ Project Generator</div>
+    <div class="page-sub">Generate comprehensive study projects for any ZIMSEC subject. Projects are saved and can be exported as PDF.</div>
+
+    <div class="usage-badge">Projects used: <span id="proj-used">—</span> / <span id="proj-limit">—</span></div>
+
+    <div class="template-section">
+      <strong>📋 Required Information</strong>
+      Fill in the fields below. The AI will generate a full study project following the ZIMSEC project structure: objectives, key concepts, worked examples, practice questions, and exam tips.
+    </div>
+
+    <div class="card">
+      <h3>Project Details</h3>
+      <p>Provide subject, level and focus topic to generate a targeted study project.</p>
+
+      <div class="row">
+        <div>
+          <label>Subject</label>
+          <select id="proj-subject">
+            <option value="">— Choose —</option>
+            <option>Mathematics</option>
+            <option>Physics</option>
+            <option>Chemistry</option>
+            <option>Biology</option>
+            <option>English Language</option>
+            <option>Accounts</option>
+            <option>Geography</option>
+            <option>History</option>
+            <option>Computer Science</option>
+            <option>Agriculture</option>
+            <option>Commerce</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Level</label>
+          <select id="proj-level">
+            <option value="O-Level">O-Level</option>
+            <option value="A-Level">A-Level</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Focus Topic</label>
+      <input type="text" id="proj-topic" placeholder="e.g. Quadratic Equations, Organic Chemistry, World War 2…">
+
+      <label>Additional Context (optional)</label>
+      <textarea id="proj-context" placeholder="Any specific areas to focus on, exam year, difficulty level…" style="min-height:70px"></textarea>
+
+      <div class="actions">
+        <button class="btn-acc" id="gen-btn" onclick="generateProject()">✨ Generate Project</button>
+        <button class="btn-out" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">Generating your study project…</div>
+
+    <div id="output-section" style="display:none">
+      <div class="card">
+        <h3 id="output-title">Generated Project</h3>
+        <div class="output-box" id="output-content"></div>
+        <div class="actions">
+          <button class="btn-grn" onclick="downloadPdf()">📥 Download as PDF</button>
+          <button class="btn-out" onclick="copyContent()">📋 Copy Text</button>
+          <button class="btn-out" onclick="newProject()">+ New Project</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('fp_session');
+    if (!token) window.location.replace('/login');
+
+    let generatedContent = '';
+    let generatedTitle = '';
+
+    async function api(method, url, body) {
+      const opts = { method, headers: { 'x-session-token': token } };
+      if (body instanceof FormData) { opts.body = body; }
+      else if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+      const r = await fetch(url, opts);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Error');
+      return d;
+    }
+
+    async function init() {
+      try {
+        const d = await api('GET', '/api/subscription');
+        document.getElementById('proj-used').textContent = d.usage?.projectsTotal ?? 0;
+        document.getElementById('proj-limit').textContent = d.limits?.projects === Infinity ? '∞' : (d.limits?.projects ?? '—');
+      } catch {}
+    }
+
+    async function generateProject() {
+      const subject = document.getElementById('proj-subject').value;
+      const level   = document.getElementById('proj-level').value;
+      const topic   = document.getElementById('proj-topic').value.trim();
+      const context = document.getElementById('proj-context').value.trim();
+
+      if (!subject) { alert('Please select a subject.'); return; }
+      if (!topic)   { alert('Please enter a focus topic.'); return; }
+
+      const btn = document.getElementById('gen-btn');
+      btn.disabled = true; btn.textContent = '✨ Generating…';
+      showStatus('loading', '🔄 Prok AI is creating your project. This may take 20-40 seconds…');
+
+      const fullTitle = `${subject} ${level} — ${topic}`;
+
+      try {
+        const subData = await api('GET', '/api/subscription');
+        const used  = subData.usage?.projectsTotal ?? 0;
+        const limit = subData.limits?.projects;
+        if (limit !== Infinity && used >= limit) {
+          showStatus('err', `Project limit reached (${limit}). Upgrade your plan at Subscription.`);
+          btn.disabled = false; btn.textContent = '✨ Generate Project';
+          return;
+        }
+      } catch {}
+
+      try {
+        let templateGuide = '';
+        try {
+          const tmpl = await api('GET', '/api/skills/project-template');
+          if (tmpl.template) templateGuide = `\nFollow this project structure:\n${tmpl.template}`;
+        } catch {}
+
+        const prompt = `You are a ZIMSEC study project generator for Zimbabwean students.
+
+Create a comprehensive study project for:
+- Subject: ${subject}
+- Level: ${level}
+- Focus Topic: ${topic}
+${context ? `- Additional context: ${context}` : ''}
+${templateGuide}
+
+Requirements:
+1. Start with the project title as # heading
+2. Include ## Subject, ## Level sections
+3. ## Learning Objectives (3-5 bullet points)
+4. ## Key Concepts & Definitions (define 4-6 key terms with clear explanations)
+5. ## Important Formulas / Facts (use $LaTeX$ notation for math formulas)
+6. ## Worked Examples (2-3 step-by-step solutions)
+7. ## Practice Questions (5 questions of increasing difficulty)
+8. ## ZIMSEC Exam Tips (specific to this topic and ${level})
+9. ## Common Mistakes to Avoid
+
+Be thorough, educational, and specific to ZIMSEC curriculum. Minimum 1000 words.`;
+
+        const chatResp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-session-token': token },
+          body: JSON.stringify({ message: prompt }),
+        });
+        const chatData = await chatResp.json();
+        if (!chatResp.ok) throw new Error(chatData.error || 'AI error');
+
+        generatedContent = chatData.reply || '';
+        generatedTitle   = fullTitle;
+
+        await fetch('/api/skills/project', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-session-token': token },
+          body: JSON.stringify({ name: fullTitle, content: generatedContent }),
+        });
+
+        document.getElementById('output-title').textContent = fullTitle;
+        document.getElementById('output-content').textContent = generatedContent;
+        document.getElementById('output-section').style.display = 'block';
+        document.getElementById('output-section').scrollIntoView({ behavior: 'smooth' });
+
+        if (window.renderMathInElement) {
+          setTimeout(() => renderMathInElement(document.getElementById('output-content'), {
+            delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
+            throwOnError: false
+          }), 200);
+        }
+
+        showStatus('ok', '✅ Project generated and saved!');
+        init();
+      } catch (e) {
+        showStatus('err', '❌ ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '✨ Generate Project';
+      }
+    }
+
+    async function downloadPdf() {
+      if (!generatedContent) return;
+      const btn = event.currentTarget;
+      btn.disabled = true; btn.textContent = '⏳ Generating PDF…';
+      try {
+        const r = await fetch('/api/skills/project', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-session-token': token },
+          body: JSON.stringify({ name: generatedTitle, content: generatedContent, asPdf: true }),
+        });
+        if (!r.ok) {
+          const d = await r.json();
+          throw new Error(d.error || 'PDF failed');
+        }
+        const blob = await r.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = `${generatedTitle.replace(/[^a-z0-9]/gi,'_')}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('PDF failed: ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '📥 Download as PDF';
+      }
+    }
+
+    function copyContent() {
+      navigator.clipboard.writeText(generatedContent).then(() => alert('Copied to clipboard!'));
+    }
+
+    function newProject() {
+      document.getElementById('output-section').style.display = 'none';
+      document.getElementById('status-bar').style.display = 'none';
+      document.getElementById('proj-topic').value = '';
+      document.getElementById('proj-context').value = '';
+      generatedContent = ''; generatedTitle = '';
+    }
+
+    function clearForm() {
+      document.getElementById('proj-subject').value = '';
+      document.getElementById('proj-level').value = 'O-Level';
+      document.getElementById('proj-topic').value = '';
+      document.getElementById('proj-context').value = '';
+    }
+
+    function showStatus(type, msg) {
+      const el = document.getElementById('status-bar');
+      el.className = 'status-bar ' + type;
+      el.textContent = msg;
+    }
+
+    init();
+  </script>
+</body>
+</html>

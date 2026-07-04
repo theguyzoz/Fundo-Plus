@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <title>Fundo Plus — AI Education Platform for Zimbabwe</title>
+    <meta name="description" content="Fundo Plus is Zimbabwe's leading AI education platform. ZIMSEC O-Level & A-Level study help, quiz generation, past papers, and Prok AI — available on Web and WhatsApp.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Fundo Plus — AI Study Platform for Zimbabwe">
+    <meta property="og:description" content="Fundo Plus is Zimbabwe's AI education platform. ZIMSEC O-Level and A-Level study help, quiz generation, past papers and Prok AI.">
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://fundaplus.up.railway.app/">
+    <style>:root{--blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;--dark:#0f172a;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#ffffff;--surf:#f8fafc}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}a{text-decoration:none;color:inherit}nav{position:sticky;top:0;z-index:100;background:#ffffffee;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 5%;display:flex;align-items:center;height:64px;gap:1rem}.nav-logo{display:flex;align-items:center;gap:.6rem;font-size:1.15rem;font-weight:900;color:var(--blue)}.nav-links{display:flex;gap:1.5rem;margin-left:2rem}.nav-links a{font-size:.88rem;color:var(--muted);font-weight:600;transition:.15s}.nav-links a:hover{color:var(--blue)}.nav-right{margin-left:auto;display:flex;gap:.6rem}.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.25rem;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;border:none;transition:.15s}.btn-ghost{background:0 0;color:var(--muted)}.btn-ghost:hover{background:var(--surf);color:var(--text)}.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue2);transform:translateY(-1px)}.btn-lg{padding:.8rem 2rem;font-size:1rem;border-radius:10px}.btn-white{background:#fff;color:var(--blue);border:2px solid var(--blue)}.btn-white:hover{background:var(--surf)}.hero{padding:90px 5% 80px;background:linear-gradient(160deg,#eff6ff 0,#f0fdf4 60%,#fff 100%);text-align:center;position:relative;overflow:hidden}.hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:#dbeafe;color:var(--blue);border-radius:99px;padding:.3rem 1rem;font-size:.78rem;font-weight:700;margin-bottom:1.5rem;letter-spacing:.04em}.hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;letter-spacing:-1.5px;line-height:1.1;max-width:760px;margin:0 auto}.hero h1 span{color:var(--blue)}.hero p{margin:1.25rem auto 0;font-size:1.08rem;color:var(--muted);max-width:560px}.hero-btns{margin-top:2.5rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}.hero-visual{margin-top:4rem;display:flex;justify-content:center}.stats{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.75rem 5%;display:flex;justify-content:center;gap:3rem;flex-wrap:wrap}.stat{text-align:center}.stat .num{font-size:2rem;font-weight:900;color:var(--blue)}.stat .label{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}section{padding:80px 5%}.section-inner{max-width:1100px;margin:0 auto}.section-tag{display:inline-block;background:#dbeafe;color:var(--blue);font-size:.75rem;font-weight:800;padding:.25rem .75rem;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}.section-title{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;letter-spacing:-.8px;margin-bottom:.5rem}.section-sub{color:var(--muted);font-size:1rem;max-width:540px}.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;margin-top:3rem}.feat-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.5rem;transition:.2s;position:relative}.feat-card:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(37,99,235,.09)}.feat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;font-size:1.4rem}.feat-card h3{font-size:1rem;font-weight:800;margin-bottom:.4rem}.feat-card p{font-size:.85rem;color:var(--muted);line-height:1.55}.tag-new{background:#dcfce7;color:#166534;font-size:.65rem;font-weight:800;padding:.15rem .5rem;border-radius:99px;margin-left:.4rem;vertical-align:middle}.tag-soon{background:#fef9c3;color:#854d0e;font-size:.65rem;font-weight:800;padding:.15rem .5rem;border-radius:99px;margin-left:.4rem;vertical-align:middle}.how{background:var(--surf);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;margin-top:3rem}.step{text-align:center}.step-num{width:52px;height:52px;background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.25rem;margin:0 auto 1rem}.step h3{font-size:.95rem;font-weight:800;margin-bottom:.4rem}.step p{font-size:.82rem;color:var(--muted)}.ai-section{background:linear-gradient(135deg,#1e3a8a,#1d4ed8,#2563eb);color:#fff}.ai-section .section-title{color:#fff}.ai-section .section-sub{color:#bfdbfe}.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;margin-top:3rem}@media(max-width:700px){.ai-grid{grid-template-columns:1fr}}.ai-chat-demo{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:1.5rem}.chat-bubble{padding:.6rem 1rem;border-radius:10px;font-size:.85rem;margin:.4rem 0;max-width:90%}.bubble-user{background:rgba(255,255,255,.15);margin-left:auto;text-align:right}.bubble-ai{background:rgba(37,99,235,.4);border:1px solid rgba(99,155,255,.3)}.bubble-name{font-size:.7rem;font-weight:700;opacity:.7;margin-bottom:.15rem}.ai-features{display:flex;flex-direction:column;gap:1rem}.ai-feat{display:flex;align-items:flex-start;gap:.75rem}.ai-feat-icon{font-size:1.3rem;margin-top:.1rem}.ai-feat h4{font-size:.9rem;font-weight:800;color:#fff}.ai-feat p{font-size:.8rem;color:#bfdbfe}.subjects-grid{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:2rem}.subj{background:#fff;border:1px solid var(--border);border-radius:99px;padding:.35rem 1rem;font-size:.82rem;font-weight:600;color:var(--text)}.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;margin-top:3rem}.plan{background:#fff;border:2px solid var(--border);border-radius:16px;padding:2rem}.plan.featured{border-color:var(--blue);box-shadow:0 0 0 4px #dbeafe}.plan-name{font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.plan-price{font-size:2.4rem;font-weight:900;letter-spacing:-1px;margin:.5rem 0}.plan-price span{font-size:.9rem;font-weight:600;color:var(--muted)}.plan-desc{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}.plan-features{list-style:none;display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.75rem}.plan-features li{font-size:.85rem;display:flex;align-items:center;gap:.5rem}.plan-features li::before{content:"✓";color:var(--green);font-weight:900}.wa-callout{background:linear-gradient(135deg,#dcfce7,#d1fae5);border:1.5px solid #86efac;border-radius:16px;padding:2.5rem;text-align:center;max-width:680px;margin:0 auto}.wa-callout h3{font-size:1.25rem;font-weight:800;color:#14532d;margin-bottom:.5rem}.wa-callout p{font-size:.9rem;color:#166534;line-height:1.6}.wa-btn{display:inline-flex;align-items:center;gap:.5rem;background:#25d366;color:#fff;border-radius:10px;padding:.75rem 1.75rem;font-weight:700;font-size:.95rem;margin-top:1.25rem}footer{background:var(--dark);color:#94a3b8;padding:3rem 5%;display:flex;flex-wrap:wrap;gap:2rem;justify-content:space-between}.footer-brand .name{font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:.4rem}.footer-brand p{font-size:.82rem;line-height:1.6}.footer-links h4{font-size:.8rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}.footer-links a{display:block;font-size:.82rem;color:#94a3b8;margin-bottom:.35rem}.footer-links a:hover{color:#fff}.footer-bottom{background:#0a0f1a;color:#475569;text-align:center;padding:1rem;font-size:.78rem}.burger{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--text)}.burger:hover{background:var(--surf)}.mobile-menu{display:none;position:fixed;inset:0;background:#fff;z-index:200;flex-direction:column;padding:20px}.mobile-menu.open{display:flex}.mobile-menu .close-btn{align-self:flex-end;background:0 0;border:none;font-size:1.5rem;cursor:pointer;padding:8px;color:var(--text)}.mobile-menu a{display:block;padding:14px 0;font-size:1.05rem;font-weight:600;color:var(--text);border-bottom:1px solid var(--border)}.mobile-menu a:hover{color:var(--blue)}@media(max-width:640px){.nav-links{display:none}.stats{gap:1.5rem}.burger{display:flex}}</style>
+  </head>
+
+  <body>
+    <nav>
+      <a class="nav-logo" href="/">
+        <img src="/images/logo.png" width="32" height="32" alt="Fundo Plus" style="border-radius:8px">
+          Fundo Plus</a>
+          <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How it works</a>
+            <a href="#subjects">Subjects</a>
+            <a href="#pricing">Pricing</a>
+            <a href="/about">About</a>
+            <a href="/community">Community</a>
+            <a href="/terms">Terms</a></div>
+
+            <div class="nav-right">
+              <a href="/login" class="btn btn-ghost">Sign In</a>
+              <a href="/login" class="btn btn-primary">Get Started</a></div>
+
+              <button class="burger" onclick="openMobile()" aria-label="Menu">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+              </nav>
+
+              <div class="mobile-menu" id="mobileMenu">
+                <button class="close-btn" onclick="closeMobile()">✕</button>
+
+                <a href="#features" onclick="closeMobile()">Features</a>
+                <a href="#how" onclick="closeMobile()">How it works</a>
+                <a href="#subjects" onclick="closeMobile()">Subjects</a>
+                <a href="#pricing" onclick="closeMobile()">Pricing</a>
+                <a href="/about">About</a>
+                <a href="/community">Community</a>
+                <a href="/terms">Terms</a>
+                <a href="/support">Support</a>
+                <a href="/login" style="color:var(--blue);font-weight:800">Sign In / Get Started</a></div>
+
+                <section class="hero">
+                  <div class="hero-badge">🇿🇼 Built for Zimbabwe · ZIMSEC Curriculum</div>
+
+                  <h1>Your AI Study Partner for
+                  <span>ZIMSEC Success</span></h1>
+
+                  <p>Fundo Plus combines powerful AI, past papers, quiz generation and WhatsApp access — everything a Zimbabwean student needs to excel.</p>
+
+                  <div class="hero-btns">
+                    <a href="/login" class="btn btn-primary btn-lg">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        Start Learning Free </a>
+                        <a href="https://wa.me/263717129736" target="_blank" class="btn btn-white btn-lg">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.523 5.845L.054 23.454a.75.75 0 00.917.917l5.609-1.469A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.978 9.978 0 01-5.168-1.437l-.369-.221-3.826 1.002 1.02-3.723-.242-.384A9.951 9.951 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                            Try on WhatsApp</a></div>
+
+                            <div class="hero-visual">
+                              <svg width="720" height="220" viewBox="0 0 720 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="10" y="20" width="220" height="180" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+                                <rect x="26" y="36" width="80" height="10" rx="5" fill="#dbeafe"/>
+                                <rect x="26" y="54" width="180" height="8" rx="4" fill="#f1f5f9"/>
+                                <rect x="26" y="68" width="140" height="8" rx="4" fill="#f1f5f9"/>
+                                <rect x="70" y="90" width="140" height="36" rx="10" fill="#eff6ff" stroke="#bfdbfe"/>
+                                <rect x="82" y="99" width="116" height="7" rx="3" fill="#93c5fd"/>
+                                <rect x="82" y="112" width="80" height="7" rx="3" fill="#bfdbfe"/>
+                                <rect x="26" y="140" width="180" height="8" rx="4" fill="#f1f5f9"/>
+                                <rect x="26" y="154" width="120" height="8" rx="4" fill="#f1f5f9"/>
+                                <rect x="26" y="174" width="60" height="18" rx="6" fill="#2563eb"/>
+                                <rect x="250" y="10" width="220" height="200" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+                                <rect x="266" y="28" width="90" height="10" rx="5" fill="#dcfce7"/>
+                                <rect x="266" y="46" width="180" height="8" rx="4" fill="#f1f5f9"/>
+                                <rect x="266" y="62" width="180" height="32" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                                <circle cx="280" cy="78" r="6" fill="#2563eb"/>
+                                <rect x="292" y="74" width="120" height="7" rx="3" fill="#e2e8f0"/>
+                                <rect x="266" y="100" width="180" height="32" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                                <circle cx="280" cy="116" r="6" fill="#e2e8f0"/>
+                                <rect x="292" y="112" width="100" height="7" rx="3" fill="#e2e8f0"/>
+                                <rect x="266" y="138" width="180" height="32" rx="8" fill="#dcfce7" stroke="#86efac"/>
+                                <circle cx="280" cy="154" r="6" fill="#16a34a"/>
+                                <rect x="292" y="150" width="130" height="7" rx="3" fill="#86efac"/>
+                                <rect x="266" y="178" width="80" height="20" rx="6" fill="#2563eb"/>
+                                <rect x="490" y="20" width="220" height="180" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+                                <rect x="506" y="36" width="100" height="10" rx="5" fill="#fef3c7"/>
+                                <rect x="506" y="54" width="188" height="44" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+                                <rect x="520" y="64" width="100" height="7" rx="3" fill="#e2e8f0"/>
+                                <rect x="520" y="77" width="70" height="6" rx="3" fill="#f1f5f9"/>
+                                <rect x="506" y="104" width="188" height="44" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+                                <rect x="520" y="114" width="120" height="7" rx="3" fill="#e2e8f0"/>
+                                <rect x="520" y="127" width="70" height="6" rx="3" fill="#f1f5f9"/>
+                                <rect x="506" y="154" width="188" height="36" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+                                <rect x="520" y="164" width="90" height="7" rx="3" fill="#e2e8f0"/>
+                                <rect x="520" y="177" width="50" height="6" rx="3" fill="#f1f5f9"/></svg>
+                              </div>
+                            </section>
+
+                            <div class="stats">
+                              <div class="stat">
+                                <div class="num">5+</div>
+
+                                <div class="label">Active Subjects</div>
+                              </div>
+
+                              <div class="stat">
+                                <div class="num">100%</div>
+
+                                <div class="label">ZIMSEC Aligned</div>
+                              </div>
+
+                              <div class="stat">
+                                <div class="num">24/7</div>
+
+                                <div class="label">AI Availability</div>
+                              </div>
+
+                              <div class="stat">
+                                <div class="num">2-in-1</div>
+
+                                <div class="label">Web + WhatsApp</div>
+                              </div>
+                            </div>
+
+                            <section id="features">
+                              <div class="section-inner">
+                                <div class="section-tag">Features</div>
+
+                                <div class="section-title">Everything you need to study smarter</div>
+
+                                <div class="section-sub">Built specifically for Zimbabwean students following the ZIMSEC O-Level and A-Level curriculum.</div>
+
+                                <div class="feat-grid">
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#eff6ff">🤖</div>
+
+                                    <h3>Prok AI
+                                    <span class="tag-new">NEW</span></h3>
+
+                                    <p>Ask any question about your subjects. Get full explanations, worked examples with LaTeX math, and step-by-step solutions — instantly.</p>
+                                  </div>
+
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#f0fdf4">📝</div>
+
+                                    <h3>AI Quiz Generator</h3>
+
+                                    <p>Paste your notes and generate MCQ or short-answer quizzes in seconds. Every wrong answer comes with a full explanation.</p>
+                                  </div>
+
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#fefce8">📄</div>
+
+                                    <h3>Past Papers Library</h3>
+
+                                    <p>Browse and download ZIMSEC past examination papers. Search by subject, year, and level — all in one place.</p>
+                                  </div>
+
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#f0fdf4">📱</div>
+
+                                    <h3>WhatsApp Integration</h3>
+
+                                    <p>Link your WhatsApp to Prok AI. Ask questions, generate documents, and get study help — right in your chat.</p>
+                                  </div>
+
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#fff7ed">📑</div>
+
+                                    <h3>Document Generator</h3>
+
+                                    <p>Generate study notes, essays, and revision guides as PDF or Word files. Great for offline studying.</p>
+                                  </div>
+
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#fdf2f8">🧮</div>
+
+                                    <h3>Smart Calculator
+                                    <span class="tag-new">NEW</span></h3>
+
+                                    <p>Ask Prok AI to calculate expressions — trigonometry, logarithms, algebra and more. Works in both web and WhatsApp.</p>
+                                  </div>
+
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#eff6ff">🔍</div>
+
+                                    <h3>Web Search</h3>
+
+                                    <p>Prok AI can search the web for current information, news, and resources to complement your studies.</p>
+                                  </div>
+
+                                  <div class="feat-card">
+                                    <div class="feat-icon" style="background:#f0fdf4">🖼️</div>
+
+                                    <h3>Image Generation
+                                    <span class="tag-soon">BETA</span></h3>
+
+                                    <p>Generate diagrams, illustrations, and visual aids to help understand complex concepts.</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </section>
+
+                            <section id="how" class="how">
+                              <div class="section-inner">
+                                <div class="section-tag">How it works</div>
+
+                                <div class="section-title">Up and running in minutes</div>
+
+                                <div class="steps-grid">
+                                  <div class="step">
+                                    <div class="step-num">1</div>
+
+                                    <h3>Create your account</h3>
+
+                                    <p>Sign up with your Gmail, Outlook, or Yahoo email address.</p>
+                                  </div>
+
+                                  <div class="step">
+                                    <div class="step-num">2</div>
+
+                                    <h3>Set up your profile</h3>
+
+                                    <p>Enter your name, age, and school during quick onboarding.</p>
+                                  </div>
+
+                                  <div class="step">
+                                    <div class="step-num">3</div>
+
+                                    <h3>Start studying</h3>
+
+                                    <p>Use the dashboard for AI chat, quizzes, and past papers.</p>
+                                  </div>
+
+                                  <div class="step">
+                                    <div class="step-num">4</div>
+
+                                    <h3>Link WhatsApp</h3>
+
+                                    <p>Connect your number for 24/7 AI study help on mobile.</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </section>
+
+                            <section class="ai-section">
+                              <div class="section-inner">
+                                <div class="section-tag" style="background:rgba(255,255,255,.15);color:#bfdbfe">Prok AI</div>
+
+                                <div class="section-title">Meet Prok AI — your personal tutor</div>
+
+                                <div class="section-sub">Prok AI understands the ZIMSEC curriculum deeply. Ask in plain English — get expert-level answers instantly.</div>
+
+                                <div class="ai-grid">
+                                  <div class="ai-features">
+                                    <div class="ai-feat">
+                                      <div class="ai-feat-icon">📐</div>
+
+                                      <div>
+                                        <h4>LaTeX Mathematics</h4>
+
+                                        <p>Beautifully rendered equations and worked solutions for Maths, Physics, and Chemistry.</p>
+                                      </div>
+                                    </div>
+
+                                    <div class="ai-feat">
+                                      <div class="ai-feat-icon">📚</div>
+
+                                      <div>
+                                        <h4>ZIMSEC Curriculum Aligned</h4>
+
+                                        <p>Trained on O-Level and A-Level content including all core subjects.</p>
+                                      </div>
+                                    </div>
+
+                                    <div class="ai-feat">
+                                      <div class="ai-feat-icon">🌍</div>
+
+                                      <div>
+                                        <h4>Web + WhatsApp</h4>
+
+                                        <p>Available in browser and directly in WhatsApp — no app download needed.</p>
+                                      </div>
+                                    </div>
+
+                                    <div class="ai-feat">
+                                      <div class="ai-feat-icon">🧮</div>
+
+                                      <div>
+                                        <h4>Built-in Calculator</h4>
+
+                                        <p>Evaluate complex expressions, trig functions, logarithms and more.</p>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div class="ai-chat-demo">
+                                    <div class="chat-bubble bubble-user">
+                                      <div class="bubble-name">You</div>
+                                      Explain the quadratic formula</div>
+
+                                      <div class="chat-bubble bubble-ai">
+                                        <div class="bubble-name">Prok AI</div>
+                                        The quadratic formula solves ax² + bx + c = 0:<br><br>x = (−b ± √(b²−4ac)) / 2a<br><br>The discriminant b²−4ac tells you: if &gt; 0 → two real roots, = 0 → one root, &lt; 0 → no real roots.</div>
+
+                                        <div class="chat-bubble bubble-user">
+                                          <div class="bubble-name">You</div>
+                                          Calculate √144 + 5²</div>
+
+                                          <div class="chat-bubble bubble-ai">
+                                            <div class="bubble-name">Prok AI 🧮</div>
+                                            √144 + 5² = 12 + 25 = <strong>37</strong></div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </section>
+
+                                    <section id="subjects">
+                                      <div class="section-inner">
+                                        <div class="section-tag">Subjects</div>
+
+                                        <div class="section-title">Covering the full ZIMSEC curriculum</div>
+
+                                        <div class="section-sub">Prok AI has deep knowledge across all major O-Level and A-Level subjects taught in Zimbabwe.</div>
+
+                                        <div class="subjects-grid">
+                                          <span class="subj">📐 Mathematics</span>
+                                          <span class="subj">🔬 Combined Science</span>
+                                          <span class="subj">⚗️ Chemistry</span>
+                                          <span class="subj">🧬 Biology</span>
+                                          <span class="subj">⚡ Physics</span>
+                                          <span class="subj">📖 English Language</span>
+                                          <span class="subj">📜 Literature in English</span>
+                                          <span class="subj">🌍 Geography</span>
+                                          <span class="subj">🏛️ History</span>
+                                          <span class="subj">💼 Commerce</span>
+                                          <span class="subj">📊 Business Studies</span>
+                                          <span class="subj">💰 Accounts</span>
+                                          <span class="subj">🖥️ Computer Science</span>
+                                          <span class="subj">📗 Shona</span>
+                                          <span class="subj">📘 Ndebele</span>
+                                          <span class="subj">🇫🇷 French</span>
+                                          <span class="subj">➕ A-Level Maths</span>
+                                          <span class="subj">🏥 A-Level Biology</span></div>
+                                        </div>
+                                      </section>
+
+                                      <section id="pricing" style="background:var(--surf);border-top:1px solid var(--border)">
+                                        <div class="section-inner">
+                                          <div class="section-tag">Pricing</div>
+
+                                          <div class="section-title">Simple, student-friendly pricing</div>
+
+                                          <div class="pricing-grid">
+                                            <div class="plan">
+                                              <div class="plan-name">Free</div>
+
+                                              <div class="plan-price">$0
+                                              <span>/month</span></div>
+
+                                              <div class="plan-desc">Perfect for getting started with AI study help.</div>
+
+                                              <ul class="plan-features">
+                                                <li>25 AI messages/day</li>
+
+                                                <li>Quiz generator</li>
+
+                                                <li>Past papers access</li>
+
+                                                <li>WhatsApp linking</li>
+
+                                                <li>5 PDF exports/day</li>
+                                              </ul>
+
+                                              <a href="/login" class="btn btn-white" style="width:100%;justify-content:center">Get Started Free</a></div>
+
+                                              <div class="plan featured">
+                                                <div class="plan-name">Pro</div>
+
+                                                <div class="plan-price">Coming
+                                                <span>Soon</span></div>
+
+                                                <div class="plan-desc">For serious students who need unlimited access.</div>
+
+                                                <ul class="plan-features">
+                                                  <li>Unlimited AI messages</li>
+
+                                                  <li>Priority responses</li>
+
+                                                  <li>Unlimited PDF/DOCX exports</li>
+
+                                                  <li>Past paper upload</li>
+
+                                                  <li>Advanced image generation</li>
+                                                </ul>
+
+                                                <a href="/login" class="btn btn-primary" style="width:100%;justify-content:center">Join Waitlist</a></div>
+                                              </div>
+                                            </div>
+                                          </section>
+
+                                          <section>
+                                            <div class="section-inner">
+                                              <div class="wa-callout">
+                                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="margin-bottom:.75rem">
+                                                  <circle cx="24" cy="24" r="24" fill="#25d366"/>
+                                                  <path d="M34.944 28.764c-.594-.297-3.516-1.734-4.06-1.932-.545-.199-.942-.297-1.339.297-.397.595-1.534 1.932-1.881 2.328-.347.397-.694.447-1.288.149-3.516-1.758-5.82-3.138-8.124-7.128-.614-1.056.614-1.008 1.758-3.318.198-.397.099-.744-.05-1.041-.149-.297-1.339-3.224-1.833-4.414-.484-1.158-.977-.992-1.339-1.008-.347-.016-.744-.016-1.14-.016s-1.041.149-1.586.744c-.545.595-2.08 2.031-2.08 4.951s2.129 5.745 2.427 6.142c.297.397 4.192 6.4 10.154 8.977 5.962 2.577 5.962 1.718 7.04 1.609 1.08-.109 3.516-1.438 4.012-2.826.496-1.388.496-2.577.347-2.826-.148-.248-.545-.397-1.138-.694z" fill="white"/></svg>
+
+                                                  <h3>Study on WhatsApp — anytime, anywhere</h3>
+
+                                                  <p>Link your WhatsApp to Fundo Plus and get access to Prok AI, document generation, and quiz help directly in your chats. No app download required.</p>
+
+                                                  <a href="https://wa.me/263717129736" target="_blank" class="wa-btn">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                                                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.523 5.845L.054 23.454a.75.75 0 00.917.917l5.609-1.469A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.978 9.978 0 01-5.168-1.437l-.369-.221-3.826 1.002 1.02-3.723-.242-.384A9.951 9.951 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                                                      Chat with Prok AI on WhatsApp</a></div>
+                                                    </div>
+                                                  </section>
+
+                                                  <footer>
+                                                    <div class="footer-brand">
+                                                      <div class="name">📚 Fundo Plus</div>
+
+                                                      <p>AI-powered education platform for<br>Zimbabwean students. Built by XTech.</p>
+                                                    </div>
+
+                                                    <div class="footer-links">
+                                                      <h4>Platform</h4>
+
+                                                      <a href="/login">Sign In</a>
+                                                      <a href="/login">Create Account</a>
+                                                      <a href="/resources">Resources</a>
+                                                      <a href="/sitemap.xml">Sitemap</a></div>
+
+                                                      <div class="footer-links">
+                                                        <h4>Study Tools</h4>
+
+                                                        <a href="/~">Dashboard</a>
+                                                        <a href="/#features">Quiz Generator</a>
+                                                        <a href="/#features">Past Papers</a>
+                                                        <a href="/#features">Prok AI</a></div>
+
+                                                        <div class="footer-links">
+                                                          <h4>Company</h4>
+
+                                                          <a href="/about">About Us</a>
+                                                          <a href="/terms">Terms of Service</a>
+                                                          <a href="/community">Community</a>
+                                                          <a href="/support">Support</a>
+                                                          <a href="https://wa.me/263717129736" target="_blank">WhatsApp</a></div>
+                                                        </footer>
+
+                                                        <div class="footer-bottom">© 2025 Fundo Plus by XTech · Zimbabwe · All rights reserved</div>
+
+                                                        <script>function openMobile(){document.getElementById("mobileMenu").classList.add("open")}function closeMobile(){document.getElementById("mobileMenu").classList.remove("open")}</script>
+                                                      </body>
+                                                    </html>

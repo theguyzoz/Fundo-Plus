@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <title>Community — Fundo Plus</title>
+    <style>:root{--blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;--dark:#0f172a;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#f8fafc;--surf:#fff;--rad:12px;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}a{text-decoration:none;color:inherit}nav{position:sticky;top:0;z-index:100;background:#ffffffee;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 5%;display:flex;align-items:center;height:64px;gap:1rem}.nav-logo{display:flex;align-items:center;gap:.6rem;font-size:1.15rem;font-weight:900;color:var(--blue)}.nav-links{display:flex;gap:1.5rem;margin-left:2rem}.nav-links a{font-size:.88rem;color:var(--muted);font-weight:600;transition:.15s}.nav-links a.active,.nav-links a:hover{color:var(--blue)}.nav-right{margin-left:auto;display:flex;gap:.6rem;align-items:center}.btn{display:inline-flex;align-items:center;padding:.5rem 1.1rem;border-radius:8px;font-weight:700;font-size:.86rem;cursor:pointer;border:none;transition:.15s}.btn-ghost{background:0 0;color:var(--muted)}.btn-ghost:hover{background:#f1f5f9;color:var(--text)}.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue2)}.btn-sm{padding:.4rem .85rem;font-size:.78rem}.avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:900;flex-shrink:0}.page{max-width:860px;margin:0 auto;padding:32px 20px 80px}.page-header{margin-bottom:24px}.page-header h1{font-size:1.7rem;font-weight:900;letter-spacing:-.5px}.page-header p{font-size:.88rem;color:var(--muted);margin-top:.25rem}.meta-bar{display:flex;align-items:center;gap:1rem;margin-top:.75rem;flex-wrap:wrap}.meta-tag{background:#eff6ff;color:var(--blue);border-radius:99px;padding:.2rem .75rem;font-size:.72rem;font-weight:700}.meta-warn{background:#fffbeb;color:#92400e;border-radius:99px;padding:.2rem .75rem;font-size:.72rem;font-weight:700}.compose{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);padding:1.25rem;margin-bottom:20px;box-shadow:var(--sh)}.compose textarea{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:.75rem 1rem;font-size:.9rem;color:var(--text);resize:vertical;min-height:80px;outline:0;font-family:inherit;background:#f8fafc;transition:.15s}.compose textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe;background:#fff}.compose-foot{display:flex;align-items:center;justify-content:space-between;margin-top:.75rem;flex-wrap:wrap;gap:.5rem}.char-count{font-size:.72rem;color:var(--muted)}.char-count.warn{color:#dc2626}.login-prompt{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:var(--rad);padding:1.25rem;text-align:center;margin-bottom:20px}.login-prompt p{font-size:.88rem;color:var(--muted);margin-bottom:.75rem}.messages-list{display:flex;flex-direction:column;gap:12px}.msg-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);padding:1rem 1.25rem;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:.15s}.msg-card:hover{border-color:#c7d9ff}.msg-card.is-reply{margin-left:28px;border-left:3px solid #bfdbfe;background:#fafbff}.msg-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem}.msg-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#60a5fa);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;flex-shrink:0}.msg-name{font-size:.82rem;font-weight:800;color:var(--text)}.msg-time{font-size:.72rem;color:var(--muted);margin-left:auto}.msg-text{font-size:.9rem;color:#1e293b;line-height:1.65;word-break:break-word}.reply-preview{background:#f1f5f9;border-left:3px solid var(--blue);border-radius:0 6px 6px 0;padding:.4rem .75rem;font-size:.78rem;color:var(--muted);margin-bottom:.5rem}.reply-preview strong{color:var(--text)}.msg-actions{display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap}.action-btn{background:0 0;border:1px solid var(--border);border-radius:6px;padding:.25rem .65rem;font-size:.72rem;font-weight:700;color:var(--muted);cursor:pointer;transition:.12s;display:inline-flex;align-items:center;gap:.3rem}.action-btn:hover{border-color:var(--blue);color:var(--blue);background:#eff6ff}.action-btn.delete:hover{border-color:#dc2626;color:#dc2626;background:#fef2f2}.reply-form{background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:.75rem;margin-top:.75rem;display:none}.reply-form.show{display:block}.reply-form textarea{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:.6rem .9rem;font-size:.85rem;min-height:65px;resize:vertical;outline:0;font-family:inherit;background:#fff}.reply-form textarea:focus{border-color:var(--blue)}.reply-form-foot{display:flex;gap:.5rem;margin-top:.5rem;justify-content:flex-end}.empty{text-align:center;padding:50px 20px;color:var(--muted)}.empty .eicon{font-size:2.5rem;margin-bottom:.75rem}.loading{text-align:center;padding:40px;color:var(--muted);font-size:.88rem}.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:.5rem}@keyframes spin{to{transform:rotate(360deg)}}.err-msg{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.65rem 1rem;color:#dc2626;font-size:.83rem;margin-bottom:12px;display:none}.progress-bar{height:4px;background:var(--border);border-radius:99px;margin-top:.5rem}.progress-fill{height:100%;border-radius:99px;background:var(--blue);transition:width .3s}.progress-fill.warn{background:#f59e0b}.progress-fill.danger{background:#dc2626}.burger{display:none;background:0 0;border:none;cursor:pointer;padding:6px;color:var(--text)}.mobile-menu{display:none;position:fixed;inset:0;background:#fff;z-index:200;flex-direction:column;padding:20px}.mobile-menu.open{display:flex}.mobile-menu .close{align-self:flex-end;background:0 0;border:none;font-size:1.5rem;cursor:pointer;padding:8px}.mobile-menu a{display:block;padding:14px 0;font-size:1.05rem;font-weight:600;color:var(--text);border-bottom:1px solid var(--border)}footer{background:var(--dark);color:#94a3b8;padding:2.5rem 5%;display:flex;flex-wrap:wrap;gap:1.5rem;justify-content:space-between}.footer-brand .name{font-size:1rem;font-weight:900;color:#fff;margin-bottom:.3rem}.footer-links h4{font-size:.75rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem}.footer-links a{display:block;font-size:.8rem;color:#94a3b8;margin-bottom:.3rem}.footer-links a:hover{color:#fff}.footer-bottom{background:#0a0f1a;color:#475569;text-align:center;padding:1rem;font-size:.78rem}@media(max-width:640px){.nav-links{display:none}.burger{display:flex}.msg-card.is-reply{margin-left:12px}}</style>
+
+    <script>!function(){const _fetch=window.fetch;window.fetch=async function(...args){const res=await _fetch(...args);if(403===res.status){const clone=res.clone();try{const d=await clone.json();if(d&&"BANNED"===d.code)return location.reload(),new Response("{}",{status:403})}catch{}}return res}}()</script>
+
+    <script>async function validateSession(opts={}){const{requireAuth:requireAuth=!0,onUser:onUser=null}=opts,token=localStorage.getItem("fp_session");if(!token)return requireAuth?(window.location.replace("/login"),null):null;try{const r=await fetch("/api/auth/me",{headers:{"x-session-token":token}});if(401===r.status){localStorage.clear();return requireAuth?(window.location.replace("/login"),null):null}if(403===r.status){const d=await r.json().catch(()=>({}));if("BANNED"===d.code)return location.reload(),null;return requireAuth?(window.location.replace("/login"),null):null}if(!r.ok)return requireAuth?(window.location.replace("/login"),null):null;const d=await r.json();return d.ok?(onUser&&onUser(d.user),d.user):(localStorage.clear(),requireAuth?(window.location.replace("/login"),null):null)}catch{return requireAuth?(window.location.replace("/login"),null):null}}</script>
+    </head>
+
+  <body>
+    <div class="mobile-menu" id="mobileMenu">
+      <button class="close" onclick="closeMobile()">✕</button>
+
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/community" style="color:var(--blue)">Community</a>
+      <a href="/terms">Terms</a>
+      <a href="/support">Support</a></div>
+
+      <nav>
+        <a class="nav-logo" href="/">
+          <img src="/images/logo.png" width="30" height="30" alt="Fundo Plus" style="border-radius:8px">
+            Fundo Plus</a>
+            <div class="nav-links">
+              <a href="/">Home</a>
+              <a href="/about">About</a>
+              <a href="/community" class="active">Community</a>
+              <a href="/terms">Terms</a>
+              <a href="/support">Support</a></div>
+
+              <div class="nav-right" id="nav-right">
+                <a href="/login" class="btn btn-ghost">Sign In</a>
+                <a href="/login" class="btn btn-primary">Join</a></div>
+
+                <button class="burger" onclick="openMobile()">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/></svg>
+                  </button>
+                </nav>
+
+                <div class="page">
+                  <div class="page-header">
+                    <h1>💬 Community</h1>
+
+                    <p>A space for Fundo Plus students to connect, ask questions, and support each other.</p>
+
+                    <div class="meta-bar">
+                      <span class="meta-tag" id="msg-count-tag">Loading…</span>
+                      <span class="meta-warn">⚠️ Keep it respectful & on topic</span></div>
+
+                      <div class="progress-bar">
+                        <div class="progress-fill" id="capacity-bar" style="width:0%"></div>
+                      </div>
+
+                      <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem" id="capacity-label"></div>
+                    </div>
+
+                    <div id="compose-area"></div>
+
+                    <div class="err-msg" id="err-msg"></div>
+
+                    <div id="messages-area">
+                      <div class="loading">
+                        <span class="spinner"></span>Loading messages…</div>
+                      </div>
+                    </div>
+
+                    <footer>
+                      <div class="footer-brand">
+                        <div class="name">📚 Fundo Plus</div>
+
+                        <p>Built for Zimbabwean students by XTech.</p>
+                      </div>
+
+                      <div class="footer-links">
+                        <h4>Links</h4>
+
+                        <a href="/about">About</a>
+                        <a href="/terms">Terms</a>
+                        <a href="/support">Support</a></div>
+                      </footer>
+
+                      <div class="footer-bottom">© 2025 Fundo Plus by XTech · Zimbabwe</div>
+
+                      <script>const TOKEN=localStorage.getItem("fp_session");let currentUser=null,messages=[],activeReplyTo=null;function updateNav(user){const letter=(user.name||user.email||"?")[0].toUpperCase();document.getElementById("nav-right").innerHTML=`
+                      <div class="avatar">${letter}</div>
+
+                      <a href="/~" class="btn btn-ghost" style="font-size:.82rem;">Dashboard</a>`}function renderComposeArea(){const el=document.getElementById("compose-area");if(!currentUser)return void(el.innerHTML='
+                      <div class="login-prompt">\n
+                      <p>Sign in to post messages and join the conversation.</p>
+                      \n
+                      <a href="/login" class="btn btn-primary">Sign In to Post</a>\n
+                      <a href="/login" style="margin-left:.5rem;" class="btn btn-ghost">Create Account</a>\n    </div>
+                      ');const displayName=currentUser.name?`${currentUser.name} ${currentUser.surname||""}`.trim():currentUser.email;el.innerHTML=`
+                      <div class="compose">\n
+                      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;">\n
+                      <div class="msg-avatar">${displayName[0].toUpperCase()}</div>
+                      \n
+                      <span style="font-size:.82rem;font-weight:700;color:var(--text);">${displayName}</span>\n    </div>
+                      \n
+                      <div id="reply-indicator" style="display:none;" class="reply-preview"></div>
+                      \n
+                      <textarea id="compose-text" placeholder="Share a question, tip, or encouragement with the community…" maxlength="1000" oninput="updateCharCount()"></textarea>
+                      \n
+                      <div class="compose-foot">\n
+                      <span class="char-count" id="char-count">0 / 1000</span>\n
+                      <div style="display:flex;gap:.5rem;">\n
+                      <button id="cancel-reply-btn" class="btn btn-ghost btn-sm" onclick="cancelReply()" style="display:none;">✕ Cancel Reply</button>
+                      \n
+                      <button class="btn btn-primary btn-sm" onclick="postMessage()">Post →</button>
+                      \n      </div>
+                      \n    </div>
+                      \n  </div>
+                      `}function updateCharCount(){const txt=document.getElementById("compose-text");if(!txt)return;const len=txt.value.length,el=document.getElementById("char-count");el.textContent=`${len} / 1000`,el.classList.toggle("warn",len>900)}async function loadMessages(){try{const r=await fetch("/api/community"),d=await r.json();if(!d.ok)return;messages=d.messages,updateCapacity(d.total),renderMessages()}catch{}}function updateCapacity(total){const pct=Math.min(100,total/5e3*100),bar=document.getElementById("capacity-bar");bar.style.width=pct+"%",bar.className="progress-fill"+(pct>90?" danger":pct>70?" warn":""),document.getElementById("msg-count-tag").textContent=`${total} / 5,000 messages`,document.getElementById("capacity-label").textContent=pct>90?"⚠️ Community is nearly full — oldest messages will be removed soon":5e3-total+" message slots remaining"}function renderMessages(){const area=document.getElementById("messages-area");if(!messages.length)return void(area.innerHTML='
+                      <div class="empty">
+                        <div class="eicon">💬</div>
+
+                        <p>No messages yet. Be the first to post!</p>
+                      </div>
+                      ');const msgMap={};messages.forEach(m=>msgMap[m.id]=m);const topLevel=messages.filter(m=>!m.replyTo),repliesFor={};messages.forEach(m=>{m.replyTo&&(repliesFor[m.replyTo]||(repliesFor[m.replyTo]=[]),repliesFor[m.replyTo].push(m))});let html='
+                      <div class="messages-list">';[...topLevel].reverse().forEach(msg=>{html+=renderMsgCard(msg,!1,msgMap),(repliesFor[msg.id]||[]).forEach(reply=>{html+=renderMsgCard(reply,!0,msgMap)})}),html+="</div>
+                      ",area.innerHTML=html}function renderMsgCard(msg,isReply,msgMap){const initial=(msg.name||"?")[0].toUpperCase(),time=timeAgo(msg.createdAt),isOwn=currentUser&&msg.userId===currentUser.id,parentMsg=msg.replyTo?msgMap[msg.replyTo]:null;let replyPreview="";parentMsg&&(replyPreview=`
+                      <div class="reply-preview"><strong>${escHtml(parentMsg.name)}:</strong> ${escHtml(parentMsg.text.slice(0,80))}${parentMsg.text.length>80?"…":""}</div>
+                      `);const actions=currentUser?`\n    ${isReply?"":`
+                      <button class="action-btn" onclick="startReply('${msg.id}','${escAttr(msg.name)}','${escAttr(msg.text.slice(0,60))}')">↩ Reply</button>
+                      `}\n    ${isOwn?`
+                      <button class="action-btn delete" onclick="deleteMsg('${msg.id}')">🗑 Delete</button>
+                      `:""}\n  `:"";return`
+                      <div class="msg-card${isReply?" is-reply":""}" id="msg-${msg.id}">\n
+                      <div class="msg-head">\n
+                      <div class="msg-avatar">${initial}</div>
+                      \n
+                      <span class="msg-name">${escHtml(msg.name)}</span>\n
+                      <span class="msg-time">${time}</span>\n    </div>
+                      \n    ${replyPreview}\n
+                      <div class="msg-text">${escHtml(msg.text)}</div>
+                      \n
+                      <div class="msg-actions">${actions}</div>
+                      \n  </div>
+                      `}async function postMessage(){if(!currentUser)return window.location.href="/login";const txtEl=document.getElementById("compose-text");if(!txtEl)return;const text=txtEl.value.trim();if(!text)return showErr("Please write a message.");if(text.length>1e3)return showErr("Message too long.");const body={text:text};activeReplyTo&&(body.replyTo=activeReplyTo.id);try{const r=await fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json","x-session-token":TOKEN},body:JSON.stringify(body)}),d=await r.json();if(!r.ok)return showErr(d.error||"Failed to post.");txtEl.value="",cancelReply(),updateCharCount(),await loadMessages()}catch{showErr("Network error. Please try again.")}}async function deleteMsg(id){if(confirm("Delete this message?"))try{const r=await fetch(`/api/community/${id}`,{method:"DELETE",headers:{"x-session-token":TOKEN}}),d=await r.json();if(!r.ok)return showErr(d.error||"Could not delete.");await loadMessages()}catch{showErr("Network error.")}}function startReply(id,name,textSnippet){activeReplyTo={id:id,name:name,text:textSnippet};const ind=document.getElementById("reply-indicator");ind&&(ind.style.display="block",ind.innerHTML=`<strong>Replying to ${escHtml(name)}:</strong> ${escHtml(textSnippet)}${textSnippet.length>=60?"…":""}`);const cancelBtn=document.getElementById("cancel-reply-btn");cancelBtn&&(cancelBtn.style.display="inline-flex");const txt=document.getElementById("compose-text");txt&&txt.focus(),window.scrollTo({top:0,behavior:"smooth"})}function cancelReply(){activeReplyTo=null;const ind=document.getElementById("reply-indicator");ind&&(ind.style.display="none");const cancelBtn=document.getElementById("cancel-reply-btn");cancelBtn&&(cancelBtn.style.display="none")}function showErr(msg){const el=document.getElementById("err-msg");el.textContent=msg,el.style.display="block",setTimeout(()=>el.style.display="none",4e3)}function escHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function escAttr(s){return String(s).replace(/'/g,"\\'").replace(/\n/g," ")}function timeAgo(iso){const diff=Date.now()-new Date(iso).getTime(),mins=Math.floor(diff/6e4);if(mins<1)return"just now";if(mins<60)return`${mins}m ago`;const hrs=Math.floor(mins/60);if(hrs<24)return`${hrs}h ago`;return`${Math.floor(hrs/24)}d ago`}function openMobile(){document.getElementById("mobileMenu").classList.add("open")}function closeMobile(){document.getElementById("mobileMenu").classList.remove("open")}!async function(){if(TOKEN){const u=await validateSession({requireAuth:!1});u&&(currentUser=u,updateNav(u))}renderComposeArea(),await loadMessages(),setInterval(loadMessages,15e3)}()</script>
+                    </body>
+                  </html>

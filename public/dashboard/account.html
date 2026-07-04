@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>My Account — FundaPlus</title>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --blue2: #1d4ed8;
+      --green: #16a34a;
+      --red: #dc2626;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --card: #fff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+    nav { background: var(--card); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem; position: sticky; top: 0; z-index: 50; }
+    .back { display: flex; align-items: center; gap: .5rem; font-weight: 800; font-size: .88rem; color: var(--blue); text-decoration: none; }
+    .nav-logo { font-size: 1rem; font-weight: 900; color: var(--blue); margin-left: .5rem; }
+    .nav-right { margin-left: auto; display: flex; gap: .5rem; }
+    main { max-width: 600px; margin: 2rem auto; padding: 0 1rem 4rem; }
+    h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: -.4px; margin-bottom: .25rem; }
+    .sub { font-size: .85rem; color: var(--muted); margin-bottom: 2rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+    .card-title { font-size: .78rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1.1rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 0; font-size: .85rem; border-bottom: 1px solid var(--bg); }
+    .info-row:last-child { border: none; }
+    .lbl { color: var(--muted); font-size: .78rem; font-weight: 700; }
+    .val { font-weight: 700; max-width: 60%; word-break: break-all; text-align: right; }
+    .badge { border-radius: 99px; padding: .2rem .75rem; font-size: .72rem; font-weight: 800; }
+    .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-no { background: #fee2e2; color: var(--red); }
+    .badge-warn { background: #fef9c3; color: #854d0e; }
+    .field { margin-bottom: .85rem; }
+    label { display: block; font-size: .75rem; font-weight: 700; color: var(--text); margin-bottom: .3rem; }
+    input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: .65rem .9rem; font-size: .88rem; color: var(--text); outline: 0; background: #fff; transition: .15s; }
+    input:focus { border-color: var(--blue); }
+    .btn { padding: .65rem 1.4rem; border: none; border-radius: 8px; font-weight: 800; font-size: .85rem; cursor: pointer; transition: .15s; }
+    .btn-blue { background: var(--blue); color: #fff; }
+    .btn-blue:hover { background: var(--blue2); }
+    .btn-red { background: #fef2f2; color: var(--red); border: 1.5px solid #fecaca; }
+    .btn-red:hover { background: #fee2e2; }
+    .btn-full { width: 100%; margin-top: .25rem; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .alert { border-radius: 8px; padding: .65rem .9rem; font-size: .82rem; margin-bottom: .75rem; display: none; }
+    .alert.show { display: block; }
+    .alert-ok { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+    .alert-err { background: #fef2f2; border: 1px solid #fecaca; color: var(--red); }
+    .confirm-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; font-size: .83rem; margin-top: .75rem; display: none; }
+    .confirm-box.show { display: block; }
+    .confirm-box p { color: var(--red); margin-bottom: .75rem; line-height: 1.5; }
+    .confirm-box .row { display: flex; gap: .5rem; }
+    .avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 900; margin-bottom: 1rem; }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <a class="back" href="/~">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Dashboard
+    </a>
+    <span class="nav-logo">FundaPlus</span>
+    <div class="nav-right">
+      <button class="btn btn-red" onclick="doLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main>
+    <h1>My Account</h1>
+    <p class="sub">Manage your profile, security, and linked services.</p>
+
+    
+    <div class="card">
+      <div class="card-title">Profile</div>
+      <div class="avatar" id="av-letter">?</div>
+      <div class="info-row"><span class="lbl">Full Name</span><span class="val" id="info-name">—</span></div>
+      <div class="info-row"><span class="lbl">Email</span><span class="val" id="info-email">—</span></div>
+      <div class="info-row"><span class="lbl">Phone</span><span class="val" id="info-phone">—</span></div>
+      <div class="info-row"><span class="lbl">Age</span><span class="val" id="info-age">—</span></div>
+      <div class="info-row"><span class="lbl">School</span><span class="val" id="info-school">—</span></div>
+      <div class="info-row"><span class="lbl">Member Since</span><span class="val" id="info-since">—</span></div>
+    </div>
+
+    <!-- WhatsApp -->
+    <div class="card">
+      <div class="card-title">WhatsApp</div>
+      <div class="info-row"><span class="lbl">Status</span><span class="val" id="wa-status">—</span></div>
+      <div class="info-row"><span class="lbl">Pairing grace</span><span class="val" id="wa-grace">—</span></div>
+      <div id="wa-link-section" style="margin-top:1rem;display:none">
+        <button class="btn btn-blue" onclick="genPairLink()">Generate WhatsApp Link</button>
+        <div id="pair-result" style="margin-top:.75rem;font-size:.82rem;display:none">
+          <div style="font-weight:700;margin-bottom:.35rem">Send this link in WhatsApp:</div>
+          <input readonly id="pair-val" style="font-family:monospace;font-size:.78rem">
+          <div style="margin-top:.4rem">
+            <a id="pair-wa-link" href="#" target="_blank" style="color:var(--blue);font-weight:700;font-size:.82rem">Open in WhatsApp →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="card">
+      <div class="card-title">Update Profile</div>
+      <div class="alert alert-ok" id="prof-ok"></div>
+      <div class="alert alert-err" id="prof-err"></div>
+      <div style="display:flex;gap:.75rem">
+        <div class="field" style="flex:1">
+          <label>First Name</label>
+          <input id="upd-name" placeholder="Tapiwa">
+        </div>
+        <div class="field" style="flex:1">
+          <label>Surname</label>
+          <input id="upd-surname" placeholder="Moyo">
+        </div>
+      </div>
+      <div class="field">
+        <label>Age</label>
+        <input type="number" id="upd-age" min="5" max="80">
+      </div>
+      <div class="field">
+        <label>School</label>
+        <input id="upd-school">
+      </div>
+      <button class="btn btn-blue btn-full" id="prof-btn" onclick="updateProfile()">Save Changes</button>
+    </div>
+
+    
+    <div class="card">
+      <div class="card-title">Change Password</div>
+      <div class="alert alert-ok" id="pw-ok"></div>
+      <div class="alert alert-err" id="pw-err"></div>
+      <div class="field">
+        <label>Current Password</label>
+        <input type="password" id="cur-pw" placeholder="••••••••">
+      </div>
+      <div class="field">
+        <label>New Password</label>
+        <input type="password" id="new-pw" placeholder="At least 6 characters">
+      </div>
+      <div class="field">
+        <label>Confirm New Password</label>
+        <input type="password" id="new-pw2" placeholder="Repeat new password">
+      </div>
+      <button class="btn btn-blue btn-full" id="pw-btn" onclick="changePassword()">Update Password</button>
+    </div>
+
+    
+    <div class="card" style="border-color:#fecaca">
+      <div class="card-title" style="color:var(--red)">Danger Zone</div>
+      <p style="font-size:.83rem;color:var(--muted);margin-bottom:.85rem;line-height:1.5">
+        Deleting your account is permanent and cannot be undone. All your data, quiz history, and linked services will be removed.
+      </p>
+      <button class="btn btn-red" onclick="showConfirm()">Delete My Account</button>
+      <div class="confirm-box" id="confirm-box">
+        <p>⚠️ Are you absolutely sure? This action <strong>cannot be reversed</strong>. Your account and all associated data will be permanently deleted.</p>
+        <div class="row">
+          <button class="btn btn-red" onclick="deleteAccount()">Yes, delete permanently</button>
+          <button class="btn" style="background:var(--bg);border:1px solid var(--border)" onclick="hideConfirm()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const _fetch = window.fetch;
+      window.fetch = async function (...args) {
+        const res = await _fetch(...args);
+        if (res.status === 403) {
+          const clone = res.clone();
+          try {
+            const d = await clone.json();
+            if (d && d.code === 'BANNED') {
+              location.reload();
+              return new Response('{}', { status: 403 });
+            }
+          } catch {}
+        }
+        return res;
+      };
+    })();
+
+    async function validateSession(opts = {}) {
+      const { requireAuth = true, onUser = null } = opts;
+      const token = localStorage.getItem('fp_session');
+
+      if (!token) {
+        if (requireAuth) { window.location.replace('/login'); }
+        return null;
+      }
+
+      try {
+        const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
+
+        if (r.status === 401 || r.status === 403) {
+          const d = await r.json().catch(() => ({}));
+          localStorage.clear();
+          if (d.code === 'BANNED') { location.reload(); return null; }
+          if (requireAuth) { window.location.replace('/login'); }
+          return null;
+        }
+
+        if (!r.ok) {
+          if (requireAuth) { window.location.replace('/login'); }
+          return null;
+        }
+
+        const d = await r.json();
+        if (d.ok) {
+          if (onUser) onUser(d.user);
+          return d.user;
+        }
+
+        localStorage.clear();
+        if (requireAuth) { window.location.replace('/login'); }
+        return null;
+      } catch {
+        if (requireAuth) { window.location.replace('/login'); }
+        return null;
+      }
+    }
+
+    const token = localStorage.getItem('fp_session');
+
+    async function api(method, url, body) {
+      const opts = {
+        method,
+        headers: { 'x-session-token': token }
+      };
+      if (body) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const r = await fetch(url, opts);
+      const d = await r.json();
+      if (!r.ok) {
+        const e = new Error(d.error || 'Error');
+        e.status = r.status;
+        throw e;
+      }
+      return d;
+    }
+
+    async function init() {
+      const user = await validateSession({ requireAuth: true });
+      if (!user) return;
+
+      try {
+        const d = await api('GET', '/api/me');
+        const u = d.user;
+
+        document.getElementById('av-letter').textContent = (u.name || 'S')[0].toUpperCase();
+        document.getElementById('info-name').textContent = (u.name && u.surname) ? `${u.name} ${u.surname}` : '—';
+        document.getElementById('info-email').textContent = u.email || '—';
+        document.getElementById('info-phone').textContent = u.phone || '—';
+        document.getElementById('info-age').textContent = u.age || '—';
+        document.getElementById('info-school').textContent = u.school || '—';
+        document.getElementById('info-since').textContent = u.registeredAt
+          ? new Date(u.registeredAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+          : '—';
+
+        document.getElementById('upd-name').value = u.name || '';
+        document.getElementById('upd-surname').value = u.surname || '';
+        document.getElementById('upd-age').value = u.age || '';
+        document.getElementById('upd-school').value = u.school || '';
+
+        const waEl = document.getElementById('wa-status');
+        const graceEl = document.getElementById('wa-grace');
+        const linkSec = document.getElementById('wa-link-section');
+
+        if (d.pairingStatus === 'paired') {
+          waEl.innerHTML = '<span class="badge badge-ok">✅ Linked</span>';
+          graceEl.textContent = 'Active';
+        } else if (d.pairingStatus === 'grace') {
+          waEl.innerHTML = '<span class="badge badge-warn">⚠️ Not Linked</span>';
+          graceEl.textContent = `${d.daysLeft} day(s) remaining`;
+          linkSec.style.display = 'block';
+        } else {
+          waEl.innerHTML = '<span class="badge badge-no">❌ Required</span>';
+          graceEl.textContent = 'Trial ended';
+          linkSec.style.display = 'block';
+        }
+      } catch (e) {
+        if (e?.status === 401 || e?.status === 403) {
+          localStorage.clear();
+          window.location.replace('/login');
+        }
+      }
+    }
+
+    async function updateProfile() {
+      const name    = document.getElementById('upd-name').value.trim();
+      const surname = document.getElementById('upd-surname').value.trim();
+      const age     = document.getElementById('upd-age').value;
+      const school  = document.getElementById('upd-school').value.trim();
+      const ok      = document.getElementById('prof-ok');
+      const err     = document.getElementById('prof-err');
+
+      ok.style.display = err.style.display = 'none';
+      ok.classList.remove('show');
+      err.classList.remove('show');
+
+      if (!name || !surname || !age || !school) {
+        err.textContent = 'All fields required.';
+        err.classList.add('show');
+        return;
+      }
+
+      const btn = document.getElementById('prof-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      try {
+        await api('POST', '/api/profile/update', { name, surname, age: parseInt(age), school });
+        ok.textContent = 'Profile updated successfully!';
+        ok.classList.add('show');
+        document.getElementById('info-name').textContent = `${name} ${surname}`;
+        document.getElementById('av-letter').textContent = name[0].toUpperCase();
+      } catch (e) {
+        err.textContent = e.message;
+        err.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    }
+
+    async function changePassword() {
+      const cur  = document.getElementById('cur-pw').value;
+      const nw   = document.getElementById('new-pw').value;
+      const nw2  = document.getElementById('new-pw2').value;
+      const ok   = document.getElementById('pw-ok');
+      const err  = document.getElementById('pw-err');
+
+      ok.style.display = err.style.display = 'none';
+      ok.classList.remove('show');
+      err.classList.remove('show');
+
+      if (!cur || !nw || !nw2) {
+        err.textContent = 'All fields required.';
+        err.classList.add('show');
+        return;
+      }
+      if (nw.length < 6) {
+        err.textContent = 'New password must be at least 6 characters.';
+        err.classList.add('show');
+        return;
+      }
+      if (nw !== nw2) {
+        err.textContent = 'Passwords do not match.';
+        err.classList.add('show');
+        return;
+      }
+
+      const btn = document.getElementById('pw-btn');
+      btn.disabled = true;
+      btn.textContent = 'Updating…';
+
+      try {
+        await api('POST', '/api/profile/change-password', { currentPassword: cur, newPassword: nw });
+        ok.textContent = 'Password updated successfully!';
+        ok.classList.add('show');
+        document.getElementById('cur-pw').value = '';
+        document.getElementById('new-pw').value = '';
+        document.getElementById('new-pw2').value = '';
+      } catch (e) {
+        err.textContent = e.message;
+        err.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+      }
+    }
+
+    async function genPairLink() {
+      try {
+        const d = await api('POST', '/api/generate-link');
+        document.getElementById('pair-val').value = d.botLink;
+        document.getElementById('pair-wa-link').href = d.botLink;
+        document.getElementById('pair-result').style.display = 'block';
+      } catch (e) {
+        alert('Failed: ' + e.message);
+      }
+    }
+
+    function showConfirm()  { document.getElementById('confirm-box').classList.add('show'); }
+    function hideConfirm()  { document.getElementById('confirm-box').classList.remove('show'); }
+
+    async function deleteAccount() {
+      try {
+        await api('DELETE', '/api/account');
+        localStorage.clear();
+        window.location.href = '/login';
+      } catch (e) {
+        alert('Failed: ' + e.message);
+      }
+    }
+
+    function doLogout() {
+      fetch('/api/auth/logout', { method: 'POST', headers: { 'x-session-token': token } }).catch(() => {});
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+
+    init();
+  </script>
+</body>
+</html>

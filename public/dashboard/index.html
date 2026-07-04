@@ -1,0 +1,1629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Fundo Plus — Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false})">
+  </script>
+
+  <style>
+    *, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f6f8ff; --surf: #fff; --brd: #e2e8f5;
+      --acc: #2563eb; --acc2: #1d4ed8; --grn: #16a34a;
+      --red: #dc2626; --txt: #0f172a; --mut: #64748b;
+      --rad: 12px; --warn: #f59e0b;
+      --sh: 0 1px 3px rgba(37,99,235,.07), 0 4px 20px rgba(37,99,235,.06);
+    }
+    body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 228px; background: var(--surf); border-right: 1px solid var(--brd); display: flex; flex-direction: column; padding: 0 0 1rem; z-index: 60; box-shadow: var(--sh); transition: transform .25s cubic-bezier(.4,0,.2,1); }
+    .sb-logo { display: flex; align-items: center; gap: 9px; padding: 18px 16px 14px; border-bottom: 1px solid var(--brd); font-size: 1.05rem; font-weight: 900; color: var(--acc); }
+    .sb-section { font-size: .65rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; padding: 14px 16px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 14px; margin: 1px 8px; border-radius: 9px; cursor: pointer; font-size: .86rem; color: var(--mut); font-weight: 600; text-decoration: none; transition: .12s; }
+    .nav-item:hover { background: #eff6ff; color: var(--acc); }
+    .nav-item.active { background: #eff6ff; color: var(--acc); font-weight: 700; }
+    .nav-item svg { flex-shrink: 0; opacity: .8; }
+    .nav-item.active svg { opacity: 1; }
+    .sb-bottom { margin-top: auto; border-top: 1px solid var(--brd); padding-top: 8px; }
+
+    /* ── Overlay ── */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.3); z-index: 55; backdrop-filter: blur(2px); }
+    .sidebar-overlay.show { display: block; }
+
+    /* ── Topbar ── */
+    .topbar { position: fixed; top: 0; left: 228px; right: 0; height: 56px; background: #ffffffee; backdrop-filter: blur(10px); border-bottom: 1px solid var(--brd); display: flex; align-items: center; padding: 0 20px; gap: 12px; z-index: 50; box-shadow: var(--sh); }
+    .topbar-title { font-size: .95rem; font-weight: 800; color: var(--txt); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--acc); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 900; flex-shrink: 0; }
+    .ham { display: none; background: 0 0; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--txt); flex-shrink: 0; }
+    .ham:hover { background: var(--bg); }
+
+    /* ── Notification bell ── */
+    .notif-bell-wrap { position: relative; display: flex; align-items: center; }
+    .notif-bell { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--mut); display: flex; align-items: center; justify-content: center; transition: .12s; }
+    .notif-bell:hover { background: var(--bg); color: var(--acc); }
+    .notif-dot { position: absolute; top: 2px; right: 2px; background: #dc2626; color: #fff; border-radius: 99px; font-size: .6rem; font-weight: 900; padding: 1px 5px; min-width: 16px; text-align: center; display: none; border: 1.5px solid #fff; }
+    .notif-dot.show { display: block; }
+
+    /* ── Notification drawer (opens when bell clicked) ── */
+    #notif-drawer { display: none; position: fixed; top: 60px; right: 14px; width: min(340px, calc(100vw - 28px)); background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 200; overflow: hidden; }
+    #notif-drawer.open { display: flex; flex-direction: column; }
+    .nd-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid #f1f5f9; }
+    .nd-title { font-size: .88rem; font-weight: 900; color: #0f172a; }
+    .nd-actions { display: flex; gap: 8px; }
+    .nd-btn { font-size: .72rem; font-weight: 700; color: #2563eb; background: none; border: none; cursor: pointer; padding: 3px 6px; border-radius: 5px; }
+    .nd-btn:hover { background: #eff6ff; }
+    .nd-list { overflow-y: auto; max-height: 360px; }
+    .nd-item { padding: 12px 16px; border-bottom: 1px solid #f8fafc; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: .1s; }
+    .nd-item:hover { background: #f8fafc; }
+    .nd-item.unread { background: #eff6ff; }
+    .nd-item.unread:hover { background: #dbeafe; }
+    .nd-item-icon { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; overflow: hidden; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: .75rem; }
+    .nd-item-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .nd-item-body { flex: 1; min-width: 0; }
+    .nd-item-title { font-size: .82rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nd-item-desc { font-size: .75rem; color: #64748b; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .nd-item-time { font-size: .67rem; color: #94a3b8; margin-top: 4px; }
+    .nd-empty { text-align: center; padding: 28px; color: #94a3b8; font-size: .82rem; }
+
+    /* ── Notification popup card ── */
+    #notif-popup-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.35); backdrop-filter: blur(3px); z-index: 400; align-items: center; justify-content: center; }
+    #notif-popup-overlay.open { display: flex; }
+    .notif-popup-card {
+      width: min(300px, calc(100vw - 32px)); border-radius: 16px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25); background: #fff;
+      animation: popIn .22s cubic-bezier(.175,.885,.32,1.275);
+    }
+    @keyframes popIn { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .npc-bg { height: 100px; background: #f1f5f9; position: relative; overflow: hidden; }
+    .npc-bg img { width: 100%; height: 100%; object-fit: cover; }
+    .npc-body { padding: 16px 18px 14px; }
+    .npc-title { font-size: .95rem; font-weight: 900; color: #0f172a; margin-bottom: 7px; }
+    .npc-desc { font-size: .82rem; color: #475569; line-height: 1.6; }
+    .npc-footer { padding: 10px 18px 14px; display: flex; justify-content: flex-end; }
+    .npc-ok { padding: 8px 22px; background: var(--acc); color: #fff; border: none; border-radius: 9px; font-weight: 800; font-size: .82rem; cursor: pointer; }
+
+    /* ── Main layout ── */
+    .main { margin-left: 228px; margin-top: 56px; padding: 24px; min-height: calc(100vh - 56px); }
+    .warn-banner { background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; display: none; align-items: center; gap: 10px; font-size: .83rem; color: #92400e; }
+    .warn-banner a { color: #d97706; font-weight: 700; text-decoration: none; margin-left: 4px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Stat cards ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-card { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 16px; box-shadow: var(--sh); }
+    .stat-card .slabel { font-size: .7rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .stat-card .sval { font-size: 1.75rem; font-weight: 900; color: var(--acc); }
+    .stat-card .ssub { font-size: .73rem; color: var(--mut); margin-top: 3px; }
+    .cta-card { background: linear-gradient(135deg,#eff6ff,#f0fdf4); border: 1px solid #bfdbfe; border-radius: var(--rad); padding: 18px; box-shadow: var(--sh); }
+    .cta-card h3 { font-size: .95rem; font-weight: 800; margin-bottom: 5px; }
+    .cta-card p { font-size: .82rem; color: var(--mut); margin-bottom: 12px; }
+
+    /* ── Chat ── */
+    
+    .typing { color: var(--mut); font-style: italic; font-size: .82rem; }
+
+    /* ── Cards / forms ── */
+    .card-box { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 20px; box-shadow: var(--sh); }
+    .card-box h3 { font-size: .95rem; font-weight: 800; margin-bottom: 6px; }
+    .card-box p { font-size: .82rem; color: var(--mut); margin-bottom: 12px; }
+    textarea { width: 100%; min-height: 120px; border: 1.5px solid var(--brd); border-radius: 9px; padding: 10px; font-size: .86rem; color: var(--txt); resize: vertical; outline: 0; background: var(--bg); font-family: inherit; margin-bottom: 10px; }
+    textarea:focus { border-color: var(--acc); }
+
+    /* ── Quiz top bar ── */
+    .quiz-top { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
+    .quiz-top .fg { display: flex; flex-direction: column; gap: 4px; }
+    .quiz-top label { font-size: .72rem; font-weight: 700; color: var(--mut); }
+    .quiz-top select, .upload-btn-label { border: 1.5px solid var(--brd); border-radius: 8px; padding: 7px 12px; font-size: .82rem; color: var(--txt); background: #fff; cursor: pointer; outline: 0; font-family: inherit; }
+    .upload-btn-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--mut); transition: .12s; }
+    .upload-btn-label:hover { border-color: var(--acc); color: var(--acc); }
+    .upload-btn-label.has-file { border-color: var(--grn); color: var(--grn); background: #f0fdf4; }
+
+    /* ── Buttons ── */
+    .btn-acc { padding: 8px 20px; background: var(--acc); border: none; border-radius: 8px; color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer; }
+    .btn-acc:hover { background: var(--acc2); }
+    .btn-acc:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-out { padding: 8px 18px; background: #fff; border: 1.5px solid var(--brd); border-radius: 8px; color: var(--mut); font-weight: 700; font-size: .85rem; cursor: pointer; }
+    .btn-out:hover { border-color: var(--acc); color: var(--acc); }
+
+    /* ── Quiz question cards ── */
+    .q-card { background: var(--surf); border: 1px solid var(--brd); border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+    .q-num { font-size: .7rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .q-text { font-weight: 700; margin-bottom: 10px; font-size: .9rem; line-height: 1.5; }
+    .opt { padding: 9px 14px; border: 1.5px solid var(--brd); border-radius: 8px; cursor: pointer; margin: 4px 0; font-size: .84rem; transition: .12s; display: flex; align-items: center; gap: 8px; }
+    .opt:hover { border-color: var(--acc); background: #eff6ff; }
+    .opt.selected { border-color: var(--acc); background: #eff6ff; }
+    .opt.correct { border-color: var(--grn); background: #f0fdf4; color: var(--grn); font-weight: 700; }
+    .opt.wrong { border-color: var(--red); background: #fef2f2; color: var(--red); }
+    .opt-key { width: 24px; height: 24px; border-radius: 50%; border: 2px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 900; flex-shrink: 0; }
+    .explanation { margin-top: 10px; padding: 10px 14px; background: var(--bg); border-left: 3px solid var(--acc); border-radius: 0 8px 8px 0; font-size: .8rem; color: var(--mut); display: none; line-height: 1.55; }
+    .explanation.show { display: block; }
+    .short-ans { width: 100%; border: 1.5px solid var(--brd); border-radius: 8px; padding: 8px 12px; font-size: .85rem; color: var(--txt); outline: 0; background: var(--bg); }
+    .short-ans:focus { border-color: var(--acc); }
+    .score-card { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--rad); padding: 20px; text-align: center; margin-bottom: 16px; }
+    .score-num { font-size: 2.8rem; font-weight: 900; color: var(--grn); }
+    .score-label { font-size: .85rem; color: var(--grn); font-weight: 700; margin-top: 4px; }
+    .quiz-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+    /* ── Page header ── */
+    .page-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-size: 1.3rem; font-weight: 900; letter-spacing: -.4px; }
+    .page-sub { font-size: .82rem; color: var(--mut); margin-top: 3px; }
+
+    /* ── Filters / search ── */
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filter-btn { padding: 6px 14px; border: 1.5px solid var(--brd); border-radius: 20px; background: var(--surf); cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--mut); transition: .12s; }
+    .filter-btn.active, .filter-btn:hover { border-color: var(--acc); color: var(--acc); background: #eff6ff; }
+    .search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+    .search-bar input { flex: 1; padding: 9px 14px; border: 1.5px solid var(--brd); border-radius: 9px; font-size: .86rem; outline: 0; background: var(--surf); color: var(--txt); }
+    .search-bar input:focus { border-color: var(--acc); }
+
+    /* ── Resources grid ── */
+    .resources-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 16px; }
+    .res-card { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 16px; box-shadow: var(--sh); display: flex; flex-direction: column; gap: 8px; transition: .15s; }
+    .res-card:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(37,99,235,.1); }
+    .res-icon { width: 40px; height: 40px; background: #eff6ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .res-title { font-size: .9rem; font-weight: 800; line-height: 1.3; }
+    .res-meta { font-size: .72rem; color: var(--mut); display: flex; gap: 8px; flex-wrap: wrap; }
+    .res-desc { font-size: .76rem; color: var(--mut); line-height: 1.5; flex: 1; }
+    .res-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .res-btn { padding: 6px 12px; border-radius: 7px; border: none; cursor: pointer; font-size: .75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; transition: .12s; }
+    .res-btn-view { background: #eff6ff; color: var(--acc); }
+    .res-btn-view:hover { background: #dbeafe; }
+    .res-btn-dl { background: var(--acc); color: #fff; }
+    .res-btn-dl:hover { background: var(--acc2); }
+    .tag { display: inline-block; padding: 2px 7px; border-radius: 99px; font-size: .67rem; font-weight: 700; background: #f1f5f9; color: var(--mut); }
+    .empty { text-align: center; padding: 50px 20px; color: var(--mut); }
+
+    /* ── Pairing ── */
+    .pair-box { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 24px; max-width: 520px; box-shadow: var(--sh); }
+    .pair-box p { font-size: .85rem; color: var(--mut); margin: .4rem 0 1.1rem; line-height: 1.6; }
+    .pair-link-row { display: flex; gap: 6px; margin-top: 10px; }
+    .pair-link-row input { flex: 1; border: 1.5px solid var(--brd); border-radius: 8px; padding: 8px 12px; font-size: .8rem; color: var(--txt); outline: 0; background: var(--bg); font-family: monospace; }
+
+    /* ── PDF Modal ── */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal-bg.open { display: flex; }
+    .modal { background: var(--surf); border-radius: 14px; width: min(900px,100%); height: min(92vh,760px); display: flex; flex-direction: column; overflow: hidden; }
+    .modal-hdr { padding: 10px 14px; border-bottom: 1px solid var(--brd); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .modal-title { font-weight: 800; font-size: .85rem; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .modal-close { background: 0 0; border: none; cursor: pointer; font-size: 1.1rem; color: var(--mut); padding: 4px 8px; border-radius: 6px; }
+    .modal-close:hover { background: var(--bg); }
+    /* PDF viewer */
+    .pdf-toolbar { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: #1e1e2e; border-bottom: 1px solid #333; flex-shrink: 0; }
+    .pdf-toolbar button { background: #2d2d44; color: #ccc; border: none; border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: .82rem; }
+    .pdf-toolbar button:hover { background: #3d3d5c; color: #fff; }
+    .pdf-toolbar button:disabled { opacity: .35; cursor: default; }
+    .pdf-page-info { color: #aaa; font-size: .8rem; min-width: 80px; text-align: center; }
+    .pdf-zoom { color: #aaa; font-size: .8rem; min-width: 48px; text-align: center; }
+    .pdf-scroll { flex: 1; overflow-y: auto; overflow-x: auto; background: #2b2b3b; display: flex; flex-direction: column; align-items: center; padding: 16px 8px; gap: 12px; }
+    .pdf-page-wrap { box-shadow: 0 4px 20px rgba(0,0,0,.5); border-radius: 3px; overflow: hidden; background: #fff; }
+    .pdf-page-wrap canvas { display: block; }
+    .pdf-loading { color: #aaa; font-size: .9rem; padding: 40px; text-align: center; }
+    .pdf-error { color: #f87171; font-size: .85rem; padding: 40px; text-align: center; }
+    iframe { flex: 1; border: none; width: 100%; background: #525659; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: none; }
+      .topbar { left: 0; }
+      .main { margin-left: 0; }
+      .ham { display: flex; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
+      Fundo Plus
+    </div>
+
+    <div class="sb-section">Main</div>
+    <a class="nav-item active" href="#" onclick="return show('home',this),false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Home
+    </a>
+    <a class="nav-item" href="/ai">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+      </svg>
+      Prok AI Chat
+    </a>
+    <a class="nav-item" href="#" onclick="return show('quiz',this),false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M9 11l3 3L22 4"/>
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+      </svg>
+      Quiz
+    </a>
+    <a class="nav-item" href="#" onclick="return show('skills',this),false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      Skills &amp; Study
+    </a>
+
+    <div class="sb-section">Resources</div>
+    <a class="nav-item" href="#" onclick="return show('resources',this),false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      Past Papers
+    </a>
+    <a class="nav-item" href="#" onclick="return show('pairing',this),false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="5" y="2" width="14" height="20" rx="2"/>
+        <line x1="12" y1="18" x2="12.01" y2="18"/>
+      </svg>
+      WhatsApp
+    </a>
+    <a class="nav-item" href="/~/projectgen">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      Project Generator
+    </a>
+    <a class="nav-item" href="/~/subscription">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="1" y="4" width="22" height="16" rx="2"/>
+        <line x1="1" y1="10" x2="23" y2="10"/>
+      </svg>
+      Subscription
+    </a>
+
+    <div class="sb-section">Community</div>
+    <a class="nav-item" href="/community">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      Community
+    </a>
+    <a class="nav-item" href="/support">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
+      </svg>
+      Support
+    </a>
+    <a class="nav-item" href="/~/more">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+      </svg>
+      More
+    </a>
+
+    <div class="sb-bottom">
+      <a class="nav-item" href="/about">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        About
+      </a>
+      <a class="nav-item" href="/terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        Terms
+      </a>
+      <a class="nav-item" href="/me">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        My Profile
+      </a>
+      <a class="nav-item" href="#" onclick="return doLogout(),false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign Out
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── Topbar ── -->
+  <header class="topbar">
+    <button class="ham" onclick="toggleSb()" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <span class="topbar-title" id="topbar-title">Home</span>
+    <div class="topbar-right">
+      <!-- Notification Bell -->
+      <div class="notif-bell-wrap" id="notif-bell-wrap" style="display:none">
+        <button class="notif-bell" onclick="toggleNotifDrawer(event)" aria-label="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </button>
+        <span class="notif-dot" id="notif-dot"></span>
+      </div>
+      <div class="avatar" id="avatar-letter">?</div>
+      <span style="font-size:.82rem;font-weight:700;color:var(--mut)" id="topbar-name"></span>
+    </div>
+  </header>
+
+  <!-- Notification Drawer -->
+  <div id="notif-drawer">
+    <div class="nd-header">
+      <span class="nd-title">🔔 Notifications</span>
+      <div class="nd-actions">
+        <button class="nd-btn" onclick="markAllRead()">Mark all read</button>
+        <button class="nd-btn" style="color:var(--mut)" onclick="closeNotifDrawer()">✕</button>
+      </div>
+    </div>
+    <div class="nd-list" id="nd-list">
+      <div class="nd-empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Notification Popup Overlay -->
+  <div id="notif-popup-overlay">
+    <div class="notif-popup-card" id="notif-popup-card">
+      <div class="npc-bg" id="npc-bg">
+        <img id="npc-bg-img" src="" style="display:none">
+      </div>
+      <div class="npc-body">
+        <div class="npc-title" id="npc-title"></div>
+        <div class="npc-desc" id="npc-desc"></div>
+      </div>
+      <div class="npc-footer">
+        <button class="npc-ok" onclick="dismissPopup()">Got it ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main panels ── -->
+  <main class="main">
+    
+    <div class="warn-banner" id="pair-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <span id="pair-banner-text"></span>
+      <a href="#" onclick="return show('pairing'),false">Link Now →</a>
+    </div>
+
+    
+    <div class="panel active" id="panel-home">
+      <div style="margin-bottom:18px">
+        <div style="font-size:1.2rem;font-weight:900;margin-bottom:3px">Welcome back, <span id="user-name">…</span> 👋</div>
+        <div style="font-size:.82rem;color:var(--mut)">Your Fundo Plus study overview</div>
+      </div>
+      
+      <div id="plan-badge-row" style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)">Plan:</span>
+        <span id="plan-badge" style="padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:800;background:#eff6ff;color:var(--acc)">Free</span>
+        <a href="/~/subscription" style="font-size:.75rem;color:var(--acc);font-weight:700;text-decoration:none;margin-left:4px">Upgrade →</a>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="slabel">AI Messages Today</div>
+          <div class="sval" id="s-chats">0</div>
+          <div class="ssub" id="s-chats-limit">of — daily limit</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">Quizzes Today</div>
+          <div class="sval" id="s-quizzes">0</div>
+          <div class="ssub" id="s-quizzes-limit">of — limit</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">PDF Exports Today</div>
+          <div class="sval" id="s-pdfs">0</div>
+          <div class="ssub" id="s-pdfs-limit">of — limit</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">Study Sessions</div>
+          <div class="sval" id="s-sessions">0</div>
+          <div class="ssub" id="s-sessions-limit">of — today</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">Projects (total)</div>
+          <div class="sval" id="s-projects">0</div>
+          <div class="ssub" id="s-projects-limit">of — limit</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">Paper Downloads</div>
+          <div class="sval" id="s-dl">0</div>
+          <div class="ssub" id="s-dl-limit">of — per 6hrs</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">WhatsApp</div>
+          <div class="sval" id="s-wa" style="font-size:1rem;margin-top:4px">—</div>
+          <div class="ssub">Link status</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">School</div>
+          <div class="sval" id="s-school" style="font-size:.95rem;margin-top:4px">—</div>
+          <div class="ssub">Your institution</div>
+        </div>
+        <div class="stat-card">
+          <div class="slabel">Past Papers</div>
+          <div class="sval" id="s-papers">0</div>
+          <div class="ssub">Available to download</div>
+        </div>
+      </div>
+      <div class="cta-card">
+        <h3>🤖 Ask Prok AI anything</h3>
+        <p>Get instant help with ZIMSEC subjects — worked examples, essay feedback, exam tips and more. LaTeX math rendered automatically.</p>
+        <button class="btn-acc" onclick="window.location.href='/ai'">Open AI Chat →</button>
+      </div>
+    </div>
+
+    
+
+    <div class="panel" id="panel-quiz">
+      <div id="quiz-setup" class="card-box">
+        <h3>📝 Quiz Generator</h3>
+        <p>Paste notes, type a topic, or upload a PDF — Prok AI generates a quiz with full answer explanations.</p>
+        <textarea id="quiz-text" placeholder="Paste your study material here, or describe a topic e.g. 'Photosynthesis O-Level Biology'…"></textarea>
+        <div class="quiz-top">
+          <div class="fg">
+            <label>Questions</label>
+            <select id="quiz-count">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Style</label>
+            <select id="quiz-style">
+              <option value="mixed" selected>Mixed</option>
+              <option value="mcq">Multiple Choice</option>
+              <option value="short">Short Answer</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>PDF Upload</label>
+            <label class="upload-btn-label" id="pdf-upload-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span id="pdf-label-text">Upload PDF</span>
+              <input type="file" id="quiz-pdf" accept=".pdf" style="display:none" onchange="handlePdfUpload(this)">
+            </label>
+          </div>
+          <div class="fg" style="margin-top:auto">
+            <button class="btn-acc" id="gen-btn" onclick="generateQuiz()">Generate Quiz</button>
+          </div>
+        </div>
+      </div>
+      <div id="quiz-results" style="display:none">
+        <div class="score-card" id="score-card" style="display:none">
+          <div class="score-num" id="score-num">0/0</div>
+          <div class="score-label">Quiz Complete 🎉</div>
+        </div>
+        <div id="quiz-qs"></div>
+        <div class="quiz-actions">
+          <button class="btn-out" onclick="resetQuiz()">← New Quiz</button>
+          <button class="btn-acc" id="mark-btn" onclick="markQuiz()">Submit &amp; See Answers</button>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="panel" id="panel-resources">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">📚 Past Papers &amp; Resources</div>
+          <div class="page-sub">Past papers, textbooks and study materials</div>
+        </div>
+        <button class="btn-acc" onclick="toggleUploadForm()">+ Share Resource</button>
+      </div>
+
+      <div id="upload-form" style="display:none" class="card-box">
+        <h3 style="margin-bottom:10px">📤 Share a Resource</h3>
+        <div id="up-al" style="display:none;padding:10px;border-radius:8px;font-size:.82rem;margin-bottom:10px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label style="font-size:.72rem;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Title *</label>
+            <input id="up-title" placeholder="e.g. ZIMSEC 2023 Maths O-Level" style="width:100%;border:1.5px solid var(--brd);border-radius:8px;padding:8px 12px;font-size:.84rem;outline:0;color:var(--txt)">
+          </div>
+          <div>
+            <label style="font-size:.72rem;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Subject</label>
+            <input id="up-subject" placeholder="e.g. Mathematics" style="width:100%;border:1.5px solid var(--brd);border-radius:8px;padding:8px 12px;font-size:.84rem;outline:0;color:var(--txt)">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label style="font-size:.72rem;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Year</label>
+            <input type="number" id="up-year" placeholder="2023" min="1990" max="2030" style="width:100%;border:1.5px solid var(--brd);border-radius:8px;padding:8px 12px;font-size:.84rem;outline:0;color:var(--txt)">
+          </div>
+          <div>
+            <label style="font-size:.72rem;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Level</label>
+            <select id="up-level" style="width:100%;border:1.5px solid var(--brd);border-radius:8px;padding:8px 12px;font-size:.84rem;outline:0;color:var(--txt);background:#fff">
+              <option value="">Any</option>
+              <option>O-Level</option>
+              <option>A-Level</option>
+              <option>Primary</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.72rem;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">PDF File *</label>
+          <div style="border:1.5px dashed var(--brd);border-radius:9px;padding:16px;text-align:center;cursor:pointer;background:var(--bg)" onclick="document.getElementById('up-file').click()">
+            <div style="font-size:1.3rem;margin-bottom:4px">📄</div>
+            <p style="font-size:.8rem;color:var(--mut)">Click to select PDF (max 20 MB)</p>
+            <p id="up-filename" style="font-size:.76rem;color:var(--acc);margin-top:4px;font-weight:700"></p>
+            <input type="file" id="up-file" accept=".pdf" style="display:none" onchange="document.getElementById('up-filename').textContent = this.files[0]?.name || ''">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-acc" onclick="submitResource()">Upload Resource</button>
+          <button class="btn-out" onclick="toggleUploadForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input id="res-search" placeholder="Search by title, subject or year…" oninput="filterResources()">
+      </div>
+      <div class="filters" id="res-filters">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('O-Level',this)">O-Level</button>
+        <button class="filter-btn" onclick="setFilter('A-Level',this)">A-Level</button>
+        <button class="filter-btn" onclick="setFilter('Primary',this)">Primary</button>
+        <button class="filter-btn" onclick="setFilter('Other',this)">Other</button>
+      </div>
+      <div class="resources-grid" id="resources-grid">
+        <div class="empty"><p>Loading resources…</p></div>
+      </div>
+    </div>
+
+    
+    <div class="panel" id="panel-pairing">
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:14px">📱 Link WhatsApp</div>
+      <div class="pair-box" id="pair-content">
+        <p>Connect your WhatsApp for enhanced AI limits and direct bot access. The bot works for all users, but linking gives you <strong>2x AI messages</strong> and personalized responses.</p>
+        <p style="font-size:.78rem;color:var(--mut);margin-bottom:12px">⚠️ WhatsApp bot must be online for verification to work. You can still use the dashboard without linking.</p>
+        <button class="btn-acc" onclick="genPairLink(event)">🔗 Generate Verification Code</button>
+      </div>
+    </div>
+
+    
+    <div class="panel" id="panel-skills">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">⭐ Skills &amp; Study</div>
+          <div class="page-sub">Select a syllabus to focus your study session. The AI will guide you through the content.</div>
+        </div>
+      </div>
+
+      <div id="active-syllabus-banner" style="display:none;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:14px 18px;margin-bottom:18px;align-items:center;gap:12px">
+        <div style="font-size:1.4rem">📘</div>
+        <div style="flex:1">
+          <div style="font-size:.82rem;font-weight:800;color:#166534">Active Syllabus</div>
+          <div id="active-syllabus-name" style="font-size:.95rem;font-weight:900;color:#14532d"></div>
+          <div id="active-syllabus-topics" style="font-size:.72rem;color:#16a34a;margin-top:2px"></div>
+        </div>
+        <button onclick="clearActiveSyllabus()" class="btn-out" style="font-size:.72rem">✕ Clear</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="card-box" style="padding:16px">
+            <h3 style="font-size:.9rem;font-weight:900;margin-bottom:12px">📚 Available Syllabuses</h3>
+            <div id="syllabus-list" style="display:flex;flex-direction:column;gap:8px">
+              <div style="color:var(--mut);font-size:.82rem;text-align:center;padding:20px">Loading syllabuses…</div>
+            </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--brd)">
+              <div style="font-size:.72rem;color:var(--mut);font-weight:700;margin-bottom:8px">📁 SYLLABUS FOLDER</div>
+              <div style="font-size:.78rem;color:var(--mut);line-height:1.5">
+                Syllabuses are loaded from <code style="background:var(--bg);padding:1px 5px;border-radius:4px">skills/syllabus/</code>.
+                Add <code>.json</code> or <code>.txt</code> files there to expand the list.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card-box" style="padding:16px;margin-bottom:16px">
+            <h3 style="font-size:.9rem;font-weight:900;margin-bottom:6px">🗂 Study Project</h3>
+            <p style="font-size:.78rem;color:var(--mut);margin-bottom:12px">AI generates a structured study file based on your selected syllabus and focus topic.</p>
+            <div style="margin-bottom:10px">
+              <label style="font-size:.72rem;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Focus Topic (optional)</label>
+              <input id="project-topic" placeholder="e.g. Quadratic equations, Photosynthesis…" style="width:100%;border:1.5px solid var(--brd);border-radius:8px;padding:7px 12px;font-size:.84rem;color:var(--txt);outline:0;background:var(--bg)">
+            </div>
+            <button class="btn-acc" id="make-project-btn" onclick="makeProject()" style="width:100%">✨ Generate Study Project</button>
+            <div id="project-status" style="margin-top:8px;font-size:.78rem;color:var(--mut);display:none"></div>
+          </div>
+
+          <div class="card-box" style="padding:16px">
+            <h3 style="font-size:.9rem;font-weight:900;margin-bottom:6px">🧠 Skills Folder</h3>
+            <p style="font-size:.78rem;color:var(--mut);margin-bottom:10px">
+              The AI uses files in the <code style="background:var(--bg);padding:1px 5px;border-radius:4px">skills/</code> folder to enhance its answers.
+              Add subject guides, formula sheets, or notes.
+            </p>
+            <div id="skills-folder-list" style="font-size:.78rem;color:var(--mut);line-height:1.7">
+              <div style="padding:6px 0;border-bottom:1px solid var(--brd)">📄 <strong>skills/maths-formulas.md</strong> — Formula reference</div>
+              <div style="padding:6px 0;border-bottom:1px solid var(--brd)">📄 <strong>skills/zimsec-guide.md</strong> — Exam tips</div>
+              <div style="padding:6px 0">📁 <strong>skills/syllabus/</strong> — Syllabus files</div>
+            </div>
+            <div style="margin-top:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:.74rem;color:#92400e">
+              💡 Place <code>.md</code>, <code>.txt</code>, or <code>.json</code> files in <code>skills/</code> to give the AI extra context for your study session.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="project-output" style="display:none;margin-top:16px">
+        <div class="card-box" style="padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h3 style="font-size:.9rem;font-weight:900">📋 Generated Study Project</h3>
+            <div style="display:flex;gap:6px">
+              <button class="btn-out" onclick="copyProject()" style="font-size:.72rem">📋 Copy</button>
+              <button class="btn-acc" onclick="saveProjectToChat()" style="font-size:.72rem">💬 Open in Chat</button>
+            </div>
+          </div>
+          <div id="project-content" style="background:var(--bg);border-radius:8px;padding:14px;font-size:.84rem;line-height:1.65;white-space:pre-wrap;max-height:400px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  
+  <div class="modal-bg" id="pdfModal">
+    <div class="modal">
+      <div class="modal-hdr">
+        <span class="modal-title" id="modal-title">Preview</span>
+        <button id="modal-dl" class="res-btn res-btn-dl" style="margin-right:6px">⬇ Download</button>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="pdf-toolbar">
+        <button id="pdf-prev" onclick="pdfChangePage(-1)">‹ Prev</button>
+        <span class="pdf-page-info"><span id="pdf-cur">—</span> / <span id="pdf-total">—</span></span>
+        <button id="pdf-next" onclick="pdfChangePage(1)">Next ›</button>
+        <span style="flex:1"></span>
+        <button onclick="pdfZoom(-0.2)">－</button>
+        <span class="pdf-zoom" id="pdf-zoom-label">100%</span>
+        <button onclick="pdfZoom(0.2)">＋</button>
+      </div>
+      <div class="pdf-scroll" id="pdf-scroll">
+        <div class="pdf-loading" id="pdf-loading">Loading PDF…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const _fetch = window.fetch;
+      window.fetch = async function (...args) {
+        const res = await _fetch(...args);
+        if (res.status === 403) {
+          const clone = res.clone();
+          try {
+            const d = await clone.json();
+            if (d && d.code === 'BANNED') {
+              location.reload();
+              return new Response('{}', { status: 403 });
+            }
+          } catch {}
+        }
+        return res;
+      };
+    })();
+
+    async function validateSession(opts = {}) {
+      const { requireAuth = true, onUser = null } = opts;
+      const token = localStorage.getItem('fp_session');
+
+      if (!token) {
+        if (requireAuth) window.location.replace('/login');
+        return null;
+      }
+
+      try {
+        const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
+
+        if (r.status === 401) {
+          localStorage.clear();
+          if (requireAuth) window.location.replace('/login');
+          return null;
+        }
+
+        if (!r.ok) {
+          if (requireAuth) window.location.replace('/login');
+          return null;
+        }
+
+        const d = await r.json();
+        if (d.banned) {
+          location.reload();
+          return null;
+        }
+        if (d.ok) {
+          if (onUser) onUser(d.user);
+          return d.user;
+        }
+
+        localStorage.clear();
+        if (requireAuth) window.location.replace('/login');
+        return null;
+      } catch {
+        if (requireAuth) window.location.replace('/login');
+        return null;
+      }
+    }
+
+    const token = localStorage.getItem('fp_session');
+    let chatCount = 0;
+    let quizData = [];
+    let quizAns = {};
+    let allResources = [];
+    let resFilter = 'all';
+    let pdfText = '';
+
+    const panelTitles = {
+      home: 'Home',
+      chat: 'Prok AI Chat',
+      quiz: 'Quiz Generator',
+      resources: 'Past Papers',
+      pairing: 'WhatsApp Linking',
+      skills: 'Skills & Study',
+      subscription: 'Subscription',
+      projects: 'Project Generator'
+    };
+
+    async function api(method, url, body) {
+      const opts = { method, headers: { 'x-session-token': token } };
+      if (body) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const r = await fetch(url, opts);
+      const d = await r.json();
+      if (!r.ok) {
+        const e = new Error(d.error || 'Error');
+        e.status = r.status;
+        throw e;
+      }
+      return d;
+    }
+
+    function toggleSb() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('show');
+    }
+
+    function closeSb() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+
+    function show(name, el) {
+      event?.preventDefault();
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('panel-' + name).classList.add('active');
+      if (el) {
+        el.classList.add('active');
+      } else {
+        document.querySelector(`.nav-item[onclick*="'${name}'"]`)?.classList.add('active');
+      }
+      document.getElementById('topbar-title').textContent = panelTitles[name] || name;
+      closeSb();
+      if (name === 'resources') loadResources();
+      if (name === 'skills') initSkillsPanel();
+    }
+
+    async function init() {
+      const user = await validateSession({ requireAuth: true });
+      if (!user) return;
+
+      try {
+        const d = await api('GET', '/api/me');
+        const u = d.user;
+
+        document.getElementById('user-name').textContent = u.name || 'Student';
+        document.getElementById('topbar-name').textContent = u.name || '';
+        document.getElementById('avatar-letter').textContent = (u.name || 'S')[0].toUpperCase();
+        document.getElementById('s-school').textContent = u.school || '—';
+        document.getElementById('s-wa').textContent = d.pairingStatus === 'paired' ? '✅ Linked' : '❌ Not linked';
+
+        const planColors = { free:'#6b7280', lite:'#2563eb', plus:'#7c3aed', pro:'#dc2626' };
+        const planBadge = document.getElementById('plan-badge');
+        if (planBadge) {
+          const pn = (d.plan || 'free');
+          planBadge.textContent = pn.charAt(0).toUpperCase()+pn.slice(1)+' Plan';
+          planBadge.style.color = planColors[pn] || 'var(--acc)';
+          planBadge.style.background = pn === 'free' ? '#f1f5f9' : '#eff6ff';
+        }
+
+        const lim = d.limits || {};
+        const usg = d.usage  || {};
+        function fmtLim(v) { return (v === Infinity || v === 'unlimited' || v === 'Infinity') ? '∞' : (v ?? '?'); }
+        if (document.getElementById('s-chats-limit'))    document.getElementById('s-chats-limit').textContent    = `of ${fmtLim(lim.aiMsg)} today`;
+        if (document.getElementById('s-quizzes'))        document.getElementById('s-quizzes').textContent        = usg.quizzes ?? 0;
+        if (document.getElementById('s-quizzes-limit'))  document.getElementById('s-quizzes-limit').textContent  = `of ${fmtLim(lim.quizzes)} today`;
+        if (document.getElementById('s-pdfs'))           document.getElementById('s-pdfs').textContent           = usg.pdf ?? 0;
+        if (document.getElementById('s-pdfs-limit'))     document.getElementById('s-pdfs-limit').textContent     = `of ${fmtLim(lim.pdfExports)} today`;
+        if (document.getElementById('s-sessions'))       document.getElementById('s-sessions').textContent       = usg.studySessions ?? 0;
+        if (document.getElementById('s-sessions-limit')) document.getElementById('s-sessions-limit').textContent = `of ${fmtLim(lim.studySessions)} today`;
+        if (document.getElementById('s-projects'))       document.getElementById('s-projects').textContent       = usg.projectsTotal ?? 0;
+        if (document.getElementById('s-projects-limit')) document.getElementById('s-projects-limit').textContent = `of ${fmtLim(lim.projects)} total`;
+        const dlCount = (usg.paperDlWindows && usg.paperDlWindows.length) ? (usg.paperDlWindows[usg.paperDlWindows.length-1]?.count ?? 0) : 0;
+        if (document.getElementById('s-dl'))             document.getElementById('s-dl').textContent             = dlCount;
+        if (document.getElementById('s-dl-limit'))       document.getElementById('s-dl-limit').textContent       = `of ${fmtLim(lim.paperDl)} per 6hrs`;
+
+        if (d.pairingStatus !== 'paired' && (d.plan || 'free') === 'free') {
+          document.getElementById('pair-banner-text').textContent = 'Link WhatsApp to double your daily AI messages (free!).';
+          document.getElementById('pair-banner').style.display = 'flex';
+        }
+
+        loadResources();
+      } catch (e) {
+        if (e?.status === 401 || e?.status === 403) {
+          localStorage.clear();
+          window.location.replace('/login');
+        }
+      }
+    }
+
+    async function handlePdfUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const label = document.getElementById('pdf-upload-label');
+      const labelText = document.getElementById('pdf-label-text');
+      labelText.textContent = 'Extracting…';
+
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const r = await fetch('/api/quiz/upload', { method: 'POST', headers: { 'x-session-token': token }, body: fd });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Upload failed');
+        pdfText = d.text;
+        document.getElementById('quiz-text').value = `[PDF: ${file.name}]\n\n${pdfText.slice(0, 500)}…`;
+        label.classList.add('has-file');
+        labelText.textContent = file.name.length > 18 ? file.name.slice(0, 18) + '…' : file.name;
+      } catch (e) {
+        alert('PDF upload failed: ' + e.message);
+        labelText.textContent = 'Upload PDF';
+        label.classList.remove('has-file');
+        pdfText = '';
+      }
+    }
+
+    async function generateQuiz() {
+      const rawText = document.getElementById('quiz-text').value.trim();
+      const text = pdfText || rawText;
+      const count = document.getElementById('quiz-count').value;
+      const style = document.getElementById('quiz-style').value;
+      if (!text) { alert('Paste study material or upload a PDF first.'); return; }
+
+      const btn = document.getElementById('gen-btn');
+      btn.disabled = true;
+      btn.textContent = 'Generating…';
+
+      try {
+        const d = await api('POST', '/api/quiz/generate', { text, count: parseInt(count), style });
+        quizData = d.questions || [];
+        quizAns = {};
+        if (!quizData.length) { alert('No questions generated. Try more detailed material.'); return; }
+        renderQs();
+        document.getElementById('quiz-setup').style.display = 'none';
+        document.getElementById('quiz-results').style.display = 'block';
+        document.getElementById('score-card').style.display = 'none';
+        document.getElementById('mark-btn').style.display = '';
+      } catch (e) {
+        alert('Failed: ' + (e.message || 'Error'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Quiz';
+      }
+    }
+
+    function renderQs() {
+      document.getElementById('quiz-qs').innerHTML = quizData.map((q, i) => {
+        const opts = Object.entries(q.options || {});
+        if (q.type === 'mcq' && opts.length) {
+          return `
+            <div class="q-card" id="qc-${i}">
+              <div class="q-num">Question ${i + 1} of ${quizData.length}</div>
+              <div class="q-text">${q.question}</div>
+              ${opts.map(([k, v]) => `
+                <div class="opt" id="op-${i}-${k}" onclick="pick(${i},'${k}')">
+                  <span class="opt-key">${k}</span>${v}
+                </div>`).join('')}
+              <div class="explanation" id="ex-${i}">💡 <strong>Explanation:</strong> ${q.explanation || 'See correct answer above.'}</div>
+            </div>`;
+        }
+        return `
+          <div class="q-card" id="qc-${i}">
+            <div class="q-num">Question ${i + 1} of ${quizData.length}</div>
+            <div class="q-text">${q.question}</div>
+            <input class="short-ans" id="sh-${i}" placeholder="Your answer…">
+            <div class="explanation" id="ex-${i}">✅ <strong>Model answer:</strong> ${q.answer || '—'}<br>💡 ${q.explanation || ''}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function pick(qi, key) {
+      quizAns[qi] = key;
+      document.querySelectorAll(`[id^="op-${qi}-"]`).forEach(el => el.classList.remove('selected', 'correct', 'wrong'));
+      document.getElementById(`op-${qi}-${key}`)?.classList.add('selected');
+    }
+
+    function markQuiz() {
+      let correct = 0;
+      const total = quizData.length;
+
+      quizData.forEach((q, i) => {
+        const ex = document.getElementById(`ex-${i}`);
+        if (q.type === 'mcq') {
+          const chosen = quizAns[i];
+          const right = (q.answer || '').trim().toUpperCase();
+          document.querySelectorAll(`[id^="op-${i}-"]`).forEach(el => el.classList.remove('selected'));
+          if (chosen) {
+            document.getElementById(`op-${i}-${chosen}`)?.classList.add(chosen.toUpperCase() === right ? 'correct' : 'wrong');
+          }
+          if (right) document.getElementById(`op-${i}-${right}`)?.classList.add('correct');
+          if (chosen && chosen.toUpperCase() === right) correct++;
+        } else {
+          const ans = document.getElementById(`sh-${i}`)?.value.trim();
+          if (ans && ans.length > 0) correct++;
+        }
+        if (ex) ex.classList.add('show');
+      });
+
+      document.getElementById('score-num').textContent = `${correct}/${total}`;
+      document.getElementById('score-card').style.display = 'block';
+      document.getElementById('score-card').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('mark-btn').style.display = 'none';
+    }
+
+    function resetQuiz() {
+      pdfText = '';
+      document.getElementById('quiz-text').value = '';
+      document.getElementById('pdf-label-text').textContent = 'Upload PDF';
+      document.getElementById('pdf-upload-label').classList.remove('has-file');
+      document.getElementById('quiz-pdf').value = '';
+      document.getElementById('quiz-setup').style.display = 'block';
+      document.getElementById('quiz-results').style.display = 'none';
+      document.getElementById('mark-btn').style.display = '';
+    }
+
+    function toggleUploadForm() {
+      const f = document.getElementById('upload-form');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function loadResources() {
+      try {
+        const d = await api('GET', '/api/papers');
+        allResources = d.papers || [];
+        document.getElementById('s-papers').textContent = allResources.length;
+        renderResources(allResources);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function filterResources() {
+      const q = document.getElementById('res-search').value.toLowerCase();
+      let list = allResources;
+      if (resFilter !== 'all') {
+        list = list.filter(p => (p.level || p.subject || '').includes(resFilter));
+      }
+      if (q) {
+        list = list.filter(p => (p.originalName + p.subject + p.year).toLowerCase().includes(q));
+      }
+      renderResources(list);
+    }
+
+    function setFilter(f, btn) {
+      resFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterResources();
+    }
+
+    function renderResources(papers) {
+      const grid = document.getElementById('resources-grid');
+      if (!papers.length) {
+        grid.innerHTML = `
+          <div class="empty">
+            <div style="font-size:2.5rem;margin-bottom:8px">📂</div>
+            <p style="color:var(--mut)">No resources found</p>
+          </div>`;
+        return;
+      }
+      grid.innerHTML = papers.map(p => `
+        <div class="res-card">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="res-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="res-title">${p.originalName || p.filename}</div>
+          </div>
+          <div class="res-meta">
+            ${p.subject ? `<span>📚 ${p.subject}</span>` : ''}
+            ${p.year ? `<span>📅 ${p.year}</span>` : ''}
+            ${p.level ? `<span class="tag">${p.level}</span>` : ''}
+            <span>${(p.size / 1024 / 1024).toFixed(1)} MB</span>
+          </div>
+          ${p.description ? `<div class="res-desc">${p.description}</div>` : ''}
+          <div class="res-actions">
+            <button class="res-btn res-btn-view" onclick="previewPdf('${p.filename}','${(p.originalName || p.filename).replace(/'/g, "\\'")}')">👁 Preview</button>
+            <button class="res-btn res-btn-dl" onclick="downloadPaper('${p.filename}','${(p.originalName || p.filename).replace(/'/g, "\\'")}')">⬇ Download</button>
+          </div>
+        </div>`).join('');
+    }
+
+    async function submitResource() {
+      const title   = document.getElementById('up-title').value.trim();
+      const subject = document.getElementById('up-subject').value.trim();
+      const year    = document.getElementById('up-year').value;
+      const level   = document.getElementById('up-level').value;
+      const file    = document.getElementById('up-file').files[0];
+      const al      = document.getElementById('up-al');
+
+      if (!title || !file) {
+        al.style.display = 'block';
+        al.style.background = '#fef2f2';
+        al.style.border = '1px solid #fecaca';
+        al.style.color = '#991b1b';
+        al.textContent = 'Title and PDF file are required.';
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', title);
+      fd.append('subject', subject);
+      fd.append('year', year);
+      fd.append('level', level);
+
+      try {
+        const r = await fetch('/api/papers/public-upload', { method: 'POST', headers: { 'x-session-token': token }, body: fd });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error);
+        al.style.display = 'block';
+        al.style.background = '#f0fdf4';
+        al.style.border = '1px solid #bbf7d0';
+        al.style.color = '#166534';
+        al.textContent = '✅ Resource uploaded successfully!';
+        toggleUploadForm();
+        loadResources();
+      } catch (e) {
+        al.style.display = 'block';
+        al.style.background = '#fef2f2';
+        al.style.border = '1px solid #fecaca';
+        al.style.color = '#991b1b';
+        al.textContent = 'Upload failed: ' + e.message;
+      }
+    }
+
+    let _pdfDoc = null, _pdfPage = 1, _pdfScale = 1.4, _pdfRendering = false;
+
+    async function previewPdf(filename, title) {
+      const previewUrl = `/api/papers/file/${encodeURIComponent(filename)}?token=${encodeURIComponent(token)}`;
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-dl').onclick = () => downloadPaper(filename, title);
+      document.getElementById('modal-dl').removeAttribute('href');
+      document.getElementById('pdfModal').classList.add('open');
+
+      _pdfDoc = null; _pdfPage = 1; _pdfScale = 1.4; _pdfRendering = false;
+      const scroll = document.getElementById('pdf-scroll');
+      scroll.innerHTML = '<div class="pdf-loading">Loading PDF…</div>';
+      document.getElementById('pdf-cur').textContent = '—';
+      document.getElementById('pdf-total').textContent = '—';
+      document.getElementById('pdf-zoom-label').textContent = Math.round(_pdfScale * 100) + '%';
+
+      if (!window.pdfjsLib) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      try {
+        const resp = await fetch(previewUrl);
+        if (!resp.ok) throw new Error('Could not load PDF (' + resp.status + ')');
+        const arrayBuf = await resp.arrayBuffer();
+        _pdfDoc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+        document.getElementById('pdf-total').textContent = _pdfDoc.numPages;
+        scroll.innerHTML = '';
+        for (let i = 1; i <= _pdfDoc.numPages; i++) {
+          await _renderPage(i, scroll);
+        }
+        _updatePageInfo();
+        scroll.onscroll = _onPdfScroll;
+      } catch (e) {
+        scroll.innerHTML = `<div class="pdf-error">⚠ ${e.message}</div>`;
+      }
+    }
+
+    async function _renderPage(pageNum, container) {
+      const page = await _pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: _pdfScale });
+      const wrap = document.createElement('div');
+      wrap.className = 'pdf-page-wrap';
+      wrap.dataset.page = pageNum;
+      const canvas = document.createElement('canvas');
+      canvas.width  = viewport.width;
+      canvas.height = viewport.height;
+      wrap.appendChild(canvas);
+      container.appendChild(wrap);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    }
+
+    function _onPdfScroll() {
+      if (!_pdfDoc) return;
+      const scroll = document.getElementById('pdf-scroll');
+      const wraps  = scroll.querySelectorAll('.pdf-page-wrap');
+      for (const wrap of wraps) {
+        const rect = wrap.getBoundingClientRect();
+        const scrollRect = scroll.getBoundingClientRect();
+        if (rect.top >= scrollRect.top - rect.height / 2) {
+          _pdfPage = parseInt(wrap.dataset.page);
+          _updatePageInfo();
+          break;
+        }
+      }
+    }
+
+    function _updatePageInfo() {
+      document.getElementById('pdf-cur').textContent = _pdfPage;
+      document.getElementById('pdf-prev').disabled = _pdfPage <= 1;
+      document.getElementById('pdf-next').disabled = !_pdfDoc || _pdfPage >= _pdfDoc.numPages;
+    }
+
+    function pdfChangePage(delta) {
+      if (!_pdfDoc) return;
+      const target = _pdfPage + delta;
+      if (target < 1 || target > _pdfDoc.numPages) return;
+      const scroll = document.getElementById('pdf-scroll');
+      const wrap = scroll.querySelector(`[data-page="${target}"]`);
+      if (wrap) wrap.scrollIntoView({ behavior: 'smooth' });
+      _pdfPage = target;
+      _updatePageInfo();
+    }
+
+    async function pdfZoom(delta) {
+      if (!_pdfDoc) return;
+      _pdfScale = Math.min(3, Math.max(0.5, _pdfScale + delta));
+      document.getElementById('pdf-zoom-label').textContent = Math.round(_pdfScale * 100) + '%';
+      const scroll = document.getElementById('pdf-scroll');
+      const currentPage = _pdfPage;
+      scroll.innerHTML = '<div class="pdf-loading">Re-rendering…</div>';
+      scroll.innerHTML = '';
+      for (let i = 1; i <= _pdfDoc.numPages; i++) {
+        await _renderPage(i, scroll);
+      }
+      const wrap = scroll.querySelector(`[data-page="${currentPage}"]`);
+      if (wrap) wrap.scrollIntoView();
+      _updatePageInfo();
+    }
+
+    function closeModal() {
+      document.getElementById('pdfModal').classList.remove('open');
+      document.getElementById('pdf-scroll').innerHTML = '';
+      document.getElementById('pdf-scroll').onscroll = null;
+      _pdfDoc = null;
+    }
+
+    async function downloadPaper(filename, title) {
+      try {
+        const url = `/api/papers/file/${encodeURIComponent(filename)}?token=${encodeURIComponent(token)}&mode=download`;
+        const r = await fetch(url);
+        if (!r.ok) { const d = await r.json().catch(() => ({})); return alert(d.error || 'Download failed'); }
+        const blob = await r.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = title || filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      } catch (e) { alert('Download failed: ' + e.message); }
+    }
+
+    document.getElementById('pdfModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('pdfModal')) closeModal();
+    });
+
+    async function genPairLink(e) {
+      const btn = e?.currentTarget;
+      if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+
+      try {
+        const d = await api('POST', '/api/generate-link');
+        document.getElementById('pair-content').innerHTML = `
+          <p style="margin-bottom:10px">Send this verification message to our WhatsApp bot. It contains a special code that links your account.</p>
+          <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:.7rem;font-weight:800;color:#166534;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Your Verification Code</div>
+            <div style="font-family:monospace;font-size:.85rem;word-break:break-all;color:#14532d;background:#dcfce7;border-radius:6px;padding:8px 12px;margin-bottom:10px">${d.verifyMsg}</div>
+            <div style="font-size:.72rem;color:#16a34a">⏱ Expires in ${d.expiresInMinutes} minutes</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <a href="${d.botLink}" target="_blank" class="btn-acc" style="text-decoration:none;display:inline-block">📱 Open WhatsApp &amp; Send →</a>
+            <button class="btn-out" onclick="navigator.clipboard.writeText('${d.verifyMsg}').then(()=>alert('Code copied!'))">📋 Copy Code</button>
+          </div>
+          <p style="font-size:.76rem;color:var(--mut)">💡 The message will be pre-filled. Just press Send in WhatsApp. The bot will confirm once linked.</p>`;
+      } catch (e) {
+        alert('Failed: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = '🔗 Generate Verification Code'; }
+      }
+    }
+
+    function copyLink() {
+      const v = document.getElementById('pl-val')?.value;
+      if (v) { navigator.clipboard.writeText(v); alert('Copied!'); }
+    }
+
+    async function doLogout() {
+      event?.preventDefault();
+      try { await api('POST', '/api/auth/logout'); } catch {}
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+
+    const BUILTIN_SYLLABUSES = [
+      { id: 'maths-olevel',     name: 'Mathematics O-Level',    level: 'O-Level', topics: ['Algebra','Geometry','Trigonometry','Statistics','Calculus basics','Number theory'] },
+      { id: 'physics-olevel',   name: 'Physics O-Level',        level: 'O-Level', topics: ['Mechanics','Waves','Electricity','Magnetism','Thermal Physics','Nuclear Physics'] },
+      { id: 'chemistry-olevel', name: 'Chemistry O-Level',      level: 'O-Level', topics: ['Atomic structure','Bonding','Reactions','Organic Chemistry','Acids & Bases','Electrochemistry'] },
+      { id: 'biology-olevel',   name: 'Biology O-Level',        level: 'O-Level', topics: ['Cell biology','Genetics','Ecology','Human biology','Plant biology','Evolution'] },
+      { id: 'accounts-olevel',  name: 'Accounts O-Level',       level: 'O-Level', topics: ['Bookkeeping','Financial statements','Trial balance','Cash flow','Depreciation'] },
+      { id: 'english-olevel',   name: 'English Language O-Level', level: 'O-Level', topics: ['Comprehension','Composition','Summary','Grammar','Creative writing'] },
+      { id: 'maths-alevel',     name: 'Mathematics A-Level',    level: 'A-Level', topics: ['Pure Maths','Statistics','Mechanics','Further calculus','Complex numbers','Differential equations'] },
+      { id: 'physics-alevel',   name: 'Physics A-Level',        level: 'A-Level', topics: ['Advanced Mechanics','Fields','Quantum Physics','Relativity','Nuclear Physics','Astrophysics'] },
+      { id: 'chemistry-alevel', name: 'Chemistry A-Level',      level: 'A-Level', topics: ['Advanced Organic','Physical Chemistry','Analytical Chemistry','Spectroscopy'] },
+      { id: 'biology-alevel',   name: 'Biology A-Level',        level: 'A-Level', topics: ['Molecular Biology','Biochemistry','Genetics & Evolution','Physiology','Ecology'] },
+      { id: 'geography-olevel', name: 'Geography O-Level',      level: 'O-Level', topics: ['Physical Geography','Human Geography','Map skills','Climate','Population'] },
+      { id: 'history-olevel',   name: 'History O-Level',        level: 'O-Level', topics: ['African History','World Wars','Nationalism','Post-independence Africa','Cold War'] }
+    ];
+
+    let activeSyllabus = JSON.parse(localStorage.getItem('fp_active_syllabus') || 'null');
+
+    async function initSkillsPanel() {
+      renderActiveSyllabusBanner();
+
+      try {
+        const r = await api('GET', '/api/skills/syllabuses');
+        if (r.ok && r.syllabuses && r.syllabuses.length) {
+          const serverIds = new Set(r.syllabuses.map(s => s.id));
+          window._allSyllabuses = [...r.syllabuses, ...BUILTIN_SYLLABUSES.filter(s => !serverIds.has(s.id))];
+        } else {
+          window._allSyllabuses = BUILTIN_SYLLABUSES;
+        }
+      } catch {
+        window._allSyllabuses = BUILTIN_SYLLABUSES;
+      }
+
+      try {
+        const sf = await api('GET', '/api/skills/files');
+        if (sf.ok && sf.files.length) {
+          document.getElementById('skills-folder-list').innerHTML =
+            sf.files.map(f => `<div style="padding:5px 0;border-bottom:1px solid var(--brd);">📄 <strong>skills/${f.name}</strong> <span style="color:var(--mut);font-size:.7rem;">(${Math.round(f.size / 1024 * 10) / 10} KB)</span></div>`).join('') +
+            `<div style="padding:5px 0;">📁 <strong>skills/syllabus/</strong> — ${(window._allSyllabuses || []).length} syllabuses</div>`;
+        }
+      } catch {}
+
+      renderSyllabusList();
+    }
+
+    function renderSyllabusList() {
+      const container = document.getElementById('syllabus-list');
+      if (!container) return;
+      const list = window._allSyllabuses || BUILTIN_SYLLABUSES;
+
+      if (!list.length) {
+        container.innerHTML = '<div style="color:var(--mut);font-size:.82rem;text-align:center;padding:20px;">No syllabuses found. Add .json files to skills/syllabus/</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(s => {
+        const isActive = activeSyllabus && activeSyllabus.id === s.id;
+        const topicsArr = Array.isArray(s.topics) ? s.topics : [];
+        return `
+          <div style="border:1.5px solid ${isActive ? 'var(--grn)' : 'var(--brd)'};border-radius:9px;padding:10px 14px;background:${isActive ? '#f0fdf4' : 'var(--bg)'};cursor:pointer;transition:.12s;" onclick="selectSyllabus('${s.id}')">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:.85rem;font-weight:800;color:${isActive ? 'var(--grn)' : 'var(--txt)'};">${s.name || s.id}</div>
+              <span style="font-size:.65rem;font-weight:800;background:${'A-Level' === s.level ? '#fef3c7' : '#eff6ff'};color:${'A-Level' === s.level ? '#92400e' : 'var(--acc)'};border-radius:99px;padding:2px 8px;">${s.level || 'ZIMSEC'}</span>
+            </div>
+            ${topicsArr.length ? `<div style="font-size:.72rem;color:var(--mut);margin-top:3px;">${topicsArr.slice(0, 3).join(' · ')}${topicsArr.length > 3 ? ' +' + (topicsArr.length - 3) + ' more' : ''}</div>` : ''}
+            ${isActive ? '<div style="font-size:.7rem;color:var(--grn);font-weight:800;margin-top:4px;">✓ Active</div>' : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function selectSyllabus(id) {
+      const s = (window._allSyllabuses || BUILTIN_SYLLABUSES).find(x => x.id === id);
+      if (!s) return;
+      activeSyllabus = s;
+      localStorage.setItem('fp_active_syllabus', JSON.stringify(s));
+      renderSyllabusList();
+      renderActiveSyllabusBanner();
+    }
+
+    function renderActiveSyllabusBanner() {
+      const banner = document.getElementById('active-syllabus-banner');
+      if (!banner) return;
+      if (activeSyllabus) {
+        banner.style.display = 'flex';
+        document.getElementById('active-syllabus-name').textContent = activeSyllabus.name;
+        document.getElementById('active-syllabus-topics').textContent = activeSyllabus.topics.slice(0, 5).join(' · ');
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    function clearActiveSyllabus() {
+      activeSyllabus = null;
+      localStorage.removeItem('fp_active_syllabus');
+      renderSyllabusList();
+      renderActiveSyllabusBanner();
+    }
+
+    async function makeProject() {
+      if (!activeSyllabus) { alert('Please select a syllabus first.'); return; }
+
+      const topic  = document.getElementById('project-topic').value.trim();
+      const btn    = document.getElementById('make-project-btn');
+      const status = document.getElementById('project-status');
+
+      btn.disabled = true;
+      btn.textContent = '✨ Generating…';
+      status.style.display = 'block';
+      status.textContent = 'Prok AI is creating your study project…';
+
+      const prompt = `You are a study project generator for Zimbabwean students (ZIMSEC curriculum).
+Syllabus: ${activeSyllabus.name} (${activeSyllabus.level})
+Topics covered: ${activeSyllabus.topics.join(', ')}
+${topic ? `Focus topic: ${topic}` : 'Generate an overview project covering the main topics.'}
+
+Create a comprehensive study project file with:
+1. Learning objectives
+2. Key concepts and definitions
+3. Important formulas/facts (use $LaTeX$ for math)
+4. Step-by-step worked examples
+5. Practice questions with hints
+6. Study tips specific to ZIMSEC exams
+
+Format with clear ## headings. Be thorough and educational.`;
+
+      try {
+        const d = await api('POST', '/api/chat', { message: prompt });
+        const content = d.reply || 'Could not generate project.';
+        document.getElementById('project-content').textContent = content;
+        document.getElementById('project-output').style.display = 'block';
+        status.textContent = '✅ Project ready!';
+
+        const saved = { syllabus: activeSyllabus.name, topic: topic || 'Overview', content, createdAt: new Date().toISOString() };
+        localStorage.setItem('fp_last_project', JSON.stringify(saved));
+
+        if (window.renderMathInElement) {
+          setTimeout(() => renderMathInElement(document.getElementById('project-content'), {
+            delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
+            throwOnError: false
+          }), 100);
+        }
+      } catch (e) {
+        status.textContent = '❌ Failed: ' + e.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✨ Generate Study Project';
+        setTimeout(() => status.style.display = 'none', 3000);
+      }
+    }
+
+    function copyProject() {
+      const content = document.getElementById('project-content').textContent;
+      navigator.clipboard.writeText(content).then(() => alert('Copied to clipboard!'));
+    }
+
+    function saveProjectToChat() {
+      window.location.href = '/ai';
+    }
+
+    init();
+
+    // Poll ban status every 30s — redirect immediately if account gets suspended
+    setInterval(async () => {
+      try {
+        const r = await apiFetch('/api/ban-status');
+        if (!r) return;
+        const d = await r.json();
+        if (d.banned) location.reload();
+      } catch {}
+    }, 30000);
+
+    // ── apiFetch: thin wrapper with session token ────────────────────────
+    async function apiFetch(url, opts = {}) {
+      const headers = { 'x-session-token': token, ...(opts.headers || {}) };
+      if (opts.body && typeof opts.body === 'string') headers['Content-Type'] = 'application/json';
+      return fetch(url, { ...opts, headers });
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  NOTIFICATION SYSTEM
+    // ══════════════════════════════════════════════════════
+    let _notifData   = [];
+    let _popupQueue  = [];
+    let _popupActive = false;
+
+    // Dashboard routes eligible for popup display
+    const POPUP_ROUTES = ['/', '/~', '/~/account', '/me', '/~/subscription',
+      '/~/projectgen', '/~/projects', '/~/more', '/~/zimsec', '/~/leaderboard',
+      '/~/exam', '/ai'];
+    const _onPopupRoute = POPUP_ROUTES.some(r => location.pathname === r || location.pathname.startsWith(r + '/'));
+
+    async function loadNotifications() {
+      try {
+        const r = await apiFetch('/api/notifications');
+        if (!r || !r.ok) return;
+        const data = await r.json();
+        _notifData = data.notifications || [];
+        const unread = data.unread || 0;
+
+        // Bell visibility
+        const bellWrap = document.getElementById('notif-bell-wrap');
+        if (bellWrap) bellWrap.style.display = _notifData.length ? 'flex' : 'none';
+
+        // Red dot
+        const dot = document.getElementById('notif-dot');
+        if (dot) {
+          if (unread > 0) {
+            dot.textContent = unread > 99 ? '99+' : String(unread);
+            dot.classList.add('show');
+          } else {
+            dot.classList.remove('show');
+          }
+        }
+
+        // Queue popup notifications that are unread
+        if (_onPopupRoute) {
+          const popups = _notifData.filter(n => n.type === 'popup' && !n.read);
+          popups.forEach(n => {
+            if (!_popupQueue.find(p => p.id === n.id)) _popupQueue.push(n);
+          });
+          if (!_popupActive) showNextPopup();
+        }
+
+        // Refresh drawer if open
+        if (document.getElementById('notif-drawer').classList.contains('open')) renderDrawer();
+      } catch (e) { console.warn('[Notif]', e); }
+    }
+
+    function renderDrawer() {
+      const el = document.getElementById('nd-list');
+      if (!_notifData.length) { el.innerHTML = '<div class="nd-empty">No notifications yet</div>'; return; }
+      el.innerHTML = _notifData.map(n => {
+        const thumb = n.bgImage ? `<img src="${escH(n.bgImage)}" alt="">` : `<span>📢</span>`;
+        const timeStr = new Date(n.createdAt).toLocaleDateString('en-ZW',{day:'numeric',month:'short'});
+        return `
+          <div class="nd-item ${n.read ? '' : 'unread'}" onclick="markReadAndClose('${escH(n.id)}')">
+            <div class="nd-item-icon">${thumb}</div>
+            <div class="nd-item-body">
+              <div class="nd-item-title">${escH(n.title)}</div>
+              <div class="nd-item-desc">${escH(n.description || '')}</div>
+              <div class="nd-item-time">${timeStr}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function toggleNotifDrawer(e) {
+      e && e.stopPropagation();
+      const drawer = document.getElementById('notif-drawer');
+      if (drawer.classList.contains('open')) {
+        closeNotifDrawer();
+      } else {
+        drawer.classList.add('open');
+        renderDrawer();
+      }
+    }
+
+    function closeNotifDrawer() {
+      document.getElementById('notif-drawer').classList.remove('open');
+    }
+
+    async function markReadAndClose(id) {
+      closeNotifDrawer();
+      await apiFetch('/api/notifications/read', { method: 'POST', body: JSON.stringify({ notifId: id }) });
+      await loadNotifications();
+    }
+
+    async function markAllRead() {
+      await apiFetch('/api/notifications/read', { method: 'POST', body: JSON.stringify({ all: true }) });
+      closeNotifDrawer();
+      await loadNotifications();
+    }
+
+    function showNextPopup() {
+      if (!_popupQueue.length) { _popupActive = false; return; }
+      _popupActive = true;
+      const notif = _popupQueue.shift();
+      const bgImg = document.getElementById('npc-bg-img');
+      if (notif.bgImage) {
+        bgImg.src = notif.bgImage;
+        bgImg.style.display = 'block';
+        document.getElementById('npc-bg').style.background = 'transparent';
+      } else {
+        bgImg.style.display = 'none';
+        document.getElementById('npc-bg').style.background = '#f1f5f9';
+      }
+      document.getElementById('npc-title').textContent = notif.title;
+      document.getElementById('npc-desc').textContent  = notif.description || '';
+      document.getElementById('notif-popup-overlay').dataset.notifId = notif.id;
+      document.getElementById('notif-popup-overlay').classList.add('open');
+    }
+
+    async function dismissPopup() {
+      const overlay = document.getElementById('notif-popup-overlay');
+      const id = overlay.dataset.notifId;
+      overlay.classList.remove('open');
+      if (id) {
+        await apiFetch('/api/notifications/read', { method: 'POST', body: JSON.stringify({ notifId: id }) });
+        await loadNotifications();
+      }
+      setTimeout(showNextPopup, 300);
+    }
+
+    // Close drawer on outside click
+    document.addEventListener('click', e => {
+      const drawer = document.getElementById('notif-drawer');
+      const bell   = document.getElementById('notif-bell-wrap');
+      if (drawer && drawer.classList.contains('open') && !drawer.contains(e.target) && bell && !bell.contains(e.target)) {
+        closeNotifDrawer();
+      }
+    });
+
+    function escH(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Load notifications after init, then poll every 60s
+    setTimeout(loadNotifications, 1500);
+    setInterval(loadNotifications, 60000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <title>Account Suspended — Fundo Plus</title>
+    <style>:root{--red:#dc2626;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--blue:#2563eb}*{margin:0;padding:0;box-sizing:border-box}body{background:#fef2f2;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}.card{background:#fff;border:1.5px solid #fecaca;border-radius:16px;padding:2.5rem;max-width:480px;width:100%;text-align:center}.icon{font-size:3.5rem;margin-bottom:1rem}h1{font-size:1.4rem;font-weight:900;color:var(--red);margin-bottom:.5rem}.reason-box{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:1rem 1.25rem;margin:1.25rem 0;text-align:left}.reason-box .label{font-size:.72rem;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem}.reason-box .reason{font-size:.9rem;color:var(--text);font-weight:600}.reason-box .date{font-size:.75rem;color:var(--muted);margin-top:.25rem}.appeal-section{margin-top:1.5rem;text-align:left}.appeal-section h2{font-size:.95rem;font-weight:800;margin-bottom:.5rem}.appeal-section p{font-size:.82rem;color:var(--muted);margin-bottom:.75rem;line-height:1.5}.status-badge{display:inline-block;border-radius:99px;padding:.3rem .9rem;font-size:.75rem;font-weight:800;margin-bottom:.75rem}.status-none{background:#f1f5f9;color:var(--muted)}.status-pending{background:#fef9c3;color:#854d0e}.status-approved{background:#dcfce7;color:#166534}.status-rejected{background:#fee2e2;color:var(--red)}textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:.7rem;font-size:.85rem;color:var(--text);resize:vertical;min-height:90px;outline:0;font-family:inherit}textarea:focus{border-color:var(--blue)}.btn{width:100%;padding:.75rem;border:none;border-radius:9px;font-weight:800;font-size:.9rem;cursor:pointer;margin-top:.5rem}.btn-blue{background:var(--blue);color:#fff}.btn-blue:disabled{opacity:.5;cursor:not-allowed}.err{background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:.6rem .85rem;color:var(--red);font-size:.8rem;margin-bottom:.5rem;display:none}.ok{background:#f0fdf4;border:1px solid #86efac;border-radius:7px;padding:.6rem .85rem;color:#166534;font-size:.8rem;margin-bottom:.5rem;display:none}.logout-link{display:block;margin-top:1.25rem;font-size:.8rem;color:var(--muted);text-decoration:none}.logout-link:hover{color:var(--red)}</style>
+  </head>
+
+  <body>
+    <div class="card">
+      <div class="icon">🚫</div>
+
+      <h1>Your account has been suspended</h1>
+
+      <p style="font-size:.88rem;color:var(--muted)">Access to Fundo Plus has been restricted by an administrator.</p>
+
+      <div class="reason-box">
+        <div class="label">Reason for suspension</div>
+
+        <div class="reason" id="ban-reason">Loading…</div>
+
+        <div class="date" id="ban-date"></div>
+      </div>
+
+      <div class="appeal-section">
+        <h2>Submit an appeal</h2>
+
+        <div id="appeal-status-wrap" style="display:none">
+          <span class="status-badge" id="appeal-badge"></span>
+          <p id="appeal-status-msg"></p>
+        </div>
+
+        <div id="appeal-form">
+          <p>If you believe this suspension is a mistake, explain your case below. An administrator will review your appeal.</p>
+
+          <div class="err" id="err"></div>
+
+          <div class="ok" id="ok"></div>
+
+          <textarea id="appeal-msg" placeholder="Explain why your account should be reinstated…"></textarea>
+
+          <button class="btn btn-blue" id="appeal-btn" onclick="submitAppeal()">Submit Appeal</button>
+        </div>
+      </div>
+
+      <a class="logout-link" href="#" onclick="doLogout()">← Sign out and use a different account</a></div>
+
+      <script>const token=localStorage.getItem("fp_session");async function loadBanInfo(){try{const r=await fetch("/api/ban-status",{headers:{"x-session-token":token}}),d=await r.json();if(!d.banned)return void(window.location.href="/~");document.getElementById("ban-reason").textContent=d.reason||"No reason provided",document.getElementById("ban-date").textContent="Suspended: "+new Date(d.bannedAt).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});const status=d.appealStatus||"none",wrap=document.getElementById("appeal-status-wrap"),badge=document.getElementById("appeal-badge"),msg=document.getElementById("appeal-status-msg"),form=document.getElementById("appeal-form");"none"!==status&&(wrap.style.display="block",badge.className="status-badge status-"+status,badge.textContent={pending:"⏳ Appeal Pending",approved:"✅ Appeal Approved",rejected:"❌ Appeal Rejected"}[status]||status,"pending"===status?(msg.textContent="Your appeal is under review. Please wait for an administrator response.",form.style.display="none"):"approved"===status?(msg.textContent="Your appeal was approved. You will be redirected shortly.",setTimeout(()=>window.location.href="/~",2e3)):"rejected"===status&&(msg.textContent="Your appeal was rejected. Contact support if you believe this is an error.",form.style.display="none"))}catch(e){document.getElementById("ban-reason").textContent="Unable to load suspension details."}}async function submitAppeal(){const msg=document.getElementById("appeal-msg").value.trim(),err=document.getElementById("err"),ok=document.getElementById("ok");if(err.style.display=ok.style.display="none",!msg||msg.length<20)return err.textContent="Please write at least 20 characters explaining your case.",void(err.style.display="block");const btn=document.getElementById("appeal-btn");btn.disabled=!0,btn.textContent="Submitting…";try{const r=await fetch("/api/appeal",{method:"POST",headers:{"Content-Type":"application/json","x-session-token":token},body:JSON.stringify({message:msg})}),d=await r.json();if(!r.ok)return err.textContent=d.error||"Failed to submit",void(err.style.display="block");ok.textContent="Appeal submitted! An administrator will review it shortly.",ok.style.display="block",document.getElementById("appeal-form").style.display="none",document.getElementById("appeal-status-wrap").style.display="block",document.getElementById("appeal-badge").className="status-badge status-pending",document.getElementById("appeal-badge").textContent="⏳ Appeal Pending"}catch(e){err.textContent="Network error.",err.style.display="block"}finally{btn.disabled=!1,btn.textContent="Submit Appeal"}}function doLogout(){fetch("/api/auth/logout",{method:"POST",headers:{"x-session-token":token}}).catch(()=>{}),localStorage.clear(),window.location.href="/login"}token||(window.location.href="/login"),loadBanInfo()</script>
+    </body>
+  </html>

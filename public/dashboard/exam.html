@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Exams — Fundo Plus</title>
+  <style>
+    *,::after,::before{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f6f8ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--warn:#f59e0b;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:0 0 1rem;z-index:60;box-shadow:var(--sh);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+    .sb-logo{display:flex;align-items:center;gap:9px;padding:18px 16px 14px;border-bottom:1px solid var(--brd);font-size:1.05rem;font-weight:900;color:var(--acc)}
+    .sb-section{font-size:.65rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;padding:14px 16px 4px}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:1px 8px;border-radius:9px;cursor:pointer;font-size:.86rem;color:var(--mut);font-weight:600;text-decoration:none;transition:.12s}
+    .nav-item:hover{background:#eff6ff;color:var(--acc)}
+    .nav-item.active{background:#eff6ff;color:var(--acc);font-weight:700}
+    .nav-item svg{flex-shrink:0;opacity:.8}
+    .sb-bottom{margin-top:auto;border-top:1px solid var(--brd);padding-top:8px}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.3);z-index:55;backdrop-filter:blur(2px)}
+    .sidebar-overlay.show{display:block}
+    .topbar{position:fixed;top:0;left:228px;right:0;height:56px;background:#ffffffee;backdrop-filter:blur(10px);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:50;box-shadow:var(--sh)}
+    .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt)}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .avatar{width:32px;height:32px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;flex-shrink:0}
+    .ham{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--txt);flex-shrink:0}
+    .main{margin-left:228px;margin-top:56px;padding:28px 24px;min-height:calc(100vh - 56px)}
+    .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+    .ph-left h1{font-size:1.35rem;font-weight:900;letter-spacing:-.3px}
+    .ph-left p{font-size:.82rem;color:var(--mut);margin-top:3px}
+    .back-link{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--mut);text-decoration:none;padding:6px 12px;border-radius:8px;border:1.5px solid var(--brd);background:var(--surf);transition:.12s;margin-bottom:16px}
+    .back-link:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}
+    .filter-bar{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+    .fb-btn{padding:6px 14px;border-radius:99px;border:1.5px solid var(--brd);background:var(--surf);font-size:.78rem;font-weight:700;color:var(--mut);cursor:pointer;transition:.12s}
+    .fb-btn.on{border-color:var(--acc);background:#eff6ff;color:var(--acc)}
+    .exam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+    .exam-card{background:var(--surf);border:1.5px solid var(--brd);border-radius:var(--rad);padding:20px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:13px;transition:border-color .15s,box-shadow .15s}
+    .exam-card:hover{border-color:#bfdbfe;box-shadow:0 4px 24px rgba(37,99,235,.1)}
+    .exam-card.is-live{border-color:#86efac;background:linear-gradient(135deg,#fff 0%,#f0fdf4 100%)}
+    .exam-title{font-size:.96rem;font-weight:800;color:var(--txt)}
+    .subj-pill{font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:99px;background:#eff6ff;color:var(--acc);white-space:nowrap}
+    .exam-meta{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:.79rem;color:var(--mut)}
+    .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:.73rem;font-weight:800;padding:4px 11px;border-radius:99px}
+    .status-pill.upcoming{background:#fef3c7;color:#92400e}
+    .status-pill.live{background:#dcfce7;color:#166534}
+    .live-dot{width:7px;height:7px;border-radius:50%;background:#16a34a;animation:blink 1.2s infinite}
+    .status-pill.ended{background:#f1f5f9;color:var(--mut)}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .countdown{font-size:.76rem;font-weight:700;color:var(--warn)}
+    .btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.12s}
+    .btn-blue{background:var(--acc);color:#fff}.btn-blue:hover{background:var(--acc2)}
+    .btn-green{background:#16a34a;color:#fff}.btn-green:hover{background:#15803d}
+    .btn-ghost{background:var(--bg);color:var(--mut);border:1.5px solid var(--brd)}.btn-ghost:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}
+    .btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
+    .sect-label{font-size:.7rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+    .sect-wrap{margin-bottom:28px}
+    .empty{text-align:center;padding:60px 20px}
+    .empty h3{font-size:.95rem;font-weight:800;color:var(--mut);margin-bottom:5px}
+    .empty p{font-size:.82rem;color:var(--mut)}
+    .spin{display:inline-block;width:18px;height:18px;border:2.5px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite;vertical-align:middle;margin-right:7px}
+    @keyframes sp{to{transform:rotate(360deg)}}
+
+    /* ── Exam taking modal ── */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(4px)}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--surf);border-radius:16px;width:100%;max-width:760px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--brd);position:sticky;top:0;background:var(--surf);z-index:1;border-radius:16px 16px 0 0}
+    .modal-head h2{font-size:1rem;font-weight:800}
+    .modal-close{background:0 0;border:none;cursor:pointer;font-size:1.3rem;color:var(--mut);padding:4px 8px;border-radius:6px;line-height:1}
+    .modal-close:hover{background:var(--bg)}
+    .modal-body{padding:20px 24px 28px}
+    .timer-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .timer-pill{font-size:.82rem;font-weight:800;background:#fffbeb;border:1px solid #fcd34d;color:#92400e;border-radius:8px;padding:4px 12px}
+    .timer-pill.danger{background:#fef2f2;border-color:#fca5a5;color:var(--red)}
+    .prog-bar{flex:1;height:6px;background:var(--bg);border-radius:99px;overflow:hidden}
+    .prog-fill{height:100%;background:var(--acc);border-radius:99px;transition:width .3s}
+    .q-block{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--brd)}
+    .q-block:last-of-type{border-bottom:none}
+    .q-num{font-size:.68rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .q-text{font-size:.92rem;font-weight:600;margin-bottom:12px;line-height:1.55}
+    .opts{display:flex;flex-direction:column;gap:7px}
+    .opt{display:flex;align-items:center;gap:10px;padding:9px 13px;border:1.5px solid var(--brd);border-radius:9px;cursor:pointer;font-size:.86rem;transition:.12s}
+    .opt:hover{border-color:var(--acc);background:#eff6ff}
+    .opt.sel{border-color:var(--acc);background:#eff6ff}
+    .opt.correct{border-color:var(--grn);background:#f0fdf4;color:#15803d;pointer-events:none}
+    .opt.wrong{border-color:var(--red);background:#fef2f2;color:var(--red);pointer-events:none}
+    .opt-letter{width:22px;height:22px;border-radius:50%;background:var(--bg);border:1.5px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0}
+    .opt.sel .opt-letter{background:var(--acc);border-color:var(--acc);color:#fff}
+    .opt.correct .opt-letter{background:var(--grn);border-color:var(--grn);color:#fff}
+    .opt.wrong .opt-letter{background:var(--red);border-color:var(--red);color:#fff}
+    .sa-input{width:100%;border:1.5px solid var(--brd);border-radius:9px;padding:10px 12px;font-size:.88rem;font-family:inherit;resize:vertical;min-height:90px;outline:0;background:var(--bg)}
+    .sa-input:focus{border-color:var(--acc)}
+    .ai-fb{margin-top:8px;padding:10px 14px;border-radius:9px;font-size:.82rem;line-height:1.55}
+    .ai-fb.ok{background:#f0fdf4;border:1px solid #86efac;color:#15803d}
+    .ai-fb.partial{background:#fffbeb;border:1px solid #fcd34d;color:#92400e}
+    .ai-fb.bad{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
+    .result-wrap{text-align:center;padding:32px 16px}
+    .big-score{font-size:3.5rem;font-weight:900;color:var(--acc);line-height:1}
+    .grade-badge{display:inline-block;margin-top:14px;padding:8px 24px;border-radius:99px;font-size:1.3rem;font-weight:900}
+    .g-a{background:#dcfce7;color:#15803d}.g-b{background:#dbeafe;color:#1d4ed8}.g-c{background:#fffbeb;color:#92400e}.g-f{background:#fef2f2;color:#991b1b}
+    @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}.topbar{left:0}.main{margin-left:0}.ham{display:flex}}
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo"><img src="/images/logo.png" width="26" height="26" style="border-radius:8px" alt="">Fundo Plus</div>
+  <div class="sb-section">Main</div>
+  <a class="nav-item" href="/~/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</a>
+  <a class="nav-item" href="/~/#chat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Prok AI Chat</a>
+  <div class="sb-section">Academics</div>
+  <a class="nav-item active" href="/~/exam"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Exams</a>
+  <a class="nav-item" href="/~/leaderboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Leaderboard</a>
+  <div class="sb-section">More</div>
+  <a class="nav-item" href="/~/more"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</a>
+  <div class="sb-bottom">
+    <a class="nav-item" href="/me"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>My Profile</a>
+    <a class="nav-item" href="#" onclick="doLogout();return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</a>
+  </div>
+</nav>
+<header class="topbar">
+  <button class="ham" onclick="toggleSb()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+  <span class="topbar-title">ZIMSEC Exams</span>
+  <div class="topbar-right">
+    <div class="avatar" id="av">?</div>
+    <span style="font-size:.82rem;font-weight:700;color:var(--mut)" id="uname"></span>
+  </div>
+</header>
+
+<main class="main">
+  <a class="back-link" href="/~/more">← Back to More</a>
+  <div class="ph">
+    <div class="ph-left"><h1>ZIMSEC Exams</h1><p>Scheduled exams &amp; subscriber self-serve exams — unlock anytime, take within 3 days</p></div>
+    <a class="btn btn-ghost" href="/~/leaderboard"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Leaderboard</a>
+  </div>
+  <div class="filter-bar">
+    <button class="fb-btn on" onclick="setFilter('all',this)">All</button>
+    <button class="fb-btn" onclick="setFilter('upcoming',this)">Upcoming</button>
+    <button class="fb-btn" onclick="setFilter('live',this)">Live Now</button>
+    <button class="fb-btn" onclick="setFilter('ended',this)">Ended</button>
+  </div>
+  <div id="loading" style="text-align:center;padding:48px;color:var(--mut)"><span class="spin"></span>Loading exams…</div>
+  <div id="exams-container"></div>
+  <div class="empty" id="exams-empty" style="display:none">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <h3>No exams here</h3><p>Your teacher will schedule exams soon.</p>
+  </div>
+</main>
+
+<!-- Exam modal -->
+<div class="modal-bg" id="exam-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="modal-title">Exam</h2>
+        <div class="timer-bar" style="margin-top:8px;margin-bottom:0">
+          <span class="timer-pill" id="modal-timer" style="display:none">⏱ --:--</span>
+          <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+          <span style="font-size:.75rem;color:var(--mut);white-space:nowrap" id="prog-label"></span>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const tok=localStorage.getItem('fp_session');
+let me=null,allExams=[],activeFilter='all',curExam=null,curQs=[],answers={},submitted=false,timerIv=null;
+// Track exams already submitted this session so the button can't be re-clicked
+const submittedExams=new Set(JSON.parse(sessionStorage.getItem('fp_submitted_exams')||'[]'));
+
+async function api(m,u,b){
+  const o={method:m,headers:{'x-session-token':tok}};
+  if(b){o.headers['Content-Type']='application/json';o.body=JSON.stringify(b);}
+  const r=await fetch(u,o);const d=await r.json();
+  if(!r.ok)throw new Error(d.error||'Error');
+  return d;
+}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show')}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show')}
+async function doLogout(){try{await api('POST','/api/auth/logout')}catch{}localStorage.clear();location.href='/login'}
+
+function getStatus(ex){
+  if(!ex.scheduledAt){
+    // Subscriber self-serve exam
+    if(ex.submitted)return'ended';
+    if(ex.unlocked)return'live';
+    return'upcoming';
+  }
+  const s=new Date(ex.scheduledAt).getTime(),e=s+(ex.durationMins||60)*60000,n=Date.now();
+  if(n<s)return'upcoming';
+  if(n>=s&&n<=e)return'live';
+  return'ended';
+}
+function canEnter(ex){
+  if(!ex.scheduledAt)return ex.unlocked&&!ex.submitted;
+  const s=new Date(ex.scheduledAt).getTime(),n=Date.now();
+  return n>=s&&n<=s+60*60000; // 60-min entry window
+}
+
+async function unlockExam(examId,btn){
+  btn.disabled=true;btn.textContent='Unlocking…';
+  try{
+    const d=await api('POST',`/api/zimsec/exams/${examId}/unlock`);
+    // Refresh exam list to reflect new unlock state
+    await loadExams();
+  }catch(e){
+    alert(e.message||'Could not unlock exam.');
+    btn.disabled=false;btn.textContent='🔓 Unlock Exam';
+  }
+}
+
+function setFilter(f,btn){activeFilter=f;document.querySelectorAll('.fb-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderExams()}
+
+function renderExams(){
+  const cont=document.getElementById('exams-container'),emp=document.getElementById('exams-empty');
+  cont.innerHTML='';
+  const filtered=activeFilter==='all'?allExams:allExams.filter(e=>getStatus(e)===activeFilter);
+  if(!filtered.length){emp.style.display='block';return;}
+  emp.style.display='none';
+  const order=['live','upcoming','ended'],labels={live:'Live Now',upcoming:'Upcoming',ended:'Past Exams'};
+  const groups={};
+  filtered.forEach(e=>{const s=getStatus(e);(groups[s]=groups[s]||[]).push(e)});
+  order.forEach(status=>{
+    const list=groups[status];if(!list?.length)return;
+    const sect=document.createElement('div');sect.className='sect-wrap';
+    const start=status==='live'?'<span class="live-dot"></span>':'';
+    sect.innerHTML=`<div class="sect-label">${labels[status]}</div><div class="exam-grid" id="g-${status}"></div>`;
+    cont.appendChild(sect);
+    const grid=sect.querySelector(`#g-${status}`);
+    list.forEach(ex=>{
+      const s=ex.scheduledAt?new Date(ex.scheduledAt):null;
+      const ds=s?s.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'No date';
+      const ts=s?s.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';\
+      // Compute exam end time for display
+      const examEndTs = s ? new Date(s.getTime() + (ex.durationMins||60)*60000) : null;
+      const examEndsStr = examEndTs ? examEndTs.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+      const examEndsLabel = examEndTs ? `<span title="Exam closes at ${examEndsStr}">🔒 Closes ${examEndsStr}</span>` : '';
+      const isLive=status==='live',isUp=status==='upcoming',isEnd=status==='ended';
+      const card=document.createElement('div');
+      card.className='exam-card'+(isLive?' is-live':'');
+      card.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div class="exam-title">${ex.title}</div>
+          <span class="subj-pill">${ex.subject||'General'}</span>
+        </div>
+        <div class="exam-meta">
+          <span>📅 ${ds}</span>${ts?`<span>🕐 ${ts}</span>`:''}
+          <span>⏱ ${ex.durationMins||60} min</span>
+          <span>❓ ${ex.questionCount||'?'} Qs</span>
+          ${examEndsLabel}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span class="status-pill ${status}" id="sp-${ex.id}">${isLive?'<span class="live-dot"></span>':''} ${isLive?'Live Now':isUp?'Upcoming':'Ended'}</span>
+          ${isUp?`<span class="countdown" id="cd-${ex.id}">⏳ …</span>`:''}
+        </div>
+        <div id="act-${ex.id}">
+          ${ex.submitted
+            ? `<button class="btn btn-ghost" onclick="viewMyResult('${ex.id}')">📊 My Results</button>`
+            : !ex.scheduledAt
+              ? ex.unlocked
+                ? `<button class="btn btn-green" onclick="startExam('${ex.id}')">✏️ Start Exam</button><div style="font-size:.75rem;color:var(--mut);margin-top:4px">⏳ Window expires ${new Date(ex.expiresAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>`
+                : ex.canUnlock
+                  ? `<button class="btn btn-blue" id="ulbtn-${ex.id}" onclick="unlockExam('${ex.id}',this)">🔓 Unlock Exam</button><div style="font-size:.75rem;color:var(--mut);margin-top:4px">Opens a 3-day window to take this exam</div>`
+                  : `<button class="btn btn-ghost" disabled>🔒 Paid plan required</button>`
+              : isLive
+                ? submittedExams.has(ex.id)
+                  ? `<button class="btn btn-ghost" onclick="viewMyResult('${ex.id}')">📊 My Results</button>`
+                  : canEnter(ex)
+                    ? `<button class="btn btn-green" onclick="startExam('${ex.id}')">✏️ Start Exam</button>`
+                    : `<button class="btn btn-ghost" disabled title="Entry window closed (1 hour)">🔒 Entry Closed</button>`
+                : isEnd
+                  ? `<button class="btn btn-ghost" onclick="viewMyResult('${ex.id}')">📊 My Results</button>`
+                  : `<button class="btn btn-ghost" disabled>Not started yet</button>`
+          }
+        </div>`;
+      grid.appendChild(card);
+      if(isUp&&s){
+        const cdEl=document.getElementById('cd-'+ex.id);
+        const spEl=document.getElementById('sp-'+ex.id);
+        const actEl=document.getElementById('act-'+ex.id);
+        const tick=()=>{
+          const left=s-new Date();
+          if(left<=0){cdEl?.remove();spEl.className='status-pill live';spEl.innerHTML='<span class="live-dot"></span> Live Now';card.classList.add('is-live');actEl.innerHTML=submittedExams.has(ex.id)?`<button class="btn btn-ghost" onclick="viewMyResult('${ex.id}')">📊 My Results</button>`:canEnter(ex)?`<button class="btn btn-green" onclick="startExam('${ex.id}')">✏️ Start Exam</button>`:`<button class="btn btn-ghost" disabled>🔒 Entry Closed</button>`;return;}
+          const h=Math.floor(left/3600000),m=Math.floor((left%3600000)/60000),sc=Math.floor((left%60000)/1000);
+          if(cdEl)cdEl.textContent='⏳ '+(h>0?h+'h ':'')+m+'m '+sc+'s';
+        };
+        tick();setInterval(tick,1000);
+      }
+    });
+  });
+}
+
+async function loadExams(){
+  try{
+    const d=await api('GET','/api/zimsec/exams');
+    document.getElementById('loading').style.display='none';
+    allExams=d.exams||[];renderExams();
+  }catch(e){
+    document.getElementById('loading').innerHTML='<p style="color:var(--red)">⚠️ '+e.message+'</p>';
+  }
+}
+
+function startExam(examId){
+  // Redirect to dedicated exam-taking page
+  location.href='/~/exam/take?id='+examId;
+}
+
+function renderQuestions(){
+  const answered=Object.keys(answers).length;
+  document.getElementById('prog-fill').style.width=(answered/curQs.length*100)+'%';
+  document.getElementById('prog-label').textContent=`${answered}/${curQs.length}`;
+  const body=document.getElementById('modal-body');
+  if(submitted){return;}
+  const letters=['A','B','C','D','E'];
+  body.innerHTML=curQs.map((q,i)=>{
+    const id=q.id;
+    if(q.type==='sa'||!q.options?.length){
+      return `<div class="q-block" id="qb-${id}">
+        <div class="q-num">Question ${i+1} <span style="font-size:.65rem;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-left:4px">AI Marked</span></div>
+        <div class="q-text">${q.text}</div>
+        <textarea class="sa-input" placeholder="Type your answer…" oninput="setAns('${id}',this.value)">${answers[id]||''}</textarea>
+      </div>`;
+    }
+    const opts=q.options.map((o,oi)=>{
+      const letter=o.letter||letters[oi];const txt=o.text||o;
+      const sel=answers[id]===letter?'sel':'';
+      return `<div class="opt ${sel}" onclick="pickOpt('${id}','${letter}')"><div class="opt-letter">${letter}</div><span>${txt}</span></div>`;
+    }).join('');
+    return `<div class="q-block" id="qb-${id}">
+      <div class="q-num">Question ${i+1}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="opts">${opts}</div>
+    </div>`;
+  }).join('')+`<div style="display:flex;justify-content:flex-end;margin-top:20px">
+    <button class="btn btn-green" onclick="submitExam()">✅ Submit Exam</button>
+  </div>`;
+}
+
+function pickOpt(qId,letter){
+  if(submitted)return;
+  answers[qId]=letter;
+  const q=curQs.find(q=>q.id===qId);
+  const block=document.getElementById('qb-'+qId);
+  if(block&&q){
+    const letters=['A','B','C','D','E'];
+    block.querySelectorAll('.opt').forEach((el,oi)=>{
+      const l=q.options[oi]?.letter||letters[oi];
+      el.className='opt'+(answers[qId]===l?' sel':'');
+    });
+  }
+  const answered=Object.keys(answers).length;
+  document.getElementById('prog-fill').style.width=(answered/curQs.length*100)+'%';
+  document.getElementById('prog-label').textContent=`${answered}/${curQs.length}`;
+}
+
+function setAns(qId,val){answers[qId]=val;}
+
+async function submitExam(){
+  const unanswered=curQs.filter(q=>!answers[q.id]&&answers[q.id]!==0);
+  if(unanswered.length&&!confirm(`${unanswered.length} question(s) unanswered. Submit anyway?`))return;
+  clearInterval(timerIv);document.getElementById('modal-timer').style.display='none';
+  document.getElementById('modal-body').innerHTML='<div style="text-align:center;padding:48px"><span class="spin"></span><p style="margin-top:12px;color:var(--mut)">Submitting &amp; marking with AI…</p></div>';
+  try{
+    const d=await api('POST',`/api/zimsec/exams/${curExam.id}/submit`,{answers,timeTaken:0});
+    submitted=true;
+    submittedExams.add(curExam.id);
+    sessionStorage.setItem('fp_submitted_exams',JSON.stringify([...submittedExams]));
+    renderResult(d);loadExams();
+  }catch(e){alert('Submit failed: '+e.message);renderQuestions();}
+}
+
+function renderResult(d){
+  const pct=d.pct||0;
+  const grade=pct>=75?'A':pct>=60?'B':pct>=50?'C':'F';
+  const gc={A:'g-a',B:'g-b',C:'g-c',F:'g-f'}[grade];
+  const letters=['A','B','C','D','E'];
+  const breakdown=d.breakdown||{};
+  const review=curQs.map((q,i)=>{
+    const b=breakdown[q.id];if(!b)return'';
+    if(q.type==='sa'||!q.options?.length){
+      const score=b.score||0;const pctS=Math.round(score*100);
+      const cls=score>=0.8?'ok':score>=0.4?'partial':'bad';
+      const lbl=score>=0.8?'✅ Good':'⚡ Partial credit ('+pctS+'%)';
+      return `<div class="q-block"><div class="q-num">Q${i+1} · AI Marked</div><div class="q-text">${q.text}</div>
+        <div style="background:var(--bg);border-radius:8px;padding:9px 12px;font-size:.83rem;margin-bottom:8px;border:1px solid var(--brd)"><em>Your answer:</em> ${answers[q.id]||'<em>No answer</em>'}</div>
+        <div class="ai-fb ${cls}"><strong>${lbl}</strong> — ${b.explanation||''}</div></div>`;
+    }
+    const opts=q.options.map((o,oi)=>{
+      const letter=o.letter||letters[oi];const txt=o.text||o;
+      const isCorrect=String(b.correct_answer).toUpperCase()===letter;
+      const isGiven=String(b.given||'').toUpperCase()===letter;
+      let cls='';if(isCorrect)cls='correct';else if(isGiven&&!b.correct)cls='wrong';
+      return `<div class="opt ${cls}" style="pointer-events:none"><div class="opt-letter">${letter}</div><span>${txt}</span></div>`;
+    }).join('');
+    return `<div class="q-block"><div class="q-num">Q${i+1} · ${b.correct?'✅ Correct':'❌ Wrong'}</div><div class="q-text">${q.text}</div><div class="opts">${opts}</div></div>`;
+  }).join('');
+
+  document.getElementById('modal-body').innerHTML=`
+    <div class="result-wrap">
+      <div class="big-score">${pct}%</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--mut);margin-top:6px">${d.score} / ${d.total} marks</div>
+      <div class="grade-badge ${gc}">Grade ${grade}</div>
+    </div>
+    ${review?`<hr style="border:none;border-top:1px solid var(--brd);margin:8px 0"><h3 style="font-size:.9rem;font-weight:800;margin-bottom:16px">📝 Question Review</h3>${review}`:''}
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <a class="btn btn-blue" href="/~/leaderboard">View Leaderboard</a>
+    </div>`;
+}
+
+async function viewMyResult(examId){
+  try{
+    const d=await api('GET','/api/zimsec/results');
+    const r=(d.results||[]).filter(r=>r.examId===examId).sort((a,b)=>b.pct-a.pct)[0];
+    if(!r){alert('No result found for this exam.');return;}
+    document.getElementById('modal-title').textContent='Your Results';
+    document.getElementById('exam-modal').classList.add('open');
+    const pct=r.pct||0,grade=pct>=75?'A':pct>=60?'B':pct>=50?'C':'F';
+    const gc={A:'g-a',B:'g-b',C:'g-c',F:'g-f'}[grade];
+    document.getElementById('modal-body').innerHTML=`<div class="result-wrap">
+      <div class="big-score">${pct}%</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--mut);margin-top:6px">${r.score} / ${r.total}</div>
+      <div class="grade-badge ${gc}">Grade ${grade}</div>
+      <p style="font-size:.82rem;color:var(--mut);margin-top:14px">Submitted ${new Date(r.submittedAt).toLocaleString()}</p>
+      <button class="btn btn-ghost" style="margin-top:20px" onclick="closeModal()">Close</button>
+    </div>`;
+  }catch(e){alert(e.message)}
+}
+
+function startTimer(endTs){
+  const el=document.getElementById('modal-timer');el.style.display='inline-flex';
+  clearInterval(timerIv);
+  timerIv=setInterval(()=>{
+    const diff=endTs-Date.now();
+    if(diff<=0){clearInterval(timerIv);el.textContent="⏱ Time's up!";el.classList.add('danger');submitExam();return;}
+    const m=Math.floor(diff/60000),s=Math.floor((diff%60000)/1000);
+    el.textContent=`⏱ ${m}:${s.toString().padStart(2,'0')}`;
+    if(diff<300000)el.classList.add('danger');else el.classList.remove('danger');
+  },1000);
+}
+
+function closeModal(){
+  if(!submitted&&curQs.length>0&&!confirm('Leave exam? Progress will be lost.'))return;
+  clearInterval(timerIv);document.getElementById('exam-modal').classList.remove('open');
+  curQs=[];answers={};submitted=false;
+}
+
+(async()=>{
+  if(!tok){location.href='/login';return;}
+  try{
+    const d=await api('GET','/api/auth/me');
+    if(!d.ok){location.href='/login';return;}
+    me=d.user;
+    const n=me.name||me.email||'S';
+    document.getElementById('av').textContent=n[0].toUpperCase();
+    document.getElementById('uname').textContent=n;
+    loadExams();
+  }catch{location.href='/login';}
+})();
+</script>
+</body>
+</html>

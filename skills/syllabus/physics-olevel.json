@@ -1,0 +1,8 @@
+{
+  "id": "physics-olevel",
+  "name": "Physics O-Level",
+  "level": "O-Level",
+  "board": "ZIMSEC",
+  "topics": ["Mechanics","Waves","Electricity","Magnetism","Thermal Physics","Nuclear Physics"],
+  "description": "ZIMSEC O-Level Physics covering mechanics, waves, electricity and modern physics."
+}

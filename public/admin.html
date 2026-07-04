@@ -1,0 +1,1478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>FundaPlus Admin — XTech</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    *, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --green: #16a34a;
+      --green-dim: #15803d;
+      --green-light: #dcfce7;
+      --yellow: #d97706;
+      --yellow-light: #fef3c7;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --text: #0f172a;
+      --muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* ── NAV ── */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 58px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+    .logo-text { font-size: 1rem; font-weight: 900; color: var(--green); letter-spacing: -.3px; }
+    .nav-divider { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+    .nav-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+    .ntab { padding: 6px 13px; border: none; background: transparent; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; color: var(--muted); transition: .12s; white-space: nowrap; }
+    .ntab:hover { background: var(--surface2); color: var(--text); }
+    .ntab.active { color: var(--green); background: var(--green-light); }
+    .ntab.has-badge { position: relative; }
+    .tab-badge { position: absolute; top: 2px; right: 4px; background: var(--red); color: #fff; border-radius: 99px; font-size: .6rem; font-weight: 900; padding: 1px 5px; min-width: 16px; text-align: center; }
+    .nav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+    /* ── BUTTONS ── */
+    .btn { padding: 7px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .82rem; font-weight: 700; transition: .12s; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-dim); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+    .btn-danger { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: #fecaca; }
+
+    /* ── AUTH ── */
+    .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); }
+    .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 40px; width: min(400px, 95vw); text-align: center; box-shadow: var(--shadow-md); }
+    .auth-card h2 { margin-bottom: 6px; font-size: 1.4rem; font-weight: 900; color: var(--text); }
+    .auth-card p { color: var(--muted); font-size: .85rem; margin-bottom: 28px; }
+    input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: .9rem; outline: 0; margin-bottom: 12px; transition: .12s; }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
+    .err { color: var(--red); font-size: .8rem; margin-bottom: 10px; display: none; background: var(--red-light); border-radius: 7px; padding: 6px 10px; }
+    .err.show { display: block; }
+
+    /* ── LAYOUT ── */
+    .page { display: none; padding: 24px; max-width: 1180px; margin: 0 auto; }
+    .page.active { display: block; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .card h3 { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 800; margin-bottom: 16px; }
+    .card-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .card-sub { font-size: .82rem; color: var(--muted); margin-bottom: 16px; }
+
+    /* ── STATS ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .stat { background: var(--surface2); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+    .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--green); letter-spacing: -.5px; }
+    .stat-label { font-size: .75rem; color: var(--muted); margin-top: 3px; font-weight: 600; }
+
+    /* ── TABLES ── */
+    .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    th { text-align: left; padding: 10px 12px; background: var(--surface2); color: var(--muted); font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    /* ── BADGES ── */
+    .status-badge { padding: 3px 10px; border-radius: 99px; font-size: .72rem; font-weight: 800; }
+    .status-connected { background: var(--green-light); color: var(--green); }
+    .status-disconnected { background: var(--red-light); color: var(--red); }
+    .status-connecting { background: var(--yellow-light); color: var(--yellow); }
+    .badge-active { background: var(--green-light); color: #166534; border-radius: 99px; padding: 3px 10px; font-size: .72rem; font-weight: 800; display: inline-block; }
+    .badge-banned { background: var(--red-light); color: #991b1b; border-radius: 99px; padding: 3px 10px; font-size: .72rem; font-weight: 800; display: inline-block; }
+    .badge-pending { background: var(--yellow-light); color: #92400e; border-radius: 99px; padding: 3px 10px; font-size: .72rem; font-weight: 800; display: inline-block; }
+
+    /* ── ACTION BUTTONS ── */
+    .btn-ban    { padding: 4px 10px; background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; }
+    .btn-unban  { padding: 4px 10px; background: var(--green-light); color: #166534; border: 1px solid #86efac; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; }
+    .btn-approve { padding: 4px 12px; background: var(--green-light); color: #166534; border: 1px solid #86efac; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; margin-right: 4px; }
+    .btn-reject  { padding: 4px 12px; background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; }
+
+    /* ── BOT ── */
+    .pair-code { font-size: 2.2rem; font-weight: 900; letter-spacing: .2em; color: var(--green); background: var(--green-light); border: 2px dashed #86efac; border-radius: 12px; padding: 18px; text-align: center; margin: 14px 0; font-family: 'Courier New', monospace; }
+    .pair-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .pair-input-row input { flex: 1; margin: 0; }
+
+    /* ── MODAL ── */
+    #ban-modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+    #ban-modal.open { display: flex; }
+    #proof-img-modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); backdrop-filter: blur(4px); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+    #proof-img-modal.open { display: flex; }
+    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.75rem; max-width: 440px; width: 100%; box-shadow: var(--shadow-md); }
+    .modal-box h3 { margin-bottom: .75rem; color: var(--red); font-size: 1rem; font-weight: 900; }
+    #ban-modal-user { font-size: .85rem; color: var(--muted); margin-bottom: .75rem; }
+    #ban-reason-input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text); font-size: .83rem; resize: vertical; min-height: 80px; outline: 0; margin-bottom: .75rem; font-family: inherit; }
+    #ban-reason-input:focus { border-color: var(--red); }
+    .modal-actions { display: flex; gap: .5rem; }
+    .modal-actions button { flex: 1; padding: 9px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; font-size: .85rem; }
+    .modal-confirm { background: var(--red); color: #fff; }
+    .modal-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border) !important; }
+
+    /* ── SUPPORT CARD ── */
+    .msg-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 10px; transition: .12s; }
+    .msg-card:hover { border-color: #93c5fd; box-shadow: 0 0 0 3px var(--blue-light); }
+    .msg-card .msg-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .msg-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-light); color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 900; flex-shrink: 0; }
+    .msg-meta { flex: 1; min-width: 0; }
+    .msg-name { font-size: .88rem; font-weight: 800; }
+    .msg-email { font-size: .75rem; color: var(--muted); }
+    .msg-subject { font-size: .82rem; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+    .msg-body { font-size: .82rem; color: #374151; line-height: 1.6; background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
+    .msg-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .msg-time { font-size: .72rem; color: var(--muted); }
+
+    /* ── PROOF MODAL IMAGE ── */
+    .proof-modal-inner { background: var(--surface); border-radius: 16px; padding: 20px; max-width: 600px; width: 100%; box-shadow: var(--shadow-md); }
+    .proof-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface2); }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { flex-wrap: wrap; height: auto; padding: 10px 16px; gap: 8px; }
+      .nav-tabs { order: 3; width: 100%; overflow-x: auto; padding-bottom: 4px; }
+      .page { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-card">
+      <svg width="44" height="44" viewBox="0 0 36 36" fill="none" style="margin:0 auto 14px">
+        <rect width="36" height="36" rx="9" fill="#161b22" stroke="#30363d"/>
+        <path d="M10 12h16M10 18h10M10 24h13" stroke="#23d18b" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="27" cy="24" r="4" fill="#388bfd"/>
+      </svg>
+      <h2>FundaPlus Admin</h2>
+      <p>Admin access — FundaPlus Edu Platform</p>
+      <input type="password" id="passInput" placeholder="Admin password" onkeydown='if(event.key==="Enter") doLogin()'>
+      <div class="err" id="loginErr">Incorrect password</div>
+      <button class="btn btn-primary" style="width:100%;padding:11px" onclick="doLogin()">Sign in</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" style="display:none">
+    <nav>
+      <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
+      <span class="logo-text">FundaPlus Admin</span>
+      <div class="nav-divider"></div>
+      <div class="nav-tabs">
+        <button class="ntab active" onclick='showPage("overview")'>📊 Overview</button>
+        <button class="ntab" onclick='showPage("bot")'>🤖 Bot</button>
+        <button class="ntab" onclick='showPage("users")'>👥 Users</button>
+        <button class="ntab" onclick='showPage("bans")'>🚫 Bans</button>
+        <button class="ntab" onclick='showPage("subscriptions")'>💳 Subs</button>
+        <button class="ntab" onclick='showPage("proofs")'>🧾 Proofs</button>
+        <button class="ntab" onclick='showPage("support")'>💬 Support</button>
+        <button class="ntab" onclick='showPage("papers")'>📄 Papers</button>
+        <button class="ntab" onclick='showPage("freelinks")'>🔗 Free Links</button>
+        <button class="ntab" onclick='showPage("files")'>Files</button>
+        <button class="ntab" onclick='showPage("chats")'>Chats</button>
+        <button class="ntab" onclick='showPage("wishlist")'>Wishlist</button>
+        <button class="ntab" onclick='showPage("datafiles")'>🗄 Data</button>
+        <button class="ntab" onclick='showPage("appupdate")'>🚀 App Update</button>
+        <a class="ntab" href="/admin/notifications" style="text-decoration:none">📣 Notify</a>
+      </div>
+      <div class="nav-right">
+        <button class="btn btn-ghost" onclick="doSync()">⬆ Sync Now</button>
+        <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
+      </div>
+    </nav>
+
+    <!-- Overview -->
+    <div class="page active" id="page-overview">
+      <div class="card">
+        <h3>Web Users</h3>
+        <div class="stat-grid" id="webUserStats"><div style="color:var(--muted)">Loading...</div></div>
+      </div>
+      <div class="card">
+        <h3>Server</h3>
+        <div class="stat-grid" id="serverStats"><div style="color:var(--muted)">Loading...</div></div>
+      </div>
+      <div class="card">
+        <h3>Bot Status</h3>
+        <div id="botStatusBlock">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Bot -->
+    <div class="page" id="page-bot">
+      <div class="card">
+        <h3>WhatsApp Pairing</h3>
+        <div class="pair-input-row">
+          <input type="tel" id="phoneInput" placeholder="Phone number (e.g. 263712345678)">
+          <button class="btn btn-primary" onclick="doPair()">Pair</button>
+          <button class="btn btn-danger" onclick="doDisconnect()">Disconnect</button>
+        </div>
+        <div class="pair-code" id="pairCode" style="display:none">—</div>
+        <div style="font-size:.78rem;color:var(--muted)">Enter the code in WhatsApp → Linked Devices → Link a Device</div>
+        <div style="margin-top:12px">
+          <button class="btn btn-danger" onclick="doReset()">Reset session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="page" id="page-users">
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="user-search" placeholder="Search email, name, phone, ID…" style="flex:1;padding:7px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:.83rem;outline:0;min-width:200px;margin-bottom:0" oninput="searchUsers()">
+          <button class="btn btn-primary" style="font-size:.82rem;padding:7px 14px" onclick="loadUsers()">Refresh</button>
+        </div>
+      </div>
+      <div class="card">
+        <div id="users-table"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- Bans -->
+    <div class="page" id="page-bans">
+      <div class="card" style="margin-bottom:12px">
+        <h3 style="margin-bottom:.5rem">🚫 Active Bans &amp; Appeals</h3>
+        <p style="font-size:.82rem;color:var(--muted)">Manage suspended accounts and review user appeals.</p>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <h4 style="font-size:.82rem;font-weight:800;margin-bottom:.75rem;color:#f59e0b">⏳ Pending Appeals</h4>
+        <div id="appeals-table"><div style="color:var(--muted);font-size:.82rem">Loading…</div></div>
+      </div>
+      <div class="card">
+        <h4 style="font-size:.82rem;font-weight:800;margin-bottom:.75rem">All Active Bans</h4>
+        <div id="bans-table"><div style="color:var(--muted);font-size:.82rem">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- Papers -->
+    <div class="page" id="page-papers">
+      <div class="card">
+        <h3>Uploaded Papers</h3>
+        <div id="papersStorageInfo" style="font-size:.82rem;color:var(--muted);margin-bottom:12px"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Filename</th>
+              <th>Uploader</th>
+              <th>Size</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="papersTable">
+            <tr><td colspan="5" style="color:var(--muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Free Premium Links -->
+    <div class="page" id="page-freelinks">
+      <div class="card">
+        <div class="card-title">🔗 Create Free Premium Link</div>
+        <div class="card-sub">Generate a shareable link that grants users a free premium plan.</div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
+          <div>
+            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Plan</label>
+            <select id="fl-plan" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
+              <option value="lite">Lite</option>
+              <option value="plus" selected>Plus</option>
+              <option value="pro">Pro</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Max Uses (0 = unlimited)</label>
+            <input type="number" id="fl-maxuses" value="1" min="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
+          </div>
+          <div>
+            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Expires (optional)</label>
+            <input type="datetime-local" id="fl-expires" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
+          </div>
+          <div>
+            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Note / Label</label>
+            <input type="text" id="fl-note" placeholder="e.g. Discord promo, School event…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:auto;padding:10px 26px" onclick="createFreeLink()">Generate Link</button>
+
+        <!-- Generated link display -->
+        <div id="fl-result" style="display:none;margin-top:18px;padding:16px;background:var(--green-light);border:1.5px solid #86efac;border-radius:10px">
+          <div style="font-size:.75rem;font-weight:700;color:#166534;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">✅ Link Created — Share this URL:</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="text" id="fl-result-url" readonly style="flex:1;background:#fff;border:1px solid #86efac;font-family:monospace;font-size:.85rem;color:var(--text)">
+            <button onclick="copyLink()" class="btn btn-primary" style="width:auto;padding:9px 16px;white-space:nowrap">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Existing Links Table -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:0">All Promo Links</div>
+          <button class="btn btn-ghost" style="width:auto;padding:7px 14px" onclick="loadFreeLinks()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Note</th>
+                <th>Uses</th>
+                <th>Max Uses</th>
+                <th>Expires</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Link</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fl-table-body">
+              <tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Files -->
+    <div class="page" id="page-files">
+      <div class="card">
+        <h3>Data Files</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Size</th>
+              <th>Modified</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="filesTable">
+            <tr><td colspan="4" style="color:var(--muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Chats -->
+    <div class="page" id="page-chats">
+      <div class="card">
+        <h3>Synced Chats</h3>
+        <table>
+          <thead>
+            <tr><th>JID</th><th>Messages</th><th>Last Active</th></tr>
+          </thead>
+          <tbody id="chatsTable">
+            <tr><td colspan="3" style="color:var(--muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Wishlist -->
+    <div class="page" id="page-wishlist">
+      <div class="card">
+        <h3>Upgrade Wishlist</h3>
+        <div id="wishlistInfo" style="font-size:2rem;font-weight:800;color:var(--green)">—</div>
+        <div style="color:var(--muted);font-size:.85rem;margin-top:4px">users want to upgrade</div>
+      </div>
+    </div>
+
+    
+    <div class="page" id="page-subscriptions">
+      <div class="card">
+        <h3>💳 Active Subscriptions</h3>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <input id="sub-user-id" placeholder="User ID" style="flex:1;min-width:200px;margin:0;padding:7px 12px;font-size:.83rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:0">
+          <select id="sub-plan" style="padding:7px 12px;font-size:.83rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:0">
+            <option value="lite">Lite</option>
+            <option value="plus">Plus</option>
+            <option value="pro">Pro</option>
+            <option value="free">Free (remove)</option>
+          </select>
+          <button class="btn btn-primary" onclick="grantSub()">Grant Sub</button>
+          <button class="btn btn-ghost" onclick="loadSubs()">Refresh</button>
+        </div>
+        <div id="subs-result" style="font-size:.8rem;margin-bottom:10px"></div>
+        <div id="subs-table"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
+      </div>
+    </div>
+
+    
+    <div class="page" id="page-proofs">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="card-title">🧾 Payment Proofs</div>
+            <div class="card-sub">Review and approve subscription payment proofs. Approved images are stored to Supabase and deleted locally.</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="proofs-pending-count" style="font-size:.8rem;font-weight:700;color:var(--yellow);background:var(--yellow-light);padding:4px 10px;border-radius:99px"></span>
+            <button class="btn btn-ghost" onclick="loadProofs()">↺ Refresh</button>
+          </div>
+        </div>
+      </div>
+      <div id="proofs-table"><div style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Loading…</div></div>
+
+
+    <!-- ═══════════════ DATA FILE MANAGEMENT ═══════════════ -->
+    <div class="page" id="page-datafiles">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+          <div>
+            <div class="card-title">🗄 Data File Management</div>
+            <div class="card-sub">Sync JSON data files between Supabase and the server's data directory</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="loadDataFiles()" style="font-size:.8rem">🔄 Refresh</button>
+            <button class="btn btn-ghost" onclick="dataPullAll()" style="font-size:.8rem">⬇ Pull All from Supabase</button>
+            <button class="btn btn-primary" onclick="dataPushSelected()" style="font-size:.8rem">⬆ Push Selected → Supabase</button>
+            <button class="btn btn-ghost" onclick="dataPullSelected()" style="font-size:.8rem">⬇ Pull Selected from Supabase</button>
+          </div>
+        </div>
+
+        <!-- Upload from device -->
+        <div style="background:var(--surface2);border:1.5px dashed var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">📱 Upload JSON files from your device → Server</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="flex:1;min-width:200px;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:6px">
+              <span>📂</span>
+              <span id="uploadFileLabel">Select JSON file(s)…</span>
+              <input type="file" id="dataFileInput" accept=".json" multiple style="display:none" onchange="updateUploadLabel()">
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text);cursor:pointer;white-space:nowrap">
+              <input type="checkbox" id="pushAfterUpload"> Also push to Supabase
+            </label>
+            <button class="btn btn-primary" onclick="uploadDataFiles()" style="font-size:.8rem">Upload to Server</button>
+          </div>
+          <div id="uploadResult" style="margin-top:8px;font-size:.78rem;min-height:16px"></div>
+        </div>
+
+        <div id="dataSyncBanner" style="display:none;background:var(--yellow-light);color:var(--yellow);border-radius:8px;padding:8px 12px;font-size:.8rem;margin-bottom:10px;font-weight:700"></div>
+
+        <!-- Select + refresh row -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--muted)">
+            <input type="checkbox" id="selectAllData" onchange="toggleSelectAllData(this)"> Select all
+          </label>
+          <span id="dataFilesStatus" style="font-size:.78rem;color:var(--muted)"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px"></th>
+                <th>File</th>
+                <th>Server</th>
+                <th>Supabase</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dataFilesTable">
+              <tr><td colspan="5" style="color:var(--muted);padding:24px;text-align:center">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+      <div id="proof-img-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px">
+        <div class="proof-modal-inner">
+          <div class="proof-modal-header">
+            <h3 style="font-size:.95rem;font-weight:900;color:var(--text)" id="proof-modal-title">Payment Proof</h3>
+            <button onclick="closeProofModal()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;color:var(--muted)">✕</button>
+          </div>
+          <img id="proof-img" src="" alt="Payment proof" style="width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface2);border:1px solid var(--border)">
+          <div style="display:flex;gap:8px;margin-top:14px" id="proof-modal-actions"></div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="page" id="page-support">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="card-title">💬 Support Messages</div>
+            <div class="card-sub">Messages submitted by users via the support page</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 10px">
+              <input type="checkbox" id="supp-unresolved" onchange="loadSupport()" style="width:auto;margin:0;padding:0"> Unresolved only
+            </label>
+            <button class="btn btn-ghost" onclick="loadSupport()">↺ Refresh</button>
+          </div>
+        </div>
+      </div>
+      <div id="support-table"><div style="color:var(--muted);font-size:.85rem;padding:20px;text-align:center">Loading…</div></div>
+    </div>
+
+  </div>
+
+  <!-- Ban Modal -->
+  <div id="ban-modal">
+    <div class="modal-box">
+      <h3>🚫 Ban User</h3>
+      <p id="ban-modal-user"></p>
+      <textarea id="ban-reason-input" placeholder="Reason for ban (required)…"></textarea>
+      <div class="modal-actions">
+        <button class="modal-confirm" onclick="confirmBan()">Confirm Ban</button>
+        <button class="modal-cancel" onclick="closeBanModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = localStorage.getItem('adminToken') || '';
+    let _banTargetId = '';
+    const socket = io();
+
+    function api(url, opts) {
+      opts = opts || {};
+      opts.headers = Object.assign({ 'x-admin-token': adminToken, 'Content-Type': 'application/json' }, opts.headers || {});
+      return fetch(url, opts);
+    }
+
+    async function doLogin() {
+      const pass = document.getElementById('passInput').value;
+      if (!pass) return;
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          document.getElementById('loginErr').classList.add('show');
+          return;
+        }
+        adminToken = data.token;
+        localStorage.setItem('adminToken', adminToken);
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadAll();
+      } catch (e) {
+        alert('Login failed: ' + e.message);
+      }
+    }
+
+    function doLogout() {
+      localStorage.removeItem('adminToken');
+      location.reload();
+    }
+
+    function showPage(p) {
+      document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.ntab').forEach(el => el.classList.remove('active'));
+      const page = document.getElementById('page-' + p);
+      if (page) page.classList.add('active');
+      const order = ['overview', 'bot', 'users', 'bans', 'subscriptions', 'proofs', 'support', 'papers', 'freelinks', 'files', 'chats', 'wishlist', 'datafiles', 'appupdate'];
+      const idx = order.indexOf(p);
+      const tabs = document.querySelectorAll('.ntab');
+      if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+      if (p === 'users')         loadUsers();
+      if (p === 'bans')          loadBans();
+      if (p === 'papers')        loadPapers();
+      if (p === 'appupdate')     loadUpdateInfo();
+      if (p === 'files')         loadFiles();
+      if (p === 'chats')         loadChats();
+      if (p === 'wishlist')      loadWishlist();
+      if (p === 'subscriptions') loadSubs();
+      if (p === 'proofs')        loadProofs();
+      if (p === 'support')       loadSupport();
+      if (p === 'freelinks')     loadFreeLinks();
+      if (p === 'datafiles')     loadDataFiles();
+    }
+
+    function loadAll() {
+      loadOverview();
+      loadServer();
+      loadUsers();
+      loadBans();
+    }
+
+    async function loadOverview() {
+      const statsEl = document.getElementById('webUserStats');
+      const botEl   = document.getElementById('botStatusBlock');
+      if (!adminToken) return; // not logged in yet
+
+      try {
+        const uRes = await api('/api/admin/users/search?q=');
+        if (uRes.status === 401) {
+          // Token expired — force re-login
+          localStorage.removeItem('adminToken');
+          adminToken = '';
+          document.getElementById('authScreen').style.display = 'block';
+          document.getElementById('dashboard').style.display  = 'none';
+          return;
+        }
+        if (!uRes.ok) throw new Error('Server error ' + uRes.status);
+        const users  = (await uRes.json()).users || [];
+        const total  = users.length;
+        const banned = users.filter(u => u.banned).length;
+        if (statsEl) {
+          statsEl.innerHTML = [
+            ['Total Users', total,          ''],
+            ['Active',      total - banned, 'color:var(--green)'],
+            ['Banned',      banned,         'color:#ef4444'],
+          ].map(([l, v, s]) => `
+            <div class="stat">
+              <div class="stat-val" style="${s}">${v}</div>
+              <div class="stat-label">${l}</div>
+            </div>`).join('');
+        }
+      } catch (e) {
+        if (statsEl) statsEl.innerHTML = `<div style="color:#ef4444;font-size:.82rem">Error: ${e.message}</div>`;
+      }
+
+      try {
+        const sRes = await api('/api/admin/server');
+        if (!sRes.ok) throw new Error('Server error ' + sRes.status);
+        const s = await sRes.json();
+        if (botEl) {
+          botEl.innerHTML = `
+            <div class="stat-grid">
+              <div class="stat"><div class="stat-val" style="color:var(--green);font-size:.9rem">WATI</div><div class="stat-label">Provider</div></div>
+              <div class="stat"><div class="stat-val" style="font-size:.9rem">${s.uptime || '—'}</div><div class="stat-label">Uptime</div></div>
+              <div class="stat"><div class="stat-val" style="font-size:.9rem">${s.heapUsed || '—'}</div><div class="stat-label">Heap Used</div></div>
+              <div class="stat"><div class="stat-val" style="font-size:.9rem">${s.nodeVersion || '—'}</div><div class="stat-label">Node</div></div>
+            </div>`;
+        }
+      } catch (e) {
+        if (botEl) botEl.innerHTML = `<div style="color:#ef4444;font-size:.82rem">Error: ${e.message}</div>`;
+      }
+    }
+
+    async function loadServer() {
+      const el = document.getElementById('serverStats');
+      if (!el) return;
+      try {
+        const res = await api('/api/admin/server');
+        if (!res.ok) { el.innerHTML = `<div style="color:#ef4444;font-size:.8rem">Auth error ${res.status}</div>`; return; }
+        const d = await res.json();
+        el.innerHTML = `
+          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.uptime || '—'}</div><div class="stat-label">Uptime</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.platform || '—'}/${d.arch || ''}</div><div class="stat-label">Platform</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.nodeVersion || '—'}</div><div class="stat-label">Node</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.cpus || '—'}</div><div class="stat-label">CPUs</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.heapUsed || '—'} / ${d.totalMem || '—'}</div><div class="stat-label">Memory</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.freeMem || '—'}</div><div class="stat-label">Free</div></div>
+        `;
+      } catch (e) {
+        el.innerHTML = `<div style="color:#ef4444;font-size:.8rem">Error: ${e.message}</div>`;
+      }
+    }
+
+    async function loadUsers() {
+      const q = (document.getElementById('user-search') || {}).value || '';
+      const box = document.getElementById('users-table');
+      if (!box) return;
+      box.innerHTML = '<div style="color:var(--muted);font-size:.82rem">Loading users...</div>';
+      try {
+        const res = await api('/api/admin/users/search?q=' + encodeURIComponent(q));
+        if (!res.ok) {
+          box.innerHTML = `<div style="color:#ef4444">Error loading users: ${res.status} ${res.statusText}</div>`;
+          return;
+        }
+        const users = (await res.json()).users || [];
+        const total = users.length;
+        const linked = users.filter(u => u.jid).length;
+        const banned = users.filter(u => u.banned).length;
+
+        const statsEl = document.getElementById('webUserStats');
+        if (statsEl) {
+          statsEl.innerHTML = [
+            ['Web Users', total, ''],
+            ['WA Linked', linked, 'color:var(--green)'],
+            ['Banned', banned, 'color:#ef4444'],
+            ['Not Linked', total - linked, 'color:var(--yellow)']
+          ].map(([l, v, s]) => `
+            <div class="stat">
+              <div class="stat-val" style="${s}">${v}</div>
+              <div class="stat-label">${l}</div>
+            </div>
+          `).join('');
+        }
+
+        if (!users.length) {
+          box.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No users found.</div>';
+          return;
+        }
+
+        const rows = users.map(u => {
+          const uid = String(u.id || '').replace(/'/g, '');
+          const uemail = String(u.email || u.phone || '').replace(/['"]/g, '');
+          const uname = (String(u.name || '') + ' ' + String(u.surname || '')).trim().replace(/['"]/g, '');
+          const joined = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('en-GB') : '—';
+          const badge = u.banned
+            ? '<span class="badge-banned">BANNED</span>'
+            : '<span class="badge-active">Active</span>';
+          const action = u.banned
+            ? `<button class="btn-unban" onclick="doUnban('${uid}')">Unban</button>`
+            : `<button class="btn-ban" onclick="openBanModal('${uid}','${uemail}','${uname}')">Ban</button>`;
+          return `
+            <tr>
+              <td style="font-family:monospace;font-size:.76rem">${u.email || u.phone || '—'}</td>
+              <td>${u.name || ''} ${u.surname || ''}</td>
+              <td style="font-size:.76rem">${u.school || '—'}</td>
+              <td>${u.age || '—'}</td>
+              <td>${u.jid ? '✅' : '❌'}</td>
+              <td style="font-size:.73rem;color:var(--muted)">${joined}</td>
+              <td>${badge}</td>
+              <td>${action}</td>
+            </tr>
+          `;
+        }).join('');
+
+        box.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Email / Phone</th>
+                <th>Name</th>
+                <th>School</th>
+                <th>Age</th>
+                <th>WA</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      } catch (e) {
+        box.innerHTML = `<div style="color:#ef4444">Error loading users: ${e.message}</div>`;
+      }
+    }
+
+    function searchUsers() {
+      clearTimeout(window._st);
+      window._st = setTimeout(loadUsers, 350);
+    }
+
+    async function loadBans() {
+      const bansBox = document.getElementById('bans-table');
+      const appealsBox = document.getElementById('appeals-table');
+      try {
+        const [bRes, aRes] = await Promise.all([
+          api('/api/admin/bans'),
+          api('/api/admin/appeals')
+        ]);
+        const bans = (await bRes.json()).bans || [];
+        const appeals = (await aRes.json()).appeals || [];
+
+        if (appealsBox) {
+          if (appeals.length) {
+            const rows = appeals.map(a => {
+              const uid = String(a.userId || '').replace(/'/g, '');
+              return `
+                <tr>
+                  <td><div style="font-weight:700;font-size:.82rem">${a.name || '—'}</div><div style="font-size:.75rem;color:var(--muted)">${a.email || '—'}</div></td>
+                  <td style="font-size:.78rem">${a.reason || '—'}</td>
+                  <td style="font-size:.78rem;font-style:italic">${a.appealMessage || '—'}</td>
+                  <td>
+                    <button class="btn-approve" onclick="resolveAppeal('${uid}','approved')">✅ Approve</button>
+                    <button class="btn-reject" onclick="resolveAppeal('${uid}','rejected')">❌ Reject</button>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+            appealsBox.innerHTML = `
+              <table>
+                <thead><tr><th>User</th><th>Banned For</th><th>Appeal</th><th>Actions</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            `;
+          } else {
+            appealsBox.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No pending appeals.</div>';
+          }
+        }
+
+        if (bansBox) {
+          if (bans.length) {
+            const rows = bans.map(b => {
+              const bid = String(b.userId || '').replace(/'/g, '');
+              const aBg = b.appealStatus === 'pending' ? '#fef9c3' : b.appealStatus === 'rejected' ? '#fef2f2' : '#f1f5f9';
+              const aCol = b.appealStatus === 'pending' ? '#854d0e' : b.appealStatus === 'rejected' ? '#ef4444' : '#64748b';
+              return `
+                <tr>
+                  <td><div style="font-weight:700;font-size:.82rem">${b.name || '—'}</div><div style="font-size:.75rem;color:var(--muted)">${b.email || '—'}</div></td>
+                  <td style="font-size:.78rem">${b.reason || '—'}</td>
+                  <td><span style="font-size:.72rem;font-weight:800;border-radius:99px;padding:2px 8px;background:${aBg};color:${aCol}">${b.appealStatus || 'none'}</span></td>
+                  <td style="font-size:.75rem;color:var(--muted)">${b.bannedAt ? new Date(b.bannedAt).toLocaleDateString('en-GB') : '—'}</td>
+                  <td><button class="btn-unban" onclick="doUnban('${bid}')">Unban</button></td>
+                </tr>
+              `;
+            }).join('');
+            bansBox.innerHTML = `
+              <table>
+                <thead><tr><th>User</th><th>Reason</th><th>Appeal</th><th>Banned At</th><th>Actions</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            `;
+          } else {
+            bansBox.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No active bans.</div>';
+          }
+        }
+      } catch (e) {
+        if (bansBox) bansBox.innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+      }
+    }
+
+    function openBanModal(id, email, name) {
+      _banTargetId = id;
+      document.getElementById('ban-modal-user').textContent = `${name} <${email}>`;
+      document.getElementById('ban-reason-input').value = '';
+      document.getElementById('ban-modal').classList.add('open');
+    }
+
+    function closeBanModal() {
+      document.getElementById('ban-modal').classList.remove('open');
+    }
+
+    async function confirmBan() {
+      const reason = document.getElementById('ban-reason-input').value.trim();
+      if (!reason) { alert('Reason is required.'); return; }
+      try {
+        const r = await api('/api/admin/ban', { method: 'POST', body: JSON.stringify({ userId: _banTargetId, reason }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Failed');
+        closeBanModal();
+        loadUsers();
+        loadBans();
+      } catch (e) {
+        alert('Failed: ' + e.message);
+      }
+    }
+
+    async function doUnban(userId) {
+      if (!confirm('Unban this user?')) return;
+      try {
+        const r = await api('/api/admin/unban', { method: 'POST', body: JSON.stringify({ userId }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Failed');
+        loadUsers();
+        loadBans();
+      } catch (e) {
+        alert('Failed: ' + e.message);
+      }
+    }
+
+    async function resolveAppeal(userId, decision) {
+      try {
+        const r = await api('/api/admin/appeals/' + userId + '/resolve', { method: 'POST', body: JSON.stringify({ decision }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Failed');
+        loadBans();
+        loadUsers();
+      } catch (e) {
+        alert('Failed: ' + e.message);
+      }
+    }
+
+    async function doPair() {
+      const phone = document.getElementById('phoneInput').value.trim();
+      if (!phone) return;
+      await fetch('/api/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+    }
+
+    async function doDisconnect() {
+      await fetch('/api/disconnect', { method: 'POST' });
+    }
+
+    async function doReset() {
+      if (confirm('Delete auth session and reset?')) await fetch('/api/reset', { method: 'POST' });
+    }
+
+    async function doSync() {
+      try {
+        await api('/api/admin/sync', { method: 'POST' });
+        alert('Synced!');
+      } catch (e) {
+        alert('Sync failed: ' + e.message);
+      }
+    }
+
+    async function loadPapers() {
+      const tbody = document.getElementById('papersTable');
+      if (!tbody) return;
+      try {
+        const res = await api('/api/admin/papers');
+        const papers = (await res.json()).papers || [];
+        if (!papers.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No papers uploaded.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = papers.map(p => `
+          <tr>
+            <td>${p.originalName || p.filename || '—'}</td>
+            <td>${p.uploader || '—'}</td>
+            <td>${((p.size || 0) / 1024 / 1024).toFixed(2)} MB</td>
+            <td>${p.uploadedAt ? new Date(p.uploadedAt).toLocaleDateString('en-GB') : '—'}</td>
+            <td><button class="btn-ban" onclick="deletePaper('${p.id}')">Delete</button></td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:#ef4444">Error: ${e.message}</td></tr>`;
+      }
+    }
+
+    async function deletePaper(id) {
+      if (!confirm('Delete this paper?')) return;
+      try {
+        await api('/api/admin/papers/' + id, { method: 'DELETE' });
+        loadPapers();
+      } catch (e) {
+        alert('Failed: ' + e.message);
+      }
+    }
+
+    async function loadFiles() {
+      const tbody = document.getElementById('filesTable');
+      if (!tbody) return;
+      try {
+        const res = await api('/api/admin/files');
+        const files = (await res.json()).files || [];
+        if (!files.length) {
+          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">No files.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = files.map(f => `
+          <tr>
+            <td style="font-family:monospace">${f.name}</td>
+            <td>${((f.size || 0) / 1024).toFixed(1)} KB</td>
+            <td>${f.modified ? new Date(f.modified).toLocaleDateString('en-GB') : '—'}</td>
+            <td><a href="/api/admin/files/${f.name}?token=${adminToken}" download style="color:var(--blue)">Download</a></td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color:#ef4444">Error: ${e.message}</td></tr>`;
+      }
+    }
+
+    async function loadChats() {
+      const tbody = document.getElementById('chatsTable');
+      if (!tbody) return;
+      try {
+        const res = await api('/api/admin/messages');
+        const data = await res.json();
+        const keys = Object.keys(data);
+        if (!keys.length) {
+          tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">No messages yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = keys.map(jid => {
+          const msgs = data[jid] || [];
+          const last = msgs[msgs.length - 1];
+          return `
+            <tr>
+              <td style="font-family:monospace;font-size:.76rem">${jid.split('@')[0]}</td>
+              <td>${msgs.length}</td>
+              <td style="font-size:.75rem;color:var(--muted)">${last?.ts ? new Date(last.ts).toLocaleString('en-GB') : '—'}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="3" style="color:#ef4444">Error: ${e.message}</td></tr>`;
+      }
+    }
+
+    async function loadWishlist() {
+      try {
+        const res = await api('/api/admin/wishlist');
+        const data = await res.json();
+        const el = document.getElementById('wishlistInfo');
+        if (el) el.textContent = data.upgrade || 0;
+      } catch (e) {}
+    }
+
+    async function loadSubs() {
+      const el = document.getElementById('subs-table');
+      if (!el) return;
+      try {
+        const res = await api('/api/admin/subs');
+        const d = await res.json();
+        const subs = d.subscriptions || {};
+        const rows = Object.entries(subs);
+        if (!rows.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No active subscriptions.</div>'; return; }
+        const planColors = { free:'#8b949e', lite:'#388bfd', plus:'#7c3aed', pro:'#ef4444' };
+        el.innerHTML = `<table><thead><tr><th>User ID</th><th>Plan</th><th>Status</th><th>Expires</th><th>Granted By</th><th>Action</th></tr></thead><tbody>
+          ${rows.map(([uid, s]) => `<tr>
+            <td style="font-family:monospace;font-size:.74rem">${uid}</td>
+            <td><span style="font-weight:800;color:${planColors[s.plan]||'#8b949e'}">${s.plan?.toUpperCase()}</span></td>
+            <td><span class="status-badge ${s.status==='active'?'status-connected':'status-disconnected'}">${s.status}</span></td>
+            <td style="font-size:.75rem;color:var(--muted)">${s.expiresAt ? new Date(s.expiresAt).toLocaleDateString() : 'Never'}</td>
+            <td style="font-size:.75rem;color:var(--muted)">${s.grantedBy||'—'}</td>
+            <td><button class="btn-unban" onclick="quickGrant('${uid}','free')">Remove</button></td>
+          </tr>`).join('')}
+        </tbody></table>`;
+      } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`; }
+    }
+
+    async function grantSub() {
+      const uid  = document.getElementById('sub-user-id').value.trim();
+      const plan = document.getElementById('sub-plan').value;
+      const res  = document.getElementById('subs-result');
+      if (!uid) { res.textContent = '⚠ Enter a user ID'; res.style.color = 'var(--yellow)'; return; }
+      try {
+        const r = await api('/api/admin/grant-sub', { method:'POST', body: JSON.stringify({ userId: uid, plan }) });
+        const d = await r.json();
+        res.textContent = d.ok ? `✅ Granted ${plan} to ${uid}` : ('Error: ' + d.error);
+        res.style.color = d.ok ? 'var(--green)' : 'var(--red)';
+        if (d.ok) loadSubs();
+      } catch(e) { res.textContent = 'Error: ' + e.message; res.style.color = 'var(--red)'; }
+    }
+
+    async function quickGrant(uid, plan) {
+      if (!confirm(`Set ${uid} to ${plan}?`)) return;
+      try {
+        await api('/api/admin/grant-sub', { method:'POST', body: JSON.stringify({ userId: uid, plan }) });
+        loadSubs();
+      } catch(e) { alert('Error: ' + e.message); }
+    }
+
+    async function loadProofs() {
+      const el = document.getElementById('proofs-table');
+      if (!el) return;
+      try {
+        const res = await api('/api/admin/proofs');
+        const d = await res.json();
+        const proofs = d.proofs || [];
+        const pending = proofs.filter(p => p.status === 'pending');
+        const cntEl = document.getElementById('proofs-pending-count');
+        if (cntEl) cntEl.textContent = pending.length ? `⏳ ${pending.length} pending` : '';
+        updateTabBadge('proofs', pending.length);
+        if (!proofs.length) {
+          el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">No payment proofs submitted yet.</div>';
+          return;
+        }
+        const stBadge = {
+          pending:  `<span class="badge-pending">⏳ Pending</span>`,
+          approved: `<span class="badge-active">✅ Approved</span>`,
+          rejected: `<span style="background:#fee2e2;color:#991b1b;border-radius:99px;padding:3px 10px;font-size:.72rem;font-weight:800;display:inline-block">❌ Rejected</span>`,
+        };
+        el.innerHTML = `<div class="table-wrap"><table><thead><tr>
+          <th>User</th><th>Plan</th><th>Status</th><th>Storage</th><th>Submitted</th><th>Image</th><th>Actions</th>
+          </tr></thead><tbody>
+          ${proofs.map(p => `<tr>
+            <td style="font-family:monospace;font-size:.74rem;color:var(--muted)">${p.userId}</td>
+            <td><span class="badge-active" style="background:var(--blue-light);color:var(--blue)">${p.plan?.toUpperCase()}</span></td>
+            <td>${stBadge[p.status] || p.status}</td>
+            <td style="font-size:.72rem">${p.supabaseUploaded ? '<span style="color:var(--green);font-weight:700">☁ Supabase</span>' : '<span style="color:var(--muted)">📁 Local</span>'}</td>
+            <td style="font-size:.75rem;color:var(--muted);white-space:nowrap">${new Date(p.submittedAt).toLocaleString()}</td>
+            <td>${p.status === 'pending' ? `<button class="btn-ghost btn" style="padding:3px 8px;font-size:.73rem" onclick="viewProofImg('${p.filename}','${p.id}','${p.userId}','${p.plan}','${p.status}')">🖼 View</button>` : (p.supabaseUploaded ? '<span style="font-size:.72rem;color:var(--muted)">☁ Stored</span>' : '<span style="font-size:.72rem;color:var(--muted)">Deleted</span>')}</td>
+            <td>${p.status === 'pending' ? `
+              <button class="btn-approve" onclick="reviewProofAction('${p.id}','approved')">✅ Approve</button>
+              <button class="btn-reject"  onclick="reviewProofAction('${p.id}','rejected')">❌ Reject</button>` :
+              `<span style="font-size:.74rem;color:var(--muted)">Reviewed ${p.reviewedAt ? '· ' + new Date(p.reviewedAt).toLocaleDateString() : ''}</span>`
+            }</td>
+          </tr>`).join('')}
+        </tbody></table></div>`;
+      } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`; }
+    }
+
+    function viewProofImg(filename, proofId, userId, plan, status) {
+      const modal = document.getElementById('proof-img-modal');
+      document.getElementById('proof-img').src = `/api/admin/proof-image/${filename}?adminKey=${adminToken}`;
+      document.getElementById('proof-modal-title').textContent = `${plan.toUpperCase()} Plan · ${userId}`;
+      const actEl = document.getElementById('proof-modal-actions');
+      actEl.innerHTML = status === 'pending' ? `
+        <button class="btn btn-primary" style="flex:1" onclick="reviewProofAction('${proofId}','approved');closeProofModal()">✅ Approve & Store to Supabase</button>
+        <button class="btn btn-danger"  onclick="reviewProofAction('${proofId}','rejected');closeProofModal()">❌ Reject</button>
+        <button class="btn btn-ghost"   onclick="closeProofModal()">Close</button>` :
+        `<button class="btn btn-ghost" style="width:100%" onclick="closeProofModal()">Close</button>`;
+      modal.style.display = 'flex';
+    }
+
+    function closeProofModal() { document.getElementById('proof-img-modal').style.display = 'none'; }
+
+    async function reviewProofAction(proofId, status) {
+      try {
+        const r = await api(`/api/admin/proof/${proofId}/review`, { method:'POST', body: JSON.stringify({ status }) });
+        const d = await r.json();
+        if (d.ok) {
+          const msg = status === 'approved'
+            ? 'Proof approved! Subscription activated. Image uploaded to Supabase and removed locally.'
+            : 'Proof rejected. Image deleted.';
+          alert(msg);
+          loadProofs();
+        } else alert('Error: ' + d.error);
+      } catch(e) { alert('Error: ' + e.message); }
+    }
+
+    async function loadSupport() {
+      const el = document.getElementById('support-table');
+      if (!el) return;
+      const unresolvedOnly = document.getElementById('supp-unresolved')?.checked;
+      try {
+        const res = await api('/api/admin/support');
+        const d = await res.json();
+        let msgs = d.messages || [];
+        if (unresolvedOnly) msgs = msgs.filter(m => !m.resolved);
+        if (!msgs.length) {
+          el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem">No messages found.</div>';
+          return;
+        }
+        el.innerHTML = msgs.map(m => {
+          const initials = (m.name||'?')[0].toUpperCase();
+          const date = new Date(m.createdAt).toLocaleString();
+          const resolved = m.resolved;
+          return `<div class="msg-card">
+            <div class="msg-header">
+              <div class="msg-avatar">${initials}</div>
+              <div class="msg-meta">
+                <div class="msg-name">${m.name || 'Unknown'} ${resolved ? '<span class="badge-active" style="font-size:.65rem">✓ Resolved</span>' : '<span class="badge-pending" style="font-size:.65rem">● Open</span>'}</div>
+                <div class="msg-email">${m.email || '—'} · ${date}</div>
+              </div>
+            </div>
+            <div class="msg-subject">📌 ${m.subject || 'No subject'}</div>
+            <div class="msg-body">${(m.message||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+            <div class="msg-footer">
+              <span class="msg-time">${m.userId ? '🔗 User ID: ' + m.userId : '👤 Guest'}</span>
+              ${!resolved ? `<button class="btn-approve" onclick="resolveSupport('${m.id}')">✓ Mark Resolved</button>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+        const openCount = msgs.filter(m => !m.resolved).length;
+        updateTabBadge('support', openCount);
+      } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`; }
+    }
+
+    async function resolveSupport(id) {
+      try {
+        await api(`/api/admin/support/${id}/resolve`, { method:'POST' });
+        loadSupport();
+      } catch(e) { alert('Error: ' + e.message); }
+    }
+
+    function updateTabBadge(tabName, count) {
+      const tabs = document.querySelectorAll('.ntab');
+      tabs.forEach(t => {
+        if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(`'${tabName}'`)) {
+          let badge = t.querySelector('.tab-badge');
+          if (count > 0) {
+            if (!badge) { badge = document.createElement('span'); badge.className = 'tab-badge'; t.classList.add('has-badge'); t.appendChild(badge); }
+            badge.textContent = count > 99 ? '99+' : count;
+          } else if (badge) {
+            badge.remove(); t.classList.remove('has-badge');
+          }
+        }
+      });
+    }
+
+    socket.on('status', function(data) {
+      const pb = document.getElementById('botStatusBlock');
+      if (!pb) return;
+      pb.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span class="status-badge status-${data.status}">${data.status}</span>
+          <span style="color:var(--muted);font-size:.82rem">Phone: ${data.phone || '—'}</span>
+        </div>
+        <div style="font-size:.82rem;color:var(--muted)">
+          Messages: ${data.messages || 0} &nbsp;·&nbsp; Commands: ${data.commands || 0}
+          ${data.pairingCode ? `<br><strong style="color:var(--yellow)">Pairing code: ${data.pairingCode}</strong>` : ''}
+        </div>
+      `;
+      const pc = document.getElementById('pairCode');
+      if (pc) {
+        pc.textContent = data.pairingCode || '';
+        pc.style.display = data.pairingCode ? 'block' : 'none';
+      }
+    });
+
+    if (adminToken) {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadAll();
+    }
+
+    const PLAN_LABELS = { lite: '🥈 Lite', plus: '🥇 Plus', pro: '💎 Pro' };
+    const BASE_URL = location.origin;
+
+    async function createFreeLink() {
+      const plan     = document.getElementById('fl-plan').value;
+      const maxUses  = parseInt(document.getElementById('fl-maxuses').value) || 1;
+      const expiresRaw = document.getElementById('fl-expires').value;
+      const expiresAt  = expiresRaw ? new Date(expiresRaw).toISOString() : null;
+      const note     = document.getElementById('fl-note').value.trim();
+
+      try {
+        const r = await fetch('/api/admin/promo-links', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+          body: JSON.stringify({ plan, maxUses, expiresAt, note }),
+        });
+        const d = await r.json();
+        if (!d.ok) { alert('Error: ' + (d.error || 'Unknown')); return; }
+        const url = `${BASE_URL}/redeem/${d.link.code}`;
+        document.getElementById('fl-result-url').value = url;
+        document.getElementById('fl-result').style.display = 'block';
+        loadFreeLinks();
+      } catch (e) { alert('Network error: ' + e.message); }
+    }
+
+    function copyLink() {
+      const url = document.getElementById('fl-result-url').value;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('#fl-result .btn-primary');
+        btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+
+    async function loadFreeLinks() {
+      const tbody = document.getElementById('fl-table-body');
+      tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Loading…</td></tr>';
+      try {
+        const r = await fetch('/api/admin/promo-links', { headers: { 'x-admin-token': adminToken } });
+        const d = await r.json();
+        const links = Object.values(d.links || {}).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        if (!links.length) {
+          tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">No links created yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = links.map(l => {
+          const url = `${BASE_URL}/redeem/${l.code}`;
+          const expired = l.expiresAt && new Date(l.expiresAt) < new Date();
+          const exhausted = l.maxUses > 0 && l.uses >= l.maxUses;
+          const statusClass = l.active && !expired && !exhausted ? 'badge-active' : 'badge-banned';
+          const statusText  = !l.active ? 'Deactivated' : expired ? 'Expired' : exhausted ? 'Exhausted' : 'Active';
+          return `<tr>
+            <td><span class="status-badge badge-active">${PLAN_LABELS[l.plan] || l.plan}</span></td>
+            <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.note}">${l.note || '—'}</td>
+            <td>${l.uses}</td>
+            <td>${l.maxUses === 0 ? '∞' : l.maxUses}</td>
+            <td style="font-size:.78rem">${l.expiresAt ? new Date(l.expiresAt).toLocaleString() : '—'}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td style="font-size:.78rem">${new Date(l.createdAt).toLocaleDateString()}</td>
+            <td>
+              <button onclick="copyPromoUrl('${url}')" style="padding:4px 8px;font-size:.72rem;background:var(--blue-light);color:var(--blue);border:1px solid #93c5fd;border-radius:6px;cursor:pointer;font-weight:700">Copy URL</button>
+            </td>
+            <td style="white-space:nowrap">
+              ${l.active ? `<button onclick="deactivateLink('${l.code}')" class="btn-ban">Deactivate</button> ` : ''}
+              <button onclick="deleteLink('${l.code}')" class="btn-reject">Delete</button>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="9" style="color:var(--red);text-align:center;padding:24px">Error: ${e.message}</td></tr>`;
+      }
+    }
+
+    function copyPromoUrl(url) {
+      navigator.clipboard.writeText(url);
+    }
+
+    async function deactivateLink(code) {
+      if (!confirm('Deactivate this link? Users will no longer be able to use it.')) return;
+      await fetch(`/api/admin/promo-links/${code}/deactivate`, { method: 'POST', headers: { 'x-admin-token': adminToken } });
+      loadFreeLinks();
+    }
+
+    async function deleteLink(code) {
+      if (!confirm('Permanently delete this link?')) return;
+      await fetch(`/api/admin/promo-links/${code}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken } });
+      loadFreeLinks();
+    }
+
+
+    let _dataFiles = [];
+
+    function fmtBytes(b) {
+      if (!b) return '—';
+      if (b < 1024) return b + ' B';
+      if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+      return (b/(1024*1024)).toFixed(2) + ' MB';
+    }
+    function fmtDate(s) {
+      if (!s) return '—';
+      const d = new Date(s);
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    }
+
+    async function loadDataFiles() {
+      const tbody = document.getElementById('dataFilesTable');
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);padding:24px;text-align:center">Loading…</td></tr>';
+      try {
+        const res = await api('/api/admin/data/status');
+        const { files } = await res.json();
+        _dataFiles = files || [];
+        renderDataFiles();
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red);padding:16px">${e.message}</td></tr>`;
+      }
+    }
+
+    function renderDataFiles() {
+      const tbody = document.getElementById('dataFilesTable');
+      const status = document.getElementById('dataFilesStatus');
+      if (!_dataFiles.length) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);padding:24px;text-align:center">No files found.</td></tr>'; return; }
+
+      const localCount = _dataFiles.filter(f => f.localExists).length;
+      const bucketCount = _dataFiles.filter(f => f.inBucket).length;
+      status.textContent = `${_dataFiles.length} files — ${localCount} on server, ${bucketCount} in Supabase`;
+
+      tbody.innerHTML = _dataFiles.map(f => {
+        const localBadge = f.localExists
+          ? `<span class="badge-active">✓ ${fmtBytes(f.localSize)}</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">${fmtDate(f.localModified)}</div>`
+          : `<span class="badge-banned">✗ Missing</span>`;
+        const bucketBadge = f.inBucket
+          ? `<span class="badge-active">☁ ${fmtBytes(f.bucketSize)}</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">${fmtDate(f.bucketUpdated)}</div>`
+          : `<span style="background:var(--surface2);color:var(--muted);border-radius:99px;padding:3px 10px;font-size:.72rem;font-weight:700">Not in bucket</span>`;
+        const extraBadge = f.extra ? ' <span style="font-size:.65rem;background:var(--blue-light);color:var(--blue);border-radius:99px;padding:2px 7px;font-weight:700">extra</span>' : '';
+        return `
+          <tr>
+            <td><input type="checkbox" class="datafile-cb" data-name="${f.name}" style="width:16px;height:16px"></td>
+            <td style="font-weight:700;font-size:.83rem">${f.name}${extraBadge}</td>
+            <td>${localBadge}</td>
+            <td>${bucketBadge}</td>
+            <td>
+              <div style="display:flex;gap:5px;flex-wrap:wrap">
+                ${f.inBucket ? `<button class="btn btn-ghost" style="padding:3px 8px;font-size:.72rem" onclick="dataPull('${f.name}')">⬇ Pull</button>` : ''}
+                ${f.localExists ? `<button class="btn btn-ghost" style="padding:3px 8px;font-size:.72rem" onclick="dataPush('${f.name}')">⬆ Push</button>` : ''}
+                ${f.localExists ? `<a href="/api/admin/data/download/${f.name}?token=${adminToken}" download class="btn btn-ghost" style="padding:3px 8px;font-size:.72rem;text-decoration:none">⬇ DL</a>` : ''}
+                ${f.localExists ? `<button class="btn btn-danger" style="padding:3px 8px;font-size:.72rem" onclick="dataDelete('${f.name}')">🗑</button>` : ''}
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function toggleSelectAllData(cb) {
+      document.querySelectorAll('.datafile-cb').forEach(el => el.checked = cb.checked);
+    }
+
+    function getSelectedDataFiles() {
+      return [...document.querySelectorAll('.datafile-cb:checked')].map(el => el.dataset.name);
+    }
+
+    async function dataPull(name) {
+      const banner = document.getElementById('dataSyncBanner');
+      banner.style.display = 'block';
+      banner.textContent = `Pulling ${name} from Supabase…`;
+      const res = await api('/api/admin/data/pull', { method: 'POST', body: JSON.stringify({ files: [name] }) });
+      const { results } = await res.json();
+      const r = results?.[0];
+      banner.textContent = r?.ok ? `✅ ${name} pulled successfully.` : `❌ Pull failed: ${r?.error || 'unknown'}`;
+      loadDataFiles();
+      setTimeout(() => { banner.style.display = 'none'; }, 4000);
+    }
+
+    async function dataPush(name) {
+      const banner = document.getElementById('dataSyncBanner');
+      banner.style.display = 'block';
+      banner.textContent = `Pushing ${name} to Supabase…`;
+      const res = await api('/api/admin/data/push', { method: 'POST', body: JSON.stringify({ files: [name] }) });
+      const { results } = await res.json();
+      const r = results?.[0];
+      banner.textContent = r?.ok ? `✅ ${name} pushed to Supabase.` : `❌ Push failed: ${r?.error || 'unknown'}`;
+      loadDataFiles();
+      setTimeout(() => { banner.style.display = 'none'; }, 4000);
+    }
+
+    async function dataPullAll() {
+      const banner = document.getElementById('dataSyncBanner');
+      banner.style.display = 'block';
+      banner.textContent = '⏳ Pulling all managed files from Supabase…';
+      try {
+        await api('/api/admin/data/pull-all', { method: 'POST' });
+        banner.textContent = '✅ All files pulled from Supabase.';
+        loadDataFiles();
+      } catch(e) {
+        banner.textContent = '❌ Pull failed: ' + e.message;
+      }
+      setTimeout(() => { banner.style.display = 'none'; }, 5000);
+    }
+
+    async function dataPullSelected() {
+      const files = getSelectedDataFiles();
+      if (!files.length) return alert('Select files to pull first.');
+      const banner = document.getElementById('dataSyncBanner');
+      banner.style.display = 'block';
+      banner.textContent = `⏳ Pulling ${files.length} file(s) from Supabase…`;
+      const res = await api('/api/admin/data/pull', { method: 'POST', body: JSON.stringify({ files }) });
+      const { results } = await res.json();
+      const ok = results.filter(r => r.ok).length;
+      banner.textContent = `✅ ${ok}/${files.length} pulled.`;
+      loadDataFiles();
+      setTimeout(() => { banner.style.display = 'none'; }, 4000);
+    }
+
+    async function dataPushSelected() {
+      const files = getSelectedDataFiles();
+      if (!files.length) return alert('Select files to push first.');
+      const banner = document.getElementById('dataSyncBanner');
+      banner.style.display = 'block';
+      banner.textContent = `⏳ Pushing ${files.length} file(s) to Supabase…`;
+      const res = await api('/api/admin/data/push', { method: 'POST', body: JSON.stringify({ files }) });
+      const { results } = await res.json();
+      const ok = results.filter(r => r.ok).length;
+      banner.textContent = `✅ ${ok}/${files.length} pushed to Supabase.`;
+      loadDataFiles();
+      setTimeout(() => { banner.style.display = 'none'; }, 4000);
+    }
+
+    async function dataDelete(name) {
+      if (!confirm(`Delete ${name} from the server's data directory? (Supabase copy stays.)\nThis cannot be undone.`)) return;
+      const res = await fetch(`/api/admin/data/${name}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken } });
+      const j = await res.json();
+      if (j.ok) loadDataFiles();
+      else alert('Delete failed: ' + (j.error || 'unknown'));
+    }
+
+    function updateUploadLabel() {
+      const input = document.getElementById('dataFileInput');
+      const label = document.getElementById('uploadFileLabel');
+      const count = input.files?.length || 0;
+      label.textContent = count === 0 ? 'Select JSON file(s)…' : count === 1 ? input.files[0].name : `${count} files selected`;
+    }
+
+    async function uploadDataFiles() {
+      const input = document.getElementById('dataFileInput');
+      if (!input.files?.length) return alert('Select at least one JSON file.');
+      const push = document.getElementById('pushAfterUpload').checked;
+      const resultEl = document.getElementById('uploadResult');
+      resultEl.innerHTML = '<span style="color:var(--muted)">Uploading…</span>';
+      const fd = new FormData();
+      for (const f of input.files) fd.append('files', f);
+      if (push) fd.append('push', 'true');
+      try {
+        const res = await fetch('/api/admin/data/upload', { method: 'POST', headers: { 'x-admin-token': adminToken }, body: fd });
+        const { results } = await res.json();
+        const ok = results.filter(r => r.ok);
+        const fail = results.filter(r => !r.ok);
+        let html = '';
+        if (ok.length) html += `<span style="color:var(--green);font-weight:700">✅ ${ok.map(r => r.name + (r.pushed ? ' (pushed to Supabase)' : ' (server only)')).join(', ')}</span>`;
+        if (fail.length) html += `<span style="color:var(--red);font-weight:700"> ❌ ${fail.map(r => r.name + ': ' + r.error).join(', ')}</span>`;
+        resultEl.innerHTML = html;
+        input.value = '';
+        updateUploadLabel();
+        loadDataFiles();
+      } catch(e) {
+        resultEl.innerHTML = '<span style="color:var(--red)">Upload failed: ' + e.message + '</span>';
+      }
+    }
+
+  </script>
+</body>
+</html>

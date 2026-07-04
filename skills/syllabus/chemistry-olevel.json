@@ -1,0 +1,8 @@
+{
+  "id": "chemistry-olevel",
+  "name": "Chemistry O-Level",
+  "level": "O-Level",
+  "board": "ZIMSEC",
+  "topics": ["Atomic structure","Bonding","Reactions","Organic Chemistry","Acids & Bases","Electrochemistry"],
+  "description": "ZIMSEC O-Level Chemistry from atomic structure to organic reactions."
+}

@@ -1,0 +1,8 @@
+{
+  "id": "maths-alevel",
+  "name": "Mathematics A-Level",
+  "level": "A-Level",
+  "board": "ZIMSEC",
+  "topics": ["Pure Maths","Statistics","Mechanics","Further calculus","Complex numbers","Differential equations"],
+  "description": "ZIMSEC A-Level Mathematics — advanced pure and applied mathematics."
+}

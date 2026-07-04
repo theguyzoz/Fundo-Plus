@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <title>FundaPlus — Resources</title>
+    <style>*,::after,::before{box-sizing:border-box;margin:0;padding:0}:root{--bg:#f6f8ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--txt:#0f172a;--mut:#64748b;--rad:12px;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}nav{background:var(--surf);border-bottom:1px solid var(--brd);padding:0 20px;height:56px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh);position:sticky;top:0;z-index:20}.logo{display:flex;align-items:center;gap:8px;text-decoration:none;font-weight:900;font-size:.95rem;color:var(--acc)}.nav-right{margin-left:auto;display:flex;gap:8px}.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:.83rem;font-weight:700;transition:.12s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}.btn-p{background:var(--acc);color:#fff}.btn-p:hover{background:var(--acc2)}.btn-out{background:var(--surf);color:var(--acc);border:1.5px solid var(--acc)}.btn-out:hover{background:#eff6ff}.btn-grn{background:#25d366;color:#fff}.btn-grn:hover{background:#22c35e}main{max-width:1100px;margin:0 auto;padding:28px 16px 60px}.page-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px}.page-title{font-size:1.4rem;font-weight:900;letter-spacing:-.4px}.page-sub{font-size:.85rem;color:var(--mut);margin-top:3px}.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}.filter-btn{padding:6px 14px;border:1.5px solid var(--brd);border-radius:20px;background:var(--surf);cursor:pointer;font-size:.8rem;font-weight:600;color:var(--mut);transition:.12s}.filter-btn.active,.filter-btn:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}.search-bar{display:flex;gap:8px;margin-bottom:20px}.search-bar input{flex:1;padding:10px 14px;border:1.5px solid var(--brd);border-radius:9px;font-size:.88rem;outline:0;background:var(--surf);color:var(--txt)}.search-bar input:focus{border-color:var(--acc)}.resources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}.res-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rad);padding:18px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:10px;transition:.15s}.res-card:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(37,99,235,.1)}.res-icon{width:42px;height:42px;background:#eff6ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}.res-title{font-size:.92rem;font-weight:800;line-height:1.3;word-break:break-word}.res-meta{font-size:.74rem;color:var(--mut);display:flex;gap:8px;flex-wrap:wrap}.res-meta span{display:flex;align-items:center;gap:3px}.res-desc{font-size:.78rem;color:var(--mut);line-height:1.5;flex:1}.res-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}.res-btn{padding:7px 12px;border-radius:7px;border:none;cursor:pointer;font-size:.77rem;font-weight:700;display:inline-flex;align-items:center;gap:5px;text-decoration:none;transition:.12s}.res-btn-view{background:#eff6ff;color:var(--acc)}.res-btn-view:hover{background:#dbeafe}.res-btn-dl{background:var(--acc);color:#fff}.res-btn-dl:hover{background:var(--acc2)}.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.68rem;font-weight:700;background:#f1f5f9;color:var(--mut)}.empty{text-align:center;padding:60px 20px;color:var(--mut)}.empty-icon{font-size:3rem;margin-bottom:12px}.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}.modal-bg.open{display:flex}.modal{background:var(--surf);border-radius:14px;width:min(900px,100%);height:min(90vh,700px);display:flex;flex-direction:column;overflow:hidden}.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px;flex-shrink:0}.modal-title{font-weight:800;font-size:.95rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.modal-close{background:0 0;border:none;cursor:pointer;font-size:1.2rem;color:var(--mut);padding:4px;border-radius:5px;flex-shrink:0}.modal-close:hover{background:var(--bg)}iframe{flex:1;border:none;width:100%;background:#525659}.upload-section{background:var(--surf);border:1.5px dashed var(--brd);border-radius:var(--rad);padding:24px;margin-bottom:24px;text-align:center;cursor:pointer;transition:.15s}.upload-section:hover{border-color:var(--acc);background:#eff6ff}.upload-form{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rad);padding:20px;margin-bottom:24px}.fg{margin-bottom:12px}.fg label{display:block;font-size:.78rem;font-weight:700;margin-bottom:5px;color:var(--mut)}.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid var(--brd);border-radius:8px;font-size:.86rem;outline:0;color:var(--txt);background:#fff;font-family:inherit}.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc)}.al{padding:11px 14px;border-radius:8px;font-size:.83rem;margin-bottom:12px;display:none}.al.show{display:block}.al-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}.al-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}</style>
+  </head>
+
+  <body>
+    <nav>
+      <a class="logo" href="/">
+        <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
+          FundaPlus Resources</a>
+          <div class="nav-right">
+            <a class="btn btn-out" href="/dashboard">Dashboard</a>
+            <a class="btn btn-p" href="#uploadSection" onclick="toggleUpload()">+ Share Resource</a></div>
+          </nav>
+
+          <main>
+            <div class="upload-form" id="uploadForm" style="display:none">
+              <h3 style="font-size:1rem;font-weight:800;margin-bottom:14px">📤 Share a Resource</h3>
+
+              <p style="font-size:.82rem;color:var(--mut);margin-bottom:14px">Share past papers, textbooks, or study materials with the FundaPlus community. All uploads are public.</p>
+
+              <div class="al" id="uploadAl"></div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="fg">
+                  <label>Title *</label>
+                  <input id="upTitle" placeholder="e.g. ZIMSEC 2023 Maths O-Level"></div>
+
+                  <div class="fg">
+                    <label>Subject</label>
+                    <input id="upSubject" placeholder="e.g. Mathematics"></div>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="fg">
+                      <label>Year</label>
+                      <input id="upYear" placeholder="e.g. 2023" type="number" min="1990" max="2030"></div>
+
+                      <div class="fg">
+                        <label>Level</label>
+                        <select id="upLevel">
+                          <option value="">Any</option>
+                          <option>O-Level</option>
+                          <option>A-Level</option>
+                          <option>Primary</option>
+                          <option>University</option>
+                          <option>Other</option></select>
+                        </div>
+                      </div>
+
+                      <div class="fg">
+                        <label>Description</label>
+                        <textarea id="upDesc" rows="2" placeholder="Brief description of the resource..."></textarea>
+                      </div>
+
+                      <div class="fg">
+                        <label>PDF File *</label>
+                        <div class="upload-section" onclick='document.getElementById("upFile").click()'>
+                          <div style="font-size:1.5rem;margin-bottom:6px">📄</div>
+
+                          <p style="font-size:.85rem;color:var(--mut)">Click to select PDF (max 20 MB)</p>
+
+                          <p id="upFileName" style="font-size:.78rem;color:var(--acc);margin-top:6px;font-weight:700"></p>
+
+                          <input type="file" id="upFile" accept=".pdf" style="display:none" onchange='document.getElementById("upFileName").textContent=this.files[0]?.name||""'></div>
+                        </div>
+
+                        <div style="display:flex;gap:10px">
+                          <button class="btn btn-p" onclick="submitResource()">Upload Resource</button>
+
+                          <button class="btn" style="background:var(--bg);color:var(--mut)" onclick="toggleUpload()">Cancel</button>
+                        </div>
+                      </div>
+
+                      <div class="page-hdr">
+                        <div>
+                          <div class="page-title">📚 Community Resources</div>
+
+                          <div class="page-sub">Past papers, textbooks and study materials shared by the community</div>
+                        </div>
+                      </div>
+
+                      <div class="al" id="pageAl"></div>
+
+                      <div class="search-bar">
+                        <input id="searchInp" placeholder="Search by title, subject or year..." oninput="filterResources()"></div>
+
+                        <div class="filters" id="filterBtns">
+                          <button class="filter-btn active" onclick='setFilter("all",this)'>All</button>
+
+                          <button class="filter-btn" onclick='setFilter("O-Level",this)'>O-Level</button>
+
+                          <button class="filter-btn" onclick='setFilter("A-Level",this)'>A-Level</button>
+
+                          <button class="filter-btn" onclick='setFilter("Primary",this)'>Primary</button>
+
+                          <button class="filter-btn" onclick='setFilter("Other",this)'>Other</button>
+                        </div>
+
+                        <div class="resources-grid" id="resourcesGrid">
+                          <div class="empty">
+                            <div class="empty-icon">📂</div>
+
+                            <p>Loading resources...</p>
+                          </div>
+                        </div>
+                      </main>
+
+                      <div class="modal-bg" id="pdfModal">
+                        <div class="modal">
+                          <div class="modal-hdr">
+                            <span class="modal-title" id="modalTitle">Preview</span>
+                            <a id="modalDlBtn" class="res-btn res-btn-dl" href="#" download style="margin-right:8px">⬇ Download</a>
+                            <button class="modal-close" onclick="closeModal()">✕</button>
+                          </div>
+                          <iframe id="pdfFrame" title="PDF Preview"></iframe></div>
+                        </div>
+
+                        <script>
+const _token = localStorage.getItem('fp_session');
+let _allResources = [], _filter = 'all';
+
+if (!_token) { window.location.replace('/login'); }
+
+!function(){const _f=window.fetch;window.fetch=async function(...a){const r=await _f(...a);if(403===r.status){const c=r.clone();try{const d=await c.json();if(d&&'BANNED'===d.code){location.reload();return new Response('{}',{status:403});}}catch{}}return r;};}();
+
+async function loadResources() {
+  try {
+    const res = await fetch('/api/papers', { headers: { 'x-session-token': _token } });
+    if (res.status === 401 || res.status === 403) {
+      const d = await res.json().catch(() => ({}));
+      if (d.code === 'BANNED') { location.reload(); return; }
+      localStorage.clear(); window.location.replace('/login'); return;
+    }
+    const d = await res.json();
+    _allResources = (d.papers || []).filter(p => p.publicUrl || p.filename);
+    renderResources();
+  } catch(e) {
+    document.getElementById('resourcesGrid').innerHTML = `<div class="empty"><div class="empty-icon">😕</div><p>Could not load resources: ${e.message}</p></div>`;
+  }
+}
+
+function setFilter(f, btn) {
+  _filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterResources();
+}
+
+function filterResources() {
+  const q = document.getElementById('searchInp').value.toLowerCase();
+  let list = _allResources;
+  if (_filter !== 'all') list = list.filter(r => (r.level || r.subject || '').toLowerCase().includes(_filter.toLowerCase()));
+  if (q) list = list.filter(r => (r.originalName || '').toLowerCase().includes(q) || (r.subject || '').toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q) || (r.uploadedAt || '').includes(q));
+  renderFiltered(list);
+}
+
+function renderResources() { filterResources(); }
+
+function renderFiltered(list) {
+  const g = document.getElementById('resourcesGrid');
+  if (!list.length) {
+    g.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>No resources found${_filter !== 'all' ? ' for this filter' : ''}. Be the first to share!</p></div>`;
+    return;
+  }
+  g.innerHTML = '';
+  list.forEach(r => {
+    const name = r.originalName || r.filename || 'Resource';
+    const subj = r.subject || 'General';
+    const size = r.size ? `${(r.size/1024).toFixed(0)} KB` : '';
+    const date = r.uploadedAt ? new Date(r.uploadedAt).toLocaleDateString() : '';
+    const dlUrl = r.publicUrl || '#';
+    const card = document.createElement('div');
+    card.className = 'res-card';
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div class="res-icon">📄</div>
+        <div style="flex:1;min-width:0">
+          <div class="res-title">${escHtml(name)}</div>
+          <div class="res-meta">
+            ${subj ? `<span>📚 ${escHtml(subj)}</span>` : ''}
+            ${size ? `<span>💾 ${size}</span>` : ''}
+            ${date ? `<span>🗓 ${date}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      ${r.description ? `<div class="res-desc">${escHtml(r.description)}</div>` : ''}
+      <div class="res-actions">
+        ${dlUrl !== '#' ? `<button class="res-btn res-btn-view" onclick="previewPdf('${escHtml(dlUrl)}','${escHtml(name)}')">👁 Preview</button>` : ''}
+        ${dlUrl !== '#' ? `<a class="res-btn res-btn-dl" href="${escHtml(dlUrl)}" download="${escHtml(name)}" target="_blank">⬇ Download</a>` : '<span style="font-size:.74rem;color:var(--mut)">Not available for download</span>'}
+      </div>`;
+    g.appendChild(card);
+  });
+}
+
+function previewPdf(url, title) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('pdfFrame').src = url + '#toolbar=0';
+  document.getElementById('modalDlBtn').href = url;
+  document.getElementById('modalDlBtn').download = title;
+  document.getElementById('pdfModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('pdfModal').classList.remove('open');
+  document.getElementById('pdfFrame').src = '';
+}
+
+function toggleUpload() {
+  const f = document.getElementById('uploadForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block') f.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function submitResource() {
+  const title = document.getElementById('upTitle').value.trim();
+  const file = document.getElementById('upFile').files[0];
+  if (!title || !file) return showAl('uploadAl', 'err', 'Title and PDF file are required');
+  const form = new FormData();
+  form.append('file', file);
+  form.append('title', title);
+  form.append('subject', document.getElementById('upSubject').value);
+  form.append('description', document.getElementById('upDesc').value);
+  form.append('level', document.getElementById('upLevel').value);
+  form.append('year', document.getElementById('upYear').value);
+  showAl('uploadAl', 'ok', '⏳ Uploading...');
+  try {
+    const res = await fetch('/api/papers/public-upload', {
+      method: 'POST',
+      headers: { 'x-session-token': _token },
+      body: form
+    });
+    if (res.status === 401 || res.status === 403) return showAl('uploadAl', 'err', 'Please sign in to share resources. <a href="/login" style="color:var(--acc)">Sign in</a>');
+    const d = await res.json();
+    if (d.error) return showAl('uploadAl', 'err', d.error);
+    showAl('uploadAl', 'ok', '✅ Uploaded! Your resource is now public.');
+    document.getElementById('upTitle').value = '';
+    document.getElementById('upFile').value = '';
+    document.getElementById('upFileName').textContent = '';
+    loadResources();
+  } catch(e) {
+    showAl('uploadAl', 'err', 'Upload failed: ' + e.message);
+  }
+}
+
+function showAl(id, t, m) {
+  const el = document.getElementById(id);
+  el.className = 'al show al-' + (t === 'err' ? 'err' : 'ok');
+  el.innerHTML = m;
+  if (t === 'ok' && !m.includes('⏳')) setTimeout(() => el.classList.remove('show'), 6000);
+}
+
+function escHtml(t) {
+  return (t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function initNav() {
+  try {
+    const r = await fetch('/api/auth/me', { headers: { 'x-session-token': _token } });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.ok && d.user) {
+      const letter = (d.user.name || d.user.email || '?')[0].toUpperCase();
+      const navRight = document.getElementById('nav-right');
+      if (navRight) navRight.innerHTML = `<div class="avatar" style="width:36px;height:36px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">${letter}</div><a href="/~" class="btn btn-ghost" style="font-size:.82rem;">Dashboard</a>`;
+    }
+  } catch {}
+}
+
+document.getElementById('pdfModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('DOMContentLoaded', () => { initNav(); loadResources(); });
+</script>
+                      </body>
+                    </html>

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <title>Sign In — Fundo Plus</title>
+    <style>:root{--blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--err:#dc2626}*{margin:0;padding:0;box-sizing:border-box}body{background:#f8fafc;color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex}.split-left{flex:1;background:linear-gradient(145deg,#1e3a8a,#2563eb);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;position:relative;overflow:hidden}.split-left::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}.left-content{position:relative;z-index:1;text-align:center;color:#fff;max-width:360px}.left-logo{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:2.5rem}.left-logo span{font-size:1.4rem;font-weight:900;letter-spacing:-.5px}.left-title{font-size:1.8rem;font-weight:900;line-height:1.2;margin-bottom:1rem}.left-title em{font-style:normal;color:#93c5fd}.left-sub{font-size:.9rem;color:#bfdbfe;line-height:1.6;margin-bottom:2rem}.feature-list{display:flex;flex-direction:column;gap:.75rem;text-align:left}.feat-item{display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:#dbeafe}.feat-item svg{flex-shrink:0;opacity:.9}.split-right{width:480px;display:flex;align-items:center;justify-content:center;padding:2rem;background:#fff}@media(max-width:768px){.split-left{display:none}.split-right{width:100%}}.form-box{width:100%;max-width:380px}.form-logo{display:flex;align-items:center;gap:.6rem;margin-bottom:2rem}.form-logo span{font-size:1.1rem;font-weight:900;color:var(--blue)}h2{font-size:1.5rem;font-weight:900;letter-spacing:-.5px;margin-bottom:.25rem}.sub-text{font-size:.88rem;color:var(--muted);margin-bottom:1.75rem}.tabs{display:flex;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:1.5rem}.tab{flex:1;padding:.55rem;text-align:center;border-radius:7px;cursor:pointer;font-size:.85rem;font-weight:700;color:var(--muted);transition:.15s}.tab.active{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(0,0,0,.08)}.mode-toggle{display:flex;gap:.5rem;margin-bottom:1rem}.mode-btn{flex:1;padding:.5rem;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--muted);cursor:pointer;font-size:.82rem;font-weight:700;transition:.15s;display:flex;align-items:center;justify-content:center;gap:.4rem}.mode-btn.active{border-color:var(--blue);color:var(--blue);background:#eff6ff}.field{margin-bottom:.9rem}label{display:block;font-size:.75rem;font-weight:700;color:var(--text);margin-bottom:.35rem;letter-spacing:.02em}input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:.7rem 1rem;font-size:.92rem;color:var(--text);background:#fff;outline:0;transition:.15s}input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe}.hint{font-size:.72rem;color:var(--muted);margin-top:.25rem}.btn{width:100%;padding:.8rem;border:none;border-radius:9px;font-size:.95rem;font-weight:800;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.25rem}.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:var(--blue2)}.btn-blue:disabled{opacity:.5;cursor:not-allowed}.err-box{background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:.65rem .9rem;color:var(--err);font-size:.82rem;margin-bottom:.9rem;display:none}.footer-note{font-size:.75rem;color:var(--muted);text-align:center;margin-top:1.25rem}.footer-note a{color:var(--blue)}.divider{display:flex;align-items:center;gap:.75rem;margin:.75rem 0;color:var(--muted);font-size:.75rem}.divider::after,.divider::before{content:'';flex:1;height:1px;background:var(--border)}</style>
+
+    <script>!function(){const _fetch=window.fetch;window.fetch=async function(...args){const res=await _fetch(...args);if(403===res.status){const clone=res.clone();try{const d=await clone.json();if(d&&"BANNED"===d.code)return localStorage.clear(),window.location.replace("/banned"),new Response("{}",{status:403})}catch{}}return res}}()</script>
+  </head>
+
+  <body>
+    <div class="split-left">
+      <div class="left-content">
+        <div class="left-logo">
+          <img src="/images/logo.png" width="40" height="40" alt="Fundo Plus" style="border-radius:8px">
+
+            <span>Fundo Plus</span></div>
+
+            <div class="left-title">Study smarter with <em>Prok AI</em></div>
+
+            <div class="left-sub">Zimbabwe's AI education platform. ZIMSEC curriculum, past papers, quizzes and AI help — on web and WhatsApp.</div>
+
+            <div class="feature-list">
+              <div class="feat-item">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+                  <polyline points="20 6 9 17 4 12"/></svg>
+                  Prok AI — 24/7 study assistance</div>
+
+                  <div class="feat-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+                      <polyline points="20 6 9 17 4 12"/></svg>
+                      AI quiz generator with explanations</div>
+
+                      <div class="feat-item">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+                          <polyline points="20 6 9 17 4 12"/></svg>
+                          ZIMSEC past papers library</div>
+
+                          <div class="feat-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+                              <polyline points="20 6 9 17 4 12"/></svg>
+                              WhatsApp integration included</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="split-right">
+                          <div class="form-box">
+                            <div class="form-logo">
+                              <img src="/images/logo.png" width="30" height="30" alt="Fundo Plus" style="border-radius:8px">
+
+                                <span>Fundo Plus</span></div>
+
+                                <div class="tabs">
+                                  <div class="tab active" onclick='switchTab("login")'>Sign In</div>
+
+                                  <div class="tab" onclick='switchTab("register")'>Create Account</div>
+                                </div>
+
+                                <div class="err-box" id="err"></div>
+
+                                <div id="panel-login">
+                                  <h2>Welcome back</h2>
+
+                                  <p class="sub-text">Sign in to continue studying</p>
+
+                                  <div class="mode-toggle">
+                                    <button class="mode-btn active" id="mode-email" onclick='setMode("email")'>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                        <path d="M2 8l10 6 10-6"/></svg>
+                                        Email</button>
+
+                                        <button class="mode-btn" id="mode-phone" onclick='setMode("phone")'>
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <rect x="5" y="2" width="14" height="20" rx="2"/>
+                                            <circle cx="12" cy="18" r="1"/></svg>
+                                            Phone</button>
+                                          </div>
+
+                                          <div class="field" id="f-email">
+                                            <label>Email Address</label>
+                                            <input type="email" id="l-email" placeholder="you@gmail.com" autocomplete="email"></div>
+
+                                            <div class="field" id="f-phone" style="display:none">
+                                              <label>Phone Number</label>
+                                              <input type="tel" id="l-phone" placeholder="+263 71 234 5678"></div>
+
+                                              <div class="field">
+                                                <label>Password</label>
+                                                <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
+
+                                                <button class="btn btn-blue" id="login-btn" onclick="doLogin()">Sign In</button>
+                                              </div>
+
+                                              <div id="panel-reg" style="display:none">
+                                                <h2>Create account</h2>
+
+                                                <p class="sub-text">Join thousands of Zimbabwe students</p>
+
+                                                <div class="field">
+                                                  <label>Email Address</label>
+                                                  <input type="email" id="r-email" placeholder="you@gmail.com" autocomplete="email">
+                                                  <div class="hint">Gmail, Outlook, Yahoo, iCloud and other popular providers accepted.</div>
+                                                </div>
+
+                                                <div class="field">
+                                                  <label>Password</label>
+                                                  <input type="password" id="r-pass" placeholder="At least 6 characters" autocomplete="new-password"></div>
+
+                                                  <div class="field">
+                                                    <label>Confirm Password</label>
+                                                    <input type="password" id="r-pass2" placeholder="Repeat password"></div>
+
+                                                    <button class="btn btn-blue" id="reg-btn" onclick="doRegister()">Create Account</button>
+
+                                                    <p class="footer-note" style="margin-top:.75rem">By continuing you agree to our
+                                                    <a href="/terms">terms of service</a>.</p>
+                                                  </div>
+
+                                                  <p class="footer-note">
+                                                    <a href="/">← Back to home</a></p>
+                                                  </div>
+                                                </div>
+
+                                                <script>let loginMode = 'email';
+                                                function switchTab(t) {
+                                                document.getElementById('panel-login').style.display = t==='login'?'':'none';
+                                                document.getElementById('panel-reg').style.display   = t==='register'?'':'none';
+                                                document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(t==='login'&&i===0)||(t==='register'&&i===1)));
+                                                hideErr();
+                                                }
+                                                function setMode(m) {
+                                                loginMode=m;
+                                                document.getElementById('f-email').style.display = m==='email'?'':'none';
+                                                document.getElementById('f-phone').style.display = m==='phone'?'':'none';
+                                                document.getElementById('mode-email').classList.toggle('active',m==='email');
+                                                document.getElementById('mode-phone').classList.toggle('active',m==='phone');
+                                                }
+                                                function showErr(msg){const el=document.getElementById('err');el.textContent=msg;el.style.display='block';}
+                                                function hideErr(){document.getElementById('err').style.display='none';}
+                                                async function doLogin(){
+                                                hideErr();
+                                                const pass=document.getElementById('l-pass').value;
+                                                const email=loginMode==='email'?document.getElementById('l-email').value.trim():'';
+                                                const phone=loginMode==='phone'?document.getElementById('l-phone').value.trim():'';
+                                                if(!pass||(loginMode==='email'&&!email)||(loginMode==='phone'&&!phone))return showErr('Please fill in all fields.');
+                                                const btn=document.getElementById('login-btn');btn.disabled=true;btn.textContent='Signing in…';
+                                                try{
+                                                const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,phone,password:pass})});
+                                                const d=await r.json();
+                                                if(!r.ok)return showErr(d.error||'Login failed');
+                                                localStorage.setItem('fp_session',d.token);localStorage.setItem('fp_user',JSON.stringify(d.user));
+                                                const redir=new URLSearchParams(window.location.search).get('redirect');
+                                                window.location.href=d.onboarded?(redir||'/~'):('/onboarding'+(redir?'?redirect='+encodeURIComponent(redir):''));
+                                                }catch(e){showErr('Network error.');}finally{btn.disabled=false;btn.textContent='Sign In';}
+                                                }
+                                                async function doRegister(){
+                                                hideErr();
+                                                const email=document.getElementById('r-email').value.trim();
+                                                const pass=document.getElementById('r-pass').value;
+                                                const pass2=document.getElementById('r-pass2').value;
+                                                if(!email||!pass)return showErr('Email and password required.');
+                                                if(pass.length<6)return showErr('Password must be at least 6 characters.');
+                                                if(pass!==pass2)return showErr('Passwords do not match.');
+                                                const btn=document.getElementById('reg-btn');btn.disabled=true;btn.textContent='Creating account…';
+                                                try{
+                                                const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+                                                const d=await r.json();
+                                                if(!r.ok)return showErr(d.error||'Registration failed');
+                                                localStorage.setItem('fp_session',d.token);localStorage.setItem('fp_user',JSON.stringify(d.user));
+                                                const redir2=new URLSearchParams(window.location.search).get('redirect');
+                                                window.location.href='/onboarding'+(redir2?'?redirect='+encodeURIComponent(redir2):'');
+                                                }catch(e){showErr('Network error.');}finally{btn.disabled=false;btn.textContent='Create Account';}
+                                                }
+                                                document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(document.getElementById('panel-login').style.display!=='none')doLogin();else doRegister();}});
+                                                </script>
+                                                <script>
+                                                  (async function(){
+                                                  const token = localStorage.getItem('fp_session');
+                                                  if (!token) return;
+                                                  try {
+                                                  const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
+                                                  if (r.status === 403) { const d = await r.json().catch(()=>({})); if(d.code==='BANNED'){localStorage.clear();window.location.replace('/banned');return;} }
+                                                  if (!r.ok) { localStorage.removeItem('fp_session'); return; }
+                                                  const d = await r.json();
+                                                  if (d.ok) { window.location.replace('/~'); }
+                                                  else { localStorage.removeItem('fp_session'); }
+                                                  } catch { localStorage.removeItem('fp_session'); }
+                                                  })();</script>
+                                                <script>
+(function () {
+  var APP_AUTH_KEY = 'fp_app_auth_id';
+  var params       = new URLSearchParams(window.location.search);
+  var appAuthId    = params.get('app_auth');
+
+  if (!appAuthId) return;
+
+  fetch('/api/app/auth/pending', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ id: appAuthId }),
+  }).catch(function () {});
+
+  sessionStorage.setItem(APP_AUTH_KEY, appAuthId);
+
+  var banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#2563eb;color:#fff;font-size:13px;text-align:center;padding:8px 16px;z-index:9999;font-family:system-ui,sans-serif;';
+  banner.textContent = '📱 Sign in to continue in the Fundo Plus app';
+  document.body.prepend(banner);
+
+  var _fetch = window.fetch;
+  window.fetch = async function (input, init) {
+    var res = await _fetch(input, init);
+    var url = typeof input === 'string' ? input : (input.url || '');
+    var isAuth = url.includes('/api/auth/login') || url.includes('/api/auth/register');
+    if (!isAuth || !res.ok) return res;
+    var clone = res.clone();
+    try {
+      var data  = await clone.json();
+      var token = data && data.token;
+      var id    = sessionStorage.getItem(APP_AUTH_KEY);
+      if (token && id) {
+        fetch('/api/app/auth/confirm', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'x-session-token': token },
+          body:    JSON.stringify({ pendingId: id }),
+        }).then(function () {
+          sessionStorage.removeItem(APP_AUTH_KEY);
+          banner.style.background = '#16a34a';
+          banner.textContent      = '✅ App login confirmed — you can close this tab';
+        }).catch(function () {});
+      }
+    } catch (_) {}
+    return res;
+  };
+})();
+</script>
+                                                </body>
+                                              </html>

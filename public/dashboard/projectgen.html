@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Fundo Plus — Academic Project Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    *, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f0f4ff;
+      --surf: #ffffff;
+      --brd: #dde5f7;
+      --acc: #2952e3;
+      --acc2: #1a3bbf;
+      --acc-glow: rgba(41,82,227,.15);
+      --grn: #16a34a;
+      --red: #dc2626;
+      --txt: #0c1445;
+      --mut: #6374a0;
+      --gold: #d97706;
+      --rad: 14px;
+      --sh: 0 2px 8px rgba(41,82,227,.06), 0 8px 32px rgba(41,82,227,.08);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--txt);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      background-image: radial-gradient(ellipse at 20% 0%, rgba(41,82,227,.06) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 100%, rgba(41,82,227,.05) 0%, transparent 60%);
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--brd);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      height: 60px;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 12px rgba(41,82,227,.07);
+    }
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .topbar-logo .logo-mark {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--acc) 0%, #7c3aed 100%);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 900; font-size: .88rem; letter-spacing: -.5px;
+    }
+    .topbar-logo .logo-text { font-weight: 800; font-size: .95rem; color: var(--txt); }
+    .topbar-logo .logo-plus { color: var(--acc); }
+    .topbar-back {
+      color: var(--mut);
+      font-size: .82rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--brd);
+      margin-left: auto;
+      transition: .15s;
+    }
+    .topbar-back:hover { border-color: var(--acc); color: var(--acc); }
+
+    /* ── Main ── */
+    .main { max-width: 860px; margin: 0 auto; padding: 36px 20px 60px; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(41,82,227,.1), rgba(124,58,237,.1));
+      border: 1px solid rgba(41,82,227,.25);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: .74rem;
+      font-weight: 700;
+      color: var(--acc);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      color: var(--txt);
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+    .hero h1 em { font-style: italic; color: var(--acc); }
+    .hero p {
+      font-size: .9rem;
+      color: var(--mut);
+      max-width: 540px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── Cover Preview ── */
+    .cover-preview {
+      background: linear-gradient(160deg, #1a1a3e 0%, #0f1a5c 50%, #1a1a3e 100%);
+      border-radius: 16px;
+      padding: 30px 36px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 48px rgba(15,26,92,.25), 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .cover-preview::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(41,82,227,.25) 0%, transparent 70%);
+    }
+    .cover-preview::after {
+      content: '';
+      position: absolute;
+      bottom: -30px; left: -30px;
+      width: 150px; height: 150px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,.2) 0%, transparent 70%);
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: .68rem;
+      font-weight: 700;
+      color: rgba(255,255,255,.7);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .cover-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      color: #fff;
+      margin-bottom: 6px;
+      min-height: 1.6em;
+      line-height: 1.3;
+    }
+    .cover-title.placeholder { color: rgba(255,255,255,.3); font-style: italic; }
+    .cover-divider {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, var(--acc), #7c3aed);
+      border-radius: 2px;
+      margin: 16px 0;
+    }
+    .cover-meta { display: flex; flex-direction: column; gap: 6px; }
+    .cover-meta-row {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .8rem; color: rgba(255,255,255,.65);
+    }
+    .cover-meta-row strong { color: rgba(255,255,255,.9); font-weight: 600; }
+    .cover-meta-row .dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--acc); flex-shrink: 0;
+    }
+    .cover-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 24px; padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
+    .cover-bottom-brand { font-size: .75rem; color: rgba(255,255,255,.5); }
+    .cover-bottom-brand strong { color: rgba(255,255,255,.8); }
+    .cover-level-badge {
+      background: linear-gradient(135deg, var(--acc), #7c3aed);
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 100px;
+      letter-spacing: .04em;
+    }
+
+    /* ── Form Card ── */
+    .card {
+      background: var(--surf);
+      border: 1px solid var(--brd);
+      border-radius: var(--rad);
+      padding: 26px;
+      box-shadow: var(--sh);
+      margin-bottom: 20px;
+    }
+    .card-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .card-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, rgba(41,82,227,.12), rgba(124,58,237,.1));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .card-header h2 { font-size: 1rem; font-weight: 800; color: var(--txt); }
+    .card-header p { font-size: .78rem; color: var(--mut); margin-top: 1px; }
+
+    /* Form elements */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-size: .72rem;
+      font-weight: 800;
+      color: var(--mut);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+    label .req { color: var(--acc); }
+    select, input[type=text] {
+      width: 100%;
+      border: 1.5px solid var(--brd);
+      border-radius: 9px;
+      padding: 10px 13px;
+      font-size: .88rem;
+      color: var(--txt);
+      background: var(--surf);
+      outline: none;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      transition: .15s;
+      appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236374a0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 18px;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+    select:focus, input[type=text]:focus {
+      border-color: var(--acc);
+      box-shadow: 0 0 0 3px var(--acc-glow);
+    }
+    input[type=text]::placeholder { color: #aab4d4; }
+    .hint { font-size: .72rem; color: var(--mut); }
+
+    /* Divider */
+    .form-divider {
+      border: none;
+      border-top: 1px dashed var(--brd);
+      margin: 18px 0;
+    }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+    .btn-primary {
+      flex: 1;
+      padding: 13px 24px;
+      background: linear-gradient(135deg, var(--acc) 0%, #7c3aed 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: .92rem;
+      cursor: pointer;
+      transition: .15s;
+      box-shadow: 0 4px 16px rgba(41,82,227,.3);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      min-width: 180px;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(41,82,227,.4); }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      padding: 12px 18px;
+      background: var(--surf);
+      border: 1.5px solid var(--brd);
+      border-radius: 10px;
+      color: var(--mut);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: .15s;
+    }
+    .btn-secondary:hover { border-color: var(--acc); color: var(--acc); }
+
+    /* Status bar */
+    .status {
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: .84rem;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .status.show { display: flex; }
+    .status.loading { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .status.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .status.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .status-spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Progress Steps */
+    .progress-steps {
+      display: flex; gap: 0;
+      margin-bottom: 20px;
+    }
+    .step {
+      flex: 1;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--mut);
+      border-bottom: 2.5px solid var(--brd);
+      transition: .2s;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .step.active { color: var(--acc); border-bottom-color: var(--acc); }
+    .step.done { color: var(--grn); border-bottom-color: var(--grn); }
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--brd);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .68rem;
+      font-weight: 900;
+      color: var(--mut);
+    }
+    .step.active .step-num { background: var(--acc); color: #fff; }
+    .step.done .step-num { background: var(--grn); color: #fff; }
+
+    /* Result section */
+    .result-card {
+      background: var(--surf);
+      border: 1px solid var(--brd);
+      border-radius: var(--rad);
+      box-shadow: var(--sh);
+      overflow: hidden;
+    }
+    .result-header {
+      background: linear-gradient(135deg, #1a1a3e, #0f1a5c);
+      padding: 22px 26px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .result-title { font-weight: 800; font-size: 1rem; color: #fff; }
+    .result-sub { font-size: .76rem; color: rgba(255,255,255,.6); margin-top: 2px; }
+    .result-body { padding: 22px 26px; }
+
+    /* Download link box */
+    .download-box {
+      background: linear-gradient(135deg, rgba(22,163,74,.06), rgba(16,185,129,.06));
+      border: 1.5px solid rgba(22,163,74,.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    .download-box-title {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 800; color: var(--grn); font-size: .9rem;
+      margin-bottom: 12px;
+    }
+    .download-link-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .download-link-input {
+      flex: 1;
+      background: #fff;
+      border: 1px solid rgba(22,163,74,.25);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: .78rem;
+      color: var(--txt);
+      font-family: 'Outfit', monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .btn-copy-link {
+      padding: 9px 16px;
+      background: var(--grn);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: .8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: .15s;
+    }
+    .btn-copy-link:hover { background: #15803d; }
+    .expiry-note {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .72rem;
+      color: var(--gold);
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    /* PDF Viewer */
+    .pdf-viewer-wrap {
+      border: 1px solid var(--brd);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f0f4ff;
+      margin-top: 8px;
+      box-shadow: var(--sh);
+    }
+    .pdf-viewer-bar {
+      background: var(--txt);
+      color: #fff;
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pdf-viewer-bar span { opacity: .65; font-weight: 400; font-size: .72rem; }
+    .pdf-iframe {
+      width: 100%;
+      height: 680px;
+      border: none;
+      display: block;
+      background: #fff;
+    }
+    .pdf-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--mut);
+      font-size: .85rem;
+      gap: 10px;
+    }
+
+    .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .btn-dl {
+      padding: 11px 22px;
+      background: linear-gradient(135deg, var(--acc), #7c3aed);
+      border: none;
+      border-radius: 9px;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: .88rem;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 7px;
+      text-decoration: none;
+      transition: .15s;
+      box-shadow: 0 4px 14px rgba(41,82,227,.3);
+    }
+    .btn-dl:hover { transform: translateY(-1px); }
+
+    /* Info notes */
+    .info-box {
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: .78rem;
+      color: #92400e;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .info-box strong { color: #78350f; display: block; margin-bottom: 3px; }
+
+    @media (max-width: 600px) {
+      .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .btn-row { flex-direction: column; }
+      .result-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .download-link-row { flex-direction: column; }
+      .download-link-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <a class="topbar-logo" href="/~">
+      <div class="logo-mark">F<span style="font-size:.65rem">+</span></div>
+      <span class="logo-text">Fundo<span class="logo-plus">Plus</span></span>
+    </a>
+    <a class="topbar-back" href="/~">← Dashboard</a>
+  </div>
+
+  <div class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">✦ Powered by AI · ZIMSEC Aligned</div>
+      <h1>Academic <em>Project</em> Generator</h1>
+      <p>Generate a high-quality, ZIMSEC-structured project PDF. Fill in your details below and our AI will craft a 10+ page professional project document.</p>
+    </div>
+
+    <!-- Cover Preview -->
+    <div class="cover-preview" id="cover-preview">
+      <div class="cover-badge">📄 Fundo Plus · Project Document</div>
+      <div class="cover-title placeholder" id="preview-title">Your project title will appear here…</div>
+      <div class="cover-divider"></div>
+      <div class="cover-meta">
+        <div class="cover-meta-row">
+          <div class="dot"></div>
+          <span>Student: <strong id="preview-student">—</strong></span>
+        </div>
+        <div class="cover-meta-row">
+          <div class="dot"></div>
+          <span>School: <strong id="preview-school">—</strong></span>
+        </div>
+        <div class="cover-meta-row">
+          <div class="dot"></div>
+          <span>District / City: <strong id="preview-district">—</strong></span>
+        </div>
+      </div>
+      <div class="cover-bottom">
+        <div class="cover-bottom-brand">
+          Generated by <strong>Fundo Plus</strong> · fundo.plus
+        </div>
+        <div class="cover-level-badge" id="preview-level">O-Level</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-steps" id="progress-steps">
+      <div class="step active" id="step-1">
+        <div class="step-num">1</div>
+        Fill Details
+      </div>
+      <div class="step" id="step-2">
+        <div class="step-num">2</div>
+        Generate
+      </div>
+      <div class="step" id="step-3">
+        <div class="step-num">3</div>
+        Download
+      </div>
+    </div>
+
+    <!-- Info note -->
+    <div class="info-box">
+      <strong>📋 How it works</strong>
+      Fill in the project details below. Our AI will generate a comprehensive 10+ page ZIMSEC-structured academic project and give you a <strong>download link that expires in 1 hour</strong>. Make sure to download your PDF promptly.
+    </div>
+
+    <!-- Form Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎓</div>
+        <div>
+          <h2>Academic Details</h2>
+          <p>These will appear on the cover page of your project</p>
+        </div>
+      </div>
+
+      <div class="form-grid three">
+        <div class="form-group">
+          <label>Academic Level <span class="req">*</span></label>
+          <select id="level" onchange="updatePreview()">
+            <option value="Grade 7">Grade 7</option>
+            <option value="O-Level" selected>O-Level</option>
+            <option value="A-Level">A-Level</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Subject <span class="req">*</span></label>
+          <select id="subject" onchange="updatePreview()">
+            <option value="">— Choose subject —</option>
+            <option>Agriculture</option>
+            <option>Accounts / Bookkeeping</option>
+            <option>Biology</option>
+            <option>Business Studies</option>
+            <option>Chemistry</option>
+            <option>Commerce</option>
+            <option>Computer Science</option>
+            <option>English Language</option>
+            <option>Geography</option>
+            <option>History</option>
+            <option>Home Economics</option>
+            <option>Mathematics</option>
+            <option>Physical Education</option>
+            <option>Physics</option>
+            <option>Religious Studies</option>
+            <option>Technology</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year / Term</label>
+          <select id="year">
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="form-divider">
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Project Title <span class="req">*</span></label>
+          <input type="text" id="project-title" placeholder="e.g. The Impact of Climate Change on Maize Production in Zimbabwe" oninput="updatePreview()" maxlength="200">
+          <span class="hint">Be specific and descriptive — this becomes your project's main heading</span>
+        </div>
+        <div class="form-group">
+          <label>Student Name <span class="req">*</span></label>
+          <input type="text" id="student-name" placeholder="e.g. Tendai Moyo" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label>School Name <span class="req">*</span></label>
+          <input type="text" id="school-name" placeholder="e.g. Goromonzi High School" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label>District / City <span class="req">*</span></label>
+          <input type="text" id="district" placeholder="e.g. Harare, Gutu, Bulawayo" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label>Teacher / Supervisor (optional)</label>
+          <input type="text" id="teacher" placeholder="e.g. Mr. Chikwanda">
+        </div>
+      </div>
+
+      <hr class="form-divider">
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Additional Context (optional)</label>
+          <input type="text" id="context" placeholder="e.g. Focus on communal farming, compare 2010–2025 data, include case study from Manicaland…">
+          <span class="hint">Help the AI tailor the project more precisely to your needs</span>
+        </div>
+      </div>
+
+      <div class="status" id="status-bar">
+        <div class="status-spinner"></div>
+        <span id="status-text">Generating your project… This may take 30–60 seconds.</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="gen-btn" onclick="generateProject()">
+          <span>✨</span> Generate Project PDF
+        </button>
+        <button class="btn-secondary" onclick="clearForm()">Clear Form</button>
+      </div>
+    </div>
+
+    <!-- Result section (hidden initially) -->
+    <div id="result-section" style="display:none">
+      <div class="result-card">
+        <div class="result-header">
+          <div>
+            <div class="result-title">✅ Project Generated Successfully</div>
+            <div class="result-sub" id="result-sub">Your academic project PDF is ready to download</div>
+          </div>
+        </div>
+        <div class="result-body">
+
+          <!-- Download link box -->
+          <div class="download-box">
+            <div class="download-box-title">⬇️ Your Download Link</div>
+            <div class="download-link-row">
+              <div class="download-link-input" id="download-link-display">Generating link…</div>
+              <button class="btn-copy-link" onclick="copyLink()">📋 Copy</button>
+            </div>
+            <div class="expiry-note">
+              ⏱️ This link expires in <strong id="expiry-countdown">60:00</strong> — download your PDF now
+            </div>
+          </div>
+
+          <!-- Preview of content -->
+          <div style="font-weight:800;font-size:.82rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
+            📄 Content Preview
+          </div>
+          <div class="pdf-viewer-wrap" id="pdf-viewer-wrap" style="display:none">
+            <div class="pdf-viewer-bar">
+              📄 PDF Preview &nbsp;<span>Rendered directly — no plugin needed</span>
+            </div>
+            <div class="pdf-loading" id="pdf-loading">⏳ Loading PDF preview…</div>
+            <iframe class="pdf-iframe" id="pdf-iframe" style="display:none"
+              title="Project PDF Preview"
+              onload="document.getElementById('pdf-loading').style.display='none';this.style.display='block'">
+            </iframe>
+          </div>
+
+          <div class="action-row">
+            <a class="btn-dl" id="direct-dl-btn" href="#" download>
+              ⬇️ Download PDF
+            </a>
+            <button class="btn-secondary" onclick="resetForm()">+ New Project</button>
+            <button class="btn-secondary" onclick="copyContent()">📋 Copy Text</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <script>
+    const API_TOKEN = localStorage.getItem('fp_session');
+    if (!API_TOKEN) window.location.replace('/login');
+
+    let generatedContent = '';
+    let generatedTitle = '';
+    let downloadUrl = '';
+    let expiryTimer = null;
+    let expirySeconds = 3600;
+
+    function updatePreview() {
+      const title   = document.getElementById('project-title').value.trim();
+      const student = document.getElementById('student-name').value.trim();
+      const school  = document.getElementById('school-name').value.trim();
+      const district= document.getElementById('district').value.trim();
+      const level   = document.getElementById('level').value;
+
+      const titleEl = document.getElementById('preview-title');
+      titleEl.textContent = title || 'Your project title will appear here…';
+      titleEl.classList.toggle('placeholder', !title);
+
+      document.getElementById('preview-student').textContent  = student  || '—';
+      document.getElementById('preview-school').textContent   = school   || '—';
+      document.getElementById('preview-district').textContent = district || '—';
+      document.getElementById('preview-level').textContent    = level    || 'O-Level';
+    }
+
+    async function api(method, url, body) {
+      const opts = { method, headers: { 'x-session-token': API_TOKEN } };
+      if (body) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const r = await fetch(url, opts);
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error || `HTTP ${r.status}`);
+      }
+      return r.json();
+    }
+
+    function setStatus(type, text) {
+      const bar = document.getElementById('status-bar');
+      bar.className = `status show ${type}`;
+      if (type === 'loading') {
+        bar.innerHTML = `<div class="status-spinner"></div><span>${text}</span>`;
+      } else {
+        bar.innerHTML = `<span>${text}</span>`;
+      }
+    }
+    function clearStatus() {
+      const bar = document.getElementById('status-bar');
+      bar.className = 'status';
+      bar.innerHTML = '';
+    }
+
+    function setStep(n) {
+      for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById(`step-${i}`);
+        if (i < n) { el.className = 'step done'; el.querySelector('.step-num').textContent = '✓'; }
+        else if (i === n) { el.className = 'step active'; }
+        else { el.className = 'step'; }
+      }
+    }
+
+    function startExpiryTimer() {
+      expirySeconds = 3600;
+      clearInterval(expiryTimer);
+      expiryTimer = setInterval(() => {
+        expirySeconds--;
+        const m = String(Math.floor(expirySeconds / 60)).padStart(2, '0');
+        const s = String(expirySeconds % 60).padStart(2, '0');
+        const el = document.getElementById('expiry-countdown');
+        if (el) el.textContent = `${m}:${s}`;
+        if (expirySeconds <= 0) {
+          clearInterval(expiryTimer);
+          const el2 = document.getElementById('download-link-display');
+          if (el2) el2.textContent = '⛔ Link expired — please generate a new project';
+          const dlBtn = document.getElementById('direct-dl-btn');
+          if (dlBtn) { dlBtn.style.opacity = '.4'; dlBtn.style.pointerEvents = 'none'; }
+        }
+      }, 1000);
+    }
+
+    async function generateProject() {
+      const title    = document.getElementById('project-title').value.trim();
+      const student  = document.getElementById('student-name').value.trim();
+      const school   = document.getElementById('school-name').value.trim();
+      const district = document.getElementById('district').value.trim();
+      const level    = document.getElementById('level').value;
+      const subject  = document.getElementById('subject').value;
+      const year     = document.getElementById('year').value;
+      const teacher  = document.getElementById('teacher').value.trim();
+      const context  = document.getElementById('context').value.trim();
+
+      if (!title)    { alert('Please enter a project title.'); return; }
+      if (!student)  { alert('Please enter the student name.'); return; }
+      if (!school)   { alert('Please enter the school name.'); return; }
+      if (!district) { alert('Please enter the district or city.'); return; }
+      if (!subject)  { alert('Please choose a subject.'); return; }
+
+      const btn = document.getElementById('gen-btn');
+      btn.disabled = true;
+      document.getElementById('result-section').style.display = 'none';
+      setStep(2);
+      setStatus('loading', 'Generating your project… This may take 30–60 seconds.');
+
+      try {
+        const payload = {
+          title, student, school, district, level,
+          subject, year, teacher, context,
+          asPdf: true
+        };
+
+        const data = await api('POST', '/api/skills/project-gen', payload);
+
+        if (!data.ok) throw new Error(data.error || 'Generation failed');
+
+        generatedContent = data.preview || '';
+        generatedTitle   = title;
+        downloadUrl      = data.downloadUrl || '';
+        const previewUrl = data.previewUrl  || '';
+
+        document.getElementById('result-section').style.display = 'block';
+        document.getElementById('result-sub').textContent = `"${title}" — ${level} ${subject}`;
+
+        if (previewUrl) {
+          const wrap   = document.getElementById('pdf-viewer-wrap');
+          const iframe = document.getElementById('pdf-iframe');
+          const loading= document.getElementById('pdf-loading');
+          wrap.style.display   = 'block';
+          loading.style.display = 'flex';
+          iframe.style.display  = 'none';
+          iframe.src = previewUrl;
+        }
+
+        const linkDisplay = document.getElementById('download-link-display');
+        const fullUrl = window.location.origin + downloadUrl;
+        linkDisplay.textContent = fullUrl;
+
+        const dlBtn = document.getElementById('direct-dl-btn');
+        dlBtn.href = downloadUrl;
+        dlBtn.download = `${title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+        dlBtn.style.opacity = '1';
+        dlBtn.style.pointerEvents = 'auto';
+
+        startExpiryTimer();
+        setStep(3);
+        clearStatus();
+
+        document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (err) {
+        setStatus('error', `❌ ${err.message}`);
+        setStep(1);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function copyLink() {
+      const url = document.getElementById('download-link-display').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.btn-copy-link');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = orig, 2000);
+      });
+    }
+
+    function copyContent() {
+      if (!generatedContent) return;
+      navigator.clipboard.writeText(generatedContent).then(() => alert('Content copied to clipboard!'));
+    }
+
+    function clearForm() {
+      ['project-title','student-name','school-name','district','teacher','context'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('subject').value = '';
+      document.getElementById('level').value = 'O-Level';
+      clearStatus();
+      updatePreview();
+      setStep(1);
+    }
+
+    function resetForm() {
+      document.getElementById('result-section').style.display = 'none';
+      const pdfWrap = document.getElementById('pdf-viewer-wrap');
+      if (pdfWrap) { pdfWrap.style.display = 'none'; document.getElementById('pdf-iframe').src = ''; }
+      clearInterval(expiryTimer);
+      clearForm();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    updatePreview();
+    setStep(1);
+  </script>
+</body>
+</html>

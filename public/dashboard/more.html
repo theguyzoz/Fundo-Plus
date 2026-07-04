@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>More — Fundo Plus</title>
+  <style>
+    *, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f6f8ff; --surf: #fff; --brd: #e2e8f5;
+      --acc: #2563eb; --acc2: #1d4ed8; --grn: #16a34a;
+      --red: #dc2626; --txt: #0f172a; --mut: #64748b;
+      --rad: 12px; --warn: #f59e0b;
+      --sh: 0 1px 3px rgba(37,99,235,.07), 0 4px 20px rgba(37,99,235,.06);
+    }
+    body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 228px; background: var(--surf); border-right: 1px solid var(--brd); display: flex; flex-direction: column; padding: 0 0 1rem; z-index: 60; box-shadow: var(--sh); transition: transform .25s cubic-bezier(.4,0,.2,1); }
+    .sb-logo { display: flex; align-items: center; gap: 9px; padding: 18px 16px 14px; border-bottom: 1px solid var(--brd); font-size: 1.05rem; font-weight: 900; color: var(--acc); }
+    .sb-section { font-size: .65rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; padding: 14px 16px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 14px; margin: 1px 8px; border-radius: 9px; cursor: pointer; font-size: .86rem; color: var(--mut); font-weight: 600; text-decoration: none; transition: .12s; }
+    .nav-item:hover { background: #eff6ff; color: var(--acc); }
+    .nav-item.active { background: #eff6ff; color: var(--acc); font-weight: 700; }
+    .nav-item svg { flex-shrink: 0; opacity: .8; }
+    .nav-item.active svg { opacity: 1; }
+    .sb-bottom { margin-top: auto; border-top: 1px solid var(--brd); padding-top: 8px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.3); z-index: 55; backdrop-filter: blur(2px); }
+    .sidebar-overlay.show { display: block; }
+
+    /* ── Topbar ── */
+    .topbar { position: fixed; top: 0; left: 228px; right: 0; height: 56px; background: #ffffffee; backdrop-filter: blur(10px); border-bottom: 1px solid var(--brd); display: flex; align-items: center; padding: 0 20px; gap: 12px; z-index: 50; box-shadow: var(--sh); }
+    .topbar-title { font-size: .95rem; font-weight: 800; color: var(--txt); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--acc); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 900; flex-shrink: 0; }
+    .ham { display: none; background: 0 0; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--txt); flex-shrink: 0; }
+    .ham:hover { background: var(--bg); }
+
+    /* ── Layout ── */
+    .main { margin-left: 228px; margin-top: 56px; padding: 28px 24px; min-height: calc(100vh - 56px); }
+
+    /* ── Page header ── */
+    .ph { margin-bottom: 28px; }
+    .ph h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: -.4px; color: var(--txt); }
+    .ph p { font-size: .84rem; color: var(--mut); margin-top: 4px; }
+
+    /* ── Section label ── */
+    .section-label { font-size: .7rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; }
+
+    /* ── Tool flashcard grid ── */
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+
+    .tool-card {
+      background: var(--surf);
+      border: 1.5px solid var(--brd);
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: var(--sh);
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform .18s cubic-bezier(.4,0,.2,1), box-shadow .18s, border-color .18s;
+      cursor: pointer;
+    }
+    .tool-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(37,99,235,.13); border-color: #93c5fd; }
+    .tool-card:active { transform: translateY(-1px); }
+
+    .tool-card-banner {
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .tool-card-banner svg { position: relative; z-index: 1; opacity: .9; }
+    .tool-card-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: inherit;
+      opacity: .06;
+    }
+
+    /* Per-card colour themes */
+    .theme-blue  .tool-card-banner { background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%); }
+    .theme-blue  .tool-card-banner svg { color: #2563eb; }
+    .theme-blue  .tool-badge { background: #dbeafe; color: #1d4ed8; }
+    .theme-blue  .tool-card:hover { border-color: #93c5fd; }
+
+    .theme-purple .tool-card-banner { background: linear-gradient(135deg, #ede9fe 0%, #faf5ff 100%); }
+    .theme-purple .tool-card-banner svg { color: #7c3aed; }
+    .theme-purple .tool-badge { background: #ede9fe; color: #6d28d9; }
+    .theme-purple:hover { border-color: #c4b5fd; }
+
+    .theme-green .tool-card-banner { background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%); }
+    .theme-green .tool-card-banner svg { color: #16a34a; }
+    .theme-green .tool-badge { background: #dcfce7; color: #15803d; }
+    .theme-green:hover { border-color: #86efac; }
+
+    .theme-amber .tool-card-banner { background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%); }
+    .theme-amber .tool-card-banner svg { color: #d97706; }
+    .theme-amber .tool-badge { background: #fef3c7; color: #b45309; }
+    .theme-amber:hover { border-color: #fcd34d; }
+
+    .tool-card-body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .tool-card-top { display: flex; align-items: center; justify-content: space-between; }
+    .tool-title { font-size: 1rem; font-weight: 800; color: var(--txt); }
+    .tool-badge { font-size: .67rem; font-weight: 800; padding: 3px 9px; border-radius: 99px; flex-shrink: 0; }
+    .tool-desc { font-size: .81rem; color: var(--mut); line-height: 1.55; flex: 1; }
+    .tool-arrow { display: flex; align-items: center; justify-content: flex-end; margin-top: 4px; }
+    .tool-arrow span { font-size: .78rem; font-weight: 700; color: var(--acc); display: flex; align-items: center; gap: 4px; }
+
+    /* ── Coming soon cards ── */
+    .tool-card.soon { opacity: .55; pointer-events: none; }
+    .tool-card.soon .tool-badge { background: #f1f5f9; color: var(--mut); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: none; }
+      .topbar { left: 0; }
+      .main { margin-left: 0; }
+      .ham { display: flex; }
+    }
+    @media (max-width: 480px) {
+      .tools-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
+      Fundo Plus
+    </div>
+
+    <div class="sb-section">Main</div>
+    <a class="nav-item" href="/~/">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </a>
+    <a class="nav-item" href="/~/#chat">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Prok AI Chat
+    </a>
+    <a class="nav-item" href="/~/#quiz">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Quiz
+    </a>
+    <a class="nav-item" href="/~/#skills">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Skills &amp; Study
+    </a>
+
+    <div class="sb-section">Resources</div>
+    <a class="nav-item" href="/~/#resources">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Past Papers
+    </a>
+    <a class="nav-item" href="/~/#pairing">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      WhatsApp
+    </a>
+    <a class="nav-item" href="/~/projectgen">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Project Generator
+    </a>
+    <a class="nav-item" href="/~/subscription">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Subscription
+    </a>
+
+    <div class="sb-section">Community</div>
+    <a class="nav-item" href="/community">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Community
+    </a>
+    <a class="nav-item" href="/support">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+      Support
+    </a>
+    <a class="nav-item active" href="/~/more">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+      More
+    </a>
+
+    <div class="sb-bottom">
+      <a class="nav-item" href="/about">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        About
+      </a>
+      <a class="nav-item" href="/terms">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Terms
+      </a>
+      <a class="nav-item" href="/me">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        My Profile
+      </a>
+      <a class="nav-item" href="#" onclick="doLogout();return false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── Topbar ── -->
+  <header class="topbar">
+    <button class="ham" onclick="toggleSb()" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <span class="topbar-title">More</span>
+    <div class="topbar-right">
+      <div class="avatar" id="avatar-letter">?</div>
+      <span style="font-size:.82rem;font-weight:700;color:var(--mut)" id="topbar-name"></span>
+    </div>
+  </header>
+
+  <!-- ── Main ── -->
+  <main class="main">
+    <div class="ph">
+      <h1>Tools &amp; Features</h1>
+      <p>Everything else Fundo Plus has to offer</p>
+    </div>
+
+    <div class="section-label">Academics</div>
+    <div class="tools-grid">
+
+      <!-- Exams card -->
+      <a class="tool-card theme-blue" href="/~/exam">
+        <div class="tool-card-banner">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <line x1="10" y1="9" x2="8" y2="9"/>
+          </svg>
+        </div>
+        <div class="tool-card-body">
+          <div class="tool-card-top">
+            <span class="tool-title">Exams</span>
+            <span class="tool-badge">ZIMSEC</span>
+          </div>
+          <p class="tool-desc">Sit scheduled ZIMSEC mock exams with live countdowns, multiple choice and short answer questions marked by AI.</p>
+          <div class="tool-arrow"><span>Open Exams <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+        </div>
+      </a>
+
+      <!-- Leaderboard card -->
+      <a class="tool-card theme-purple" href="/~/leaderboard">
+        <div class="tool-card-banner">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 20 18 10"/>
+            <polyline points="12 20 12 4"/>
+            <polyline points="6 20 6 14"/>
+          </svg>
+        </div>
+        <div class="tool-card-body">
+          <div class="tool-card-top">
+            <span class="tool-title">Leaderboard</span>
+            <span class="tool-badge">Rankings</span>
+          </div>
+          <p class="tool-desc">See how you rank against other students across all ZIMSEC exams. Weekly, monthly and all-time standings.</p>
+          <div class="tool-arrow"><span>View Rankings <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+        </div>
+      </a>
+
+    </div>
+
+    <div class="section-label">Coming Soon</div>
+    <div class="tools-grid">
+
+      <div class="tool-card theme-green soon">
+        <div class="tool-card-banner">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+          </svg>
+        </div>
+        <div class="tool-card-body">
+          <div class="tool-card-top">
+            <span class="tool-title">Study Notes</span>
+            <span class="tool-badge">Soon</span>
+          </div>
+          <p class="tool-desc">AI-generated revision notes for every ZIMSEC subject, organised by topic and exam objective.</p>
+        </div>
+      </div>
+
+      <div class="tool-card theme-amber soon">
+        <div class="tool-card-banner">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="tool-card-body">
+          <div class="tool-card-top">
+            <span class="tool-title">Timed Practice</span>
+            <span class="tool-badge">Soon</span>
+          </div>
+          <p class="tool-desc">Drill random past-paper questions under exam conditions with instant AI feedback on each answer.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function toggleSb() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+    function closeSb()  { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+    async function doLogout() {
+      const token = localStorage.getItem('fp_session');
+      if (token) {
+        try { await fetch('/api/auth/logout', { method: 'POST', headers: { 'x-session-token': token } }); } catch {}
+      }
+      localStorage.clear();
+      location.href = '/login';
+    }
+    (async () => {
+      const token = localStorage.getItem('fp_session');
+      if (!token) { location.href = '/login'; return; }
+      try {
+        const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
+        if (!r.ok) { localStorage.clear(); location.href = '/login'; return; }
+        const { user } = await r.json();
+        const name = user.name ? `${user.name} ${user.surname || ''}`.trim() : (user.email || '?');
+        document.getElementById('topbar-name').textContent = name;
+        document.getElementById('avatar-letter').textContent = name[0]?.toUpperCase() || '?';
+      } catch { location.href = '/login'; }
+    })();
+  </script>
+</body>
+</html>

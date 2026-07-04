@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>ZIMSEC Admin — Fundo Plus</title>
+  <style>
+    *,::after,::before{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f6f8ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--warn:#f59e0b;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:0 0 1rem;z-index:60;box-shadow:var(--sh);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+    .sb-logo{display:flex;align-items:center;gap:9px;padding:18px 16px 14px;border-bottom:1px solid var(--brd);font-size:1.05rem;font-weight:900;color:var(--acc)}
+    .sb-section{font-size:.65rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;padding:14px 16px 4px}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:1px 8px;border-radius:9px;cursor:pointer;font-size:.86rem;color:var(--mut);font-weight:600;text-decoration:none;transition:.12s}
+    .nav-item:hover{background:#eff6ff;color:var(--acc)}
+    .nav-item.active{background:#eff6ff;color:var(--acc);font-weight:700}
+    .nav-item svg{flex-shrink:0;opacity:.8}
+    .sb-bottom{margin-top:auto;border-top:1px solid var(--brd);padding-top:8px}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.3);z-index:55;backdrop-filter:blur(2px)}
+    .sidebar-overlay.show{display:block}
+    .topbar{position:fixed;top:0;left:228px;right:0;height:56px;background:#ffffffee;backdrop-filter:blur(10px);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:50;box-shadow:var(--sh)}
+    .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt)}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .avatar{width:32px;height:32px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;flex-shrink:0}
+    .ham{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--txt);flex-shrink:0}
+    .main{margin-left:228px;margin-top:56px;padding:28px 24px;min-height:calc(100vh - 56px)}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+    .card{background:var(--surf);border:1.5px solid var(--brd);border-radius:var(--rad);padding:22px;box-shadow:var(--sh);margin-bottom:16px}
+    .card-title{font-size:.95rem;font-weight:800;margin-bottom:4px;color:var(--txt)}
+    .card-sub{font-size:.8rem;color:var(--mut);margin-bottom:16px}
+    .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+    .fg label{font-size:.73rem;font-weight:700;color:var(--mut)}
+    .fg input,.fg select,.fg textarea{border:1.5px solid var(--brd);border-radius:9px;padding:9px 13px;font-size:.86rem;color:var(--txt);background:var(--bg);outline:0;font-family:inherit;width:100%;transition:border-color .12s}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);background:#fff}
+    .fg textarea{min-height:200px;resize:vertical;font-family:monospace;font-size:.82rem;line-height:1.7}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;transition:.12s}
+    .btn-acc{background:var(--acc);color:#fff}
+    .btn-acc:hover{background:var(--acc2)}
+    .btn-acc:disabled{opacity:.5;cursor:not-allowed}
+    .btn-ghost{background:var(--bg);color:var(--mut);border:1.5px solid var(--brd)}
+    .btn-ghost:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}
+    .btn-danger{background:#fef2f2;color:var(--red);border:1.5px solid #fca5a5}
+    .btn-danger:hover{background:#fee2e2}
+    .btn-sm{padding:5px 12px;font-size:.77rem}
+    .alert{padding:10px 14px;border-radius:8px;font-size:.83rem;margin-bottom:14px;display:none}
+    .alert.show{display:flex;align-items:center;gap:8px}
+    .alert-ok{background:#f0fdf4;border:1px solid #86efac;color:#15803d}
+    .alert-err{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
+    .format-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;font-size:.8rem;line-height:1.8;margin-bottom:16px}
+    .format-box code{background:rgba(0,0,0,.06);border-radius:4px;padding:1px 5px;font-family:monospace}
+    .format-box pre{background:var(--surf);border:1px solid var(--brd);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:.77rem;line-height:1.9;overflow-x:auto;white-space:pre-wrap}
+    table{width:100%;border-collapse:collapse}
+    th{font-size:.68rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;text-align:left;border-bottom:1.5px solid var(--brd)}
+    td{padding:10px 12px;font-size:.84rem;border-bottom:1px solid var(--brd);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:.7rem;font-weight:800}
+    .pill-live{background:#dcfce7;color:#15803d}
+    .pill-sched{background:#dbeafe;color:#1d4ed8}
+    .pill-ended{background:#f1f5f9;color:var(--mut)}
+    .spin{display:inline-block;width:16px;height:16px;border:2.5px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .empty{text-align:center;padding:32px;color:var(--mut);font-size:.85rem}
+    .ph{margin-bottom:24px}
+    .ph h1{font-size:1.35rem;font-weight:900}
+    .ph p{font-size:.82rem;color:var(--mut);margin-top:3px}
+    @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}.topbar{left:0}.main{margin-left:0}.ham{display:flex}.two-col{grid-template-columns:1fr}}
+    /* Edit modal */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--surf);border-radius:16px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--brd)}
+    .modal-head h3{font-size:.95rem;font-weight:800}
+    .modal-close{background:0 0;border:none;cursor:pointer;font-size:1.2rem;color:var(--mut);padding:2px 7px;border-radius:6px}
+    .modal-close:hover{background:var(--bg)}
+    .modal-body{padding:20px}
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo"><img src="/images/logo.png" width="26" height="26" style="border-radius:8px" alt="">Fundo Plus</div>
+  <div class="sb-section">Main</div>
+  <a class="nav-item" href="/~/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</a>
+  <a class="nav-item" href="/~/more"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</a>
+  <div class="sb-section">Admin</div>
+  <a class="nav-item active" href="/~/zimsec"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>ZIMSEC Admin</a>
+  <a class="nav-item" href="/admin"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin Panel</a>
+  <div class="sb-bottom">
+    <a class="nav-item" href="#" onclick="doLogout();return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</a>
+  </div>
+</nav>
+<header class="topbar">
+  <button class="ham" onclick="toggleSb()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+  <span class="topbar-title">ZIMSEC Exam Manager</span>
+  <div class="topbar-right">
+    <span style="background:#fef3c7;color:#d97706;border:1px solid #fcd34d;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:800">🔐 Admin</span>
+    <div class="avatar" id="av">?</div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="ph"><h1>📋 ZIMSEC Exam Manager</h1><p>Upload .txt exam files, schedule exams, manage questions and results</p></div>
+  <div id="alert-ok" class="alert alert-ok"></div>
+  <div id="alert-err" class="alert alert-err"></div>
+
+  <div class="two-col">
+    <!-- LEFT -->
+    <div>
+      <div class="card">
+        <div class="card-title">📄 Upload Exam .txt File</div>
+        <div class="card-sub">Paste or upload a .txt file with questions in Fundo format</div>
+
+        <div class="format-box">
+          <strong>📖 Format Guide</strong><br>
+          <code>Q:</code> MCQ question &nbsp;|&nbsp; <code>A: B: C: D:</code> Options &nbsp;|&nbsp; <code>ANS:</code> Correct letter<br>
+          <code>SA:</code> Short-answer question (AI marked) &nbsp;|&nbsp; <code>MODEL:</code> Optional model answer<br>
+          <code>#</code> lines are ignored
+          <pre>Q: What is the formula for water?
+A: H2O  B: CO2  C: O2  D: NaCl
+ANS: A
+
+Q: Capital of Zimbabwe?
+A: Harare  B: Bulawayo  C: Mutare  D: Gweru
+ANS: A
+
+SA: Explain photosynthesis in 2–3 sentences.
+MODEL: Photosynthesis is the process by which plants use sunlight...</pre>
+        </div>
+
+        <div class="fg"><label>Exam Title *</label><input type="text" id="ex-title" placeholder="e.g. Biology O-Level Paper 1 — June 2025"></div>
+        <div class="row2">
+          <div class="fg"><label>Subject</label>
+            <select id="ex-subject">
+              <option>Biology</option><option>Chemistry</option><option>Physics</option>
+              <option>Mathematics</option><option>English</option><option>History</option>
+              <option>Geography</option><option>Commerce</option><option>Accounts</option><option>General</option>
+            </select>
+          </div>
+          <div class="fg"><label>Level</label>
+            <select id="ex-level"><option>O-Level</option><option>A-Level</option><option>Form 1</option><option>Form 2</option><option>Form 3</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="fg"><label>Scheduled Date &amp; Time</label><input type="datetime-local" id="ex-dt"></div>
+          <div class="fg"><label>Duration (minutes)</label><input type="number" id="ex-dur" value="60" min="10" max="300"></div>
+        </div>
+        <div class="fg">
+          <label>Question File</label>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('file-pick').click()">📁 Choose .txt file</button>
+            <span id="file-name" style="font-size:.8rem;color:var(--mut);align-self:center"></span>
+          </div>
+          <input type="file" id="file-pick" accept=".txt" style="display:none" onchange="loadFile(this)">
+          <textarea id="ex-txt" placeholder="…or paste question content here"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="previewTxt()">👁 Preview</button>
+          <button class="btn btn-acc" id="upload-btn" onclick="uploadExam()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload &amp; Schedule
+          </button>
+        </div>
+        <div id="preview-out" style="display:none;margin-top:14px">
+          <div style="font-size:.75rem;font-weight:800;color:var(--mut);margin-bottom:6px" id="preview-count"></div>
+          <div style="background:var(--bg);border:1px solid var(--brd);border-radius:9px;padding:12px;max-height:260px;overflow-y:auto;font-size:.79rem;font-family:monospace;line-height:1.8;white-space:pre-wrap" id="preview-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div><div class="card-title">📅 Scheduled Exams</div><div class="card-sub" style="margin-bottom:0">All exams in the system</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadExams()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Refresh</button>
+        </div>
+        <div id="exams-tbl"><div class="empty"><span class="spin"></span></div></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div><div class="card-title">📊 Recent Results</div><div class="card-sub" style="margin-bottom:0">Latest submissions</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadResults()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Refresh</button>
+        </div>
+        <div id="results-tbl"><div class="empty"><span class="spin"></span></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Edit Exam Modal -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>✏️ Edit Exam</h3>
+      <button class="modal-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="fg"><label>Exam Title *</label><input type="text" id="edit-title"></div>
+      <div class="row2">
+        <div class="fg"><label>Subject</label>
+          <select id="edit-subject">
+            <option>Biology</option><option>Chemistry</option><option>Physics</option>
+            <option>Mathematics</option><option>English</option><option>History</option>
+            <option>Geography</option><option>Commerce</option><option>Accounts</option><option>General</option>
+          </select>
+        </div>
+        <div class="fg"><label>Level</label>
+          <select id="edit-level"><option>O-Level</option><option>A-Level</option><option>Form 1</option><option>Form 2</option><option>Form 3</option></select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Scheduled Date &amp; Time</label><input type="datetime-local" id="edit-dt"></div>
+        <div class="fg"><label>Duration (minutes)</label><input type="number" id="edit-dur" min="10" max="300"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+        <button class="btn btn-ghost btn-sm" onclick="closeEdit()">Cancel</button>
+        <button class="btn btn-acc btn-sm" id="edit-save-btn" onclick="saveEdit()">💾 Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const tok = localStorage.getItem('fp_session');
+const adminTok = localStorage.getItem('adminToken');
+async function api(m,u,b){
+  const headers={'x-session-token':tok};
+  if(adminTok) headers['x-admin-token']=adminTok;
+  const o={method:m,headers};
+  if(b){o.headers['Content-Type']='application/json';o.body=JSON.stringify(b);}
+  const r=await fetch(u,o); const d=await r.json();
+  if(!r.ok) throw new Error(d.error||'Error');
+  return d;
+}
+function ok(msg){const e=document.getElementById('alert-ok');e.innerHTML='✅ '+msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),6000)}
+function err(msg){const e=document.getElementById('alert-err');e.innerHTML='⚠️ '+msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),8000)}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show')}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show')}
+async function doLogout(){try{await api('POST','/api/auth/logout')}catch{}localStorage.clear();location.href='/login'}
+
+function openEdit(exam){
+  document.getElementById('edit-id').value=exam.id;
+  document.getElementById('edit-title').value=exam.title||'';
+  document.getElementById('edit-subject').value=exam.subject||'General';
+  document.getElementById('edit-level').value=exam.level||'O-Level';
+  document.getElementById('edit-dur').value=exam.durationMins||60;
+  if(exam.scheduledAt){
+    const d=new Date(exam.scheduledAt);
+    const local=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+    document.getElementById('edit-dt').value=local;
+  }else{
+    document.getElementById('edit-dt').value='';
+  }
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEdit(){document.getElementById('edit-modal').classList.remove('open')}
+async function saveEdit(){
+  const id=document.getElementById('edit-id').value;
+  const title=document.getElementById('edit-title').value.trim();
+  const subject=document.getElementById('edit-subject').value;
+  const level=document.getElementById('edit-level').value;
+  const dt=document.getElementById('edit-dt').value;
+  const dur=parseInt(document.getElementById('edit-dur').value)||60;
+  if(!title){err('Title is required.');return;}
+  const btn=document.getElementById('edit-save-btn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    await api('PUT',`/api/admin/zimsec/exams/${id}`,{
+      title,subject,level,
+      scheduledAt:dt?new Date(dt).toISOString():null,
+      durationMins:dur,
+    });
+    ok('Exam updated!');closeEdit();loadExams();
+  }catch(e){err(e.message);}
+  btn.disabled=false;btn.textContent='💾 Save Changes';
+}
+
+function loadFile(inp){
+  const f=inp.files[0]; if(!f)return;
+  document.getElementById('file-name').textContent=f.name;
+  const r=new FileReader(); r.onload=e=>document.getElementById('ex-txt').value=e.target.result; r.readAsText(f);
+}
+
+function previewTxt(){
+  const txt=document.getElementById('ex-txt').value.trim();
+  if(!txt){err('Paste or load a file first.');return;}
+  const lines=txt.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+  let qs=[],cur=null;
+  for(const l of lines){
+    if(/^Q\s*:/i.test(l)){if(cur)qs.push(cur);cur={type:'mcq',text:l.replace(/^Q\s*:\s*/i,''),opts:[],ans:null}}
+    else if(/^SA\s*:/i.test(l)){if(cur)qs.push(cur);cur={type:'sa',text:l.replace(/^SA\s*:\s*/i,''),opts:[],ans:null}}
+    else if(cur&&/^ANS\s*:/i.test(l))cur.ans=l.replace(/^ANS\s*:\s*/i,'').trim().toUpperCase();
+    else if(cur&&cur.type==='mcq'){const ps=l.split(/(?=[A-D]\s*:)/i);ps.forEach(p=>{const m=p.match(/^([A-D])\s*:\s*(.+)/i);if(m)cur.opts.push(m[1].toUpperCase()+': '+m[2].trim())})}
+  }
+  if(cur)qs.push(cur);
+  const mcq=qs.filter(q=>q.type==='mcq').length, sa=qs.filter(q=>q.type==='sa').length;
+  document.getElementById('preview-count').textContent=`${qs.length} questions parsed — ${mcq} MCQ, ${sa} Short Answer`;
+  document.getElementById('preview-body').textContent=qs.map((q,i)=>{
+    const label=q.type==='sa'?'[SA] ':'[MCQ]';
+    const opts=q.opts.length?'\n  '+q.opts.join('  '):'';
+    const ans=q.ans?'\n  ANS: '+q.ans:'';
+    return `Q${i+1} ${label} ${q.text}${opts}${ans}`;
+  }).join('\n\n');
+  document.getElementById('preview-out').style.display='block';
+}
+
+async function uploadExam(){
+  const title=document.getElementById('ex-title').value.trim();
+  const txt=document.getElementById('ex-txt').value.trim();
+  const subject=document.getElementById('ex-subject').value;
+  const level=document.getElementById('ex-level').value;
+  const dt=document.getElementById('ex-dt').value;
+  const dur=document.getElementById('ex-dur').value;
+  if(!title){err('Exam title is required.');return;}
+  if(!txt){err('Paste or load a .txt file first.');return;}
+  const btn=document.getElementById('upload-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Uploading…';
+  try{
+    const d=await api('POST','/api/admin/zimsec/upload-txt',{
+      title,subject,level,year:new Date().getFullYear(),
+      scheduledAt:dt?new Date(dt).toISOString():null,
+      durationMins:parseInt(dur)||60,
+      txtContent:txt,
+    });
+    ok(`Exam "${title}" created with ${d.questionCount} questions!`);
+    document.getElementById('ex-title').value='';
+    document.getElementById('ex-txt').value='';
+    document.getElementById('file-name').textContent='';
+    document.getElementById('preview-out').style.display='none';
+    loadExams();
+  }catch(e){err(e.message);}
+  btn.disabled=false;btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload &amp; Schedule';
+}
+
+async function loadExams(){
+  document.getElementById('exams-tbl').innerHTML='<div class="empty"><span class="spin"></span></div>';
+  try{
+    const d=await api('GET','/api/admin/zimsec/exams');
+    const exams=d.exams||[];
+    if(!exams.length){document.getElementById('exams-tbl').innerHTML='<div class="empty">No exams yet.</div>';return;}
+    const now=Date.now();
+    const rows=exams.map(e=>{
+      const start=e.scheduledAt?new Date(e.scheduledAt).getTime():null;
+      const end=start?start+(e.durationMins||60)*60000:null;
+      let pill='<span class="pill pill-sched">📅 Scheduled</span>';
+      if(!start)pill='<span class="pill pill-ended">Draft</span>';
+      else if(now>=start&&now<=end)pill='<span class="pill pill-live">🟢 Live</span>';
+      else if(now>end)pill='<span class="pill pill-ended">Ended</span>';
+      const qs=e.questionCount||'?';
+      const dt=start?new Date(start).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'}):'No schedule';
+      const endsAt=end?new Date(end).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'}):'—';
+      const deleteAt=end?new Date(end+3*3600*1000).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'}):'—';
+      return `<tr>
+        <td><strong style="font-size:.84rem">${e.title}</strong><br><span style="font-size:.73rem;color:var(--mut)">${e.subject||''} · ${e.level||''}</span></td>
+        <td>${pill}</td>
+        <td style="font-size:.78rem;color:var(--mut)">
+          📅 Start: ${dt}<br>
+          <span style="color:var(--txt);font-weight:700">⏱ ${e.durationMins||60} min</span><br>
+          🔒 Ends: <strong>${endsAt}</strong><br>
+          <span style="color:var(--red);font-size:.71rem" title="Backup auto-deleted from Supabase 3h after exam ends">🗑 Backup deleted: ${deleteAt}</span>
+        </td>
+        <td style="font-size:.78rem">${qs} Qs</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="openEdit(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleActive('${e.id}',${!e.active})">${e.active?'Deactivate':'Activate'}</button>
+            <button class="btn btn-danger btn-sm" onclick="delExam('${e.id}','${e.title.replace(/'/g,'')}')">Del</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    document.getElementById('exams-tbl').innerHTML=`<table><thead><tr><th>Exam</th><th>Status</th><th>Scheduled</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(e){document.getElementById('exams-tbl').innerHTML=`<div class="empty">⚠️ ${e.message}</div>`}
+}
+
+async function toggleActive(id,active){
+  try{await api('PUT',`/api/admin/zimsec/exams/${id}`,{active});ok(active?'Exam activated.':'Exam deactivated.');loadExams();}catch(e){err(e.message)}
+}
+
+async function delExam(id,title){
+  if(!confirm(`Delete "${title}"? All questions and results will be removed. This cannot be undone.`))return;
+  try{await api('DELETE',`/api/admin/zimsec/exams/${id}`);ok('Exam deleted.');loadExams();}catch(e){err(e.message)}
+}
+
+async function loadResults(){
+  document.getElementById('results-tbl').innerHTML='<div class="empty"><span class="spin"></span></div>';
+  try{
+    const d=await api('GET','/api/admin/zimsec/results');
+    const results=(d.results||[]).slice(-20).reverse();
+    if(!results.length){document.getElementById('results-tbl').innerHTML='<div class="empty">No results yet.</div>';return;}
+    const rows=results.map(r=>`<tr>
+      <td style="font-size:.8rem">${r.userId?.slice(0,8)||'?'}</td>
+      <td style="font-size:.8rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.examId?.slice(0,12)||'?'}</td>
+      <td><strong>${r.pct}%</strong> <span style="font-size:.75rem;color:var(--mut)">${r.score}/${r.total}</span></td>
+      <td style="font-size:.75rem;color:var(--mut)">${new Date(r.submittedAt).toLocaleDateString()}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="delResult('${r.id}')">Del</button></td>
+    </tr>`).join('');
+    document.getElementById('results-tbl').innerHTML=`<table><thead><tr><th>User</th><th>Exam</th><th>Score</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(e){document.getElementById('results-tbl').innerHTML=`<div class="empty">⚠️ ${e.message}</div>`}
+}
+
+async function delResult(id){
+  if(!confirm('Delete this result?'))return;
+  try{await api('DELETE',`/api/admin/zimsec/results/${id}`);ok('Result deleted.');loadResults();}catch(e){err(e.message)}
+}
+
+const d=new Date(Date.now()+3600000);d.setSeconds(0,0);
+document.getElementById('ex-dt').value=d.toISOString().slice(0,16);
+
+(async()=>{
+  if(!tok){location.href='/login';return;}
+  try{
+    const u=await api('GET','/api/auth/me');
+    if(!u.ok){location.href='/login';return;}
+    const n=u.user?.name||u.user?.email||'Admin';
+    document.getElementById('av').textContent=n[0].toUpperCase();
+    if(!u.user?.isAdmin&&!u.user?.is_admin){
+      document.querySelector('.main').innerHTML='<div style="text-align:center;padding:80px;color:var(--red)"><h2>Access Denied</h2><p>Admin access required.</p></div>';
+      return;
+    }
+    loadExams();loadResults();
+  }catch{location.href='/login';}
+})();
+</script>
+</body>
+</html>

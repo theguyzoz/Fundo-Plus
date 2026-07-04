@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <title>Set Up Profile — Fundo Plus</title>
+    <style>:root{--blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;--text:#1e293b;--muted:#64748b;--border:#e2e8f0}*{margin:0;padding:0;box-sizing:border-box}body{background:#f8fafc;color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex}.split-left{flex:1;background:linear-gradient(145deg,#064e3b,#16a34a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;position:relative;overflow:hidden}.split-left::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}.left-content{position:relative;z-index:1;text-align:center;color:#fff;max-width:360px}.left-icon{margin-bottom:1.5rem}.left-title{font-size:1.8rem;font-weight:900;line-height:1.2;margin-bottom:.75rem}.left-title em{font-style:normal;color:#86efac}.left-sub{font-size:.9rem;color:#bbf7d0;line-height:1.6;margin-bottom:2rem}.step-list{display:flex;flex-direction:column;gap:1rem;text-align:left}.step-item{display:flex;align-items:center;gap:.9rem}.step-circle{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;color:#fff;flex-shrink:0}.step-circle.done{background:#86efac;color:#064e3b}.step-text{font-size:.85rem;color:#d1fae5;font-weight:600}.split-right{width:500px;display:flex;align-items:center;justify-content:center;padding:2rem;background:#fff}@media(max-width:768px){.split-left{display:none}.split-right{width:100%}}.form-box{width:100%;max-width:400px}.form-logo{display:flex;align-items:center;gap:.6rem;margin-bottom:1.75rem}.form-logo span{font-size:1.1rem;font-weight:900;color:var(--blue)}h2{font-size:1.4rem;font-weight:900;letter-spacing:-.4px;margin-bottom:.25rem}.sub-text{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}.row{display:flex;gap:.75rem}.row .field{flex:1}.field{margin-bottom:.9rem}label{display:block;font-size:.75rem;font-weight:700;color:var(--text);margin-bottom:.35rem;letter-spacing:.02em}input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:.7rem 1rem;font-size:.92rem;color:var(--text);outline:0;transition:.15s}input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe}input.error{border-color:#dc2626;box-shadow:0 0 0 3px #fecaca}input.valid{border-color:#16a34a}.field-err{font-size:.72rem;color:#dc2626;margin-top:.3rem;display:none}.btn{width:100%;padding:.8rem;border:none;border-radius:9px;font-size:.95rem;font-weight:800;cursor:pointer;background:var(--blue);color:#fff;transition:.15s;margin-top:.25rem}.btn:hover{background:var(--blue2)}.btn:disabled{opacity:.5;cursor:not-allowed}.err-box{background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:.65rem .9rem;color:#dc2626;font-size:.82rem;margin-bottom:.9rem;display:none}.school-wrap{position:relative}.school-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--blue);border-radius:10px;max-height:210px;overflow-y:auto;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,.1)}.school-opt{padding:.6rem 1rem;cursor:pointer;font-size:.88rem;color:var(--text);transition:.1s}.school-opt:hover{background:#eff6ff;color:var(--blue)}.school-opt.other{color:var(--blue);font-weight:700}.ai-validating{display:none;font-size:.72rem;color:var(--muted);margin-top:.3rem;display:none;align-items:center;gap:.4rem}.ai-validating.show{display:flex}.ai-spin{width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+    <script>!function(){const _fetch=window.fetch;window.fetch=async function(...args){const res=await _fetch(...args);if(403===res.status){const clone=res.clone();try{const d=await clone.json();if(d&&"BANNED"===d.code)return location.reload(),new Response("{}",{status:403})}catch{}}return res}}()</script>
+
+    <script>async function validateSession(opts={}){const{requireAuth:requireAuth=!0,onUser:onUser=null}=opts,token=localStorage.getItem("fp_session");if(!token)return requireAuth?(window.location.replace("/login"),null):null;try{const r=await fetch("/api/auth/me",{headers:{"x-session-token":token}});if(401===r.status){localStorage.clear();return requireAuth?(window.location.replace("/login"),null):null}if(403===r.status){const d=await r.json().catch(()=>({}));if("BANNED"===d.code)return location.reload(),null;return requireAuth?(window.location.replace("/login"),null):null}if(!r.ok)return requireAuth?(window.location.replace("/login"),null):null;const d=await r.json();return d.ok?(onUser&&onUser(d.user),d.user):(localStorage.clear(),requireAuth?(window.location.replace("/login"),null):null)}catch{return requireAuth?(window.location.replace("/login"),null):null}}</script>
+    </head>
+
+  <body>
+    <div class="split-left">
+      <div class="left-content">
+        <div class="left-icon">
+          <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+            <circle cx="36" cy="36" r="36" fill="rgba(255,255,255,0.1)"/>
+            <circle cx="36" cy="28" r="12" fill="rgba(255,255,255,0.9)"/>
+            <path d="M14 58c0-12.15 9.85-22 22-22s22 9.85 22 22" stroke="rgba(255,255,255,0.9)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="56" cy="20" r="6" fill="#86efac"/>
+            <path d="M53 20l2 2 4-4" stroke="#064e3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+
+          <div class="left-title">Almost there! Set up your <em>profile</em></div>
+
+          <div class="left-sub">We just need a few details to personalise your Fundo Plus experience.</div>
+
+          <div class="step-list">
+            <div class="step-item">
+              <div class="step-circle done">✓</div>
+
+              <div class="step-text">Account created</div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-circle" style="background:rgba(255,255,255,.9);color:#16a34a;font-weight:900">2</div>
+
+              <div class="step-text" style="color:#fff">Fill in your profile</div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-circle">3</div>
+
+              <div class="step-text" style="opacity:.6">Access dashboard</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-right">
+        <div class="form-box">
+          <div class="form-logo">
+            <img src="/images/logo.png" width="30" height="30" alt="Fundo Plus" style="border-radius:8px">
+
+              <span>Fundo Plus</span></div>
+
+              <h2>Your profile</h2>
+
+              <p class="sub-text">This helps Prok AI personalise your study experience.</p>
+
+              <div class="err-box" id="err"></div>
+
+              <div class="row">
+                <div class="field">
+                  <label>First Name</label>
+                  <input id="name" placeholder="Tapiwa" autocomplete="given-name" oninput='clearFieldErr("name")'>
+                  <div class="field-err" id="name-err"></div>
+                </div>
+
+                <div class="field">
+                  <label>Surname</label>
+                  <input id="surname" placeholder="Moyo" autocomplete="family-name" oninput='clearFieldErr("surname")'>
+                  <div class="field-err" id="surname-err"></div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Age</label>
+                <input type="number" id="age" placeholder="16" min="5" max="80"></div>
+
+                <div class="field">
+                  <label>School / Institution</label>
+                  <div class="school-wrap">
+                    <input id="school-in" placeholder="Search your school or tap Other…" autocomplete="off" oninput="filterSchools()" onfocus="showDD()">
+                    <div class="school-dd" id="school-dd"></div>
+                  </div>
+
+                  <input type="hidden" id="school-val">
+                  <div class="field-err" id="school-err"></div>
+
+                  <div class="ai-validating" id="ai-validating">
+                    <div class="ai-spin"></div>
+                    AI is verifying your school name…</div>
+                  </div>
+
+                  <button class="btn" id="submit-btn" onclick="doSubmit()">Complete Setup →</button>
+                </div>
+              </div>
+
+              <script>!async function(){await validateSession({requireAuth:!0})}();const ZIM_SCHOOLS=["Harare High School","Prince Edward School","Churchill Boys High School","St George's College","Allan Wilson High School","Chisipite Senior School","Dominican Convent High School","Girls High School","Mt Pleasant High School","Westlea High School","Hellenic Academy","Lomagundi College","Peterhouse","St John's College","Falcon College","Milton High School","Gifford High School","Plumtree School","Mutare Boys High School","Mutare Girls High School","Marist Brothers Dete","St Faith's Mission","Gokomere High School","St Ignatius College","Kutama College","Chishawasha Mission","Marondera High School","Ruwa High School","Chinhoyi High School","Gweru High School","Midlands Christian College","Speciss College","UZ","MSU","NUST","HIT","ZOU","Other"];let isOtherSchool=!1;function showDD(){renderDD(ZIM_SCHOOLS),document.getElementById("school-dd").style.display="block"}function filterSchools(){const q=document.getElementById("school-in").value.toLowerCase(),f=ZIM_SCHOOLS.filter(s=>s.toLowerCase().includes(q));f.includes("Other")||f.push("Other"),renderDD(f),document.getElementById("school-dd").style.display=f.length?"block":"none",document.getElementById("school-val").value=document.getElementById("school-in").value,isOtherSchool=!0,clearFieldErr("school")}function renderDD(list){document.getElementById("school-dd").innerHTML=list.map(s=>`
+              <div class="school-opt${"Other"===s?" other":""}" onclick="pickSchool('${s.replace(/'/g,"\\'")}')">${"Other"===s?"🔍 Other — type your school name":s}</div>
+              `).join("")}function pickSchool(n){"Other"===n?(isOtherSchool=!0,document.getElementById("school-in").value="",document.getElementById("school-val").value="",document.getElementById("school-dd").style.display="none",document.getElementById("school-in").focus(),document.getElementById("school-in").placeholder="Type your school name…"):(isOtherSchool=!1,document.getElementById("school-in").value=n,document.getElementById("school-val").value=n,document.getElementById("school-dd").style.display="none",document.getElementById("school-in").classList.add("valid")),clearFieldErr("school")}function showErr(m){const el=document.getElementById("err");el.textContent=m,el.style.display="block"}function clearFieldErr(field){const el=document.getElementById(field+"-err");el&&(el.style.display="none",el.textContent="");const inp=document.getElementById(field);inp&&inp.classList.remove("error")}function showFieldErr(field,msg){const el=document.getElementById(field+"-err");el&&(el.textContent=msg,el.style.display="block");const inp=document.getElementById(field);inp&&(inp.classList.add("error"),inp.classList.remove("valid"))}async function doSubmit(){const name=document.getElementById("name").value.trim(),surname=document.getElementById("surname").value.trim(),age=document.getElementById("age").value.trim(),school=(document.getElementById("school-val").value||document.getElementById("school-in").value).trim();if(document.getElementById("err").style.display="none",!(name&&surname&&age&&school))return showErr("Please fill in all fields.");if(isNaN(age)||age<5||age>80)return showErr("Please enter a valid age (5–80).");const token=localStorage.getItem("fp_session"),btn=document.getElementById("submit-btn");if(btn.disabled=!0,btn.textContent="Validating…",isOtherSchool&&school)try{document.getElementById("ai-validating").classList.add("show");const vr=await fetch("/api/onboarding/validate",{method:"POST",headers:{"Content-Type":"application/json","x-session-token":token},body:JSON.stringify({name:name,surname:surname,school:school})}),vd=await vr.json();if(document.getElementById("ai-validating").classList.remove("show"),!vd.valid)return vd.nameError&&showFieldErr("name",vd.nameError),vd.surnameError&&showFieldErr("surname",vd.surnameError),vd.schoolError&&showFieldErr("school",vd.schoolError),vd.nameError||vd.surnameError||vd.schoolError||showErr(vd.message||"Please check your information and try again."),btn.disabled=!1,void(btn.textContent="Complete Setup →")}catch(e){document.getElementById("ai-validating").classList.remove("show")}btn.textContent="Saving…";try{const r=await fetch("/api/onboarding",{method:"POST",headers:{"Content-Type":"application/json","x-session-token":token},body:JSON.stringify({name:name,surname:surname,age:parseInt(age),school:school})}),d=await r.json();if(!r.ok)return showErr(d.error||"Failed to save");localStorage.setItem("fp_user",JSON.stringify(d.user));const redirect=new URLSearchParams(window.location.search).get("redirect");window.location.href=redirect||"/~"}catch(e){showErr("Network error.")}finally{btn.disabled=!1,btn.textContent="Complete Setup →",document.getElementById("ai-validating").classList.remove("show")}}document.addEventListener("click",e=>{e.target.closest(".school-wrap")||(document.getElementById("school-dd").style.display="none")})</script>
+            </body>
+          </html>

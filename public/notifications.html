@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <title>Notifications — FundaPlus Admin</title>
+  <style>
+    *, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+      --border: #e2e8f0; --green: #16a34a; --green-dim: #15803d;
+      --green-light: #dcfce7; --yellow: #d97706; --yellow-light: #fef3c7;
+      --red: #dc2626; --red-light: #fee2e2; --blue: #2563eb;
+      --blue-light: #dbeafe; --text: #0f172a; --muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* ── AUTH ── */
+    .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#f0fdf4,#eff6ff); }
+    .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 40px; width: min(400px,95vw); text-align: center; box-shadow: var(--shadow-md); }
+    .auth-card h2 { margin-bottom: 6px; font-size: 1.4rem; font-weight: 900; }
+    .auth-card p { color: var(--muted); font-size: .85rem; margin-bottom: 28px; }
+    .err { color: var(--red); font-size: .8rem; margin-bottom: 10px; display: none; background: var(--red-light); border-radius: 7px; padding: 6px 10px; }
+    .err.show { display: block; }
+
+    /* ── NAV ── */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 58px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+    .logo-text { font-size: 1rem; font-weight: 900; color: var(--green); letter-spacing: -.3px; }
+    .nav-right { margin-left: auto; display: flex; gap: 8px; }
+
+    /* ── BUTTONS ── */
+    .btn { padding: 7px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .82rem; font-weight: 700; transition: .12s; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-dim); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+    .btn-danger { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-sm { padding: 5px 12px; font-size: .77rem; }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } .container { padding: 16px; } }
+
+    /* ── CARD ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+    .card-h { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 800; margin-bottom: 18px; }
+
+    /* ── FORM ── */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+    input[type=text], input[type=email], textarea, select {
+      width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--surface); color: var(--text); font-size: .87rem; outline: 0;
+      transition: .12s; font-family: inherit;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+    textarea { resize: vertical; min-height: 80px; }
+    .toggle-row { display: flex; gap: 8px; }
+    .toggle-btn { flex: 1; padding: 9px; border: 1.5px solid var(--border); border-radius: 9px; background: var(--surface2); color: var(--muted); font-weight: 700; font-size: .83rem; cursor: pointer; transition: .15s; text-align: center; }
+    .toggle-btn.active { border-color: var(--green); background: var(--green-light); color: var(--green); }
+
+    /* ── BG IMAGE SELECT ── */
+    .bg-select { display: flex; gap: 10px; align-items: center; }
+    .bg-preview { width: 52px; height: 52px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: .65rem; color: var(--muted); font-weight: 700; text-align: center; flex-shrink: 0; }
+    .bg-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ── TARGET ── */
+    .email-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .email-tag { background: var(--blue-light); color: var(--blue); border-radius: 99px; padding: 3px 10px; font-size: .76rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+    .email-tag button { background: none; border: none; cursor: pointer; color: var(--blue); font-size: .9rem; line-height: 1; padding: 0; }
+
+    /* ── NOTIFICATION LIST ── */
+    .notif-list { display: flex; flex-direction: column; gap: 10px; }
+    .notif-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+    .notif-bg-thumb { width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0; border: 1.5px solid var(--border); overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; }
+    .notif-bg-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .notif-bg-thumb span { font-size: .55rem; color: var(--muted); font-weight: 700; text-align: center; }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-weight: 800; font-size: .9rem; margin-bottom: 3px; }
+    .notif-desc { font-size: .8rem; color: var(--muted); margin-bottom: 7px; white-space: pre-wrap; }
+    .notif-meta { font-size: .72rem; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+    .pill { padding: 2px 8px; border-radius: 99px; font-size: .7rem; font-weight: 800; }
+    .pill-popup { background: var(--blue-light); color: var(--blue); }
+    .pill-silent { background: var(--surface2); color: var(--muted); }
+    .pill-all { background: var(--green-light); color: var(--green); }
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: .85rem; }
+
+    /* ── PIXABAY MODAL ── */
+    #pixabay-modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55); backdrop-filter: blur(4px); z-index: 500; align-items: center; justify-content: center; padding: 16px; }
+    #pixabay-modal.open { display: flex; }
+    .pix-box { background: var(--surface); border-radius: 16px; padding: 22px; width: min(700px,100%); max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-md); }
+    .pix-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .pix-header h3 { font-size: .95rem; font-weight: 900; flex: 1; }
+    .pix-search-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .pix-search-row input { flex: 1; }
+    .pix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; overflow-y: auto; flex: 1; }
+    .pix-img { border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: .15s; aspect-ratio: 4/3; background: var(--surface2); }
+    .pix-img:hover { border-color: var(--blue); }
+    .pix-img.selected { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.2); }
+    .pix-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pix-loading { text-align: center; padding: 30px; color: var(--muted); font-size: .85rem; }
+    .pix-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+    /* ── NOTIFICATION PREVIEW ── */
+    .preview-wrap { display: flex; align-items: center; justify-content: center; background: var(--surface2); border-radius: 10px; padding: 20px; margin-bottom: 16px; border: 1px dashed var(--border); }
+    .notif-card-preview {
+      width: 260px; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      position: relative; background: #fff;
+    }
+    .notif-card-preview .nc-bg { height: 90px; background: #f1f5f9; position: relative; overflow: hidden; }
+    .notif-card-preview .nc-bg img { width: 100%; height: 100%; object-fit: cover; }
+    .notif-card-preview .nc-body { padding: 12px 14px 14px; }
+    .notif-card-preview .nc-title { font-weight: 900; font-size: .88rem; margin-bottom: 5px; color: #0f172a; }
+    .notif-card-preview .nc-desc { font-size: .77rem; color: #64748b; line-height: 1.5; }
+    .notif-card-preview .nc-footer { padding: 8px 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; }
+    .nc-ok-btn { padding: 5px 14px; background: #16a34a; color: #fff; border-radius: 7px; font-size: .75rem; font-weight: 800; border: none; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<!-- Auth -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <svg width="44" height="44" viewBox="0 0 36 36" fill="none" style="margin:0 auto 14px">
+      <rect width="36" height="36" rx="9" fill="#161b22" stroke="#30363d"/>
+      <path d="M10 12h16M10 18h10M10 24h13" stroke="#23d18b" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="27" cy="24" r="4" fill="#388bfd"/>
+    </svg>
+    <h2>FundaPlus Admin</h2>
+    <p>Notifications Panel</p>
+    <input type="password" id="passInput" placeholder="Admin password" onkeydown='if(event.key==="Enter")doLogin()'>
+    <div class="err" id="loginErr">Incorrect password</div>
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <nav>
+    <a href="/admin.html" style="text-decoration:none;display:flex;align-items:center;gap:8px">
+      <img src="/images/logo.png" width="26" height="26" style="border-radius:8px">
+      <span class="logo-text">FundaPlus Admin</span>
+    </a>
+    <span style="color:var(--muted);font-size:.82rem;margin-left:4px">/ Notifications</span>
+    <div class="nav-right">
+      <a href="/admin.html" class="btn btn-ghost">← Back to Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div style="margin-bottom:20px">
+      <div style="font-size:1.15rem;font-weight:900;margin-bottom:3px">📣 Send Notifications</div>
+      <div style="font-size:.82rem;color:var(--muted)">Create and publish notifications to users</div>
+    </div>
+
+    <div class="two-col">
+      <!-- ── Compose Form ── -->
+      <div>
+        <div class="card">
+          <div class="card-h">Compose Notification</div>
+
+          <!-- Live preview -->
+          <div class="preview-wrap">
+            <div class="notif-card-preview" id="preview-card">
+              <div class="nc-bg" id="preview-bg">
+                <img id="preview-bg-img" src="" style="display:none">
+              </div>
+              <div class="nc-body">
+                <div class="nc-title" id="preview-title">Notification Title</div>
+                <div class="nc-desc" id="preview-desc">Your notification description will appear here.</div>
+              </div>
+              <div class="nc-footer">
+                <button class="nc-ok-btn">Got it</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Type -->
+          <div class="field">
+            <label>Notify Type</label>
+            <div class="toggle-row">
+              <div class="toggle-btn active" id="type-silent" onclick="setType('silent')">🔕 Silent</div>
+              <div class="toggle-btn" id="type-popup" onclick="setType('popup')">💬 Pop Up</div>
+            </div>
+            <div style="font-size:.74rem;color:var(--muted);margin-top:6px" id="type-hint">
+              Silent: shows red dot badge on nav. Pop up: shows a notification card when user visits dashboard.
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="field">
+            <label>Notification Title / Header</label>
+            <input type="text" id="notif-title" placeholder="e.g. New Feature Available!" oninput="updatePreview()">
+          </div>
+
+          <!-- Description -->
+          <div class="field">
+            <label>Description</label>
+            <textarea id="notif-desc" placeholder="Describe the notification in detail…" oninput="updatePreview()"></textarea>
+          </div>
+
+          <!-- Background image -->
+          <div class="field">
+            <label>Background Image</label>
+            <div class="bg-select">
+              <div class="bg-preview" id="bg-preview-thumb">
+                <span>DEFAULT<br>WHITE</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+                <button class="btn btn-ghost btn-sm" style="align-self:flex-start" onclick="openPixabay()">🖼 Search Pixabay</button>
+                <button class="btn btn-ghost btn-sm" style="align-self:flex-start;color:var(--red)" onclick="clearBg()" id="clear-bg-btn" style="display:none">✕ Remove image</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Target -->
+          <div class="field">
+            <label>Target</label>
+            <select id="notif-target" onchange="updateTargetUI()">
+              <option value="all">All Users</option>
+              <option value="single">Single User (by email)</option>
+              <option value="multiple">Multiple Users (by email)</option>
+            </select>
+          </div>
+          <div id="email-target-section" style="display:none;margin-bottom:14px">
+            <div class="field" style="margin-bottom:6px">
+              <label id="email-label">User Email</label>
+              <div style="display:flex;gap:6px">
+                <input type="email" id="email-input" placeholder="user@example.com">
+                <button class="btn btn-ghost btn-sm" onclick="addEmail()">Add</button>
+              </div>
+            </div>
+            <div class="email-tags" id="email-tags"></div>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;padding:11px;font-size:.9rem" onclick="publishNotification()">
+            🚀 Publish Notification
+          </button>
+          <div style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:8px" id="publish-status"></div>
+        </div>
+      </div>
+
+      <!-- ── Notification List ── -->
+      <div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <div class="card-h" style="margin:0">Sent Notifications</div>
+            <button class="btn btn-ghost btn-sm" onclick="loadNotifications()">↺ Refresh</button>
+          </div>
+          <div id="notif-list">
+            <div class="pix-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pixabay Modal -->
+<div id="pixabay-modal">
+  <div class="pix-box">
+    <div class="pix-header">
+      <h3>🔍 Search Pixabay Images</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closePixabay()">✕ Close</button>
+    </div>
+    <div class="pix-search-row">
+      <input type="text" id="pix-query" placeholder="Search images… (e.g. education, study, announcement)" onkeydown='if(event.key==="Enter")searchPixabay()'>
+      <button class="btn btn-primary btn-sm" onclick="searchPixabay()">Search</button>
+    </div>
+    <div class="pix-grid" id="pix-grid">
+      <div class="pix-loading" style="grid-column:1/-1">Search for images above</div>
+    </div>
+    <div class="pix-footer">
+      <button class="btn btn-ghost" onclick="closePixabay()">Cancel</button>
+      <button class="btn btn-primary" onclick="selectPixabayImage()">✔ Use Selected</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let adminToken = localStorage.getItem('fp_admin_token') || '';
+  let notifType  = 'silent';
+  let bgImageUrl = null;
+  let selectedPixUrl = null;
+  let emailList  = [];
+
+  async function api(url, opts = {}) {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken, ...opts.headers },
+      ...opts,
+    });
+    return res;
+  }
+
+  async function doLogin() {
+    const pass = document.getElementById('passInput').value.trim();
+    const res  = await fetch('/api/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass }),
+    });
+    if (res.ok) {
+      adminToken = pass;
+      localStorage.setItem('fp_admin_token', pass);
+      showDashboard();
+    } else {
+      document.getElementById('loginErr').classList.add('show');
+    }
+  }
+
+  function showDashboard() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display  = 'block';
+    loadNotifications();
+  }
+
+  // Check token on load
+  if (adminToken) {
+    api('/api/admin/notifications').then(r => {
+      if (r.ok) showDashboard();
+      else { adminToken = ''; localStorage.removeItem('fp_admin_token'); }
+    });
+  }
+
+  // ── Type toggle ────────────────────────────────────────────────────────
+  function setType(t) {
+    notifType = t;
+    document.getElementById('type-silent').classList.toggle('active', t === 'silent');
+    document.getElementById('type-popup').classList.toggle('active',  t === 'popup');
+    document.getElementById('type-hint').textContent =
+      t === 'silent'
+        ? 'Silent: shows a red dot badge on the nav bar with unread count.'
+        : 'Pop Up: shows a notification card popup when the user visits the dashboard or assigned routes.';
+  }
+
+  // ── Target UI ─────────────────────────────────────────────────────────
+  function updateTargetUI() {
+    const t = document.getElementById('notif-target').value;
+    const section = document.getElementById('email-target-section');
+    section.style.display = (t === 'all') ? 'none' : 'block';
+    document.getElementById('email-label').textContent =
+      t === 'single' ? 'User Email' : 'Add Emails';
+    emailList = [];
+    renderEmailTags();
+  }
+
+  function addEmail() {
+    const inp = document.getElementById('email-input');
+    const v = inp.value.trim().toLowerCase();
+    if (!v || !v.includes('@')) return;
+    const target = document.getElementById('notif-target').value;
+    if (target === 'single') emailList = [v];
+    else if (!emailList.includes(v)) emailList.push(v);
+    inp.value = '';
+    renderEmailTags();
+  }
+
+  function renderEmailTags() {
+    const el = document.getElementById('email-tags');
+    el.innerHTML = emailList.map((e, i) =>
+      `<div class="email-tag">${e}<button onclick="removeEmail(${i})">×</button></div>`
+    ).join('');
+  }
+
+  function removeEmail(i) { emailList.splice(i, 1); renderEmailTags(); }
+
+  // ── Live preview ──────────────────────────────────────────────────────
+  function updatePreview() {
+    const title = document.getElementById('notif-title').value || 'Notification Title';
+    const desc  = document.getElementById('notif-desc').value  || 'Your notification description will appear here.';
+    document.getElementById('preview-title').textContent = title;
+    document.getElementById('preview-desc').textContent  = desc;
+  }
+
+  // ── BG image ──────────────────────────────────────────────────────────
+  function openPixabay() {
+    document.getElementById('pixabay-modal').classList.add('open');
+    selectedPixUrl = null;
+  }
+  function closePixabay() {
+    document.getElementById('pixabay-modal').classList.remove('open');
+    document.querySelectorAll('.pix-img').forEach(el => el.classList.remove('selected'));
+    selectedPixUrl = null;
+  }
+
+  async function searchPixabay() {
+    const q = document.getElementById('pix-query').value.trim();
+    if (!q) return;
+    const grid = document.getElementById('pix-grid');
+    grid.innerHTML = '<div class="pix-loading" style="grid-column:1/-1">Searching…</div>';
+    const res = await api(`/api/admin/pixabay-search?q=${encodeURIComponent(q)}`);
+    if (!res.ok) {
+      grid.innerHTML = '<div class="pix-loading" style="grid-column:1/-1;color:var(--red)">Search failed. Check PIXABAY_KEY env.</div>';
+      return;
+    }
+    const { hits } = await res.json();
+    if (!hits.length) {
+      grid.innerHTML = '<div class="pix-loading" style="grid-column:1/-1">No results found.</div>';
+      return;
+    }
+    grid.innerHTML = hits.map(h =>
+      `<div class="pix-img" onclick="selectPix(this,'${h.preview}','${h.full}')" data-preview="${h.preview}" data-full="${h.full}">
+        <img src="${h.thumb}" loading="lazy" alt="${h.tags}">
+      </div>`
+    ).join('');
+  }
+
+  function selectPix(el, preview, full) {
+    document.querySelectorAll('.pix-img').forEach(x => x.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPixUrl = full || preview;
+  }
+
+  function selectPixabayImage() {
+    if (!selectedPixUrl) { alert('Select an image first.'); return; }
+    bgImageUrl = selectedPixUrl;
+    // Update thumb
+    const thumb = document.getElementById('bg-preview-thumb');
+    thumb.innerHTML = `<img src="${bgImageUrl}" style="width:100%;height:100%;object-fit:cover">`;
+    // Update preview card
+    const bgImg = document.getElementById('preview-bg-img');
+    bgImg.src = bgImageUrl;
+    bgImg.style.display = 'block';
+    document.getElementById('preview-bg').style.background = 'transparent';
+    document.getElementById('clear-bg-btn').style.display = 'inline-flex';
+    closePixabay();
+  }
+
+  function clearBg() {
+    bgImageUrl = null;
+    document.getElementById('bg-preview-thumb').innerHTML = '<span>DEFAULT<br>WHITE</span>';
+    const bgImg = document.getElementById('preview-bg-img');
+    bgImg.src = ''; bgImg.style.display = 'none';
+    document.getElementById('preview-bg').style.background = '#f1f5f9';
+    document.getElementById('clear-bg-btn').style.display = 'none';
+  }
+
+  // ── Publish ───────────────────────────────────────────────────────────
+  async function publishNotification() {
+    const title = document.getElementById('notif-title').value.trim();
+    const desc  = document.getElementById('notif-desc').value.trim();
+    const target = document.getElementById('notif-target').value;
+    const statusEl = document.getElementById('publish-status');
+
+    if (!title) { statusEl.style.color = 'var(--red)'; statusEl.textContent = '⚠ Title is required'; return; }
+    if (target !== 'all' && !emailList.length) {
+      statusEl.style.color = 'var(--red)'; statusEl.textContent = '⚠ Add at least one email'; return;
+    }
+
+    statusEl.style.color = 'var(--muted)'; statusEl.textContent = 'Publishing…';
+
+    const res = await api('/api/admin/notifications', {
+      method: 'POST',
+      body: JSON.stringify({ type: notifType, title, description: desc, bgImage: bgImageUrl, target, targetEmails: emailList }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      statusEl.style.color = 'var(--green)'; statusEl.textContent = '✅ Published successfully!';
+      document.getElementById('notif-title').value = '';
+      document.getElementById('notif-desc').value  = '';
+      clearBg();
+      emailList = [];
+      updateTargetUI();
+      updatePreview();
+      loadNotifications();
+    } else {
+      statusEl.style.color = 'var(--red)'; statusEl.textContent = '⚠ ' + (data.error || 'Failed');
+    }
+  }
+
+  // ── Load notification list ─────────────────────────────────────────────
+  async function loadNotifications() {
+    const res = await api('/api/admin/notifications');
+    if (!res.ok) { document.getElementById('notif-list').innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
+    const { notifications } = await res.json();
+    const el = document.getElementById('notif-list');
+    if (!notifications.length) { el.innerHTML = '<div class="empty-state">No notifications yet</div>'; return; }
+
+    el.innerHTML = '<div class="notif-list">' + notifications.map(n => {
+      const thumbHtml = n.bgImage
+        ? `<img src="${n.bgImage}" alt="bg">`
+        : `<span style="font-size:.55rem;color:var(--muted);font-weight:700;text-align:center">DEFAULT</span>`;
+      const target = n.target === 'all' ? 'All Users' : (n.targetEmails || []).join(', ') || n.target;
+      const date   = new Date(n.createdAt).toLocaleDateString('en-ZW', { day:'numeric', month:'short', year:'numeric' });
+      return `
+        <div class="notif-item">
+          <div class="notif-bg-thumb">${thumbHtml}</div>
+          <div class="notif-body">
+            <div class="notif-title">${escHtml(n.title)}</div>
+            <div class="notif-desc">${escHtml(n.description || '—')}</div>
+            <div class="notif-meta">
+              <span class="pill ${n.type === 'popup' ? 'pill-popup' : 'pill-silent'}">${n.type === 'popup' ? '💬 Pop Up' : '🔕 Silent'}</span>
+              <span class="pill pill-all">→ ${escHtml(target)}</span>
+              <span>${date}</span>
+            </div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteNotif('${n.id}')">Delete</button>
+        </div>`;
+    }).join('') + '</div>';
+  }
+
+  async function deleteNotif(id) {
+    if (!confirm('Delete this notification?')) return;
+    const res = await api('/api/admin/notifications/' + id, { method: 'DELETE' });
+    if (res.ok) loadNotifications();
+    else alert('Delete failed');
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

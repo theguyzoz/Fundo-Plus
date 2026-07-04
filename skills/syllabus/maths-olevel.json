@@ -1,0 +1,8 @@
+{
+  "id": "maths-olevel",
+  "name": "Mathematics O-Level",
+  "level": "O-Level",
+  "board": "ZIMSEC",
+  "topics": ["Algebra","Geometry","Trigonometry","Statistics","Number theory","Calculus basics"],
+  "description": "ZIMSEC O-Level Mathematics — covers pure and applied mathematics topics."
+}

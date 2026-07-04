@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Claim Your Premium — Fundo Plus</title>
+  <style>
+    *, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #16a34a; --green-dim: #15803d; --green-light: #dcfce7;
+      --blue: #2563eb; --blue-light: #dbeafe;
+      --red: #dc2626; --red-light: #fee2e2;
+      --text: #0f172a; --muted: #64748b;
+      --border: #e2e8f0; --surface: #fff; --bg: #f8fafc;
+      --radius: 14px;
+    }
+    body {
+      min-height: 100vh; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 44px 40px; width: min(440px, 100%);
+      box-shadow: 0 8px 32px rgba(0,0,0,.08);
+      text-align: center;
+    }
+    .logo { font-size: 1.1rem; font-weight: 900; color: var(--green); margin-bottom: 24px; letter-spacing: -.3px; }
+    .gift-icon { font-size: 3rem; margin-bottom: 16px; display: block; }
+    h1 { font-size: 1.5rem; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+    .subtitle { font-size: .9rem; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+
+    /* plan badge */
+    .plan-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-light); color: var(--green);
+      border: 1.5px solid #86efac; border-radius: 99px;
+      padding: 8px 20px; font-size: .95rem; font-weight: 800;
+      margin-bottom: 28px;
+    }
+
+    /* states */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* forms */
+    .field { margin-bottom: 14px; text-align: left; }
+    label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+    input {
+      width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 9px; background: var(--bg); color: var(--text);
+      font-size: .9rem; outline: 0; transition: .12s;
+    }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.12); background: #fff; }
+
+    .btn {
+      width: 100%; padding: 13px; border-radius: 10px; border: none;
+      cursor: pointer; font-size: .95rem; font-weight: 800; transition: .15s;
+      margin-top: 4px;
+    }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-dim); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      background: transparent; color: var(--muted); border: 1.5px solid var(--border);
+      margin-top: 10px;
+    }
+    .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+
+    .err { background: var(--red-light); color: var(--red); border-radius: 9px; padding: 10px 14px; font-size: .85rem; margin-bottom: 14px; display: none; text-align: left; }
+    .err.show { display: block; }
+
+    .tabs { display: flex; border-bottom: 1.5px solid var(--border); margin-bottom: 22px; }
+    .tab { flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; font-size: .88rem; font-weight: 700; color: var(--muted); border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: .12s; }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    .success-icon { font-size: 3rem; margin-bottom: 16px; display: block; }
+    .success-title { font-size: 1.4rem; font-weight: 900; color: var(--green); margin-bottom: 8px; }
+    .success-msg { font-size: .9rem; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+    .go-btn { display: inline-block; background: var(--green); color: #fff; padding: 12px 32px; border-radius: 10px; font-weight: 800; text-decoration: none; font-size: .95rem; transition: .15s; }
+    .go-btn:hover { background: var(--green-dim); }
+
+    .error-icon { font-size: 3rem; margin-bottom: 16px; display: block; }
+    .error-title { font-size: 1.4rem; font-weight: 900; color: var(--red); margin-bottom: 8px; }
+    .error-msg { font-size: .9rem; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+
+    .divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--muted); font-size: .8rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .spin { display: inline-block; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">✦ Fundo Plus</div>
+
+  <!-- LOADING STATE -->
+  <div class="state active" id="state-loading">
+    <span class="gift-icon">⌛</span>
+    <h1>Checking your link…</h1>
+    <p class="subtitle">Please wait a moment.</p>
+  </div>
+
+  <!-- INVALID STATE -->
+  <div class="state" id="state-invalid">
+    <span class="error-icon">❌</span>
+    <h1 class="error-title">Invalid Link</h1>
+    <p class="error-msg" id="invalid-msg">This link is invalid or has expired.</p>
+    <a href="/" class="go-btn">Go to Fundo Plus →</a>
+  </div>
+
+  <!-- VALID — AUTH REQUIRED -->
+  <div class="state" id="state-auth">
+    <span class="gift-icon">🎁</span>
+    <h1>You're getting Premium!</h1>
+    <p class="subtitle">Sign in or create an account to claim your <strong id="auth-plan-name">Plus</strong> plan — free.</p>
+    <div class="plan-badge">🌟 <span id="auth-plan-badge">Plus</span> Plan — Free</div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="form-login">
+      <div id="login-err" class="err"></div>
+      <div class="field">
+        <label>Email or Phone</label>
+        <input type="text" id="login-identifier" placeholder="your@email.com or +263…" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Sign In & Claim 🎁</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="form-register" style="display:none">
+      <div id="reg-err" class="err"></div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="At least 6 characters" autocomplete="new-password">
+      </div>
+      <button class="btn btn-primary" id="btn-register" onclick="doRegister()">Create Account & Claim 🎁</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div class="state" id="state-success">
+    <span class="success-icon">🎉</span>
+    <h1 class="success-title">Premium Activated!</h1>
+    <p class="success-msg">Your <strong id="success-plan">Plus</strong> plan has been activated for 30 days. Enjoy all premium features!</p>
+    <a href="/~" class="go-btn">Go to Dashboard →</a>
+  </div>
+
+  <!-- ALREADY REDEEMED -->
+  <div class="state" id="state-already">
+    <span class="error-icon">ℹ️</span>
+    <h1 style="color:var(--blue)">Already Used</h1>
+    <p class="error-msg" id="already-msg">You've already redeemed this link.</p>
+    <a href="/~" class="go-btn" style="background:var(--blue)">Go to Dashboard →</a>
+  </div>
+</div>
+
+<script>
+  const code = location.pathname.split('/redeem/')[1]?.split('/')[0] || '';
+  let promoInfo = null;
+
+  function show(id) {
+    document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+    document.getElementById('state-' + id).classList.add('active');
+  }
+
+  function switchTab(tab) {
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+    document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+  }
+
+  function planLabel(plan) {
+    return { lite: 'Lite', plus: 'Plus', pro: 'Pro' }[plan] || plan;
+  }
+
+  async function init() {
+    if (!code) { show('invalid'); document.getElementById('invalid-msg').textContent = 'No promo code found in this link.'; return; }
+
+    try {
+      const r = await fetch(`/api/promo/${code}/check`);
+      const d = await r.json();
+      if (!d.valid) {
+        document.getElementById('invalid-msg').textContent = d.error || 'This link is invalid or has expired.';
+        show('invalid');
+        return;
+      }
+      promoInfo = d;
+
+      const token = localStorage.getItem('session_token');
+      if (token) {
+        await attemptRedeem(token);
+      } else {
+        const pl = planLabel(d.plan);
+        document.getElementById('auth-plan-name').textContent = pl;
+        document.getElementById('auth-plan-badge').textContent = pl;
+        show('auth');
+      }
+    } catch (e) {
+      document.getElementById('invalid-msg').textContent = 'Could not reach server. Please try again.';
+      show('invalid');
+    }
+  }
+
+  async function attemptRedeem(token) {
+    try {
+      const r = await fetch(`/api/promo/${code}/redeem`, {
+        method: 'POST',
+        headers: { 'x-session-token': token, 'Content-Type': 'application/json' },
+      });
+      const d = await r.json();
+      if (d.ok) {
+        document.getElementById('success-plan').textContent = planLabel(d.plan);
+        show('success');
+      } else if (d.error && d.error.includes('already')) {
+        document.getElementById('already-msg').textContent = d.error;
+        show('already');
+      } else {
+        document.getElementById('invalid-msg').textContent = d.error || 'Redemption failed.';
+        show('invalid');
+      }
+    } catch {
+      document.getElementById('invalid-msg').textContent = 'Server error. Please try again.';
+      show('invalid');
+    }
+  }
+
+  async function doLogin() {
+    const btn = document.getElementById('btn-login');
+    const err = document.getElementById('login-err');
+    err.classList.remove('show');
+    const identifier = document.getElementById('login-identifier').value.trim();
+    const password   = document.getElementById('login-password').value;
+    if (!identifier || !password) { err.textContent = 'All fields required.'; err.classList.add('show'); return; }
+
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+      const isEmail = identifier.includes('@');
+      const body = isEmail ? { email: identifier, password } : { phone: identifier, password };
+      const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const d = await r.json();
+      if (!d.ok) { err.textContent = d.error || 'Login failed.'; err.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign In & Claim 🎁'; return; }
+      localStorage.setItem('session_token', d.token);
+      if (d.user) localStorage.setItem('user', JSON.stringify(d.user));
+      await attemptRedeem(d.token);
+    } catch {
+      err.textContent = 'Network error. Please try again.'; err.classList.add('show');
+      btn.disabled = false; btn.textContent = 'Sign In & Claim 🎁';
+    }
+  }
+
+  async function doRegister() {
+    const btn = document.getElementById('btn-register');
+    const err = document.getElementById('reg-err');
+    err.classList.remove('show');
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    if (!email || !password) { err.textContent = 'All fields required.'; err.classList.add('show'); return; }
+    if (password.length < 6) { err.textContent = 'Password must be at least 6 characters.'; err.classList.add('show'); return; }
+
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try {
+      const r = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const d = await r.json();
+      if (!d.ok) { err.textContent = d.error || 'Registration failed.'; err.classList.add('show'); btn.disabled = false; btn.textContent = 'Create Account & Claim 🎁'; return; }
+      localStorage.setItem('session_token', d.token);
+      if (d.user) localStorage.setItem('user', JSON.stringify(d.user));
+      await attemptRedeem(d.token);
+    } catch {
+      err.textContent = 'Network error. Please try again.'; err.classList.add('show');
+      btn.disabled = false; btn.textContent = 'Create Account & Claim 🎁';
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const loginForm = document.getElementById('form-login');
+    const regForm   = document.getElementById('form-register');
+    if (loginForm.style.display !== 'none' && document.activeElement?.closest('#form-login')) doLogin();
+    if (regForm.style.display   !== 'none' && document.activeElement?.closest('#form-register')) doRegister();
+  });
+
+  init();
+</script>
+</body>
+</html>

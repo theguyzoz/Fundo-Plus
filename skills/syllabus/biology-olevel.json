@@ -1,0 +1,8 @@
+{
+  "id": "biology-olevel",
+  "name": "Biology O-Level",
+  "level": "O-Level",
+  "board": "ZIMSEC",
+  "topics": ["Cell biology","Genetics","Ecology","Human biology","Plant biology","Evolution"],
+  "description": "ZIMSEC O-Level Biology covering living organisms, genetics and ecology."
+}

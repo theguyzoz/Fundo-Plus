@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Samaz × Prok AI — Powered by Fundo Plus</title>
+  <style>
+    :root{
+      --blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;
+      --text:#1e293b;--muted:#64748b;--border:#e2e8f0;
+      --err:#dc2626;--bg:#f8fafc;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+    /* ── LOCK SCREEN ── */
+    #lock-screen{
+      position:fixed;inset:0;z-index:999;
+      background:linear-gradient(145deg,#0f172a,#1e3a8a,#2563eb);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .lock-card{
+      background:#fff;border-radius:20px;padding:2.5rem 2rem;
+      width:100%;max-width:380px;text-align:center;
+      box-shadow:0 25px 60px rgba(0,0,0,.35);
+    }
+    .lock-logo{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:1.5rem}
+    .lock-logo svg rect{fill:#2563eb}
+    .lock-logo .brand{font-size:1.2rem;font-weight:900;color:var(--blue)}
+    .lock-logo .x{font-size:1.1rem;font-weight:700;color:var(--muted);margin:0 .35rem}
+    .lock-logo .partner{font-size:1.2rem;font-weight:900;color:#0f172a}
+    .lock-title{font-size:1.4rem;font-weight:900;letter-spacing:-.5px;margin-bottom:.4rem}
+    .lock-sub{font-size:.85rem;color:var(--muted);margin-bottom:1.75rem;line-height:1.5}
+    .lock-field label{display:block;font-size:.72rem;font-weight:700;text-align:left;margin-bottom:.35rem;letter-spacing:.04em;color:var(--text)}
+    .lock-field input{
+      width:100%;border:1.5px solid var(--border);border-radius:10px;
+      padding:.75rem 1rem;font-size:.95rem;outline:0;transition:.15s;
+      letter-spacing:.1em;
+    }
+    .lock-field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe}
+    .lock-err{
+      background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;
+      padding:.5rem .85rem;color:var(--err);font-size:.8rem;
+      margin-bottom:.85rem;display:none;text-align:left;
+    }
+    .lock-btn{
+      width:100%;padding:.8rem;border:none;border-radius:10px;
+      background:var(--blue);color:#fff;font-size:.95rem;font-weight:800;
+      cursor:pointer;transition:.15s;margin-top:.75rem;
+    }
+    .lock-btn:hover{background:var(--blue2)}
+    .lock-btn:disabled{opacity:.5;cursor:not-allowed}
+    .lock-footer{margin-top:1.5rem;font-size:.72rem;color:var(--muted)}
+    .lock-footer a{color:var(--blue);text-decoration:none}
+
+    /* ── MAIN APP (hidden until unlocked) ── */
+    #app{display:none;flex-direction:column;height:100vh}
+
+    /* top bar */
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:.85rem 1.25rem;background:#fff;border-bottom:1.5px solid var(--border);
+      flex-shrink:0;
+    }
+    .topbar-left{display:flex;align-items:center;gap:.6rem}
+    .topbar-logo{display:flex;align-items:center;gap:.5rem}
+    .topbar-logo span{font-size:.95rem;font-weight:900;color:var(--blue)}
+    .topbar-badge{
+      background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;
+      padding:.2rem .65rem;font-size:.72rem;font-weight:700;color:var(--blue);
+    }
+    .topbar-right{display:flex;align-items:center;gap:.75rem}
+    .call-counter{
+      display:flex;align-items:center;gap:.4rem;
+      background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;
+      padding:.25rem .75rem;font-size:.75rem;font-weight:700;color:var(--green);
+    }
+    .btn-sm{
+      padding:.35rem .85rem;border-radius:8px;border:none;cursor:pointer;
+      font-size:.78rem;font-weight:700;transition:.15s;
+    }
+    .btn-clear{background:#f1f5f9;color:var(--muted)}
+    .btn-clear:hover{background:#e2e8f0}
+
+    /* system prompt panel */
+    .sys-panel{
+      background:#fff;border-bottom:1.5px solid var(--border);
+      padding:.75rem 1.25rem;flex-shrink:0;
+    }
+    .sys-toggle{
+      display:flex;align-items:center;justify-content:space-between;
+      cursor:pointer;user-select:none;
+    }
+    .sys-toggle-label{font-size:.8rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.4rem}
+    .sys-toggle-arrow{font-size:.7rem;color:var(--muted);transition:.2s}
+    .sys-toggle-arrow.open{transform:rotate(180deg)}
+    .sys-body{display:none;margin-top:.65rem}
+    .sys-body.open{display:block}
+    .sys-body textarea{
+      width:100%;border:1.5px solid var(--border);border-radius:9px;
+      padding:.65rem .85rem;font-size:.82rem;font-family:inherit;
+      resize:vertical;min-height:70px;outline:0;transition:.15s;color:var(--text);
+    }
+    .sys-body textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe}
+    .sys-actions{display:flex;gap:.5rem;margin-top:.5rem}
+    .sys-save{
+      padding:.35rem .85rem;border-radius:8px;background:var(--blue);
+      color:#fff;border:none;cursor:pointer;font-size:.78rem;font-weight:700;transition:.15s;
+    }
+    .sys-save:hover{background:var(--blue2)}
+    .sys-reset{
+      padding:.35rem .85rem;border-radius:8px;background:#f1f5f9;
+      color:var(--muted);border:none;cursor:pointer;font-size:.78rem;font-weight:700;
+    }
+    .sys-status{font-size:.72rem;color:var(--green);display:none;margin-left:.25rem;align-self:center}
+
+    /* chat area */
+    .chat-area{flex:1;overflow-y:auto;padding:1rem 1.25rem;display:flex;flex-direction:column;gap:.85rem}
+    .msg{display:flex;gap:.65rem;max-width:100%}
+    .msg.user{flex-direction:row-reverse}
+    .msg-avatar{
+      width:32px;height:32px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;
+    }
+    .msg.ai .msg-avatar{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff}
+    .msg.user .msg-avatar{background:#e2e8f0;color:var(--muted)}
+    .msg-bubble{
+      max-width:78%;padding:.75rem 1rem;border-radius:14px;
+      font-size:.88rem;line-height:1.55;word-break:break-word;
+    }
+    .msg.ai .msg-bubble{background:#fff;border:1.5px solid var(--border);border-radius:4px 14px 14px 14px}
+    .msg.user .msg-bubble{background:var(--blue);color:#fff;border-radius:14px 4px 14px 14px}
+    .msg-time{font-size:.68rem;color:var(--muted);margin-top:.25rem;display:block}
+    .msg.user .msg-time{text-align:right}
+
+    /* typing indicator */
+    .typing-dots{display:flex;gap:4px;align-items:center;padding:.4rem 0}
+    .typing-dots span{
+      width:7px;height:7px;border-radius:50%;background:#94a3b8;
+      animation:bounce .9s infinite;
+    }
+    .typing-dots span:nth-child(2){animation-delay:.15s}
+    .typing-dots span:nth-child(3){animation-delay:.3s}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+
+    /* input bar */
+    .input-bar{
+      padding:.9rem 1.25rem;background:#fff;border-top:1.5px solid var(--border);
+      flex-shrink:0;
+    }
+    .input-row{display:flex;gap:.65rem;align-items:flex-end}
+    .chat-input{
+      flex:1;border:1.5px solid var(--border);border-radius:12px;
+      padding:.7rem 1rem;font-size:.9rem;font-family:inherit;outline:0;
+      resize:none;max-height:120px;transition:.15s;line-height:1.4;
+    }
+    .chat-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe}
+    .send-btn{
+      width:42px;height:42px;border-radius:11px;background:var(--blue);
+      border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:.15s;flex-shrink:0;
+    }
+    .send-btn:hover{background:var(--blue2)}
+    .send-btn:disabled{opacity:.45;cursor:not-allowed}
+    .rate-warn{font-size:.72rem;color:var(--err);margin-top:.35rem;display:none}
+
+    /* welcome msg */
+    .welcome-card{
+      background:linear-gradient(135deg,#eff6ff,#f0fdf4);
+      border:1.5px solid #bfdbfe;border-radius:14px;padding:1.25rem;
+      text-align:center;margin:auto;max-width:420px;
+    }
+    .welcome-card h3{font-size:1.1rem;font-weight:900;margin-bottom:.5rem}
+    .welcome-card p{font-size:.83rem;color:var(--muted);line-height:1.5}
+
+    .rate-bar{
+      font-size:.7rem;color:var(--muted);text-align:center;
+      margin-top:.25rem;
+    }
+
+    @media(max-width:520px){
+      .topbar{padding:.65rem 1rem}
+      .chat-area{padding:.75rem 1rem}
+      .input-bar{padding:.7rem 1rem}
+      .msg-bubble{max-width:88%}
+    }
+  </style>
+</head>
+<body>
+
+<div id="lock-screen">
+  <div class="lock-card">
+    <div class="lock-logo">
+      <img src="/images/logo.png" width="28" height="28" alt="Fundo Plus" style="border-radius:8px">
+      </svg>
+      <span class="brand">Fundo Plus</span>
+      <span class="x">×</span>
+      <span class="partner">Samaz</span>
+    </div>
+
+    <div class="lock-title">Welcome, Samaz!</div>
+    <div class="lock-sub">This is a private partner portal. Enter the access code to continue.</div>
+
+    <div class="lock-err" id="lock-err"></div>
+
+    <div class="lock-field">
+      <label>ACCESS CODE</label>
+      <input type="password" id="pwd-input" placeholder="••••••••" autocomplete="off">
+    </div>
+
+    <button class="lock-btn" id="unlock-btn" onclick="tryUnlock()">Access Portal</button>
+
+    <div class="lock-footer">
+      Powered by <a href="/">Fundo Plus</a> — Prok AI Partner Programme
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">
+        <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
+        <span>Prok AI</span>
+      </div>
+      <span class="topbar-badge">Samaz Partner</span>
+    </div>
+    <div class="topbar-right">
+      <div class="call-counter">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span id="call-count">0</span> calls
+      </div>
+      <button class="btn-sm btn-clear" onclick="clearChat()">Clear chat</button>
+    </div>
+  </div>
+
+  
+  <div class="sys-panel">
+    <div class="sys-toggle" onclick="toggleSys()">
+      <span class="sys-toggle-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+        System Prompt
+        <span id="sys-indicator" style="font-size:.68rem;color:var(--muted);font-weight:400">(default)</span>
+      </span>
+      <span class="sys-toggle-arrow" id="sys-arrow">▼</span>
+    </div>
+    <div class="sys-body" id="sys-body">
+      <textarea id="sys-input" placeholder="Enter a custom system prompt. Leave blank to use the default Prok AI prompt."></textarea>
+      <div class="sys-actions">
+        <button class="sys-save" onclick="saveSystemPrompt()">Save prompt</button>
+        <button class="sys-reset" onclick="resetSystemPrompt()">Reset to default</button>
+        <span class="sys-status" id="sys-status">Saved ✓</span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="chat-area" id="chat-area">
+    <div class="welcome-card">
+      <h3>Prok AI — Samaz Portal</h3>
+      <p>Unlimited AI access via the Fundo Plus partner programme. Send any message to get started. You can customise the system prompt above.</p>
+    </div>
+  </div>
+
+  <!-- Input bar -->
+  <div class="input-bar">
+    <div class="input-row">
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask Prok AI anything…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="rate-warn" id="rate-warn">Rate limit: 50 messages per 30 seconds. Please wait a moment.</div>
+    <div class="rate-bar" id="rate-bar">Unlimited messages · 50 per 30 sec · Samaz partner access</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+  /* ── CONFIG ── */
+  const PASS_HASH = "f923df3040ab6abdc00ec0c46bf203d4b9eca51d";
+  const SERVER    = atob("aHR0cHM6Ly9mdW5kb3BsdXMudXAucmFpbHdheS5hcHA=");
+  const RATE_MAX  = 50;
+  const RATE_WIN  = 30000;
+  const SYS_KEY   = "samaz_system_prompt";
+  const DEFAULT_SYSTEM = "You are Prok AI, made by Fundo Plus. You are a helpful, intelligent AI assistant. Assist the user clearly and concisely.";
+
+  /* ── STATE ── */
+  let callCount    = 0;
+  let messages     = [];
+  let rateBucket   = [];
+  let isLoading    = false;
+  let sysOpen      = false;
+  let currentSys   = localStorage.getItem(SYS_KEY) || "";
+
+  /* ── PASSWORD CHECK (simple SHA-1 via SubtleCrypto) ── */
+  async function sha1(str){
+    const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  document.getElementById('pwd-input').addEventListener('keydown', e => {
+    if(e.key === 'Enter') tryUnlock();
+  });
+
+  window.tryUnlock = async function(){
+    const v = document.getElementById('pwd-input').value.trim();
+    if(!v){ showLockErr("Please enter the access code."); return; }
+    const btn = document.getElementById('unlock-btn');
+    btn.disabled = true; btn.textContent = 'Checking…';
+    const h = await sha1(v);
+    if(h === PASS_HASH){
+      document.getElementById('lock-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      updateSysIndicator();
+      if(currentSys) document.getElementById('sys-input').value = currentSys;
+    } else {
+      showLockErr("Incorrect access code. Contact Fundo Plus.");
+      btn.disabled = false; btn.textContent = 'Access Portal';
+    }
+  };
+
+  function showLockErr(msg){
+    const el = document.getElementById('lock-err');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  /* ── SYSTEM PROMPT ── */
+  window.toggleSys = function(){
+    sysOpen = !sysOpen;
+    document.getElementById('sys-body').classList.toggle('open', sysOpen);
+    document.getElementById('sys-arrow').classList.toggle('open', sysOpen);
+  };
+
+  window.saveSystemPrompt = function(){
+    const val = document.getElementById('sys-input').value.trim();
+    currentSys = val;
+    if(val) localStorage.setItem(SYS_KEY, val);
+    else localStorage.removeItem(SYS_KEY);
+    updateSysIndicator();
+    const st = document.getElementById('sys-status');
+    st.style.display = 'inline';
+    setTimeout(()=>{ st.style.display = 'none'; }, 2000);
+  };
+
+  window.resetSystemPrompt = function(){
+    currentSys = "";
+    document.getElementById('sys-input').value = '';
+    localStorage.removeItem(SYS_KEY);
+    updateSysIndicator();
+  };
+
+  function updateSysIndicator(){
+    const el = document.getElementById('sys-indicator');
+    el.textContent = currentSys ? '(custom)' : '(default)';
+    el.style.color = currentSys ? '#2563eb' : '';
+  }
+
+  function getSystemPrompt(){
+    return currentSys.trim() || DEFAULT_SYSTEM;
+  }
+
+  /* ── RATE LIMITING ── */
+  function checkRate(){
+    const now = Date.now();
+    rateBucket = rateBucket.filter(t => now - t < RATE_WIN);
+    if(rateBucket.length >= RATE_MAX) return false;
+    rateBucket.push(now);
+    return true;
+  }
+
+  /* ── CHAT ── */
+  window.handleKey = function(e){
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  };
+
+  window.autoResize = function(el){
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  };
+
+  window.clearChat = function(){
+    messages = [];
+    const area = document.getElementById('chat-area');
+    area.innerHTML = `<div class="welcome-card"><h3>Prok AI — Samaz Portal</h3><p>Chat cleared. Start a new conversation.</p></div>`;
+  };
+
+  window.sendMessage = async function(){
+    if(isLoading) return;
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if(!text) return;
+
+    const rateOk = checkRate();
+    const rateWarn = document.getElementById('rate-warn');
+    if(!rateOk){
+      rateWarn.style.display = 'block';
+      setTimeout(()=>{ rateWarn.style.display = 'none'; }, 4000);
+      return;
+    }
+    rateWarn.style.display = 'none';
+
+    input.value = '';
+    input.style.height = 'auto';
+    isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+
+    appendMsg('user', text);
+    messages.push({ role: 'user', content: text });
+
+    const typingId = appendTyping();
+
+    try {
+      const res = await fetch(`${SERVER}/api/samazed/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages,
+          system: getSystemPrompt(),
+        })
+      });
+
+      removeTyping(typingId);
+
+      if(!res.ok){
+        const err = await res.json().catch(()=>({ error: `HTTP ${res.status}` }));
+        appendMsg('ai', `Error: ${err.error || 'Request failed'}`);
+      } else {
+        const data = await res.json();
+        const reply = data.reply || '(no response)';
+        appendMsg('ai', reply);
+        messages.push({ role: 'assistant', content: reply });
+        callCount++;
+        document.getElementById('call-count').textContent = callCount;
+      }
+    } catch(e){
+      removeTyping(typingId);
+      appendMsg('ai', `Network error: ${e.message}`);
+    }
+
+    isLoading = false;
+    document.getElementById('send-btn').disabled = false;
+    input.focus();
+  };
+
+  function appendMsg(role, text){
+    const area = document.getElementById('chat-area');
+    const welcomes = area.querySelectorAll('.welcome-card');
+    welcomes.forEach(w => w.remove());
+
+    const now = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    const initials = role === 'user' ? 'S' : 'P';
+
+    const div = document.createElement('div');
+    div.className = `msg ${role === 'user' ? 'user' : 'ai'}`;
+    div.innerHTML = `
+      <div class="msg-avatar">${initials}</div>
+      <div>
+        <div class="msg-bubble">${escHtml(text).replace(/\n/g,'<br>')}</div>
+        <span class="msg-time">${now}</span>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function appendTyping(){
+    const area = document.getElementById('chat-area');
+    const id = 'typing-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = id;
+    div.innerHTML = `
+      <div class="msg-avatar">P</div>
+      <div>
+        <div class="msg-bubble" style="padding:.65rem 1rem">
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    return id;
+  }
+
+  function removeTyping(id){
+    const el = document.getElementById(id);
+    if(el) el.remove();
+  }
+
+  function escHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+})();
+</script>
+
+</body>
+</html>
