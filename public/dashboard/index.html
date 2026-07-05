@@ -315,6 +315,14 @@
       </svg>
       More
     </a>
+    <a class="nav-item" href="/~/notifications" id="notif-nav-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      Notifications
+      <span id="sb-notif-dot" style="margin-left:auto;background:#dc2626;color:#fff;border-radius:99px;font-size:.6rem;font-weight:900;padding:1px 6px;display:none"></span>
+    </a>
 
     <div class="sb-bottom">
       <a class="nav-item" href="/about">
@@ -1489,6 +1497,7 @@ Format with clear ## headings. Be thorough and educational.`;
     let _notifData   = [];
     let _popupQueue  = [];
     let _popupActive = false;
+    const _shownPushIds = new Set();
 
     // Dashboard routes eligible for popup display
     const POPUP_ROUTES = ['/', '/~', '/~/account', '/me', '/~/subscription',
@@ -1508,7 +1517,7 @@ Format with clear ## headings. Be thorough and educational.`;
         const bellWrap = document.getElementById('notif-bell-wrap');
         if (bellWrap) bellWrap.style.display = _notifData.length ? 'flex' : 'none';
 
-        // Red dot
+        // Red dot (topbar bell)
         const dot = document.getElementById('notif-dot');
         if (dot) {
           if (unread > 0) {
@@ -1517,6 +1526,34 @@ Format with clear ## headings. Be thorough and educational.`;
           } else {
             dot.classList.remove('show');
           }
+        }
+
+        // Sidebar nav dot
+        const sbDot = document.getElementById('sb-notif-dot');
+        if (sbDot) {
+          if (unread > 0) {
+            sbDot.textContent = unread > 99 ? '99+' : String(unread);
+            sbDot.style.display = 'inline-block';
+          } else {
+            sbDot.style.display = 'none';
+          }
+        }
+
+        // Send browser push notification for unread popup-type if permission granted
+        if (unread > 0 && 'Notification' in window && Notification.permission === 'granted') {
+          const newPopups = _notifData.filter(n => n.type === 'popup' && !n.read && !_shownPushIds.has(n.id));
+          newPopups.forEach(n => {
+            _shownPushIds.add(n.id);
+            try {
+              const notif = new Notification(n.title, {
+                body: n.description || '',
+                icon: '/images/logo.png',
+                badge: '/images/logo.png',
+                tag: n.id,
+              });
+              notif.onclick = () => { window.focus(); window.location.href = '/~/notifications'; };
+            } catch(e) { console.warn('[PushNotif]', e); }
+          });
         }
 
         // Queue popup notifications that are unread
@@ -1536,8 +1573,10 @@ Format with clear ## headings. Be thorough and educational.`;
     function renderDrawer() {
       const el = document.getElementById('nd-list');
       if (!_notifData.length) { el.innerHTML = '<div class="nd-empty">No notifications yet</div>'; return; }
-      el.innerHTML = _notifData.map(n => {
-        const thumb = n.bgImage ? `<img src="${escH(n.bgImage)}" alt="">` : `<span>📢</span>`;
+      const visible = _notifData.slice(0, 5);
+      const hasMore = _notifData.length > 5;
+      el.innerHTML = visible.map(n => {
+        const thumb = n.bgImage ? `<img src="${escH(n.bgImage)}" alt="">` : `<span>\u{1F4E2}</span>`;
         const timeStr = new Date(n.createdAt).toLocaleDateString('en-ZW',{day:'numeric',month:'short'});
         return `
           <div class="nd-item ${n.read ? '' : 'unread'}" onclick="markReadAndClose('${escH(n.id)}')">
@@ -1548,7 +1587,12 @@ Format with clear ## headings. Be thorough and educational.`;
               <div class="nd-item-time">${timeStr}</div>
             </div>
           </div>`;
-      }).join('');
+      }).join('') + (hasMore ? \`
+        <div style="padding:10px 16px;text-align:center;border-top:1px solid #f1f5f9">
+          <a href="/~/notifications" style="font-size:.78rem;font-weight:800;color:var(--acc);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            View all \${_notifData.length} notifications →
+          </a>
+        </div>\` : '');
     }
 
     function toggleNotifDrawer(e) {

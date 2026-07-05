@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Notifications — Fundo Plus</title>
+  <style>
+    *, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f6f8ff; --surf: #fff; --brd: #e2e8f5;
+      --acc: #2563eb; --acc2: #1d4ed8; --grn: #16a34a;
+      --red: #dc2626; --txt: #0f172a; --mut: #64748b;
+      --rad: 12px; --warn: #f59e0b;
+      --sh: 0 1px 3px rgba(37,99,235,.07), 0 4px 20px rgba(37,99,235,.06);
+    }
+    body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* ── Sidebar (mirrored from main dash) ── */
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 228px; background: var(--surf); border-right: 1px solid var(--brd); display: flex; flex-direction: column; padding: 0 0 1rem; z-index: 60; box-shadow: var(--sh); transition: transform .25s cubic-bezier(.4,0,.2,1); }
+    .sb-logo { display: flex; align-items: center; gap: 9px; padding: 18px 16px 14px; border-bottom: 1px solid var(--brd); font-size: 1.05rem; font-weight: 900; color: var(--acc); }
+    .sb-section { font-size: .65rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; padding: 14px 16px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 14px; margin: 1px 8px; border-radius: 9px; cursor: pointer; font-size: .86rem; color: var(--mut); font-weight: 600; text-decoration: none; transition: .12s; }
+    .nav-item:hover { background: #eff6ff; color: var(--acc); }
+    .nav-item.active { background: #eff6ff; color: var(--acc); font-weight: 700; }
+    .nav-item svg { flex-shrink: 0; opacity: .8; }
+    .nav-item.active svg { opacity: 1; }
+    .sb-bottom { margin-top: auto; border-top: 1px solid var(--brd); padding-top: 8px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.3); z-index: 55; backdrop-filter: blur(2px); }
+    .sidebar-overlay.show { display: block; }
+
+    /* ── Topbar ── */
+    .topbar { position: fixed; top: 0; left: 228px; right: 0; height: 56px; background: #ffffffee; backdrop-filter: blur(10px); border-bottom: 1px solid var(--brd); display: flex; align-items: center; padding: 0 20px; gap: 12px; z-index: 50; box-shadow: var(--sh); }
+    .topbar-title { font-size: .95rem; font-weight: 800; color: var(--txt); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--acc); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 900; flex-shrink: 0; }
+    .ham { display: none; background: 0 0; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--txt); flex-shrink: 0; }
+    .ham:hover { background: var(--bg); }
+
+    /* ── Main ── */
+    .main { margin-left: 228px; margin-top: 56px; padding: 28px 24px; min-height: calc(100vh - 56px); }
+
+    /* ── Page header ── */
+    .page-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; }
+    .page-title { font-size: 1.3rem; font-weight: 900; letter-spacing: -.4px; }
+    .page-sub { font-size: .82rem; color: var(--mut); margin-top: 3px; }
+
+    /* ── Push toggle card ── */
+    .push-card { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 18px 20px; box-shadow: var(--sh); margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .push-icon { width: 44px; height: 44px; background: linear-gradient(135deg,#eff6ff,#dbeafe); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .push-body { flex: 1; min-width: 200px; }
+    .push-title { font-size: .9rem; font-weight: 800; margin-bottom: 3px; }
+    .push-desc { font-size: .78rem; color: var(--mut); line-height: 1.5; }
+    .push-status { font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+    .push-status.granted { background: #dcfce7; color: #15803d; }
+    .push-status.denied  { background: #fee2e2; color: #dc2626; }
+    .push-status.default { background: #f1f5f9; color: var(--mut); }
+
+    /* ── Toggle switch ── */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .toggle-label { font-size: .8rem; font-weight: 700; color: var(--mut); }
+    .toggle { position: relative; width: 46px; height: 26px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 99px; transition: .2s; }
+    .slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .toggle input:checked + .slider { background: var(--acc); }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+    /* ── Filters ── */
+    .filters-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+    .filter-btn { padding: 6px 14px; border: 1.5px solid var(--brd); border-radius: 20px; background: var(--surf); cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--mut); transition: .12s; }
+    .filter-btn.active { border-color: var(--acc); color: var(--acc); background: #eff6ff; }
+    .filter-btn:hover { border-color: var(--acc); color: var(--acc); }
+    .search-inp { margin-left: auto; padding: 7px 14px; border: 1.5px solid var(--brd); border-radius: 9px; font-size: .83rem; outline: 0; background: var(--surf); color: var(--txt); width: min(220px, 100%); }
+    .search-inp:focus { border-color: var(--acc); }
+
+    /* ── Toolbar ── */
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+    .count-label { font-size: .8rem; color: var(--mut); font-weight: 600; }
+    .btn-sm { padding: 6px 14px; border-radius: 8px; border: 1.5px solid var(--brd); background: var(--surf); color: var(--mut); font-size: .78rem; font-weight: 700; cursor: pointer; transition: .12s; }
+    .btn-sm:hover { border-color: var(--acc); color: var(--acc); }
+    .btn-acc { padding: 6px 14px; border-radius: 8px; border: none; background: var(--acc); color: #fff; font-size: .78rem; font-weight: 700; cursor: pointer; transition: .12s; }
+    .btn-acc:hover { background: var(--acc2); }
+
+    /* ── Notification cards ── */
+    .notif-grid { display: flex; flex-direction: column; gap: 10px; }
+    .notif-card {
+      background: var(--surf); border: 1.5px solid var(--brd); border-radius: 14px;
+      display: flex; overflow: hidden; box-shadow: var(--sh); transition: .15s; cursor: pointer;
+    }
+    .notif-card:hover { box-shadow: 0 6px 24px rgba(37,99,235,.1); transform: translateY(-1px); }
+    .notif-card.unread { border-color: #bfdbfe; background: linear-gradient(135deg,#f0f7ff,#fff); }
+    .notif-card.popup-type { border-left: 4px solid var(--acc); }
+    .notif-card.silent-type { border-left: 4px solid #94a3b8; }
+    .nc-bg-strip { width: 80px; flex-shrink: 0; background: #f1f5f9; position: relative; overflow: hidden; }
+    .nc-bg-strip img { width: 100%; height: 100%; object-fit: cover; }
+    .nc-bg-strip .nc-default-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+    .nc-content { flex: 1; padding: 14px 16px; min-width: 0; }
+    .nc-row1 { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .nc-title-text { font-size: .92rem; font-weight: 800; color: var(--txt); line-height: 1.3; }
+    .nc-badges { display: flex; gap: 5px; flex-shrink: 0; flex-wrap: wrap; }
+    .badge { padding: 2px 8px; border-radius: 99px; font-size: .67rem; font-weight: 800; }
+    .badge-unread { background: #dbeafe; color: var(--acc); }
+    .badge-popup  { background: #eff6ff; color: var(--acc); }
+    .badge-silent { background: #f1f5f9; color: var(--mut); }
+    .nc-desc-text { font-size: .82rem; color: var(--mut); line-height: 1.55; margin-bottom: 10px; }
+    .nc-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .nc-time { font-size: .7rem; color: #94a3b8; }
+    .nc-actions { display: flex; gap: 6px; }
+    .nc-act-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--brd); background: #f8fafc; color: var(--mut); font-size: .72rem; font-weight: 700; cursor: pointer; transition: .12s; }
+    .nc-act-btn:hover { border-color: var(--acc); color: var(--acc); }
+    .nc-act-btn.read-btn { border-color: #bfdbfe; background: #eff6ff; color: var(--acc); }
+    .unread-dot { width: 8px; height: 8px; background: var(--acc); border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--mut); }
+    .empty-state .e-icon { font-size: 3rem; margin-bottom: 14px; }
+    .empty-state h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; color: var(--txt); }
+    .empty-state p { font-size: .84rem; line-height: 1.6; }
+
+    /* ── Detail Modal ── */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 300; padding: 16px; backdrop-filter: blur(4px); }
+    .modal-bg.open { display: flex; }
+    .notif-modal { background: var(--surf); border-radius: 18px; width: min(420px, 100%); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: popIn .2s cubic-bezier(.175,.885,.32,1.275); }
+    @keyframes popIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .nm-bg { height: 140px; background: #f1f5f9; overflow: hidden; position: relative; }
+    .nm-bg img { width: 100%; height: 100%; object-fit: cover; }
+    .nm-bg .nm-default { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+    .nm-body { padding: 20px 22px 16px; }
+    .nm-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 10px; line-height: 1.3; }
+    .nm-desc { font-size: .86rem; color: var(--mut); line-height: 1.7; margin-bottom: 14px; }
+    .nm-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .nm-footer { padding: 12px 22px 20px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--brd); }
+    .nm-ok { padding: 9px 24px; background: var(--acc); color: #fff; border: none; border-radius: 9px; font-weight: 800; font-size: .85rem; cursor: pointer; }
+    .nm-ok:hover { background: var(--acc2); }
+
+    /* ── Load more ── */
+    .load-more-wrap { text-align: center; padding: 20px 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: none; }
+      .topbar { left: 0; }
+      .main { margin-left: 0; }
+      .ham { display: flex; }
+      .nc-bg-strip { width: 60px; }
+    }
+    @media (max-width: 500px) {
+      .nc-bg-strip { display: none; }
+      .push-card { flex-direction: column; }
+      .filters-row { gap: 6px; }
+      .search-inp { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
+    Fundo Plus
+  </div>
+
+  <div class="sb-section">Main</div>
+  <a class="nav-item" href="/~">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </a>
+  <a class="nav-item" href="/ai">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    Prok AI Chat
+  </a>
+  <a class="nav-item" href="/~">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    Quiz
+  </a>
+  <a class="nav-item" href="/~">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Skills &amp; Study
+  </a>
+
+  <div class="sb-section">Resources</div>
+  <a class="nav-item" href="/~">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Past Papers
+  </a>
+  <a class="nav-item" href="/~">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    WhatsApp
+  </a>
+  <a class="nav-item" href="/~/projectgen">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Project Generator
+  </a>
+  <a class="nav-item" href="/~/subscription">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    Subscription
+  </a>
+
+  <div class="sb-section">Community</div>
+  <a class="nav-item" href="/community">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    Community
+  </a>
+  <a class="nav-item" href="/support">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+    Support
+  </a>
+  <a class="nav-item" href="/~/more">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+    More
+  </a>
+  <a class="nav-item active" href="/~/notifications">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    Notifications
+    <span id="sb-notif-count" style="margin-left:auto;background:#dc2626;color:#fff;border-radius:99px;font-size:.6rem;font-weight:900;padding:1px 6px;display:none"></span>
+  </a>
+
+  <div class="sb-bottom">
+    <a class="nav-item" href="/about">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      About
+    </a>
+    <a class="nav-item" href="/me">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      My Profile
+    </a>
+    <a class="nav-item" href="#" onclick="return doLogout(),false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign Out
+    </a>
+  </div>
+</nav>
+
+<!-- ── Topbar ── -->
+<header class="topbar">
+  <button class="ham" onclick="toggleSb()" aria-label="Menu">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <span class="topbar-title">🔔 Notifications</span>
+  <div class="topbar-right">
+    <div class="avatar" id="avatar-letter">?</div>
+    <span style="font-size:.82rem;font-weight:700;color:var(--mut)" id="topbar-name"></span>
+  </div>
+</header>
+
+<!-- ── Detail Modal ── -->
+<div class="modal-bg" id="detail-modal">
+  <div class="notif-modal">
+    <div class="nm-bg" id="nm-bg">
+      <img id="nm-bg-img" src="" style="display:none" alt="">
+      <div class="nm-default" id="nm-default">📢</div>
+    </div>
+    <div class="nm-body">
+      <div class="nm-title" id="nm-title"></div>
+      <div class="nm-desc" id="nm-desc"></div>
+      <div class="nm-meta" id="nm-meta"></div>
+    </div>
+    <div class="nm-footer">
+      <button class="btn-sm" onclick="closeModal()">Close</button>
+      <button class="nm-ok" id="nm-ok-btn" onclick="closeModal()">Got it ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- Push notification card -->
+  <div class="push-card" id="push-card">
+    <div class="push-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </div>
+    <div class="push-body">
+      <div class="push-title">Browser Push Notifications</div>
+      <div class="push-desc">Get notified even when you're not on the app. You'll receive popup alerts for new announcements directly from your browser.</div>
+      <div style="margin-top:6px">
+        <span class="push-status" id="push-status-badge">Checking…</span>
+      </div>
+    </div>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="toggle-label">Off</span>
+      <label class="toggle">
+        <input type="checkbox" id="push-toggle" onchange="handlePushToggle()">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Page header & controls -->
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">All Notifications</div>
+      <div class="page-sub" id="notif-count-sub">Loading your notifications…</div>
+    </div>
+  </div>
+
+  <!-- Filters + search -->
+  <div class="filters-row">
+    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" onclick="setFilter('unread', this)">Unread</button>
+    <button class="filter-btn" onclick="setFilter('popup', this)">Pop Up</button>
+    <button class="filter-btn" onclick="setFilter('silent', this)">Silent</button>
+    <input class="search-inp" type="text" id="search-inp" placeholder="Search notifications…" oninput="renderList()">
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span class="count-label" id="showing-count"></span>
+    <div style="display:flex;gap:8px">
+      <button class="btn-sm" onclick="markAllRead()">✓ Mark all read</button>
+    </div>
+  </div>
+
+  <!-- Notification list -->
+  <div class="notif-grid" id="notif-grid">
+    <div class="empty-state">
+      <div class="e-icon">⏳</div>
+      <h3>Loading…</h3>
+    </div>
+  </div>
+
+  <!-- Load more -->
+  <div class="load-more-wrap" id="load-more-wrap" style="display:none">
+    <button class="btn-sm" style="padding:9px 24px" onclick="loadMore()">Load more</button>
+  </div>
+
+</main>
+
+<script>
+  const token = localStorage.getItem('fp_session') || sessionStorage.getItem('fp_session') || '';
+  let _allNotifs = [];
+  let _filter    = 'all';
+  let _visibleCount = 20;
+  let _currentModal = null;
+
+  // ── Auth ─────────────────────────────────────────────────────────────
+  async function init() {
+    if (!token) { location.href = '/login'; return; }
+    try {
+      const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
+      if (!r.ok) { location.href = '/login'; return; }
+      const u = await r.json();
+      document.getElementById('topbar-name').textContent = u.name || '';
+      document.getElementById('avatar-letter').textContent = (u.name || 'S')[0].toUpperCase();
+    } catch { location.href = '/login'; return; }
+
+    await loadNotifications();
+    initPushState();
+  }
+
+  async function apiFetch(url, opts = {}) {
+    const headers = { 'x-session-token': token, ...(opts.headers || {}) };
+    if (opts.body && typeof opts.body === 'string') headers['Content-Type'] = 'application/json';
+    return fetch(url, { ...opts, headers });
+  }
+
+  // ── Notifications ─────────────────────────────────────────────────────
+  async function loadNotifications() {
+    try {
+      const r = await apiFetch('/api/notifications');
+      if (!r.ok) throw new Error('Failed');
+      const data = await r.json();
+      _allNotifs = data.notifications || [];
+
+      const unread = _allNotifs.filter(n => !n.read).length;
+      const sbDot = document.getElementById('sb-notif-count');
+      if (sbDot) {
+        sbDot.textContent = unread > 99 ? '99+' : String(unread);
+        sbDot.style.display = unread > 0 ? 'inline-block' : 'none';
+      }
+
+      updateCountSub(unread);
+      renderList();
+    } catch(e) {
+      document.getElementById('notif-grid').innerHTML = `
+        <div class="empty-state">
+          <div class="e-icon">⚠️</div>
+          <h3>Couldn't load notifications</h3>
+          <p>Check your connection and try refreshing.</p>
+        </div>`;
+    }
+  }
+
+  function updateCountSub(unread) {
+    const total = _allNotifs.length;
+    document.getElementById('notif-count-sub').textContent =
+      total === 0 ? 'No notifications yet' :
+      `${total} total · ${unread} unread`;
+  }
+
+  function setFilter(f, btn) {
+    _filter = f;
+    _visibleCount = 20;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
+  }
+
+  function getFiltered() {
+    const q = (document.getElementById('search-inp').value || '').toLowerCase().trim();
+    return _allNotifs.filter(n => {
+      if (_filter === 'unread' && n.read) return false;
+      if (_filter === 'popup'  && n.type !== 'popup') return false;
+      if (_filter === 'silent' && n.type !== 'silent') return false;
+      if (q) {
+        return (n.title || '').toLowerCase().includes(q) ||
+               (n.description || '').toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }
+
+  function renderList() {
+    const filtered  = getFiltered();
+    const visible   = filtered.slice(0, _visibleCount);
+    const grid      = document.getElementById('notif-grid');
+    const lmWrap    = document.getElementById('load-more-wrap');
+    const countEl   = document.getElementById('showing-count');
+
+    countEl.textContent = `Showing ${visible.length} of ${filtered.length}`;
+    lmWrap.style.display = filtered.length > visible.length ? 'block' : 'none';
+
+    if (!filtered.length) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="e-icon">🔕</div>
+          <h3>${_filter === 'unread' ? 'All caught up!' : 'No notifications found'}</h3>
+          <p>${_filter === 'unread' ? 'You have no unread notifications.' : 'Try a different filter or search term.'}</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = visible.map(n => {
+      const timeAgo = formatTime(n.createdAt);
+      const bgHtml = n.bgImage
+        ? `<img src="${escH(n.bgImage)}" alt="" loading="lazy">`
+        : `<div class="nc-default-icon">${n.type === 'popup' ? '💬' : '📢'}</div>`;
+      return `
+        <div class="notif-card ${n.read ? '' : 'unread'} ${n.type}-type" onclick="openModal('${escH(n.id)}')">
+          <div class="nc-bg-strip">${bgHtml}</div>
+          <div class="nc-content">
+            <div class="nc-row1">
+              <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">
+                ${!n.read ? '<div class="unread-dot"></div>' : ''}
+                <div class="nc-title-text">${escH(n.title)}</div>
+              </div>
+              <div class="nc-badges">
+                <span class="badge badge-${n.type}">${n.type === 'popup' ? '💬 Pop up' : '🔕 Silent'}</span>
+                ${!n.read ? '<span class="badge badge-unread">New</span>' : ''}
+              </div>
+            </div>
+            <div class="nc-desc-text">${escH(n.description || '')}</div>
+            <div class="nc-footer-row">
+              <span class="nc-time">${timeAgo}</span>
+              <div class="nc-actions" onclick="event.stopPropagation()">
+                ${!n.read ? `<button class="nc-act-btn read-btn" onclick="markOne('${escH(n.id)}')">✓ Mark read</button>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function loadMore() {
+    _visibleCount += 20;
+    renderList();
+  }
+
+  // ── Mark read ─────────────────────────────────────────────────────────
+  async function markOne(id) {
+    await apiFetch('/api/notifications/read', { method: 'POST', body: JSON.stringify({ notifId: id }) });
+    await loadNotifications();
+  }
+
+  async function markAllRead() {
+    await apiFetch('/api/notifications/read', { method: 'POST', body: JSON.stringify({ all: true }) });
+    await loadNotifications();
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────
+  function openModal(id) {
+    const n = _allNotifs.find(x => x.id === id);
+    if (!n) return;
+    _currentModal = n;
+
+    const bgImg = document.getElementById('nm-bg-img');
+    const nmDefault = document.getElementById('nm-default');
+    if (n.bgImage) {
+      bgImg.src = n.bgImage; bgImg.style.display = 'block';
+      nmDefault.style.display = 'none';
+      document.getElementById('nm-bg').style.background = 'transparent';
+    } else {
+      bgImg.style.display = 'none';
+      nmDefault.style.display = 'flex';
+      nmDefault.textContent = n.type === 'popup' ? '💬' : '📢';
+      document.getElementById('nm-bg').style.background = '#f1f5f9';
+    }
+
+    document.getElementById('nm-title').textContent = n.title;
+    document.getElementById('nm-desc').textContent  = n.description || '';
+    document.getElementById('nm-meta').innerHTML =
+      `<span class="badge badge-${n.type}">${n.type === 'popup' ? '💬 Pop up' : '🔕 Silent'}</span>
+       <span class="badge" style="background:#f1f5f9;color:var(--mut)">${formatTime(n.createdAt)}</span>
+       ${!n.read ? '<span class="badge badge-unread">Unread</span>' : ''}`;
+
+    document.getElementById('nm-ok-btn').textContent = n.read ? 'Close' : 'Got it ✓';
+    document.getElementById('detail-modal').classList.add('open');
+
+    // Mark as read when opened
+    if (!n.read) markOne(id);
+  }
+
+  function closeModal() {
+    document.getElementById('detail-modal').classList.remove('open');
+    _currentModal = null;
+  }
+
+  document.getElementById('detail-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('detail-modal')) closeModal();
+  });
+
+  // ── Push notifications ─────────────────────────────────────────────────
+  function initPushState() {
+    if (!('Notification' in window)) {
+      document.getElementById('push-card').style.opacity = '.6';
+      document.getElementById('push-card').style.pointerEvents = 'none';
+      setPushBadge('unsupported');
+      return;
+    }
+    syncPushUI();
+  }
+
+  function syncPushUI() {
+    const perm   = Notification.permission;
+    const toggle = document.getElementById('push-toggle');
+    const label  = document.getElementById('toggle-label');
+
+    setPushBadge(perm);
+
+    if (perm === 'granted') {
+      toggle.checked = true;
+      label.textContent = 'On';
+    } else {
+      toggle.checked = false;
+      label.textContent = 'Off';
+    }
+  }
+
+  function setPushBadge(perm) {
+    const el = document.getElementById('push-status-badge');
+    const map = {
+      granted:     { cls: 'granted', txt: '✓ Notifications enabled' },
+      denied:      { cls: 'denied',  txt: '✗ Blocked by browser — reset in site settings' },
+      default:     { cls: 'default', txt: 'Not enabled yet' },
+      unsupported: { cls: 'default', txt: 'Not supported in this browser' },
+    };
+    const s = map[perm] || map.default;
+    el.className = 'push-status ' + s.cls;
+    el.textContent = s.txt;
+  }
+
+  async function handlePushToggle() {
+    const toggle = document.getElementById('push-toggle');
+    if (!('Notification' in window)) { toggle.checked = false; return; }
+
+    if (toggle.checked) {
+      // Request permission
+      const result = await Notification.requestPermission();
+      if (result === 'granted') {
+        document.getElementById('toggle-label').textContent = 'On';
+        setPushBadge('granted');
+        // Send a test notification
+        new Notification('Fundo Plus Notifications', {
+          body: 'You\'ll now receive notifications from Fundo Plus!',
+          icon: '/images/logo.png',
+        });
+      } else {
+        toggle.checked = false;
+        document.getElementById('toggle-label').textContent = 'Off';
+        setPushBadge(result);
+      }
+    } else {
+      // Can't programmatically revoke — guide the user
+      toggle.checked = true; // revert — can't turn off via JS
+      setPushBadge('denied_info');
+      const el = document.getElementById('push-status-badge');
+      el.className = 'push-status default';
+      el.textContent = 'To disable: click the 🔒 icon in your address bar → Notifications → Block';
+    }
+  }
+
+  // ── Sidebar ───────────────────────────────────────────────────────────
+  function toggleSb() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+  function closeSb()  { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+  // ── Logout ────────────────────────────────────────────────────────────
+  async function doLogout() {
+    try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch {}
+    localStorage.removeItem('fp_session'); sessionStorage.removeItem('fp_session');
+    location.href = '/login';
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function escH(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatTime(iso) {
+    const d = new Date(iso);
+    const now = Date.now();
+    const diff = now - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)  return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7)  return `${days}d ago`;
+    return d.toLocaleDateString('en-ZW', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  init();
+</script>
+</body>
+</html>

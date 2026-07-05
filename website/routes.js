@@ -1916,6 +1916,11 @@ router.get('/admin/notifications', (req, res) =>
   res.sendFile(path.join(PUBLIC_DIR, 'notifications.html'))
 );
 
+// User notifications page
+router.get('/~/notifications', requireAuth, (req, res) =>
+  res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'notifications.html'))
+);
+
 // ── Admin: CRUD ───────────────────────────────────────────────────────────
 router.get('/api/admin/notifications', requireAdmin, (req, res) => {
   res.json({ ok: true, notifications: getAllNotifications() });
