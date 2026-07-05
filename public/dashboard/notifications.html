@@ -532,74 +532,127 @@
     if (e.target === document.getElementById('detail-modal')) closeModal();
   });
 
-  // ── Push notifications ─────────────────────────────────────────────────
-  function initPushState() {
-    if (!('Notification' in window)) {
-      document.getElementById('push-card').style.opacity = '.6';
-      document.getElementById('push-card').style.pointerEvents = 'none';
+  // ── Push notifications (Web Push via Service Worker) ─────────────────────
+  const SW_PATH = '/sw.js';
+
+  async function initPushState() {
+    const card = document.getElementById('push-card');
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      card.style.opacity = '.6';
+      card.style.pointerEvents = 'none';
       setPushBadge('unsupported');
       return;
     }
-    syncPushUI();
-  }
-
-  function syncPushUI() {
-    const perm   = Notification.permission;
-    const toggle = document.getElementById('push-toggle');
-    const label  = document.getElementById('toggle-label');
-
-    setPushBadge(perm);
-
-    if (perm === 'granted') {
-      toggle.checked = true;
-      label.textContent = 'On';
-    } else {
-      toggle.checked = false;
-      label.textContent = 'Off';
+    try {
+      await navigator.serviceWorker.register(SW_PATH);
+      await syncPushUI();
+    } catch (e) {
+      console.warn('[Push] SW register failed:', e);
+      setPushBadge('unsupported');
     }
   }
 
-  function setPushBadge(perm) {
+  async function getActiveSub() {
+    const reg = await navigator.serviceWorker.ready;
+    return reg.pushManager.getSubscription();
+  }
+
+  async function syncPushUI() {
+    const toggle = document.getElementById('push-toggle');
+    const label  = document.getElementById('toggle-label');
+    const perm   = Notification.permission;
+
+    if (perm === 'denied') {
+      toggle.checked = false; label.textContent = 'Off';
+      setPushBadge('denied'); return;
+    }
+
+    const sub = await getActiveSub();
+    if (sub && perm === 'granted') {
+      toggle.checked = true; label.textContent = 'On';
+      setPushBadge('granted');
+    } else {
+      toggle.checked = false; label.textContent = 'Off';
+      setPushBadge('default');
+    }
+  }
+
+  function setPushBadge(state) {
     const el = document.getElementById('push-status-badge');
     const map = {
-      granted:     { cls: 'granted', txt: '✓ Notifications enabled' },
-      denied:      { cls: 'denied',  txt: '✗ Blocked by browser — reset in site settings' },
+      granted:     { cls: 'granted', txt: '\u2713 Notifications enabled' },
+      denied:      { cls: 'denied',  txt: '\u2717 Blocked by browser \u2014 reset in site settings' },
       default:     { cls: 'default', txt: 'Not enabled yet' },
       unsupported: { cls: 'default', txt: 'Not supported in this browser' },
+      subscribing: { cls: 'default', txt: 'Subscribing\u2026' },
     };
-    const s = map[perm] || map.default;
-    el.className = 'push-status ' + s.cls;
+    const s = map[state] || map.default;
+    el.className   = 'push-status ' + s.cls;
     el.textContent = s.txt;
   }
 
   async function handlePushToggle() {
     const toggle = document.getElementById('push-toggle');
-    if (!('Notification' in window)) { toggle.checked = false; return; }
 
     if (toggle.checked) {
-      // Request permission
-      const result = await Notification.requestPermission();
-      if (result === 'granted') {
+      // ── Enable push ──────────────────────────────────────────────────
+      setPushBadge('subscribing');
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          toggle.checked = false;
+          document.getElementById('toggle-label').textContent = 'Off';
+          setPushBadge(perm);
+          return;
+        }
+
+        const keyRes  = await apiFetch('/api/push/vapid-public-key');
+        const { key } = await keyRes.json();
+
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly:      true,
+          applicationServerKey: urlBase64ToUint8Array(key),
+        });
+
+        await apiFetch('/api/push/subscribe', {
+          method: 'POST',
+          body:   JSON.stringify(sub.toJSON()),
+        });
+
         document.getElementById('toggle-label').textContent = 'On';
         setPushBadge('granted');
-        // Send a test notification
-        new Notification('Fundo Plus Notifications', {
-          body: 'You\'ll now receive notifications from Fundo Plus!',
-          icon: '/images/logo.png',
-        });
-      } else {
+      } catch (e) {
+        console.error('[Push] Subscribe failed:', e);
         toggle.checked = false;
         document.getElementById('toggle-label').textContent = 'Off';
-        setPushBadge(result);
+        setPushBadge('default');
       }
     } else {
-      // Can't programmatically revoke — guide the user
-      toggle.checked = true; // revert — can't turn off via JS
-      setPushBadge('denied_info');
-      const el = document.getElementById('push-status-badge');
-      el.className = 'push-status default';
-      el.textContent = 'To disable: click the 🔒 icon in your address bar → Notifications → Block';
+      // ── Disable push ─────────────────────────────────────────────────
+      try {
+        const sub = await getActiveSub();
+        if (sub) {
+          await apiFetch('/api/push/unsubscribe', {
+            method: 'POST',
+            body:   JSON.stringify({ endpoint: sub.endpoint }),
+          });
+          await sub.unsubscribe();
+        }
+        document.getElementById('toggle-label').textContent = 'Off';
+        setPushBadge('default');
+      } catch (e) {
+        console.error('[Push] Unsubscribe failed:', e);
+        await syncPushUI();
+      }
     }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw     = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
   }
 
   // ── Sidebar ───────────────────────────────────────────────────────────

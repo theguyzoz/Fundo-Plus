@@ -858,13 +858,54 @@ export function getExamWindowExpiry(uid, examId) {
 // ══════════════════════════════════════════════════════════════════════════
 //  Notifications
 // ══════════════════════════════════════════════════════════════════════════
-const NOTIFICATIONS_FILE = path.join(DATA_DIR, 'notifications.json');
-const NOTIF_READS_FILE   = path.join(DATA_DIR, 'notif_reads.json');
+const NOTIFICATIONS_FILE  = path.join(DATA_DIR, 'notifications.json');
+const NOTIF_READS_FILE    = path.join(DATA_DIR, 'notif_reads.json');
+const PUSH_SUBS_FILE      = path.join(DATA_DIR, 'push_subscriptions.json');
 
 function loadNotifications() { return readJson(NOTIFICATIONS_FILE, { notifications: [] }); }
 function saveNotifications(d) { writeJson(NOTIFICATIONS_FILE, d); }
 function loadNotifReads()     { return readJson(NOTIF_READS_FILE, { reads: {} }); }
 function saveNotifReads(d)    { writeJson(NOTIF_READS_FILE, d); }
+
+// Push subscriptions — keyed by userId, value is array of subscription objects
+function loadPushSubs() { return readJson(PUSH_SUBS_FILE, { subs: {} }); }
+function savePushSubs(d) { writeJson(PUSH_SUBS_FILE, d); }
+
+export function savePushSubscription(userId, subscription) {
+  const d = loadPushSubs();
+  if (!d.subs[userId]) d.subs[userId] = [];
+  // Deduplicate by endpoint
+  const endpoint = subscription.endpoint;
+  d.subs[userId] = d.subs[userId].filter(s => s.endpoint !== endpoint);
+  d.subs[userId].push(subscription);
+  savePushSubs(d);
+}
+
+export function removePushSubscription(userId, endpoint) {
+  const d = loadPushSubs();
+  if (d.subs[userId]) {
+    d.subs[userId] = d.subs[userId].filter(s => s.endpoint !== endpoint);
+    savePushSubs(d);
+  }
+}
+
+export function getPushSubscriptionsForUsers(userIds) {
+  const d = loadPushSubs();
+  const result = [];
+  for (const uid of userIds) {
+    if (d.subs[uid]) result.push(...d.subs[uid]);
+  }
+  return result;
+}
+
+export function getAllPushSubscriptions() {
+  const d = loadPushSubs();
+  const result = [];
+  for (const uid of Object.keys(d.subs)) {
+    result.push(...d.subs[uid]);
+  }
+  return result;
+}
 
 export function createNotification({ type, title, description, bgImage, target, targetEmails }) {
   const d = loadNotifications();

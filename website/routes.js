@@ -39,6 +39,9 @@ import {
   createNotification, getAllNotifications, deleteNotification,
   getNotificationsForUser, getUnreadNotificationsForUser,
   markNotificationRead, getReadNotifIds,
+  // push subscriptions
+  savePushSubscription, removePushSubscription,
+  getPushSubscriptionsForUsers, getAllPushSubscriptions,
 } from '../store.js';
 import {
   createSession, destroySession, getSessionUser,
@@ -52,6 +55,20 @@ import {
 import {
   backupExamToSupabase, deleteExamBackup, purgeExpiredExamBackups, syncToSupabase,
 } from '../utils/supabase-data.js';
+import webpush from 'web-push';
+
+// ── Web Push (VAPID) setup ─────────────────────────────────────────────────
+const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY  || 'BEPEHkkKDM0XGZVnCphAAq2IjX_V2kaVSOUfIEYBi2l33bAW9_GY4xbDS0WHAU5SOeceWuMrfTmtm3tHfc6izKs';
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || 'K-4QFQ4WJ__l5zoQ5zZlqYcsyalMi1q3DtEesGhnbDI';
+webpush.setVapidDetails('mailto:support@fundoplus.co.zw', VAPID_PUBLIC, VAPID_PRIVATE);
+
+async function sendPushToSubscriptions(subscriptions, payload) {
+  const results = await Promise.allSettled(
+    subscriptions.map(sub => webpush.sendNotification(sub, JSON.stringify(payload)))
+  );
+  const failed = results.filter(r => r.status === 'rejected').length;
+  if (failed) console.warn(`[Push] ${failed}/${subscriptions.length} pushes failed`);
+}
 
 // Run expired exam backup purge on startup (non-blocking)
 purgeExpiredExamBackups().catch(e => console.warn('[Routes] purgeExpiredExamBackups startup error:', e.message));
@@ -1914,7 +1931,28 @@ router.delete('/api/admin/zimsec/results/:id', requireAdmin, (req, res) => {
 // Admin page
 router.get('/admin/notifications', (req, res) =>
   res.sendFile(path.join(PUBLIC_DIR, 'notifications.html'))
-);
+)
+
+// ── Push subscription endpoints ────────────────────────────────────────────
+router.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ key: VAPID_PUBLIC });
+});
+
+router.post('/api/push/subscribe', requireAuth, (req, res) => {
+  const user = getSessionUser(req);
+  const sub  = req.body;
+  if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Invalid subscription' });
+  savePushSubscription(user.id, sub);
+  res.json({ ok: true });
+});
+
+router.post('/api/push/unsubscribe', requireAuth, (req, res) => {
+  const user = getSessionUser(req);
+  const { endpoint } = req.body || {};
+  if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
+  removePushSubscription(user.id, endpoint);
+  res.json({ ok: true });
+});;
 
 // User notifications page
 router.get('/~/notifications', requireAuth, (req, res) =>
@@ -1926,14 +1964,40 @@ router.get('/api/admin/notifications', requireAdmin, (req, res) => {
   res.json({ ok: true, notifications: getAllNotifications() });
 });
 
-router.post('/api/admin/notifications', requireAdmin, (req, res) => {
+router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
   const { type, title, description, bgImage, target, targetEmails } = req.body || {};
   if (!title) return res.status(400).json({ error: 'title is required' });
   if (!['silent', 'popup'].includes(type))
     return res.status(400).json({ error: 'type must be silent or popup' });
   if (!['all', 'single', 'multiple'].includes(target))
     return res.status(400).json({ error: 'target must be all, single, or multiple' });
+
   const notif = createNotification({ type, title, description, bgImage, target, targetEmails });
+
+  // Send real Web Push to subscribed browsers
+  try {
+    let subscriptions;
+    if (target === 'all') {
+      subscriptions = getAllPushSubscriptions();
+    } else {
+      const users = getAllWebUsers().filter(u =>
+        (targetEmails || []).map(e => e.toLowerCase()).includes((u.email || '').toLowerCase())
+      );
+      subscriptions = getPushSubscriptionsForUsers(users.map(u => u.id));
+    }
+    if (subscriptions.length > 0) {
+      sendPushToSubscriptions(subscriptions, {
+        title,
+        body:  description || '',
+        icon:  '/images/logo.png',
+        badge: '/images/logo.png',
+        url:   '/~/notifications',
+      }); // fire-and-forget
+    }
+  } catch (e) {
+    console.warn('[Push] Failed to send push notifications:', e.message);
+  }
+
   res.json({ ok: true, notification: notif });
 });
 
