@@ -1,0 +1,164 @@
+# ZIMSEC O Level Agriculture — Paper 1 (Multiple Choice)
+# 40 Questions | Topics: Soil Science, Crop Husbandry, Animal Husbandry,
+# Farm Structures & Machinery, Agri-business, Water Conservation,
+# Pest & Disease Control, Farm Management
+
+Q : Which soil type has the largest particle size?
+A: Clay  B: Silt  C: Sand  D: Loam
+ANS: C
+
+Q : The process by which rainwater washes nutrients down through the soil is called
+A: Leaching  B: Erosion  C: Waterlogging  D: Percolation
+ANS: A
+
+Q : A soil pH of 5 is described as
+A: Neutral  B: Alkaline  C: Acidic  D: Saline
+ANS: C
+
+Q : Which of the following is added to soil to raise its pH (reduce acidity)?
+A: Sulphur  B: Ammonium nitrate  C: Lime  D: Superphosphate
+ANS: C
+
+Q : The upward movement of water in the soil through small pores is called
+A: Leaching  B: Capillarity  C: Percolation  D: Infiltration
+ANS: B
+
+Q : Which nutrient is most important for promoting root development in crops?
+A: Nitrogen  B: Phosphorus  C: Potassium  D: Calcium
+ANS: B
+
+Q : A crop rotation practice where land is left uncultivated for a season is called
+A: Fallowing  B: Contour farming  C: Intercropping  D: Strip cropping
+ANS: A
+
+Q : Which of the following is a leguminous crop that improves soil nitrogen?
+A: Maize  B: Tobacco  C: Groundnuts  D: Sorghum
+ANS: C
+
+Q : The correct spacing for maize in Zimbabwe is approximately
+A: 90 cm × 30 cm  B: 30 cm × 10 cm  C: 45 cm × 45 cm  D: 10 cm × 5 cm
+ANS: A
+
+Q : Superphosphate fertiliser primarily supplies which nutrient?
+A: Nitrogen  B: Potassium  C: Phosphorus  D: Calcium
+ANS: C
+
+Q : Which of the following is a method of soil conservation?
+A: Overgrazing  B: Monocropping  C: Contour ploughing  D: Deep tillage every season
+ANS: C
+
+Q : Compound D fertiliser (7:14:7) means it contains
+A: 7% N, 14% K, 7% P  B: 7% N, 14% P, 7% K  C: 7% P, 14% N, 7% K  D: 14% N, 7% P, 7% K
+ANS: B
+
+Q : The practice of growing two or more crops simultaneously on the same land is called
+A: Crop rotation  B: Monoculture  C: Intercropping  D: Strip farming
+ANS: C
+
+Q : Which of the following is a ruminant animal?
+A: Pig  B: Rabbit  C: Chicken  D: Cattle
+ANS: D
+
+Q : The gestation period of a cow is approximately
+A: 5 months  B: 7 months  C: 9 months  D: 12 months
+ANS: C
+
+Q : Which of the following diseases in cattle is controlled by dipping?
+A: Foot and mouth disease  B: Tick fever (East Coast Fever)  C: Anthrax  D: Blackleg
+ANS: B
+
+Q : The part of the digestive system in ruminants where microbial digestion of cellulose occurs is the
+A: Abomasum  B: Omasum  C: Rumen  D: Reticulum
+ANS: C
+
+Q : Colostrum is important for newborn livestock because it
+A: Increases milk production  B: Provides passive immunity  C: Promotes early weaning  D: Improves weight gain only
+ANS: B
+
+Q : Which of the following is a maintenance ration for livestock?
+A: Feed given only for maximum milk production  B: Feed required to keep the animal alive without production  C: Feed for rapid weight gain  D: Feed given only to pregnant animals
+ANS: B
+
+Q : A broiler is a chicken kept for
+A: Egg production  B: Meat production  C: Both eggs and meat  D: Breeding only
+ANS: B
+
+Q : The term stocking rate refers to
+A: The number of animals sold per year  B: The number of animals per unit area of land  C: The total weight of livestock on a farm  D: The amount of feed given per animal
+ANS: B
+
+Q : Which of the following farming practices helps to prevent soil erosion on sloping land?
+A: Burning crop residues  B: Ploughing up and down slopes  C: Terracing  D: Removing all vegetation
+ANS: C
+
+Q : A farm structure used to store grain and protect it from pests and moisture is called a
+A: Kraal  B: Granary  C: Silo  D: Both B and C
+ANS: D
+
+Q : Which tool is used to measure the moisture content of soil?
+A: Hygrometer  B: Tensiometer  C: Barometer  D: Thermometer
+ANS: B
+
+Q : The correct definition of gross margin is
+A: Total income minus total costs  B: Gross income minus variable costs  C: Fixed costs minus variable costs  D: Total costs minus fixed costs
+ANS: B
+
+Q : Which of the following is a fixed cost on a farm?
+A: Seed cost  B: Fertiliser cost  C: Labour hired for planting  D: Depreciation of equipment
+ANS: D
+
+Q : A government programme that guarantees farmers a set price for their produce is called
+A: Subsidisation  B: Price support (floor price)  C: Privatisation  D: Crop insurance
+ANS: B
+
+Q : The nitrogen cycle process where bacteria convert atmospheric nitrogen into ammonia is called
+A: Nitrification  B: Denitrification  C: Nitrogen fixation  D: Ammonification
+ANS: C
+
+Q : Which type of irrigation delivers water directly to the root zone of plants?
+A: Flood irrigation  B: Sprinkler irrigation  C: Drip irrigation  D: Furrow irrigation
+ANS: C
+
+Q : Which of the following is an example of a biological method of pest control?
+A: Using pesticides  B: Introducing natural predators of the pest  C: Burning infested crops  D: Rotating crops
+ANS: B
+
+Q : Seed dressing is done to protect seeds from
+A: Poor germination due to drought  B: Soil-borne diseases and pests  C: Bird damage after planting  D: Weeds
+ANS: B
+
+Q : The correct order of tillage operations is
+A: Harrowing → Ploughing → Ridging  B: Ploughing → Harrowing → Ridging  C: Ridging → Ploughing → Harrowing  D: Harrowing → Ridging → Ploughing
+ANS: B
+
+Q : Minimum tillage is practised mainly to
+A: Increase soil aeration  B: Reduce soil compaction and moisture loss  C: Kill weeds more effectively  D: Mix fertiliser into the soil
+ANS: B
+
+Q : Which of the following crops is Zimbabwe's most important export crop?
+A: Maize  B: Cotton  C: Tobacco  D: Soyabeans
+ANS: C
+
+Q : An agro-ecological region in Zimbabwe that receives less than 450 mm of rainfall per year is
+A: Region I  B: Region II  C: Region IV  D: Region V
+ANS: D
+
+Q : The term "carrying capacity" of a pasture means
+A: The weight of the heaviest animal on the farm  B: The maximum number of animals the land can support without degradation  C: The total amount of hay that can be stored  D: The number of animals sold at the end of the year
+ANS: B
+
+Q : Which of the following is NOT a reason for keeping farm records?
+A: Planning future farm activities  B: Monitoring crop and livestock performance  C: Identifying which staff to dismiss  D: Calculating profit and loss
+ANS: C
+
+Q : The process of removing male reproductive organs from a male animal to improve meat quality is called
+A: Dipping  B: Dehorning  C: Castration  D: Ear-tagging
+ANS: C
+
+Q : Which of the following is the best definition of soil texture?
+A: The colour of the soil  B: The relative proportions of sand, silt and clay in the soil  C: The amount of organic matter in the soil  D: The arrangement of soil particles into aggregates
+ANS: B
+
+Q : A farmer harvests 5 000 kg of maize from 2 hectares of land. What is the yield per hectare?
+A: 10 000 kg/ha  B: 2 500 kg/ha  C: 7 000 kg/ha  D: 5 000 kg/ha
+ANS: B

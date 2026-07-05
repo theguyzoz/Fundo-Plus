@@ -1,0 +1,165 @@
+# ZIMSEC O Level Combined Science — Paper 1 (Multiple Choice)
+# 40 Questions | Topics: Biology (Cell biology, Nutrition, Photosynthesis, Respiration,
+# Transport, Reproduction, Genetics, Ecology), Chemistry (Atomic structure, Bonding,
+# Reactions, Acids & Bases, Electrolysis, Organic), Physics (Force, Energy, Electricity,
+# Waves, Measurement, Pressure)
+
+Q : Which organelle is responsible for producing energy (ATP) in a cell?
+A: Nucleus  B: Mitochondria  C: Chloroplast  D: Ribosome
+ANS: B
+
+Q : The process by which plants make their own food using sunlight is called
+A: Respiration  B: Transpiration  C: Photosynthesis  D: Digestion
+ANS: C
+
+Q : Which of the following is the correct word equation for aerobic respiration?
+A: Glucose + Water → Carbon dioxide + Oxygen  B: Glucose + Oxygen → Carbon dioxide + Water + Energy  C: Carbon dioxide + Water → Glucose + Oxygen  D: Glucose → Lactic acid + Energy
+ANS: B
+
+Q : The blood vessel that carries oxygenated blood from the lungs to the heart is the
+A: Pulmonary artery  B: Aorta  C: Pulmonary vein  D: Vena cava
+ANS: C
+
+Q : In a food chain, organisms that feed on producers are called
+A: Decomposers  B: Primary consumers  C: Secondary consumers  D: Apex predators
+ANS: B
+
+Q : Which hormone controls blood sugar levels in humans?
+A: Adrenaline  B: Oestrogen  C: Insulin  D: Testosterone
+ANS: C
+
+Q : In Mendelian genetics, if T represents tall (dominant) and t represents short (recessive), the genotype of a homozygous tall plant is
+A: Tt  B: tt  C: TT  D: tT
+ANS: C
+
+Q : Which part of the male reproductive system produces sperm?
+A: Prostate gland  B: Sperm duct  C: Urethra  D: Testes
+ANS: D
+
+Q : The process by which water moves through a plant from roots to leaves is
+A: Osmosis  B: Transpiration  C: Diffusion  D: Active transport
+ANS: B
+
+Q : Which of the following is a function of the cell membrane?
+A: Controlling what enters and leaves the cell  B: Producing proteins  C: Storing genetic material  D: Producing energy
+ANS: A
+
+Q : An atom of carbon has atomic number 6. How many electrons does it have?
+A: 12  B: 3  C: 6  D: 8
+ANS: C
+
+Q : Which type of bond involves the sharing of electrons between atoms?
+A: Ionic bond  B: Metallic bond  C: Covalent bond  D: Hydrogen bond
+ANS: C
+
+Q : Which of the following is an acid?
+A: NaOH  B: HCl  C: NaCl  D: Ca(OH)₂
+ANS: B
+
+Q : The pH of pure water is
+A: 0  B: 7  C: 14  D: 5
+ANS: B
+
+Q : During electrolysis of dilute sulphuric acid, what is produced at the cathode?
+A: Oxygen  B: Chlorine  C: Hydrogen  D: Sulphur
+ANS: C
+
+Q : Which of the following is a physical change?
+A: Burning wood  B: Rusting of iron  C: Melting of ice  D: Digestion of food
+ANS: C
+
+Q : Sodium chloride (NaCl) is formed when sodium reacts with chlorine. This is an example of a
+A: Decomposition reaction  B: Displacement reaction  C: Synthesis (combination) reaction  D: Reversible reaction
+ANS: C
+
+Q : What is the chemical formula for carbon dioxide?
+A: CO  B: CO₂  C: C₂O  D: C₂O₃
+ANS: B
+
+Q : Which group of elements in the Periodic Table are known as noble gases?
+A: Group I  B: Group VII  C: Group O (Group 18)  D: Group II
+ANS: C
+
+Q : Organic compounds are those that contain the element
+A: Oxygen  B: Nitrogen  C: Carbon  D: Hydrogen
+ANS: C
+
+Q : Which of the following is a scalar quantity?
+A: Force  B: Velocity  C: Acceleration  D: Speed
+ANS: D
+
+Q : A force of 20 N acts on an area of 4 m². What is the pressure?
+A: 80 Pa  B: 16 Pa  C: 5 Pa  D: 24 Pa
+ANS: C
+
+Q : The SI unit of electric current is the
+A: Volt  B: Ohm  C: Ampere  D: Watt
+ANS: C
+
+Q : Which law states that the current through a conductor is directly proportional to the voltage across it?
+A: Newton's First Law  B: Ohm's Law  C: Boyle's Law  D: Charles's Law
+ANS: B
+
+Q : What type of energy is stored in a stretched rubber band?
+A: Kinetic energy  B: Chemical energy  C: Elastic potential energy  D: Thermal energy
+ANS: C
+
+Q : The transfer of heat by direct contact between particles is called
+A: Convection  B: Radiation  C: Conduction  D: Evaporation
+ANS: C
+
+Q : Which of the following correctly defines the principle of moments?
+A: A body is in equilibrium when total clockwise moments equal total anticlockwise moments  B: Pressure is force divided by velocity  C: Energy cannot be created or destroyed  D: Every action has an equal and opposite reaction
+ANS: A
+
+Q : The speed of light in a vacuum is approximately
+A: 3 × 10⁶ m/s  B: 3 × 10⁸ m/s  C: 3 × 10¹⁰ m/s  D: 3 × 10⁴ m/s
+ANS: B
+
+Q : What is the relationship between frequency (f) and period (T) of a wave?
+A: f = T  B: f = T²  C: f = 1/T  D: f = 2T
+ANS: C
+
+Q : A car accelerates from rest to 20 m/s in 5 seconds. What is its acceleration?
+A: 100 m/s²  B: 25 m/s²  C: 4 m/s²  D: 0.25 m/s²
+ANS: C
+
+Q : The process by which a liquid changes to a gas below its boiling point is called
+A: Condensation  B: Sublimation  C: Evaporation  D: Boiling
+ANS: C
+
+Q : Which environmental factor is NOT required for photosynthesis?
+A: Sunlight  B: Water  C: Carbon dioxide  D: Oxygen
+ANS: D
+
+Q : What is the function of haemoglobin in red blood cells?
+A: Fighting infection  B: Clotting blood  C: Carrying oxygen  D: Producing hormones
+ANS: C
+
+Q : A plant cell placed in a concentrated salt solution will
+A: Swell and burst  B: Become turgid  C: Undergo plasmolysis (shrink)  D: Stay the same
+ANS: C
+
+Q : Which gas is released during photosynthesis?
+A: Carbon dioxide  B: Nitrogen  C: Oxygen  D: Hydrogen
+ANS: C
+
+Q : The movement of particles from a region of high concentration to low concentration is called
+A: Active transport  B: Osmosis  C: Diffusion  D: Facilitated diffusion
+ANS: C
+
+Q : Which of the following describes a series circuit?
+A: Components share the same voltage  B: Components are connected end-to-end and share the same current  C: Each component has its own independent switch  D: Current divides at each junction
+ANS: B
+
+Q : An ecological term for the role an organism plays in its ecosystem is its
+A: Habitat  B: Niche  C: Community  D: Population
+ANS: B
+
+Q : Neutralisation of an acid with a base produces
+A: A gas and water  B: Salt and water  C: Salt and acid  D: Base and water
+ANS: B
+
+Q : Which of the following is a renewable energy source?
+A: Coal  B: Natural gas  C: Solar energy  D: Nuclear energy
+ANS: C

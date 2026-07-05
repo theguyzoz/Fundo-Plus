@@ -1,0 +1,164 @@
+# ZIMSEC O Level Mathematics — Paper 1 (Multiple Choice)
+# 40 Questions | Topics: Arithmetic, Algebra, Sets, Geometry, Trigonometry,
+# Mensuration, Graphs, Statistics, Probability, Matrices, Vectors, Coordinate Geometry,
+# Financial Mathematics, Functions
+
+Q : Which of the following is the correct value of 2³ × 2⁻¹?
+A: 2  B: 4  C: 8  D: 16
+ANS: B
+
+Q : Simplify: 3(2x − 1) − 2(x + 4)
+A: 4x − 11  B: 4x + 11  C: 8x − 11  D: 4x − 3
+ANS: A
+
+Q : Express 0.000 325 in standard form.
+A: 3.25 × 10⁻⁴  B: 3.25 × 10⁻³  C: 32.5 × 10⁻⁵  D: 0.325 × 10⁻³
+ANS: A
+
+Q : The HCF of 36 and 48 is
+A: 6  B: 12  C: 144  D: 24
+ANS: B
+
+Q : Factorise completely: 6x² − 9xy
+A: 3(2x² − 3xy)  B: 3x(2x − 3y)  C: 3y(2x − 3)  D: 6x(x − 9y)
+ANS: B
+
+Q : If P = {2, 3, 5, 7, 11} and Q = {1, 2, 3, 4, 5}, then P ∩ Q is
+A: {2, 3, 5}  B: {1, 2, 3, 4, 5, 7, 11}  C: {1, 4}  D: {7, 11}
+ANS: A
+
+Q : Solve for x: 4x − 3 = 2x + 7
+A: x = 2  B: x = 5  C: x = 10  D: x = −2
+ANS: B
+
+Q : A car travels 240 km in 3 hours. What is its average speed in km/h?
+A: 720  B: 80  C: 60  D: 120
+ANS: B
+
+Q : Calculate the simple interest on $500 at 8% per annum for 3 years.
+A: $12  B: $120  C: $40  D: $24
+ANS: B
+
+Q : Which of the following correctly shows 5/8 as a percentage?
+A: 58%  B: 62.5%  C: 80%  D: 6.25%
+ANS: B
+
+Q : The gradient of a line passing through (1, 3) and (4, 9) is
+A: 3  B: 2  C: 6  D: 1/2
+ANS: B
+
+Q : What is the area of a triangle with base 10 cm and height 6 cm?
+A: 60 cm²  B: 16 cm²  C: 30 cm²  D: 120 cm²
+ANS: C
+
+Q : If f(x) = 3x − 2, find f(4).
+A: 10  B: 12  C: 14  D: 16
+ANS: A
+
+Q : The circumference of a circle with radius 7 cm is (use π = 22/7)
+A: 44 cm  B: 154 cm  C: 22 cm  D: 88 cm
+ANS: A
+
+Q : In the sequence 3, 7, 11, 15 ..., what is the 10th term?
+A: 39  B: 40  C: 43  D: 42
+ANS: A
+
+Q : Solve the inequality: 2x + 1 > 7
+A: x > 3  B: x > 4  C: x > 2  D: x < 3
+ANS: A
+
+Q : The mean of 5, 8, 12, 15 and x is 10. Find x.
+A: 10  B: 8  C: 12  D: 6
+ANS: A
+
+Q : A bag contains 3 red and 5 blue balls. What is the probability of picking a red ball?
+A: 3/8  B: 5/8  C: 3/5  D: 1/3
+ANS: A
+
+Q : In a right-angled triangle, if the opposite side is 6 cm and the hypotenuse is 10 cm, what is sin θ?
+A: 0.6  B: 0.8  C: 0.75  D: 0.5
+ANS: A
+
+Q : Which of the following represents a set with no elements?
+A: ∅  B: {0}  C: {∅}  D: {Ø, 0}
+ANS: A
+
+Q : Evaluate: log₁₀ 1000
+A: 1  B: 2  C: 3  D: 10
+ANS: C
+
+Q : The matrix A = [[2, 1], [3, 4]]. What is the determinant of A?
+A: 5  B: 8  C: 11  D: 14
+ANS: A
+
+Q : If vector a = (3, 4), what is |a|?
+A: 7  B: 5  C: 12  D: 25
+ANS: B
+
+Q : A rectangle has length 12 cm and width 5 cm. What is the length of its diagonal?
+A: 13 cm  B: 17 cm  C: 7 cm  D: 169 cm
+ANS: A
+
+Q : Convert 135° to radians.
+A: 3π/4  B: 4π/3  C: π/4  D: 2π/3
+ANS: A
+
+Q : What is 15% of $80?
+A: $12  B: $15  C: $20  D: $8
+ANS: A
+
+Q : The volume of a cylinder with radius 3.5 cm and height 10 cm is (use π = 22/7)
+A: 385 cm³  B: 110 cm³  C: 220 cm³  D: 770 cm³
+ANS: A
+
+Q : The exchange rate is $1 = 3.75 ZiG. How many ZiG is $120?
+A: 32  B: 480  C: 450  D: 375
+ANS: C
+
+Q : Which is the solution set of x² − 5x + 6 = 0?
+A: {2, 3}  B: {−2, −3}  C: {1, 6}  D: {−1, 6}
+ANS: A
+
+Q : The midpoint of the line joining (2, 4) and (6, 8) is
+A: (4, 6)  B: (8, 12)  C: (3, 5)  D: (4, 4)
+ANS: A
+
+Q : What is the median of: 4, 7, 9, 12, 15, 18?
+A: 9  B: 10.5  C: 12  D: 9.5
+ANS: B
+
+Q : A dealer buys goods for $400 and sells them for $500. What is the percentage profit?
+A: 20%  B: 25%  C: 10%  D: 100%
+ANS: B
+
+Q : Cos 60° =
+A: √3/2  B: 1/2  C: 1  D: √2/2
+ANS: B
+
+Q : In a pie chart, a sector representing 25% of the data has an angle of
+A: 25°  B: 90°  C: 45°  D: 75°
+ANS: B
+
+Q : Which of the following is an irrational number?
+A: √4  B: √9  C: √2  D: 0.25
+ANS: C
+
+Q : A map has a scale of 1 : 50 000. A distance of 4 cm on the map represents an actual distance of
+A: 200 m  B: 2 km  C: 20 km  D: 200 km
+ANS: B
+
+Q : If y = 2x² − 3, what is the value of y when x = −2?
+A: 5  B: −5  C: 11  D: −11
+ANS: A
+
+Q : The sum of interior angles of a hexagon is
+A: 540°  B: 720°  C: 360°  D: 900°
+ANS: B
+
+Q : A right cone has base radius 6 cm and slant height 10 cm. Its curved surface area is (use π = 22/7)
+A: 188.57 cm²  B: 188 cm²  C: 120 cm²  D: 376 cm²
+ANS: A
+
+Q : Solve simultaneously: x + y = 7 and x − y = 3
+A: x = 5, y = 2  B: x = 4, y = 3  C: x = 2, y = 5  D: x = 3, y = 4
+ANS: A
