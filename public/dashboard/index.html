@@ -1575,24 +1575,24 @@ Format with clear ## headings. Be thorough and educational.`;
       if (!_notifData.length) { el.innerHTML = '<div class="nd-empty">No notifications yet</div>'; return; }
       const visible = _notifData.slice(0, 5);
       const hasMore = _notifData.length > 5;
-      el.innerHTML = visible.map(n => {
-        const thumb = n.bgImage ? `<img src="${escH(n.bgImage)}" alt="">` : `<span>📢</span>`;
-        const timeStr = new Date(n.createdAt).toLocaleDateString('en-ZW',{day:'numeric',month:'short'});
-        return `
-          <div class="nd-item ${n.read ? '' : 'unread'}" onclick="markReadAndClose('${escH(n.id)}')">
-            <div class="nd-item-icon">${thumb}</div>
-            <div class="nd-item-body">
-              <div class="nd-item-title">${escH(n.title)}</div>
-              <div class="nd-item-desc">${escH(n.description || '')}</div>
-              <div class="nd-item-time">${timeStr}</div>
-            </div>
-          </div>`;
-      }).join('') + (hasMore ? \`
-        <div style="padding:10px 16px;text-align:center;border-top:1px solid #f1f5f9">
-          <a href="/~/notifications" style="font-size:.78rem;font-weight:800;color:var(--acc);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            View all \${_notifData.length} notifications →
-          </a>
-        </div>\` : '');
+      let html = visible.map(n => {
+        const thumb = n.bgImage ? '<img src="' + escH(n.bgImage) + '" alt="">' : '<span>📢</span>';
+        const timeStr = new Date(n.createdAt).toLocaleDateString('en-ZW', {day:'numeric', month:'short'});
+        return '<div class="nd-item ' + (n.read ? '' : 'unread') + '" onclick="markReadAndClose(' + "'" + escH(n.id) + "'" + ')">'
+          + '<div class="nd-item-icon">' + thumb + '</div>'
+          + '<div class="nd-item-body">'
+          + '<div class="nd-item-title">' + escH(n.title) + '</div>'
+          + '<div class="nd-item-desc">' + escH(n.description || '') + '</div>'
+          + '<div class="nd-item-time">' + timeStr + '</div>'
+          + '</div></div>';
+      }).join('');
+      if (hasMore) {
+        html += '<div style="padding:10px 16px;text-align:center;border-top:1px solid #f1f5f9">'
+          + '<a href="/~/notifications" style="font-size:.78rem;font-weight:800;color:var(--acc);text-decoration:none">'
+          + 'View all ' + _notifData.length + ' notifications →'
+          + '</a></div>';
+      }
+      el.innerHTML = html;
     }
 
     function toggleNotifDrawer(e) {
