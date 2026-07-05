@@ -1576,7 +1576,7 @@ Format with clear ## headings. Be thorough and educational.`;
       const visible = _notifData.slice(0, 5);
       const hasMore = _notifData.length > 5;
       el.innerHTML = visible.map(n => {
-        const thumb = n.bgImage ? `<img src="${escH(n.bgImage)}" alt="">` : `<span>\u{1F4E2}</span>`;
+        const thumb = n.bgImage ? `<img src="${escH(n.bgImage)}" alt="">` : `<span>📢</span>`;
         const timeStr = new Date(n.createdAt).toLocaleDateString('en-ZW',{day:'numeric',month:'short'});
         return `
           <div class="nd-item ${n.read ? '' : 'unread'}" onclick="markReadAndClose('${escH(n.id)}')">
