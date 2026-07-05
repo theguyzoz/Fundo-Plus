@@ -86,6 +86,8 @@ export const MANAGED_FILES = [
   'app.json', 'sessions.json',
   // ZIMSEC exam data — synced so exams/questions/results survive server crashes
   'zimsec-exams.json', 'zimsec-questions.json', 'zimsec-results.json',
+  // Notifications & push subscriptions — survive redeploys
+  'notifications.json', 'notif_reads.json', 'push_subscriptions.json',
 ];
 
 // ── Dirty tracking ────────────────────────────────────────────────────────

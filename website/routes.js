@@ -1943,6 +1943,7 @@ router.post('/api/push/subscribe', requireAuth, (req, res) => {
   const sub  = req.body;
   if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Invalid subscription' });
   savePushSubscription(user.id, sub);
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('push_subscriptions.json')).catch(() => {});
   res.json({ ok: true });
 });
 
@@ -1951,6 +1952,7 @@ router.post('/api/push/unsubscribe', requireAuth, (req, res) => {
   const { endpoint } = req.body || {};
   if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
   removePushSubscription(user.id, endpoint);
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('push_subscriptions.json')).catch(() => {});
   res.json({ ok: true });
 });;
 
@@ -1999,11 +2001,13 @@ router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
   }
 
   res.json({ ok: true, notification: notif });
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('notifications.json')).catch(() => {});
 });
 
 router.delete('/api/admin/notifications/:id', requireAdmin, (req, res) => {
   const ok = deleteNotification(req.params.id);
   if (!ok) return res.status(404).json({ error: 'Notification not found' });
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('notifications.json')).catch(() => {});
   res.json({ ok: true });
 });
 
@@ -2053,6 +2057,7 @@ router.post('/api/notifications/read', requireAuth, (req, res) => {
   } else if (notifId) {
     markNotificationRead(uid, notifId);
   }
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('notif_reads.json')).catch(() => {});
   res.json({ ok: true });
 });
 
