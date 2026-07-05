@@ -185,6 +185,8 @@ function updateProgress() {
 // ── Exit / Unload guard ───────────────────────────────────────────────────────
 let examActive = false;
 let exitBanned = false;
+let tabSwitchWarnings = 0;
+const MAX_TAB_SWITCHES = 1; // 1 warning before ban
 
 function markExitBanned(id) {
   const key = 'fp_exam_exited';
@@ -193,6 +195,23 @@ function markExitBanned(id) {
 }
 function isExitBanned(id) {
   return JSON.parse(localStorage.getItem('fp_exam_exited') || '[]').includes(id);
+}
+
+function showTabSwitchWarning() {
+  // Inject a dismissible overlay warning instead of immediately banning
+  const overlay = document.createElement('div');
+  overlay.id = 'tab-warn-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+  overlay.innerHTML = `<div style="background:#fff;border:2px solid #fca5a5;border-radius:20px;padding:36px 32px;max-width:420px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:10px">⚠️</div>
+    <h2 style="font-size:1.1rem;font-weight:900;color:#dc2626;margin-bottom:10px">Tab Switch Detected</h2>
+    <p style="font-size:.87rem;color:#64748b;line-height:1.6;margin-bottom:20px">
+      You left this exam tab. <strong>This is your only warning.</strong><br>
+      Switching tabs again will permanently forfeit your exam.
+    </p>
+    <button onclick="document.getElementById('tab-warn-overlay').remove()" style="padding:10px 28px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:.9rem;cursor:pointer">I Understand — Resume Exam</button>
+  </div>`;
+  document.body.appendChild(overlay);
 }
 
 function attachExitGuard() {
@@ -227,12 +246,18 @@ function onBeforeUnload(e) {
 function onVisibility() {
   if (!examActive) return;
   if (document.visibilityState === 'hidden') {
-    markExitBanned(examId);
-    // Call server exit ban via beacon
-    if (navigator.sendBeacon) {
-      const blob = new Blob([JSON.stringify({})], {type:'application/json'});
-      navigator.sendBeacon(`/api/zimsec/exams/${examId}/exit`, blob);
+    tabSwitchWarnings++;
+    if (tabSwitchWarnings > MAX_TAB_SWITCHES) {
+      // Second offence: ban
+      markExitBanned(examId);
+      if (navigator.sendBeacon) {
+        const blob = new Blob([JSON.stringify({})], {type:'application/json'});
+        navigator.sendBeacon(`/api/zimsec/exams/${examId}/exit`, blob);
+      }
     }
+  } else if (document.visibilityState === 'visible' && tabSwitchWarnings === 1) {
+    // First offence: show warning when they come back
+    showTabSwitchWarning();
   }
 }
 

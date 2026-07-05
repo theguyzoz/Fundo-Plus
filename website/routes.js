@@ -1557,7 +1557,7 @@ router.get('/api/zimsec/exams', requireOnboarded, (req, res) => {
       unlockedAt:     unlock?.unlockedAt || null,
       expiresAt,
       submitted,
-      canUnlock:      plan !== 'free' && !submitted,
+      canUnlock:      plan !== 'free' && !submitted && !windowOpen,
     };
   });
   res.json({ ok: true, exams });
@@ -1624,7 +1624,7 @@ async function markShortAnswer(question, studentAnswer) {
     return { score: 0, feedback: 'No answer provided.' };
   }
   try {
-    const { gpt4oChat } = await import('./gpt-service.js');
+    const { gpt4oChat } = await import('../utils/gpt-service.js');
     
     const systemPrompt = `You are an expert ZIMSEC examiner marking student exam answers for Zimbabwean O-Level and A-Level students.
 Your job is to score answers on a scale of 0.0 (completely wrong) to 1.0 (perfect).
@@ -1703,6 +1703,18 @@ router.post('/api/zimsec/exams/:id/submit', requireOnboarded, async (req, res) =
       }
       if (now > examEnd) {
         return res.status(403).json({ error: 'Exam window has closed. Submission rejected.' });
+      }
+    }
+
+    // ── Self-serve unlock window validation ─────────────────────────────────
+    if (!exam.scheduledAt) {
+      const uid = req.user.id;
+      const plan = req.user.plan || getUserPlan(uid);
+      if (plan === 'free') {
+        return res.status(403).json({ error: 'Exam access requires a paid plan.' });
+      }
+      if (!isExamWindowOpen(uid, exam.id)) {
+        return res.status(403).json({ error: 'Your exam unlock window has expired or was never opened.' });
       }
     }
 

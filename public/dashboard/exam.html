@@ -234,7 +234,7 @@ function renderExams(){
     list.forEach(ex=>{
       const s=ex.scheduledAt?new Date(ex.scheduledAt):null;
       const ds=s?s.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'No date';
-      const ts=s?s.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';\
+      const ts=s?s.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';
       // Compute exam end time for display
       const examEndTs = s ? new Date(s.getTime() + (ex.durationMins||60)*60000) : null;
       const examEndsStr = examEndTs ? examEndTs.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
