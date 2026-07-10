@@ -512,11 +512,13 @@ const COMMUNITY_LIMIT = 5000;
 let communityData = readJson(COMMUNITY_FILE, { messages: [] });
 function saveCommunity() { writeJson(COMMUNITY_FILE, communityData); }
 
-export function addCommunityMessage({ userId, name, text, replyTo = null }) {
+export function addCommunityMessage({ userId, name, text, replyTo = null, isAmbassador = false, isAdmin = false }) {
   const msg = {
     id: `cm-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
     userId, name, text: text.slice(0, 1000),
     replyTo,
+    isAmbassador: !!isAmbassador,
+    isAdmin: !!isAdmin,
     createdAt: new Date().toISOString(),
   };
   communityData.messages.push(msg);
@@ -968,4 +970,91 @@ export function getUnreadNotificationsForUser(userId, userEmail) {
   const visible = getNotificationsForUser(userId, userEmail);
   const read    = getReadNotifIds(userId);
   return visible.filter(n => !read.has(n.id));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  AMBASSADORS  (JSON-backed)
+// ══════════════════════════════════════════════════════════════════════════
+
+const AMBASSADORS_FILE = path.join(DATA_DIR, 'ambassadors.json');
+function loadAmbassadors() { return readJson(AMBASSADORS_FILE, { ambassadors: [] }); }
+function saveAmbassadors(d) { writeJson(AMBASSADORS_FILE, d); }
+
+/**
+ * Add a user as an ambassador by email.
+ * Also flips isAmbassador on their webuser record if found.
+ */
+export function addAmbassador({ email, addedBy = 'admin', note = '' }) {
+  const d = loadAmbassadors();
+  if (d.ambassadors.find(a => a.email.toLowerCase() === email.toLowerCase()))
+    return { ok: false, error: 'Already an ambassador' };
+
+  const entry = {
+    id: 'amb_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    email: email.toLowerCase().trim(),
+    addedBy,
+    note,
+    addedAt: new Date().toISOString(),
+    active: true,
+  };
+  d.ambassadors.push(entry);
+  saveAmbassadors(d);
+
+  // Flip flag on existing webuser
+  const user = Object.values(webUsersData.users).find(u => u.email?.toLowerCase() === email.toLowerCase());
+  if (user) { user.isAmbassador = true; user.updatedAt = new Date().toISOString(); saveWebUsers(); }
+
+  return { ok: true, ambassador: entry };
+}
+
+export function removeAmbassador(id) {
+  const d = loadAmbassadors();
+  const idx = d.ambassadors.findIndex(a => a.id === id);
+  if (idx === -1) return false;
+  const email = d.ambassadors[idx].email;
+  d.ambassadors.splice(idx, 1);
+  saveAmbassadors(d);
+  // Remove flag from webuser
+  const user = Object.values(webUsersData.users).find(u => u.email?.toLowerCase() === email.toLowerCase());
+  if (user) { user.isAmbassador = false; user.updatedAt = new Date().toISOString(); saveWebUsers(); }
+  return true;
+}
+
+export function updateAmbassador(id, updates) {
+  const d = loadAmbassadors();
+  const idx = d.ambassadors.findIndex(a => a.id === id);
+  if (idx === -1) return null;
+  d.ambassadors[idx] = { ...d.ambassadors[idx], ...updates, id, updatedAt: new Date().toISOString() };
+  saveAmbassadors(d);
+  return d.ambassadors[idx];
+}
+
+export function getAllAmbassadors() { return loadAmbassadors().ambassadors; }
+export function getAmbassadorByEmail(email) {
+  return loadAmbassadors().ambassadors.find(a => a.email.toLowerCase() === email.toLowerCase() && a.active) || null;
+}
+export function isAmbassador(emailOrId) {
+  const d = loadAmbassadors();
+  return d.ambassadors.some(a => a.active && (a.email.toLowerCase() === emailOrId.toLowerCase() || a.id === emailOrId));
+}
+
+// Ambassador exams — stored separately so they show "Ambassador's Test" branding
+// They use the same zimsec-exams store but tagged with createdBy = 'ambassador:<userId>'
+// Grace window = 7 days (vs 3 days for admin exams)
+export const AMBASSADOR_EXAM_WINDOW_MS = 7 * 24 * 3600 * 1000;
+
+export function isAmbassadorExam(exam) {
+  return typeof exam?.createdBy === 'string' && exam.createdBy.startsWith('ambassador:');
+}
+
+export function getAmbassadorExamWindowExpiry(uid, examId) {
+  const unlock = getExamUnlock(uid, examId);
+  if (!unlock) return null;
+  return new Date(new Date(unlock.unlockedAt).getTime() + AMBASSADOR_EXAM_WINDOW_MS).toISOString();
+}
+
+export function isAmbassadorExamWindowOpen(uid, examId) {
+  const unlock = getExamUnlock(uid, examId);
+  if (!unlock) return false;
+  return Date.now() - new Date(unlock.unlockedAt).getTime() < AMBASSADOR_EXAM_WINDOW_MS;
 }

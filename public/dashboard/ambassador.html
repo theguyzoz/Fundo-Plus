@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <title>Ambassador Hub — Fundo Plus</title>
+  <style>
+    *,::after,::before{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f0f4ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--amb:#1d4ed8;--amb-bg:#eff6ff;--amb-brd:#bfdbfe;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+    /* ── Sidebar ── */
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:0 0 1rem;z-index:60;box-shadow:var(--sh);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+    .sb-logo{display:flex;align-items:center;gap:9px;padding:18px 16px 14px;border-bottom:1px solid var(--brd);font-size:1.05rem;font-weight:900;color:var(--acc)}
+    .sb-section{font-size:.65rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;padding:14px 16px 4px}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:1px 8px;border-radius:9px;cursor:pointer;font-size:.86rem;color:var(--mut);font-weight:600;text-decoration:none;transition:.12s}
+    .nav-item:hover{background:var(--amb-bg);color:var(--acc)}
+    .nav-item.active{background:var(--amb-bg);color:var(--acc);font-weight:700}
+    .nav-item svg{flex-shrink:0;opacity:.8}
+    .sb-bottom{margin-top:auto;border-top:1px solid var(--brd);padding-top:8px}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.3);z-index:55;backdrop-filter:blur(2px)}
+    .sidebar-overlay.show{display:block}
+    @media(max-width:760px){
+      .sidebar{transform:translateX(-100%)}
+      .sidebar.open{transform:translateX(0)}
+      .topbar{left:0!important}
+      .main{margin-left:0!important}
+      .ham{display:flex!important}
+    }
+    /* ── Topbar ── */
+    .topbar{position:fixed;top:0;left:228px;right:0;height:56px;background:#ffffffee;backdrop-filter:blur(10px);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:50;box-shadow:var(--sh)}
+    .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt)}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;flex-shrink:0}
+    .ham{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--txt)}
+    /* ── Main ── */
+    .main{margin-left:228px;margin-top:56px;padding:28px 24px;min-height:calc(100vh - 56px)}
+    /* ── Hero banner ── */
+    .amb-hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 50%,#3b82f6 100%);border-radius:20px;padding:32px 28px;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:28px;position:relative;overflow:hidden}
+    .amb-hero::before{content:'★';position:absolute;right:24px;top:50%;transform:translateY(-50%);font-size:9rem;opacity:.06;line-height:1}
+    .amb-hero-icon{width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0}
+    .amb-hero-text h1{font-size:1.5rem;font-weight:900;letter-spacing:-.3px}
+    .amb-hero-text p{font-size:.86rem;opacity:.85;margin-top:5px;max-width:480px}
+    .amb-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:4px 12px;font-size:.72rem;font-weight:800;margin-top:10px}
+    /* ── Stat cards ── */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+    .stat-card{background:var(--surf);border:1.5px solid var(--brd);border-radius:14px;padding:18px 16px;box-shadow:var(--sh)}
+    .stat-card.accent{border-color:var(--amb-brd);background:var(--amb-bg)}
+    .stat-val{font-size:2rem;font-weight:900;color:var(--acc);line-height:1}
+    .stat-val.green{color:var(--grn)}
+    .stat-label{font-size:.73rem;color:var(--mut);margin-top:4px;font-weight:600}
+    /* ── Section tabs ── */
+    .section-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+    .stab{padding:7px 16px;border-radius:99px;border:1.5px solid var(--brd);background:var(--surf);font-size:.8rem;font-weight:700;color:var(--mut);cursor:pointer;transition:.12s}
+    .stab.on{border-color:var(--acc);background:var(--amb-bg);color:var(--acc)}
+    /* ── Cards / panels ── */
+    .panel{background:var(--surf);border:1.5px solid var(--brd);border-radius:16px;padding:22px;box-shadow:var(--sh);margin-bottom:20px}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+    .panel-title{font-size:1rem;font-weight:800}
+    /* ── Exam cards ── */
+    .exam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+    .exam-card{background:var(--surf);border:1.5px solid var(--brd);border-radius:14px;padding:18px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:12px}
+    .exam-card:hover{border-color:var(--amb-brd)}
+    .exam-card-title{font-size:.95rem;font-weight:800}
+    .exam-meta{font-size:.78rem;color:var(--mut);display:flex;gap:12px;flex-wrap:wrap}
+    .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:800}
+    .pill-blue{background:var(--amb-bg);color:var(--acc);border:1px solid var(--amb-brd)}
+    .pill-green{background:#dcfce7;color:var(--grn);border:1px solid #bbf7d0}
+    .pill-grey{background:#f1f5f9;color:var(--mut)}
+    /* ── Buttons ── */
+    .btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.12s}
+    .btn-primary{background:var(--acc);color:#fff}.btn-primary:hover{background:var(--acc2)}
+    .btn-ghost{background:var(--bg);color:var(--mut);border:1.5px solid var(--brd)}.btn-ghost:hover{border-color:var(--acc);color:var(--acc);background:var(--amb-bg)}
+    .btn-danger{background:#fef2f2;color:var(--red);border:1.5px solid #fecaca}.btn-danger:hover{background:#fecaca}
+    .btn-sm{padding:5px 12px;font-size:.75rem}
+    /* ── Form ── */
+    .form-group{margin-bottom:14px}
+    .form-label{font-size:.78rem;font-weight:700;color:var(--mut);margin-bottom:5px;display:block}
+    .form-input{width:100%;padding:9px 12px;border:1.5px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--txt);font-size:.88rem;transition:.12s}
+    .form-input:focus{outline:none;border-color:var(--acc);background:var(--surf)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    /* ── Leaderboard ── */
+    .lb-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd)}
+    .lb-row:last-child{border-bottom:none}
+    .lb-rank{width:28px;height:28px;border-radius:50%;background:var(--amb-bg);color:var(--acc);font-size:.78rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .lb-rank.gold{background:#fef3c7;color:#b45309}
+    .lb-rank.silver{background:#f1f5f9;color:#475569}
+    .lb-rank.bronze{background:#fef3c7;color:#92400e}
+    .lb-name{flex:1;font-size:.86rem;font-weight:700}
+    .lb-score{font-size:.82rem;font-weight:800;color:var(--acc)}
+    /* ── Announcements ── */
+    .ann-item{padding:14px 0;border-bottom:1px solid var(--brd)}
+    .ann-item:last-child{border-bottom:none}
+    .ann-title{font-size:.88rem;font-weight:800;margin-bottom:3px}
+    .ann-body{font-size:.82rem;color:var(--mut)}
+    /* ── Modal ── */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(4px)}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--surf);border-radius:16px;width:100%;max-width:560px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--brd)}
+    .modal-head h2{font-size:1rem;font-weight:800}
+    .modal-close{background:0 0;border:none;cursor:pointer;font-size:1.3rem;color:var(--mut);padding:4px 8px;border-radius:6px;line-height:1}
+    .modal-close:hover{background:var(--bg)}
+    .modal-body{padding:22px}
+    /* ── Empty ── */
+    .empty{text-align:center;padding:50px 20px}
+    .empty-icon{font-size:3rem;margin-bottom:12px}
+    .empty h3{font-size:.95rem;font-weight:800;color:var(--mut);margin-bottom:4px}
+    .empty p{font-size:.82rem;color:var(--mut)}
+    /* ── Progress ring ── */
+    .progress-ring{position:relative;width:80px;height:80px}
+    .progress-ring circle{fill:none;stroke-width:7;transform-origin:50% 50%;transform:rotate(-90deg)}
+    .progress-ring .track{stroke:#e2e8f5}
+    .progress-ring .fill{stroke:var(--acc);stroke-linecap:round;transition:stroke-dashoffset .4s}
+    .ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;color:var(--acc)}
+    /* ── Perks ── */
+    .perks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .perk-card{background:var(--amb-bg);border:1.5px solid var(--amb-brd);border-radius:12px;padding:18px}
+    .perk-icon{font-size:1.8rem;margin-bottom:8px}
+    .perk-title{font-size:.88rem;font-weight:800;color:var(--acc);margin-bottom:4px}
+    .perk-desc{font-size:.78rem;color:var(--mut)}
+    /* ── Spinner ── */
+    .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+
+<!-- Sidebar overlay -->
+<div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <img src="/images/logo.png" width="26" height="26" style="border-radius:6px" alt="">
+    Fundo <span style="color:#94a3b8;font-weight:400">Plus</span>
+  </div>
+  <div class="sb-section">Main</div>
+  <a class="nav-item" href="/~/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</a>
+  <a class="nav-item" href="/~/#chat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Prok AI Chat</a>
+  <div class="sb-section">Academics</div>
+  <a class="nav-item" href="/~/exam"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Exams</a>
+  <a class="nav-item" href="/~/leaderboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Leaderboard</a>
+  <div class="sb-section" style="color:var(--acc)">Ambassador Hub</div>
+  <a class="nav-item active" href="/~/ambassador" style="color:var(--acc);font-weight:700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Ambassador Hub</a>
+  <a class="nav-item" href="#" onclick="switchTab('exams');return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>My Tests</a>
+  <a class="nav-item" href="#" onclick="switchTab('analytics');return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Analytics</a>
+  <a class="nav-item" href="#" onclick="switchTab('announcements');return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 17H2a3 3 0 000 6h20a3 3 0 000-6z"/><path d="M8 17V5a2 2 0 012-2h4a2 2 0 012 2v12"/></svg>Announcements</a>
+  <div class="sb-section">More</div>
+  <a class="nav-item" href="/~/more"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</a>
+  <div class="sb-bottom">
+    <a class="nav-item" href="/me"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>My Profile</a>
+    <a class="nav-item" href="#" onclick="doLogout();return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</a>
+  </div>
+</div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <button class="ham" onclick="toggleSb()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <span class="topbar-title">🌟 Ambassador Hub</span>
+  <div class="topbar-right">
+    <div class="avatar" id="av">A</div>
+    <span style="font-size:.82rem;font-weight:700" id="uname">Ambassador</span>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+
+  <!-- Hero -->
+  <div class="amb-hero">
+    <div class="amb-hero-icon">🌟</div>
+    <div class="amb-hero-text">
+      <h1 id="hero-name">Welcome, Ambassador</h1>
+      <p>You have elite access to Fundo Plus. Create tests for your community, view their performance, and post with your verified badge in discussions.</p>
+      <div class="amb-badge">✓ Verified Fundo+ Ambassador · Unlimited Access</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card accent"><div class="stat-val" id="stat-exams">—</div><div class="stat-label">Tests Created</div></div>
+    <div class="stat-card accent"><div class="stat-val green" id="stat-submissions">—</div><div class="stat-label">Total Submissions</div></div>
+    <div class="stat-card accent"><div class="stat-val" id="stat-students">—</div><div class="stat-label">Students Reached</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#7c3aed">∞</div><div class="stat-label">AI Messages/day</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#7c3aed">∞</div><div class="stat-label">PDF Exports/day</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#7c3aed">∞</div><div class="stat-label">Study Sessions/day</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="section-tabs">
+    <button class="stab on" id="tab-exams" onclick="switchTab('exams')">📝 My Tests</button>
+    <button class="stab" id="tab-analytics" onclick="switchTab('analytics')">📊 Analytics</button>
+    <button class="stab" id="tab-perks" onclick="switchTab('perks')">⚡ Perks</button>
+    <button class="stab" id="tab-announcements" onclick="switchTab('announcements')">📣 Post Announcement</button>
+  </div>
+
+  <!-- Tab: My Tests -->
+  <div id="section-exams">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">My Ambassador Tests <span class="pill pill-blue" style="font-size:.65rem;vertical-align:middle">7-day grace window</span></div>
+        <button class="btn btn-primary" onclick="openCreateExam()">+ Create Test</button>
+      </div>
+      <div id="exams-list"><div style="color:var(--mut);padding:20px;text-align:center"><span class="spin"></span> Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Tab: Analytics -->
+  <div id="section-analytics" class="hidden">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <!-- Exam performance chart placeholder -->
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:16px">📈 Submission Trend</div>
+        <div id="analytics-chart" style="text-align:center;color:var(--mut);padding:40px 0;font-size:.85rem">Select a test below to view analytics</div>
+      </div>
+      <!-- Top subject breakdown -->
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:16px">🎯 Performance by Test</div>
+        <div id="analytics-breakdown" style="color:var(--mut);font-size:.83rem;padding:20px 0;text-align:center">No data yet</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">🏆 Leaderboard — Select a Test</div>
+        <select id="lb-exam-select" class="form-input" style="width:auto;min-width:200px;padding:6px 10px" onchange="loadLeaderboard(this.value)">
+          <option value="">Choose a test…</option>
+        </select>
+      </div>
+      <div id="lb-list"><div style="color:var(--mut);font-size:.83rem;text-align:center;padding:30px">Select a test above to view its leaderboard</div></div>
+    </div>
+  </div>
+
+  <!-- Tab: Perks -->
+  <div id="section-perks" class="hidden">
+    <div class="panel">
+      <div class="panel-title" style="margin-bottom:18px">⚡ Ambassador Privileges</div>
+      <div class="perks-grid">
+        <div class="perk-card">
+          <div class="perk-icon">∞</div>
+          <div class="perk-title">Unlimited AI Usage</div>
+          <div class="perk-desc">No daily caps on AI chat, PDF exports, quizzes, or study sessions. Use Fundo Plus without limits, always.</div>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">📝</div>
+          <div class="perk-title">Create Ambassador Tests</div>
+          <div class="perk-desc">Set exams for your community branded as "Ambassador's Test". Students get a generous 7-day window to complete them.</div>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">✓</div>
+          <div class="perk-title">Verified Badge in Community</div>
+          <div class="perk-desc">Every message you post in the community discussion board is marked with a blue ✓ Ambassador badge — instantly recognised.</div>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">🏆</div>
+          <div class="perk-title">Private Leaderboards</div>
+          <div class="perk-desc">Access the full performance leaderboard for every test you create. Track top scorers, average scores, and completion rates.</div>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">📊</div>
+          <div class="perk-title">Student Analytics</div>
+          <div class="perk-desc">See how many students your tests have reached, total submissions, and which of your tests performs best.</div>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">📣</div>
+          <div class="perk-title">Broadcast Announcements</div>
+          <div class="perk-desc">Post announcements directly to your community from this hub. Your messages are pinned and visible to all Fundo Plus users.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Announcements -->
+  <div id="section-announcements" class="hidden">
+    <div class="panel">
+      <div class="panel-title" style="margin-bottom:16px">📣 Post to Community</div>
+      <p style="font-size:.82rem;color:var(--mut);margin-bottom:16px">Your post will appear in the community feed with your verified Ambassador badge.</p>
+      <div class="form-group">
+        <label class="form-label">Message</label>
+        <textarea id="ann-text" class="form-input" rows="4" placeholder="Share something with your community…" style="resize:vertical;min-height:100px"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="postAnnouncement()">📣 Post to Community</button>
+      <div id="ann-result" style="margin-top:12px;font-size:.82rem"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title" style="margin-bottom:16px">Recent Community Posts</div>
+      <div id="recent-posts"><div style="color:var(--mut);font-size:.83rem;text-align:center;padding:20px"><span class="spin"></span></div></div>
+    </div>
+  </div>
+
+</div><!-- /.main -->
+
+<!-- Create / Edit Exam Modal -->
+<div class="modal-bg" id="exam-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="exam-modal-title">Create Ambassador's Test</h2>
+      <button class="modal-close" onclick="closeExamModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="em-id">
+      <div class="form-group">
+        <label class="form-label">Test Title <span style="color:var(--red)">*</span></label>
+        <input type="text" id="em-title" class="form-input" placeholder="e.g. Mathematics Paper 1 Practice">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Subject <span style="color:var(--red)">*</span></label>
+          <input type="text" id="em-subject" class="form-input" placeholder="e.g. Mathematics">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Level</label>
+          <select id="em-level" class="form-input">
+            <option value="">Select…</option>
+            <option>O Level</option>
+            <option>A Level</option>
+            <option>Form 1</option>
+            <option>Form 2</option>
+            <option>Form 3</option>
+            <option>Form 4</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Scheduled At</label>
+          <input type="datetime-local" id="em-sched" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration (mins)</label>
+          <input type="number" id="em-duration" class="form-input" placeholder="60" min="5" max="300">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="em-desc" class="form-input" rows="2" style="resize:vertical" placeholder="Optional notes for students"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-primary" onclick="saveExam()" style="flex:1">Save Test</button>
+        <button class="btn btn-ghost" onclick="closeExamModal()" style="flex:1">Cancel</button>
+      </div>
+      <div id="em-err" style="color:var(--red);font-size:.8rem;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal-bg" id="q-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Add Question</h2>
+      <button class="modal-close" onclick="closeQModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="qm-exam-id">
+      <div class="form-group">
+        <label class="form-label">Question Text <span style="color:var(--red)">*</span></label>
+        <textarea id="qm-text" class="form-input" rows="3" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Option A <span style="color:var(--red)">*</span></label>
+        <input type="text" id="qm-a" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Option B <span style="color:var(--red)">*</span></label>
+        <input type="text" id="qm-b" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Option C</label>
+        <input type="text" id="qm-c" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Option D</label>
+        <input type="text" id="qm-d" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correct Answer <span style="color:var(--red)">*</span></label>
+        <select id="qm-ans" class="form-input">
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Explanation (optional)</label>
+        <textarea id="qm-expl" class="form-input" rows="2" style="resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="saveQuestion()" style="flex:1">Add Question</button>
+        <button class="btn btn-ghost" onclick="closeQModal()" style="flex:1">Cancel</button>
+      </div>
+      <div id="qm-err" style="color:var(--red);font-size:.8rem;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const tok = localStorage.getItem('fp_session');
+let me = null, myExams = [];
+
+async function api(method, url, body) {
+  const o = { method, headers: { 'x-session-token': tok } };
+  if (body) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
+  const r = await fetch(url, o);
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Error');
+  return d;
+}
+
+function toggleSb() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+function closeSb() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+async function doLogout() { try { await api('POST', '/api/auth/logout'); } catch {} localStorage.clear(); location.href = '/login'; }
+
+// ── Tab system ──────────────────────────────────────────────────────────
+const TABS = ['exams', 'analytics', 'perks', 'announcements'];
+function switchTab(name) {
+  TABS.forEach(t => {
+    document.getElementById(`section-${t}`).classList.toggle('hidden', t !== name);
+    document.getElementById(`tab-${t}`)?.classList.toggle('on', t === name);
+  });
+  if (name === 'analytics') populateAnalytics();
+  if (name === 'announcements') loadRecentPosts();
+  // Check hash
+  history.replaceState(null, '', `/~/ambassador#${name}`);
+}
+
+// ── Stats ───────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const d = await api('GET', '/api/ambassador/me');
+    document.getElementById('stat-exams').textContent = d.stats.examsCreated;
+    document.getElementById('stat-submissions').textContent = d.stats.totalSubmissions;
+    document.getElementById('stat-students').textContent = d.stats.studentsReached;
+  } catch (e) { console.error(e); }
+}
+
+// ── Exams ───────────────────────────────────────────────────────────────
+async function loadExams() {
+  const el = document.getElementById('exams-list');
+  try {
+    const d = await api('GET', '/api/ambassador/exams');
+    myExams = d.exams || [];
+    if (!myExams.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">📝</div><h3>No tests yet</h3><p>Create your first Ambassador's Test above.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="exam-grid">${myExams.map(renderExamCard).join('')}</div>`;
+  } catch (e) {
+    el.innerHTML = `<div style="color:var(--red);padding:16px">${e.message}</div>`;
+  }
+}
+
+function renderExamCard(ex) {
+  const subj = ex.subject || '';
+  const level = ex.level || '';
+  const sched = ex.scheduledAt ? new Date(ex.scheduledAt).toLocaleString() : 'No schedule';
+  const dur = ex.durationMins ? `${ex.durationMins} min` : '60 min';
+  const qCount = ex.questionCount ?? '?';
+  return `<div class="exam-card">
+    <div>
+      <div class="exam-card-title">${escHtml(ex.title)}</div>
+      <div class="exam-meta" style="margin-top:6px">
+        ${subj ? `<span class="pill pill-blue">${escHtml(subj)}</span>` : ''}
+        ${level ? `<span class="pill pill-grey">${escHtml(level)}</span>` : ''}
+        <span class="pill pill-green">7-day grace</span>
+      </div>
+    </div>
+    <div class="exam-meta">
+      <span>🕐 ${sched}</span>
+      <span>⏱ ${dur}</span>
+      ${qCount !== '?' ? `<span>❓ ${qCount} questions</span>` : ''}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="openEditExam('${ex.id}')">✏️ Edit</button>
+      <button class="btn btn-ghost btn-sm" onclick="openAddQuestion('${ex.id}')">+ Question</button>
+      <button class="btn btn-ghost btn-sm" onclick="viewQuestions('${ex.id}')">❓ Questions</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteExam('${ex.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+// ── Create / Edit Exam ──────────────────────────────────────────────────
+function openCreateExam() {
+  document.getElementById('exam-modal-title').textContent = "Create Ambassador's Test";
+  ['em-id','em-title','em-subject','em-level','em-sched','em-duration','em-desc','em-err'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('exam-modal').classList.add('open');
+}
+
+function openEditExam(id) {
+  const ex = myExams.find(e => e.id === id); if (!ex) return;
+  document.getElementById('exam-modal-title').textContent = "Edit Ambassador's Test";
+  document.getElementById('em-id').value = id;
+  // Strip "Ambassador's Test: " prefix for editing
+  document.getElementById('em-title').value = ex.title.replace(/^Ambassador's Test:\s*/i, '');
+  document.getElementById('em-subject').value = ex.subject || '';
+  document.getElementById('em-level').value = ex.level || '';
+  document.getElementById('em-duration').value = ex.durationMins || '';
+  document.getElementById('em-desc').value = ex.description || '';
+  if (ex.scheduledAt) {
+    const dt = new Date(ex.scheduledAt);
+    document.getElementById('em-sched').value = dt.toISOString().slice(0,16);
+  }
+  document.getElementById('exam-modal').classList.add('open');
+}
+
+function closeExamModal() { document.getElementById('exam-modal').classList.remove('open'); }
+
+async function saveExam() {
+  const id = document.getElementById('em-id').value;
+  const title = document.getElementById('em-title').value.trim();
+  const subject = document.getElementById('em-subject').value.trim();
+  const level = document.getElementById('em-level').value;
+  const sched = document.getElementById('em-sched').value;
+  const dur = parseInt(document.getElementById('em-duration').value) || 60;
+  const desc = document.getElementById('em-desc').value.trim();
+  const errEl = document.getElementById('em-err');
+  errEl.textContent = '';
+  if (!title || !subject) { errEl.textContent = 'Title and subject are required.'; return; }
+  const body = { title, subject, level, scheduledAt: sched || null, durationMins: dur, description: desc };
+  try {
+    if (id) {
+      await api('PUT', `/api/ambassador/exams/${id}`, body);
+    } else {
+      await api('POST', '/api/ambassador/exams', body);
+    }
+    closeExamModal();
+    await loadExams();
+    await loadStats();
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+async function deleteExam(id) {
+  if (!confirm('Delete this test? All questions will be removed.')) return;
+  try {
+    await api('DELETE', `/api/ambassador/exams/${id}`);
+    await loadExams();
+    await loadStats();
+  } catch (e) { alert(e.message); }
+}
+
+// ── Questions ───────────────────────────────────────────────────────────
+function openAddQuestion(examId) {
+  ['qm-text','qm-a','qm-b','qm-c','qm-d','qm-expl','qm-err'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('qm-ans').value = 'A';
+  document.getElementById('qm-exam-id').value = examId;
+  document.getElementById('q-modal').classList.add('open');
+}
+function closeQModal() { document.getElementById('q-modal').classList.remove('open'); }
+
+async function saveQuestion() {
+  const examId = document.getElementById('qm-exam-id').value;
+  const text = document.getElementById('qm-text').value.trim();
+  const a = document.getElementById('qm-a').value.trim();
+  const b = document.getElementById('qm-b').value.trim();
+  const c = document.getElementById('qm-c').value.trim();
+  const d = document.getElementById('qm-d').value.trim();
+  const answer = document.getElementById('qm-ans').value;
+  const explanation = document.getElementById('qm-expl').value.trim();
+  const errEl = document.getElementById('qm-err');
+  errEl.textContent = '';
+  if (!text || !a || !b) { errEl.textContent = 'Question text and options A & B are required.'; return; }
+  try {
+    const options = { A: a, B: b };
+    if (c) options.C = c;
+    if (d) options.D = d;
+    await api('POST', `/api/ambassador/exams/${examId}/questions`, { text, options, answer, explanation });
+    closeQModal();
+    await loadExams();
+    alert('✅ Question added!');
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+async function viewQuestions(examId) {
+  try {
+    const d = await api('GET', `/api/ambassador/exams/${examId}/questions`);
+    const qs = d.questions || [];
+    if (!qs.length) { alert('No questions yet. Add some using the + Question button.'); return; }
+    const lines = qs.map((q, i) => `Q${i+1}: ${q.text} [Answer: ${q.answer}]`).join('\n');
+    alert(`Questions (${qs.length}):\n\n${lines}`);
+  } catch (e) { alert(e.message); }
+}
+
+// ── Analytics ───────────────────────────────────────────────────────────
+function populateAnalytics() {
+  const sel = document.getElementById('lb-exam-select');
+  sel.innerHTML = '<option value="">Choose a test…</option>' + myExams.map(ex =>
+    `<option value="${ex.id}">${escHtml(ex.title)}</option>`
+  ).join('');
+
+  // Build breakdown panel
+  const breakdown = document.getElementById('analytics-breakdown');
+  if (!myExams.length) { breakdown.innerHTML = '<div style="color:var(--mut);text-align:center;padding:20px">No tests created yet.</div>'; return; }
+  breakdown.innerHTML = myExams.map(ex => {
+    const pct = ex.avgScore != null ? Math.round(ex.avgScore) : null;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="flex:1">
+        <div style="font-size:.82rem;font-weight:700">${escHtml(ex.title)}</div>
+        <div style="font-size:.73rem;color:var(--mut)">${ex.submissionCount || 0} submissions</div>
+      </div>
+      ${pct != null ? `<div style="font-size:.9rem;font-weight:800;color:var(--acc)">${pct}%</div>` : '<div style="font-size:.78rem;color:var(--mut)">No data</div>'}
+    </div>`;
+  }).join('');
+
+  // Chart area
+  document.getElementById('analytics-chart').innerHTML = `
+    <div style="padding:20px 0">
+      <div style="font-size:2.5rem;font-weight:900;color:var(--acc)">${myExams.length}</div>
+      <div style="font-size:.8rem;color:var(--mut);margin-top:4px">Tests created</div>
+      <div style="font-size:2.5rem;font-weight:900;color:var(--grn);margin-top:14px">${myExams.reduce((s,e) => s + (e.submissionCount||0), 0)}</div>
+      <div style="font-size:.8rem;color:var(--mut);margin-top:4px">Total submissions</div>
+    </div>`;
+}
+
+async function loadLeaderboard(examId) {
+  if (!examId) return;
+  const el = document.getElementById('lb-list');
+  el.innerHTML = '<div style="color:var(--mut);padding:20px;text-align:center"><span class="spin"></span> Loading…</div>';
+  try {
+    const d = await api('GET', `/api/ambassador/exams/${examId}/leaderboard`);
+    const entries = d.leaderboard || [];
+    if (!entries.length) { el.innerHTML = '<div style="color:var(--mut);padding:20px;text-align:center">No submissions yet.</div>'; return; }
+    const rankClass = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    el.innerHTML = entries.slice(0, 30).map((e, i) => `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass(i)}">${i+1}</div>
+        <div class="lb-name">${escHtml(e.name || e.userId || 'Student')}</div>
+        <div style="font-size:.78rem;color:var(--mut)">${e.correct ?? '—'}/${e.total ?? '—'} correct</div>
+        <div class="lb-score">${e.percentage != null ? e.percentage + '%' : (e.score != null ? e.score + ' pts' : '—')}</div>
+      </div>`).join('');
+  } catch (e) { el.innerHTML = `<div style="color:var(--red);padding:16px">${e.message}</div>`; }
+}
+
+// ── Community Post ──────────────────────────────────────────────────────
+async function postAnnouncement() {
+  const text = document.getElementById('ann-text').value.trim();
+  const res = document.getElementById('ann-result');
+  if (!text) { res.innerHTML = '<span style="color:var(--red)">Please enter a message.</span>'; return; }
+  res.innerHTML = '<span class="spin"></span> Posting…';
+  try {
+    await api('POST', '/api/community', { text });
+    document.getElementById('ann-text').value = '';
+    res.innerHTML = '<span style="color:var(--grn)">✅ Posted to community with your Ambassador badge!</span>';
+    loadRecentPosts();
+    setTimeout(() => res.innerHTML = '', 4000);
+  } catch (e) { res.innerHTML = `<span style="color:var(--red)">${e.message}</span>`; }
+}
+
+async function loadRecentPosts() {
+  const el = document.getElementById('recent-posts');
+  try {
+    const d = await api('GET', '/api/community');
+    const myPosts = (d.messages || []).filter(m => m.userId === me?.id).slice(0, 10);
+    if (!myPosts.length) { el.innerHTML = '<div style="color:var(--mut);font-size:.83rem;text-align:center;padding:20px">You have not posted in the community yet.</div>'; return; }
+    el.innerHTML = myPosts.map(m => `<div class="ann-item">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="font-size:.72rem;color:var(--mut)">${new Date(m.createdAt).toLocaleString()}</span>
+        ${m.isAmbassador ? '<span style="font-size:.65rem;background:#eff6ff;color:#2563eb;border-radius:99px;padding:1px 7px;font-weight:800;border:1px solid #bfdbfe">✓ Ambassador</span>' : ''}
+      </div>
+      <div class="ann-body">${escHtml(m.text)}</div>
+    </div>`).join('');
+  } catch (e) { el.innerHTML = `<div style="color:var(--red);padding:16px">${e.message}</div>`; }
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Init ─────────────────────────────────────────────────────────────────
+(async () => {
+  if (!tok) { location.href = '/login'; return; }
+  try {
+    const d = await api('GET', '/api/auth/me');
+    if (!d.ok) { location.href = '/login'; return; }
+    me = d.user;
+    if (!d.isAmbassador && !me.isAdmin) { location.href = '/~/'; return; }
+    const name = me.name ? `${me.name} ${me.surname || ''}`.trim() : me.email;
+    document.getElementById('av').textContent = name[0].toUpperCase();
+    document.getElementById('uname').textContent = name;
+    document.getElementById('hero-name').textContent = `Welcome, ${me.name || 'Ambassador'}`;
+    await loadExams();
+    await loadStats();
+    // Handle hash navigation
+    const hash = location.hash.replace('#', '');
+    if (hash && TABS.includes(hash)) switchTab(hash);
+  } catch { location.href = '/login'; }
+})();
+</script>
+</body>
+</html>

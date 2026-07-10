@@ -75,6 +75,11 @@
   <a class="nav-item" href="/~/exam"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Exams</a>
   <a class="nav-item active" href="/~/leaderboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Leaderboard</a>
   <div class="sb-section">More</div>
+  <div id="amb-nav-item" style="display:none"><div class="sb-section" style="color:#2563eb">Ambassador Hub</div>
+  <a class="nav-item" href="/~/ambassador" style="color:#2563eb;font-weight:700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Ambassador Hub</a>
+  <a class="nav-item" id="amb-nav-exams" href="/~/ambassador#exams"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>My Tests</a>
+  <a class="nav-item" href="/~/ambassador#analytics"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Analytics</a>
+  </div>
   <a class="nav-item" href="/~/more"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</a>
   <div class="sb-bottom">
     <a class="nav-item" href="/me"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>My Profile</a>
@@ -198,6 +203,7 @@ function renderTable(board){
     const d=await api('GET','/api/auth/me');
     if(!d.ok){location.href='/login';return;}
     me=d.user;
+    if(d.isAmbassador||me.isAdmin){const el=document.getElementById('amb-nav-item');if(el)el.style.display='';}
     const n=me.name||me.email||'S';
     document.getElementById('av').textContent=n[0].toUpperCase();
     document.getElementById('uname').textContent=n;

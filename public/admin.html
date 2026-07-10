@@ -189,6 +189,7 @@
         <button class="ntab" onclick='showPage("wishlist")'>Wishlist</button>
         <button class="ntab" onclick='showPage("datafiles")'>🗄 Data</button>
         <button class="ntab" onclick='showPage("appupdate")'>🚀 App Update</button>
+        <button class="ntab" onclick='showPage("ambassadors")'>🌟 Ambassadors</button>
         <a class="ntab" href="/admin/notifications" style="text-decoration:none">📣 Notify</a>
       </div>
       <div class="nav-right">
@@ -526,6 +527,32 @@
       <div id="support-table"><div style="color:var(--muted);font-size:.85rem;padding:20px;text-align:center">Loading…</div></div>
     </div>
 
+    <div class="page" id="page-ambassadors">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="card-title">🌟 Ambassador Management</div>
+            <div class="card-sub">Add users by email — they get unlimited usage, exam creation rights, a blue ✓ badge in community, and their own Ambassador Hub.</div>
+          </div>
+          <button class="btn btn-primary" onclick="showAddAmbassadorModal()">+ Add Ambassador</button>
+        </div>
+      </div>
+      <div id="ambassadors-table"><div style="color:var(--muted);font-size:.85rem;padding:20px;text-align:center">Loading…</div></div>
+    </div>
+
+  </div>
+
+  <!-- Add Ambassador Modal -->
+  <div id="amb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border-radius:14px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <h3 style="margin:0 0 16px;font-size:1.1rem">🌟 Add Ambassador</h3>
+      <input id="amb-email-input" type="email" placeholder="user@gmail.com" style="width:100%;margin-bottom:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.9rem;box-sizing:border-box">
+      <input id="amb-note-input" type="text" placeholder="Note (optional)" style="width:100%;margin-bottom:16px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.9rem;box-sizing:border-box">
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="confirmAddAmbassador()" style="flex:1">Add</button>
+        <button class="btn btn-ghost" onclick="closeAmbModal()" style="flex:1">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <!-- Ban Modal -->
@@ -586,7 +613,7 @@
       document.querySelectorAll('.ntab').forEach(el => el.classList.remove('active'));
       const page = document.getElementById('page-' + p);
       if (page) page.classList.add('active');
-      const order = ['overview', 'bot', 'users', 'bans', 'subscriptions', 'proofs', 'support', 'papers', 'freelinks', 'files', 'chats', 'wishlist', 'datafiles', 'appupdate'];
+      const order = ['overview', 'bot', 'users', 'bans', 'subscriptions', 'proofs', 'support', 'papers', 'freelinks', 'files', 'chats', 'wishlist', 'datafiles', 'appupdate', 'ambassadors'];
       const idx = order.indexOf(p);
       const tabs = document.querySelectorAll('.ntab');
       if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
@@ -602,6 +629,7 @@
       if (p === 'support')       loadSupport();
       if (p === 'freelinks')     loadFreeLinks();
       if (p === 'datafiles')     loadDataFiles();
+      if (p === 'ambassadors')   loadAmbassadors();
     }
 
     function loadAll() {
@@ -1471,6 +1499,73 @@
       } catch(e) {
         resultEl.innerHTML = '<span style="color:var(--red)">Upload failed: ' + e.message + '</span>';
       }
+    }
+
+    // ── Ambassador CRUD ──────────────────────────────────────────────
+    async function loadAmbassadors() {
+      const el = document.getElementById('ambassadors-table');
+      el.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">Loading…</div>';
+      try {
+        const r = await api('/api/admin/ambassadors');
+        const d = await r.json();
+        const ambs = d.ambassadors || [];
+        if (!ambs.length) { el.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">No ambassadors yet. Add one above!</div>'; return; }
+        el.innerHTML = `<div class="table-wrap"><table>
+          <thead><tr><th>Email</th><th>Status</th><th>Note</th><th>Added By</th><th>Added At</th><th>Actions</th></tr></thead>
+          <tbody>${ambs.map(a => `<tr>
+            <td><strong>${a.email}</strong></td>
+            <td><span style="padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:700;background:${a.active?'#dbeafe':'#f1f5f9'};color:${a.active?'#1d4ed8':'#64748b'}">${a.active?'✓ Active':'Inactive'}</span></td>
+            <td style="color:var(--muted);font-size:.82rem">${a.note||'—'}</td>
+            <td style="font-size:.8rem;color:var(--muted)">${a.addedBy||'admin'}</td>
+            <td style="font-size:.78rem;color:var(--muted)">${new Date(a.addedAt).toLocaleDateString()}</td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem" onclick="toggleAmbassador('${a.id}',${!a.active})">${a.active?'Deactivate':'Activate'}</button>
+              <button class="btn" style="padding:4px 10px;font-size:.78rem;background:#fef2f2;color:#dc2626;border:none" onclick="deleteAmbassador('${a.id}','${a.email}')">Remove</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table></div>`;
+      } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:20px">${e.message}</div>`; }
+    }
+
+    function showAddAmbassadorModal() {
+      document.getElementById('amb-modal').style.display = 'flex';
+      setTimeout(() => document.getElementById('amb-email-input').focus(), 50);
+    }
+    function closeAmbModal() {
+      document.getElementById('amb-modal').style.display = 'none';
+      document.getElementById('amb-email-input').value = '';
+      document.getElementById('amb-note-input').value = '';
+    }
+
+    async function confirmAddAmbassador() {
+      const email = document.getElementById('amb-email-input').value.trim();
+      const note  = document.getElementById('amb-note-input').value.trim();
+      if (!email) return alert('Enter an email address');
+      try {
+        const r = await api('/api/admin/ambassadors', { method:'POST', body: JSON.stringify({ email, note }) });
+        const d = await r.json();
+        if (!r.ok) return alert(d.error || 'Failed');
+        closeAmbModal();
+        loadAmbassadors();
+        alert(`✅ ${email} is now an Ambassador!`);
+      } catch(e) { alert(e.message); }
+    }
+
+    async function toggleAmbassador(id, active) {
+      try {
+        const r = await api(`/api/admin/ambassadors/${id}`, { method:'PUT', body: JSON.stringify({ active }) });
+        if (!r.ok) { const d = await r.json(); return alert(d.error||'Failed'); }
+        loadAmbassadors();
+      } catch(e) { alert(e.message); }
+    }
+
+    async function deleteAmbassador(id, email) {
+      if (!confirm(`Remove ${email} as Ambassador? This will revoke all ambassador privileges.`)) return;
+      try {
+        const r = await api(`/api/admin/ambassadors/${id}`, { method:'DELETE' });
+        if (!r.ok) { const d = await r.json(); return alert(d.error||'Failed'); }
+        loadAmbassadors();
+      } catch(e) { alert(e.message); }
     }
 
   </script>

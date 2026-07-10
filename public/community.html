@@ -136,10 +136,9 @@
                       `:""}\n  `:"";return`
                       <div class="msg-card${isReply?" is-reply":""}" id="msg-${msg.id}">\n
                       <div class="msg-head">\n
-                      <div class="msg-avatar">${initial}</div>
+                      <div class="msg-avatar" style="background:${msg.isAmbassador?'linear-gradient(135deg,#1d4ed8,#3b82f6)':'linear-gradient(135deg,#2563eb,#60a5fa)'}">${initial}</div>
                       \n
-                      <span class="msg-name">${escHtml(msg.name)}</span>\n
-                      <span class="msg-time">${time}</span>\n    </div>
+                      <span class="msg-name">${escHtml(msg.name)}</span>${msg.isAmbassador?'<span style="display:inline-flex;align-items:center;gap:2px;background:#eff6ff;color:#2563eb;border-radius:99px;padding:1px 7px;font-size:.63rem;font-weight:800;margin-left:4px;border:1px solid #bfdbfe">✓ Ambassador</span>':msg.isAdmin?'<span style="background:#f0fdf4;color:#16a34a;border-radius:99px;padding:1px 7px;font-size:.63rem;font-weight:800;margin-left:4px;border:1px solid #bbf7d0">⚡ Admin</span>':''}<span class="msg-time">${time}</span>\n    </div>
                       \n    ${replyPreview}\n
                       <div class="msg-text">${escHtml(msg.text)}</div>
                       \n

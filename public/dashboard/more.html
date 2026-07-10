@@ -191,7 +191,16 @@
       More
     </a>
 
-    <div class="sb-bottom">
+    <div id="amb-nav-item" style="display:none">
+    <div class="sb-section" style="color:#2563eb;border-top:1px solid #dbeafe;margin-top:4px">Ambassador Hub</div>
+    <a class="nav-item" href="/~/ambassador" style="color:#2563eb;font-weight:700">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Ambassador Hub</a>
+    <a class="nav-item" href="/~/ambassador#exams">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>My Tests</a>
+    <a class="nav-item" href="/~/ambassador#analytics">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Analytics</a>
+  </div>
+  <div class="sb-bottom">
       <a class="nav-item" href="/about">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         About
@@ -332,10 +341,12 @@
       try {
         const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
         if (!r.ok) { localStorage.clear(); location.href = '/login'; return; }
-        const { user } = await r.json();
+        const d = await r.json();
+        const user = d.user;
         const name = user.name ? `${user.name} ${user.surname || ''}`.trim() : (user.email || '?');
         document.getElementById('topbar-name').textContent = name;
         document.getElementById('avatar-letter').textContent = name[0]?.toUpperCase() || '?';
+        if (d.isAmbassador || user.isAdmin) { const el = document.getElementById('amb-nav-item'); if (el) el.style.display = ''; }
       } catch { location.href = '/login'; }
     })();
   </script>

@@ -42,6 +42,11 @@ import {
   // push subscriptions
   savePushSubscription, removePushSubscription,
   getPushSubscriptionsForUsers, getAllPushSubscriptions,
+  // ambassadors
+  addAmbassador, removeAmbassador, updateAmbassador,
+  getAllAmbassadors, getAmbassadorByEmail, isAmbassador,
+  isAmbassadorExam, getAmbassadorExamWindowExpiry, isAmbassadorExamWindowOpen,
+  AMBASSADOR_EXAM_WINDOW_MS,
 } from '../store.js';
 import {
   createSession, destroySession, getSessionUser,
@@ -241,11 +246,19 @@ router.get('/api/me', requireAuth, (req, res) => {
 
   const plan = getUserPlan(user.id);
   const isLinked = !!user.jid;
-  const limits = getPlanLimits(user.id, isLinked);
+  let limits = getPlanLimits(user.id, isLinked);
   const usage  = getFullUsage(user.id);
   const sub    = getUserSubscription(user.id);
 
-  res.json({ ok: true, user: sanitizeUser(user), pairingStatus, daysLeft, plan, limits, usage, sub });
+  // Ambassadors get unlimited everything
+  const ambassadorActive = !!(user.isAmbassador && getAmbassadorByEmail(user.email));
+  if (ambassadorActive) {
+    limits = { plan: 'ambassador', aiMsg: 'unlimited', projects: 'unlimited',
+      studySessions: 'unlimited', pdfExports: 'unlimited', quizzes: 'unlimited', paperDl: 'unlimited' };
+  }
+
+  res.json({ ok: true, user: sanitizeUser(user), pairingStatus, daysLeft, plan, limits, usage, sub,
+    isAmbassador: ambassadorActive });
 });
 
 router.delete('/api/account', requireAuth, (req, res) => {
@@ -305,8 +318,9 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
   const isLinked = !!req.user.jid;
   const limits = getPlanLimits(uid, isLinked);
   const usage  = getFullUsage(uid);
+  const ambassadorActive = !!(req.user.isAmbassador && getAmbassadorByEmail(req.user.email));
 
-  const aiLimit = limits.aiMsg === 'unlimited' ? Infinity : limits.aiMsg;
+  const aiLimit = (limits.aiMsg === 'unlimited' || ambassadorActive) ? Infinity : limits.aiMsg;
   if (aiLimit !== Infinity && (usage.chat || 0) >= aiLimit) {
     return res.status(429).json({ error: `Daily AI message limit reached (${aiLimit}). Upgrade your plan for more.` });
   }
@@ -845,7 +859,11 @@ router.post('/api/community', requireAuth, (req, res) => {
   if (text.trim().length > 1000) return res.status(400).json({ error: 'Message too long (max 1000 chars)' });
   const user = req.user;
   const displayName = user.name ? `${user.name} ${user.surname || ''}`.trim() : (user.email || 'Anonymous');
-  const msg = addCommunityMessage({ userId: user.id, name: displayName, text: text.trim(), replyTo });
+  const ambassadorStatus = !!(user.isAmbassador && getAmbassadorByEmail(user.email));
+  const msg = addCommunityMessage({
+    userId: user.id, name: displayName, text: text.trim(), replyTo,
+    isAmbassador: ambassadorStatus, isAdmin: !!user.isAdmin,
+  });
   res.json({ ok: true, message: msg });
 });
 
@@ -2071,6 +2089,154 @@ router.post('/api/notifications/read', requireAuth, (req, res) => {
   }
   import('../utils/supabase-data.js').then(m => m.uploadDataFile('notif_reads.json')).catch(() => {});
   res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  AMBASSADOR — Admin CRUD
+// ══════════════════════════════════════════════════════════════════════════
+
+// Serve ambassador dashboard page
+router.get('/~/ambassador', requireAuth, (req, res) => {
+  if (!req.user.isAmbassador && !req.user.isAdmin) return res.redirect('/~/');
+  res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'ambassador.html'));
+});
+
+// Admin: list all ambassadors
+router.get('/api/admin/ambassadors', requireAdmin, (req, res) => {
+  res.json({ ok: true, ambassadors: getAllAmbassadors() });
+});
+
+// Admin: add ambassador by email
+router.post('/api/admin/ambassadors', requireAdmin, (req, res) => {
+  const { email, note = '' } = req.body || {};
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required' });
+  const result = addAmbassador({ email, addedBy: req.user?.id || 'admin', note });
+  if (!result.ok) return res.status(409).json({ error: result.error });
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('ambassadors.json')).catch(() => {});
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('webusers.json')).catch(() => {});
+  res.json(result);
+});
+
+// Admin: update ambassador (note / active toggle)
+router.put('/api/admin/ambassadors/:id', requireAdmin, (req, res) => {
+  const updated = updateAmbassador(req.params.id, req.body || {});
+  if (!updated) return res.status(404).json({ error: 'Ambassador not found' });
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('ambassadors.json')).catch(() => {});
+  res.json({ ok: true, ambassador: updated });
+});
+
+// Admin: remove ambassador
+router.delete('/api/admin/ambassadors/:id', requireAdmin, (req, res) => {
+  const ok = removeAmbassador(req.params.id);
+  if (!ok) return res.status(404).json({ error: 'Ambassador not found' });
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('ambassadors.json')).catch(() => {});
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('webusers.json')).catch(() => {});
+  res.json({ ok: true });
+});
+
+// ── Ambassador Self Routes ────────────────────────────────────────────────
+
+function requireAmbassador(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Unauthorised' });
+  if (req.user.isAdmin) return next(); // admin can do everything
+  if (req.user.isAmbassador && getAmbassadorByEmail(req.user.email)) return next();
+  return res.status(403).json({ error: 'Ambassador access required' });
+}
+
+// Ambassador: get their own profile + stats
+router.get('/api/ambassador/me', requireAuth, requireAmbassador, (req, res) => {
+  const user = req.user;
+  const amb  = getAmbassadorByEmail(user.email);
+  const myExams = getAllZimsecExams().filter(e => e.createdBy === `ambassador:${user.id}`);
+  const myResults = getAllZimsecResults().filter(r => myExams.some(e => e.id === r.examId));
+  res.json({
+    ok: true,
+    ambassador: amb,
+    stats: {
+      examsCreated: myExams.length,
+      totalSubmissions: myResults.length,
+      studentsReached: new Set(myResults.map(r => r.userId)).size,
+    },
+  });
+});
+
+// Ambassador: create an exam (tagged ambassador:<userId>)
+router.post('/api/ambassador/exams', requireAuth, requireAmbassador, (req, res) => {
+  const { title, subject, level, year, description, scheduledAt, durationMins } = req.body || {};
+  if (!title || !subject) return res.status(400).json({ error: 'Title and subject required' });
+  const exam = createZimsecExam({
+    title: `Ambassador's Test: ${title}`,
+    subject, level, year, description, scheduledAt, durationMins,
+    createdBy: `ambassador:${req.user.id}`,
+  });
+  res.json({ ok: true, exam });
+});
+
+// Ambassador: list only their own exams
+router.get('/api/ambassador/exams', requireAuth, requireAmbassador, (req, res) => {
+  const exams = getAllZimsecExams().filter(e => e.createdBy === `ambassador:${req.user.id}`);
+  res.json({ ok: true, exams });
+});
+
+// Ambassador: update their own exam
+router.put('/api/ambassador/exams/:id', requireAuth, requireAmbassador, (req, res) => {
+  const exam = getZimsecExam(req.params.id);
+  if (!exam) return res.status(404).json({ error: 'Exam not found' });
+  if (exam.createdBy !== `ambassador:${req.user.id}` && !req.user.isAdmin)
+    return res.status(403).json({ error: 'Not your exam' });
+  const updated = updateZimsecExam(req.params.id, req.body);
+  res.json({ ok: true, exam: updated });
+});
+
+// Ambassador: delete their own exam
+router.delete('/api/ambassador/exams/:id', requireAuth, requireAmbassador, (req, res) => {
+  const exam = getZimsecExam(req.params.id);
+  if (!exam) return res.status(404).json({ error: 'Exam not found' });
+  if (exam.createdBy !== `ambassador:${req.user.id}` && !req.user.isAdmin)
+    return res.status(403).json({ error: 'Not your exam' });
+  deleteZimsecExam(req.params.id);
+  deleteZimsecQuestionsByExam(req.params.id);
+  res.json({ ok: true });
+});
+
+// Ambassador: add question to their exam
+router.post('/api/ambassador/exams/:id/questions', requireAuth, requireAmbassador, (req, res) => {
+  const exam = getZimsecExam(req.params.id);
+  if (!exam) return res.status(404).json({ error: 'Exam not found' });
+  if (exam.createdBy !== `ambassador:${req.user.id}` && !req.user.isAdmin)
+    return res.status(403).json({ error: 'Not your exam' });
+  const q = createZimsecQuestion({ examId: req.params.id, ...req.body });
+  res.json({ ok: true, question: q });
+});
+
+// Ambassador: get questions for their exam
+router.get('/api/ambassador/exams/:id/questions', requireAuth, requireAmbassador, (req, res) => {
+  const exam = getZimsecExam(req.params.id);
+  if (!exam) return res.status(404).json({ error: 'Exam not found' });
+  if (exam.createdBy !== `ambassador:${req.user.id}` && !req.user.isAdmin)
+    return res.status(403).json({ error: 'Not your exam' });
+  res.json({ ok: true, questions: getAllZimsecQuestions(req.params.id) });
+});
+
+// Ambassador: leaderboard for their exam
+router.get('/api/ambassador/exams/:id/leaderboard', requireAuth, requireAmbassador, (req, res) => {
+  const exam = getZimsecExam(req.params.id);
+  if (!exam) return res.status(404).json({ error: 'Exam not found' });
+  res.json({ ok: true, leaderboard: getZimsecLeaderboard(req.params.id, 100) });
+});
+
+// Ambassador: submit results for their exam (uses same unlock mechanism, 7-day grace)
+// Students unlock ambassador exams via normal /api/zimsec/exams/:id/unlock endpoint
+// but we override the window check on the front-end. Here we store a special flag.
+
+// User-facing: unlock an ambassador exam (7-day window)
+router.post('/api/zimsec/ambassador-exams/:id/unlock', requireAuth, (req, res) => {
+  const exam = getZimsecExam(req.params.id);
+  if (!exam) return res.status(404).json({ error: 'Exam not found' });
+  if (!isAmbassadorExam(exam)) return res.status(400).json({ error: 'Not an ambassador exam' });
+  const unlock = unlockExamForUser(req.user.id, req.params.id);
+  const expiry = getAmbassadorExamWindowExpiry(req.user.id, req.params.id);
+  res.json({ ok: true, unlock, expiresAt: expiry, windowDays: 7 });
 });
 
 export default router;
