@@ -100,10 +100,38 @@
 
     /* ── Stat cards ── */
     .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 14px; margin-bottom: 20px; }
-    .stat-card { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 16px; box-shadow: var(--sh); }
-    .stat-card .slabel { font-size: .7rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-    .stat-card .sval { font-size: 1.75rem; font-weight: 900; color: var(--acc); }
-    .stat-card .ssub { font-size: .73rem; color: var(--mut); margin-top: 3px; }
+    /* ── Dashboard gauge cards ── */
+    .dash-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+    .dash-card {
+      background: var(--surf);
+      border: 1.5px solid var(--brd);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(37,99,235,.05);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .dash-card:hover { border-color: #93c5fd; box-shadow: 0 4px 16px rgba(37,99,235,.10); }
+    .dash-card.dash-card-wide { cursor: pointer; }
+    .dash-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+    .dash-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .dash-info { min-width: 0; }
+    .dash-label { font-size: .68rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+    .dash-reading { display: flex; align-items: baseline; gap: 3px; }
+    .dash-val { font-size: 1.45rem; font-weight: 900; color: var(--txt); line-height: 1; }
+    .dash-max { font-size: .75rem; color: var(--mut); font-weight: 600; }
+    .dash-bar-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; width: 90px; }
+    .dash-bar { width: 100%; height: 6px; background: var(--brd); border-radius: 99px; overflow: hidden; }
+    .dash-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+    .fill-blue   { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+    .fill-amber  { background: linear-gradient(90deg, #fbbf24, #d97706); }
+    .fill-green  { background: linear-gradient(90deg, #4ade80, #16a34a); }
+    .fill-purple { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+    .fill-warn   { background: linear-gradient(90deg, #f97316, #dc2626); }
+    .dash-pct { font-size: .65rem; font-weight: 800; color: var(--mut); }
     .cta-card { background: linear-gradient(135deg,#eff6ff,#f0fdf4); border: 1px solid #bfdbfe; border-radius: var(--rad); padding: 18px; box-shadow: var(--sh); }
     .cta-card h3 { font-size: .95rem; font-weight: 800; margin-bottom: 5px; }
     .cta-card p { font-size: .82rem; color: var(--mut); margin-bottom: 12px; }
@@ -417,66 +445,136 @@
 
     
     <div class="panel active" id="panel-home">
-      <div style="margin-bottom:18px">
-        <div style="font-size:1.2rem;font-weight:900;margin-bottom:3px">Welcome back, <span id="user-name">…</span> 👋</div>
-        <div style="font-size:.82rem;color:var(--mut)">Your Fundo Plus study overview</div>
-      </div>
-      
-      <div id="plan-badge-row" style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)">Plan:</span>
-        <span id="plan-badge" style="padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:800;background:#eff6ff;color:var(--acc)">Free</span>
-        <a href="/~/subscription" style="font-size:.75rem;color:var(--acc);font-weight:700;text-decoration:none;margin-left:4px">Upgrade →</a>
-      </div>
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="slabel">AI Messages Today</div>
-          <div class="sval" id="s-chats">0</div>
-          <div class="ssub" id="s-chats-limit">of — daily limit</div>
+      <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:1.15rem;font-weight:900;margin-bottom:2px">Hey, <span id="user-name">…</span> 👋</div>
+          <div style="font-size:.78rem;color:var(--mut)">Your study dashboard</div>
         </div>
-        <div class="stat-card">
-          <div class="slabel">Quizzes Today</div>
-          <div class="sval" id="s-quizzes">0</div>
-          <div class="ssub" id="s-quizzes-limit">of — limit</div>
-        </div>
-        <div class="stat-card">
-          <div class="slabel">PDF Exports Today</div>
-          <div class="sval" id="s-pdfs">0</div>
-          <div class="ssub" id="s-pdfs-limit">of — limit</div>
-        </div>
-        <div class="stat-card">
-          <div class="slabel">Study Sessions</div>
-          <div class="sval" id="s-sessions">0</div>
-          <div class="ssub" id="s-sessions-limit">of — today</div>
-        </div>
-        <div class="stat-card">
-          <div class="slabel">Projects (total)</div>
-          <div class="sval" id="s-projects">0</div>
-          <div class="ssub" id="s-projects-limit">of — limit</div>
-        </div>
-        <div class="stat-card">
-          <div class="slabel">Paper Downloads</div>
-          <div class="sval" id="s-dl">0</div>
-          <div class="ssub" id="s-dl-limit">of — per 6hrs</div>
-        </div>
-        <div class="stat-card">
-          <div class="slabel">WhatsApp</div>
-          <div class="sval" id="s-wa" style="font-size:1rem;margin-top:4px">—</div>
-          <div class="ssub">Link status</div>
-        </div>
-        <div class="stat-card">
-          <div class="slabel">School</div>
-          <div class="sval" id="s-school" style="font-size:.95rem;margin-top:4px">—</div>
-          <div class="ssub">Your institution</div>
-        </div>
-        <div class="stat-card">
-          <div class="slabel">Past Papers</div>
-          <div class="sval" id="s-papers">0</div>
-          <div class="ssub">Available to download</div>
+        <div id="plan-badge-row" style="display:flex;align-items:center;gap:8px">
+          <span id="plan-badge" style="padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:800;background:#f1f5f9;color:var(--mut)">Free Plan</span>
+          <a href="/~/subscription" style="font-size:.72rem;color:var(--acc);font-weight:700;text-decoration:none">Upgrade →</a>
         </div>
       </div>
-      <div class="cta-card">
+
+      <!-- Dashboard gauge cards -->
+      <div class="dash-grid">
+
+        <div class="dash-card" onclick="show('chat',document.querySelector('.nav-item[onclick*=chat]'))">
+          <div class="dash-left">
+            <div class="dash-icon" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </div>
+            <div class="dash-info">
+              <div class="dash-label">AI Messages</div>
+              <div class="dash-reading"><span class="dash-val" id="s-chats">0</span><span class="dash-max" id="s-chats-max">/ —</span></div>
+            </div>
+          </div>
+          <div class="dash-bar-wrap">
+            <div class="dash-bar"><div class="dash-fill fill-blue" id="bar-chats" style="width:0%"></div></div>
+            <div class="dash-pct" id="pct-chats">0%</div>
+          </div>
+        </div>
+
+        <div class="dash-card" onclick="show('quiz',document.querySelector('.nav-item[onclick*=quiz]'))">
+          <div class="dash-left">
+            <div class="dash-icon" style="background:linear-gradient(135deg,#fef3c7,#fffbeb)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            </div>
+            <div class="dash-info">
+              <div class="dash-label">Quizzes</div>
+              <div class="dash-reading"><span class="dash-val" id="s-quizzes">0</span><span class="dash-max" id="s-quizzes-max">/ —</span></div>
+            </div>
+          </div>
+          <div class="dash-bar-wrap">
+            <div class="dash-bar"><div class="dash-fill fill-amber" id="bar-quizzes" style="width:0%"></div></div>
+            <div class="dash-pct" id="pct-quizzes">0%</div>
+          </div>
+        </div>
+
+        <div class="dash-card">
+          <div class="dash-left">
+            <div class="dash-icon" style="background:linear-gradient(135deg,#fdf2f8,#fce7f3)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="dash-info">
+              <div class="dash-label">PDF Exports</div>
+              <div class="dash-reading"><span class="dash-val" id="s-pdfs">0</span><span class="dash-max" id="s-pdfs-max">/ —</span></div>
+            </div>
+          </div>
+          <div class="dash-bar-wrap">
+            <div class="dash-bar"><div class="dash-fill fill-purple" id="bar-pdfs" style="width:0%"></div></div>
+            <div class="dash-pct" id="pct-pdfs">0%</div>
+          </div>
+        </div>
+
+        <div class="dash-card" onclick="show('skills',document.querySelector('.nav-item[onclick*=skills]'))">
+          <div class="dash-left">
+            <div class="dash-icon" style="background:linear-gradient(135deg,#dcfce7,#f0fdf4)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <div class="dash-info">
+              <div class="dash-label">Study Sessions</div>
+              <div class="dash-reading"><span class="dash-val" id="s-sessions">0</span><span class="dash-max" id="s-sessions-max">/ —</span></div>
+            </div>
+          </div>
+          <div class="dash-bar-wrap">
+            <div class="dash-bar"><div class="dash-fill fill-green" id="bar-sessions" style="width:0%"></div></div>
+            <div class="dash-pct" id="pct-sessions">0%</div>
+          </div>
+        </div>
+
+        <div class="dash-card" onclick="window.location.href='/~/projectgen'">
+          <div class="dash-left">
+            <div class="dash-icon" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div class="dash-info">
+              <div class="dash-label">Projects</div>
+              <div class="dash-reading"><span class="dash-val" id="s-projects">0</span><span class="dash-max" id="s-projects-max">/ —</span></div>
+            </div>
+          </div>
+          <div class="dash-bar-wrap">
+            <div class="dash-bar"><div class="dash-fill fill-blue" id="bar-projects" style="width:0%"></div></div>
+            <div class="dash-pct" id="pct-projects">0%</div>
+          </div>
+        </div>
+
+        <div class="dash-card" onclick="show('resources',document.querySelector('.nav-item[onclick*=resources]'))">
+          <div class="dash-left">
+            <div class="dash-icon" style="background:linear-gradient(135deg,#fef3c7,#fffbeb)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+            </div>
+            <div class="dash-info">
+              <div class="dash-label">Paper Downloads</div>
+              <div class="dash-reading"><span class="dash-val" id="s-dl">0</span><span class="dash-max" id="s-dl-max">/ —</span></div>
+            </div>
+          </div>
+          <div class="dash-bar-wrap">
+            <div class="dash-bar"><div class="dash-fill fill-amber" id="bar-dl" style="width:0%"></div></div>
+            <div class="dash-pct" id="pct-dl">0%</div>
+          </div>
+        </div>
+
+        <!-- WhatsApp status — full width -->
+        <div class="dash-card dash-card-wide" onclick="show('pairing',document.querySelector('.nav-item[onclick*=pairing]'))">
+          <div class="dash-left">
+            <div class="dash-icon" style="background:linear-gradient(135deg,#dcfce7,#f0fdf4)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </div>
+            <div class="dash-info">
+              <div class="dash-label">WhatsApp</div>
+              <div class="dash-val" id="s-wa" style="font-size:.88rem;font-weight:800;margin-top:2px">—</div>
+            </div>
+          </div>
+          <div style="font-size:.72rem;color:var(--mut);text-align:right;line-height:1.4">Tap to<br>link →</div>
+        </div>
+
+      </div>
+      <!-- end dash-grid -->
+
+      <div class="cta-card" style="margin-top:20px">
         <h3>🤖 Ask Prok AI anything</h3>
-        <p>Get instant help with ZIMSEC subjects — worked examples, essay feedback, exam tips and more. LaTeX math rendered automatically.</p>
+        <p>Get instant help with ZIMSEC subjects — worked examples, essay feedback, exam tips and more.</p>
         <button class="btn-acc" onclick="window.location.href='/ai'">Open AI Chat →</button>
       </div>
     </div>
@@ -881,18 +979,25 @@
         const lim = d.limits || {};
         const usg = d.usage  || {};
         function fmtLim(v) { return (v === Infinity || v === 'unlimited' || v === 'Infinity') ? '∞' : (v ?? '?'); }
-        if (document.getElementById('s-chats-limit'))    document.getElementById('s-chats-limit').textContent    = `of ${fmtLim(lim.aiMsg)} today`;
-        if (document.getElementById('s-quizzes'))        document.getElementById('s-quizzes').textContent        = usg.quizzes ?? 0;
-        if (document.getElementById('s-quizzes-limit'))  document.getElementById('s-quizzes-limit').textContent  = `of ${fmtLim(lim.quizzes)} today`;
-        if (document.getElementById('s-pdfs'))           document.getElementById('s-pdfs').textContent           = usg.pdf ?? 0;
-        if (document.getElementById('s-pdfs-limit'))     document.getElementById('s-pdfs-limit').textContent     = `of ${fmtLim(lim.pdfExports)} today`;
-        if (document.getElementById('s-sessions'))       document.getElementById('s-sessions').textContent       = usg.studySessions ?? 0;
-        if (document.getElementById('s-sessions-limit')) document.getElementById('s-sessions-limit').textContent = `of ${fmtLim(lim.studySessions)} today`;
-        if (document.getElementById('s-projects'))       document.getElementById('s-projects').textContent       = usg.projectsTotal ?? 0;
-        if (document.getElementById('s-projects-limit')) document.getElementById('s-projects-limit').textContent = `of ${fmtLim(lim.projects)} total`;
+        function setBar(valId, maxId, barId, pctId, used, limit) {
+          const isUnlimited = (limit === Infinity || limit === 'unlimited' || limit === 'Infinity' || limit == null);
+          const pct = isUnlimited ? 0 : Math.min(100, Math.round((used / limit) * 100));
+          if (document.getElementById(valId))  document.getElementById(valId).textContent  = used;
+          if (document.getElementById(maxId))  document.getElementById(maxId).textContent  = `/ ${fmtLim(limit)}`;
+          if (document.getElementById(barId)) {
+            const bar = document.getElementById(barId);
+            setTimeout(() => { bar.style.width = isUnlimited ? '100%' : pct + '%'; }, 100);
+            if (pct >= 90) bar.className = bar.className.replace(/fill-\w+/, 'fill-warn');
+          }
+          if (document.getElementById(pctId))  document.getElementById(pctId).textContent  = isUnlimited ? '∞' : pct + '%';
+        }
+        setBar('s-chats',    's-chats-max',    'bar-chats',    'pct-chats',    usg.chat           ?? 0, lim.aiMsg);
+        setBar('s-quizzes',  's-quizzes-max',  'bar-quizzes',  'pct-quizzes',  usg.quizzes        ?? 0, lim.quizzes);
+        setBar('s-pdfs',     's-pdfs-max',     'bar-pdfs',     'pct-pdfs',     usg.pdf            ?? 0, lim.pdfExports);
+        setBar('s-sessions', 's-sessions-max', 'bar-sessions', 'pct-sessions', usg.studySessions  ?? 0, lim.studySessions);
+        setBar('s-projects', 's-projects-max', 'bar-projects', 'pct-projects', usg.projectsTotal  ?? 0, lim.projects);
         const dlCount = (usg.paperDlWindows && usg.paperDlWindows.length) ? (usg.paperDlWindows[usg.paperDlWindows.length-1]?.count ?? 0) : 0;
-        if (document.getElementById('s-dl'))             document.getElementById('s-dl').textContent             = dlCount;
-        if (document.getElementById('s-dl-limit'))       document.getElementById('s-dl-limit').textContent       = `of ${fmtLim(lim.paperDl)} per 6hrs`;
+        setBar('s-dl',       's-dl-max',       'bar-dl',       'pct-dl',       dlCount,                 lim.paperDl);
 
         if (d.pairingStatus !== 'paired' && (d.plan || 'free') === 'free') {
           document.getElementById('pair-banner-text').textContent = 'Link WhatsApp to double your daily AI messages (free!).';
