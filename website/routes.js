@@ -54,6 +54,7 @@ import {
 } from './auth.js';
 import { askWebAI, clearWebHistory } from './ai.js';
 import { createVerifyToken, consumeToken } from '../utils/verify.js';
+import { generateAmbassadorCertificate } from '../utils/certificate.js';
 import {
   uploadUpdateJson, uploadApk, fetchUpdateJson, getApkPublicUrl,
 } from '../utils/update-store.js';
@@ -2158,6 +2159,25 @@ router.get('/api/ambassador/me', requireAuth, requireAmbassador, (req, res) => {
       studentsReached: new Set(myResults.map(r => r.userId)).size,
     },
   });
+});
+
+// Ambassador: download certificate of ambassadorship
+router.get('/api/ambassador/certificate', requireAuth, requireAmbassador, async (req, res) => {
+  try {
+    const user = req.user;
+    const amb  = getAmbassadorByEmail(user.email);
+    const name = user.name || user.email.split('@')[0];
+    const addedAt = amb?.addedAt || null;
+    const buf = await generateAmbassadorCertificate({ name, addedAt });
+    const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="fundo_plus_ambassador_certificate_${safeName}.pdf"`);
+    res.setHeader('Content-Length', buf.length);
+    res.send(buf);
+  } catch (err) {
+    console.error('[Certificate]', err);
+    res.status(500).json({ error: 'Failed to generate certificate' });
+  }
 });
 
 // Ambassador: create an exam (tagged ambassador:<userId>)
