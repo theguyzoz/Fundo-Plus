@@ -88,6 +88,12 @@ export const MANAGED_FILES = [
   'zimsec-exams.json', 'zimsec-questions.json', 'zimsec-results.json',
   // Notifications & push subscriptions — survive redeploys
   'notifications.json', 'notif_reads.json', 'push_subscriptions.json',
+  // Ambassador system — referral links, referrals, exam perms
+  'ambassadors.json',
+  // WhatsApp pairing state
+  'wa.json',
+  // Payment proof metadata
+  'proofmeta.json',
 ];
 
 // ── Dirty tracking ────────────────────────────────────────────────────────

@@ -86,6 +86,13 @@ setInterval(() => {
   purgeExpiredExamBackups().catch(e => console.warn('[Routes] purgeExpiredExamBackups interval error:', e.message));
 }, 60 * 60 * 1000);
 
+// Auto-sync all managed data files to Supabase every 10 minutes
+setInterval(() => {
+  import('../utils/supabase-data.js')
+    .then(m => m.syncToSupabase())
+    .catch(e => console.warn('[Routes] periodic syncToSupabase failed:', e.message));
+}, 10 * 60 * 1000);
+
 const __dirname    = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR   = path.join(__dirname, '..', 'public');
 const SKILLS_DIR   = path.join(__dirname, '..', 'skills');
