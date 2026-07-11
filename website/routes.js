@@ -54,7 +54,6 @@ import {
 } from './auth.js';
 import { askWebAI, clearWebHistory } from './ai.js';
 import { createVerifyToken, consumeToken } from '../utils/verify.js';
-import { generateAmbassadorCertificate } from '../utils/certificate.js';
 import {
   uploadUpdateJson, uploadApk, fetchUpdateJson, getApkPublicUrl,
 } from '../utils/update-store.js';
@@ -252,7 +251,7 @@ router.get('/api/me', requireAuth, (req, res) => {
   const sub    = getUserSubscription(user.id);
 
   // Ambassadors get unlimited everything
-  const ambassadorActive = !!(user.isAmbassador && getAmbassadorByEmail(user.email));
+  const ambassadorActive = !!(getAmbassadorByEmail(user.email));
   if (ambassadorActive) {
     limits = { plan: 'ambassador', aiMsg: 'unlimited', projects: 'unlimited',
       studySessions: 'unlimited', pdfExports: 'unlimited', quizzes: 'unlimited', paperDl: 'unlimited' };
@@ -319,7 +318,7 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
   const isLinked = !!req.user.jid;
   const limits = getPlanLimits(uid, isLinked);
   const usage  = getFullUsage(uid);
-  const ambassadorActive = !!(req.user.isAmbassador && getAmbassadorByEmail(req.user.email));
+  const ambassadorActive = !!(getAmbassadorByEmail(req.user.email));
 
   const aiLimit = (limits.aiMsg === 'unlimited' || ambassadorActive) ? Infinity : limits.aiMsg;
   if (aiLimit !== Infinity && (usage.chat || 0) >= aiLimit) {
@@ -860,7 +859,7 @@ router.post('/api/community', requireAuth, (req, res) => {
   if (text.trim().length > 1000) return res.status(400).json({ error: 'Message too long (max 1000 chars)' });
   const user = req.user;
   const displayName = user.name ? `${user.name} ${user.surname || ''}`.trim() : (user.email || 'Anonymous');
-  const ambassadorStatus = !!(user.isAmbassador && getAmbassadorByEmail(user.email));
+  const ambassadorStatus = !!(getAmbassadorByEmail(user.email));
   const msg = addCommunityMessage({
     userId: user.id, name: displayName, text: text.trim(), replyTo,
     isAmbassador: ambassadorStatus, isAdmin: !!user.isAdmin,
@@ -2098,7 +2097,7 @@ router.post('/api/notifications/read', requireAuth, (req, res) => {
 
 // Serve ambassador dashboard page
 router.get('/~/ambassador', requireAuth, (req, res) => {
-  if (!req.user.isAmbassador && !req.user.isAdmin) return res.redirect('/~/');
+  if (!getAmbassadorByEmail(req.user.email) && !req.user.isAdmin) return res.redirect('/~/');
   res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'ambassador.html'));
 });
 
@@ -2139,8 +2138,8 @@ router.delete('/api/admin/ambassadors/:id', requireAdmin, (req, res) => {
 
 function requireAmbassador(req, res, next) {
   if (!req.user) return res.status(401).json({ error: 'Unauthorised' });
-  if (req.user.isAdmin) return next(); // admin can do everything
-  if (req.user.isAmbassador && getAmbassadorByEmail(req.user.email)) return next();
+  if (req.user.isAdmin) return next();
+  if (getAmbassadorByEmail(req.user.email)) return next();
   return res.status(403).json({ error: 'Ambassador access required' });
 }
 
@@ -2159,25 +2158,6 @@ router.get('/api/ambassador/me', requireAuth, requireAmbassador, (req, res) => {
       studentsReached: new Set(myResults.map(r => r.userId)).size,
     },
   });
-});
-
-// Ambassador: download certificate of ambassadorship
-router.get('/api/ambassador/certificate', requireAuth, requireAmbassador, async (req, res) => {
-  try {
-    const user = req.user;
-    const amb  = getAmbassadorByEmail(user.email);
-    const name = user.name || user.email.split('@')[0];
-    const addedAt = amb?.addedAt || null;
-    const buf = await generateAmbassadorCertificate({ name, addedAt });
-    const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="fundo_plus_ambassador_certificate_${safeName}.pdf"`);
-    res.setHeader('Content-Length', buf.length);
-    res.send(buf);
-  } catch (err) {
-    console.error('[Certificate]', err);
-    res.status(500).json({ error: 'Failed to generate certificate' });
-  }
 });
 
 // Ambassador: create an exam (tagged ambassador:<userId>)

@@ -270,18 +270,6 @@
         </div>
       </div>
 
-      <!-- Certificate download -->
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--brd)">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
-          <div>
-            <div style="font-size:.95rem;font-weight:800;color:var(--txt);margin-bottom:4px">🎓 Certificate of Ambassadorship</div>
-            <div style="font-size:.8rem;color:var(--mut);max-width:440px">Download your official certificate as a PDF. Use it for job applications, university admissions, or your CV to show peer leadership and community service.</div>
-          </div>
-          <button class="btn btn-primary" id="cert-btn" onclick="downloadCertificate()">
-            ⬇ Download Certificate
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -426,28 +414,6 @@ async function api(method, url, body) {
 function toggleSb() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
 function closeSb() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
 async function doLogout() { try { await api('POST', '/api/auth/logout'); } catch {} localStorage.clear(); location.href = '/login'; }
-
-async function downloadCertificate() {
-  const btn = document.getElementById('cert-btn');
-  const orig = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '⏳ Generating…';
-  try {
-    const r = await fetch('/api/ambassador/certificate', { headers: { 'x-session-token': tok } });
-    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
-    const blob = await r.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'fundo_plus_ambassador_certificate.pdf';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
-  } catch (e) {
-    alert('Could not generate certificate: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = orig;
-  }
-}
 
 // ── Tab system ──────────────────────────────────────────────────────────
 const TABS = ['exams', 'analytics', 'perks', 'announcements'];
