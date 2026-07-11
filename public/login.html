@@ -127,6 +127,24 @@
                                                 </div>
 
                                                 <script>let loginMode = 'email';
+                                                // Handle referral link — show banner and switch to register tab
+                                                (function() {
+                                                  const p = new URLSearchParams(window.location.search);
+                                                  const ref = p.get('ref');
+                                                  const tab = p.get('tab');
+                                                  if (ref || tab === 'register') {
+                                                    document.addEventListener('DOMContentLoaded', () => {
+                                                      switchTab('register');
+                                                      if (ref) {
+                                                        const banner = document.createElement('div');
+                                                        banner.style.cssText = 'background:linear-gradient(135deg,#eef2ff,#ede9fe);border:1.5px solid #c4b5fd;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.83rem;color:#5b21b6;font-weight:600;display:flex;align-items:center;gap:10px';
+                                                        banner.innerHTML = '<span style="font-size:1.3rem">🌟</span><span>You were invited by a <strong>Fundo+ Ambassador</strong>! Create your account to get started.</span>';
+                                                        const regPanel = document.getElementById('panel-reg');
+                                                        if (regPanel) regPanel.insertBefore(banner, regPanel.firstChild);
+                                                      }
+                                                    });
+                                                  }
+                                                })();
                                                 function switchTab(t) {
                                                 document.getElementById('panel-login').style.display = t==='login'?'':'none';
                                                 document.getElementById('panel-reg').style.display   = t==='register'?'':'none';

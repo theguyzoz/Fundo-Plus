@@ -44,8 +44,11 @@ import {
   getPushSubscriptionsForUsers, getAllPushSubscriptions,
   // ambassadors
   addAmbassador, removeAmbassador, updateAmbassador,
-  getAllAmbassadors, getAmbassadorByEmail, isAmbassador,
-  isAmbassadorExam, getAmbassadorExamWindowExpiry, isAmbassadorExamWindowOpen,
+  getAllAmbassadors, getAllAmbassadorsWithCodes,
+  getAmbassadorByEmail, getAmbassadorByEmailWithCode,
+  getAmbassadorByCode, recordReferral,
+  isAmbassador, isAmbassadorExam,
+  getAmbassadorExamWindowExpiry, isAmbassadorExamWindowOpen,
   AMBASSADOR_EXAM_WINDOW_MS,
 } from '../store.js';
 import {
@@ -153,6 +156,15 @@ function pageGuardBan(req, res, next) {
 //  PAGE ROUTES
 // ═══════════════════════════════════════════════════════════════════
 router.get('/login',       (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
+
+// Ambassador referral link — sets cookie then redirects to register tab
+router.get('/join/:code', (req, res) => {
+  const amb = getAmbassadorByCode(req.params.code);
+  if (!amb) return res.redirect('/login?tab=register&ref_invalid=1');
+  // Set a short-lived cookie so the register endpoint can read it
+  res.cookie('amb_ref', req.params.code, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
+  res.redirect('/login?tab=register&ref=' + encodeURIComponent(amb.referralCode));
+});
 router.get('/onboarding',  pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'onboarding.html')));
 router.get('/~',           pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'index.html')));
 router.get('/~/account',   pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'account.html')));
@@ -185,6 +197,18 @@ router.post('/api/auth/register', (req, res) => {
   if (!email && !phone) return res.status(400).json({ error: 'Email or phone number required' });
   const result = createUser({ email: email?.trim().toLowerCase(), phone: phone?.trim(), password });
   if (!result.ok) return res.status(400).json({ error: result.error });
+
+  // Record referral if they came through an ambassador link
+  const refCode = req.cookies?.amb_ref;
+  if (refCode) {
+    const amb = getAmbassadorByCode(refCode);
+    if (amb) {
+      recordReferral(amb.id, result.user.id, result.user.email || phone || '');
+      import('../utils/supabase-data.js').then(m => m.uploadDataFile('ambassadors.json')).catch(() => {});
+    }
+    res.clearCookie('amb_ref');
+  }
+
   const token = createSession(result.user.id);
   res.cookie('session', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
   res.json({ ok: true, token, user: sanitizeUser(result.user), onboarded: false });
@@ -2104,7 +2128,7 @@ router.get('/~/ambassador', requireAuth, (req, res) => {
 
 // Admin: list all ambassadors
 router.get('/api/admin/ambassadors', requireAdmin, (req, res) => {
-  res.json({ ok: true, ambassadors: getAllAmbassadors() });
+  res.json({ ok: true, ambassadors: getAllAmbassadorsWithCodes() });
 });
 
 // Admin: add ambassador by email
@@ -2147,16 +2171,20 @@ function requireAmbassador(req, res, next) {
 // Ambassador: get their own profile + stats
 router.get('/api/ambassador/me', requireAuth, requireAmbassador, (req, res) => {
   const user = req.user;
-  const amb  = getAmbassadorByEmail(user.email);
+  const amb  = getAmbassadorByEmailWithCode(user.email);
   const myExams = getAllZimsecExams().filter(e => e.createdBy === `ambassador:${user.id}`);
   const myResults = getAllZimsecResults().filter(r => myExams.some(e => e.id === r.examId));
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
   res.json({
     ok: true,
     ambassador: amb,
+    referralLink: `${baseUrl}/join/${amb.referralCode}`,
+    referrals: amb.referrals || [],
     stats: {
-      examsCreated: myExams.length,
+      examsCreated:     myExams.length,
       totalSubmissions: myResults.length,
-      studentsReached: new Set(myResults.map(r => r.userId)).size,
+      studentsReached:  new Set(myResults.map(r => r.userId)).size,
+      referredUsers:    (amb.referrals || []).length,
     },
   });
 });

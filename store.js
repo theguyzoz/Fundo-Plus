@@ -1058,3 +1058,68 @@ export function isAmbassadorExamWindowOpen(uid, examId) {
   if (!unlock) return false;
   return Date.now() - new Date(unlock.unlockedAt).getTime() < AMBASSADOR_EXAM_WINDOW_MS;
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  AMBASSADOR REFERRALS
+// ══════════════════════════════════════════════════════════════════════════
+
+/** Generate a short unique referral code for an ambassador */
+function genRefCode(email) {
+  const base = email.split('@')[0].replace(/[^a-z0-9]/gi, '').slice(0, 6).toLowerCase();
+  const rand  = Math.random().toString(36).slice(2, 5);
+  return `${base}${rand}`;
+}
+
+/** Ensure every ambassador has a referralCode; call on read */
+function ensureRefCode(amb) {
+  if (!amb.referralCode) {
+    amb.referralCode = genRefCode(amb.email);
+    amb.referrals = amb.referrals || [];
+  }
+  return amb;
+}
+
+export function getAmbassadorByCode(code) {
+  const d = loadAmbassadors();
+  return d.ambassadors.find(a => a.referralCode === code && a.active) || null;
+}
+
+export function recordReferral(ambassadorId, newUserId, newUserEmail) {
+  const d = loadAmbassadors();
+  const idx = d.ambassadors.findIndex(a => a.id === ambassadorId);
+  if (idx === -1) return;
+  if (!d.ambassadors[idx].referrals) d.ambassadors[idx].referrals = [];
+  // Avoid duplicates
+  if (d.ambassadors[idx].referrals.some(r => r.userId === newUserId)) return;
+  d.ambassadors[idx].referrals.push({
+    userId: newUserId,
+    email:  newUserEmail,
+    joinedAt: new Date().toISOString(),
+  });
+  saveAmbassadors(d);
+}
+
+/** Get all ambassadors, ensuring each has a referral code */
+export function getAllAmbassadorsWithCodes() {
+  const d = loadAmbassadors();
+  let changed = false;
+  d.ambassadors = d.ambassadors.map(a => {
+    const before = a.referralCode;
+    ensureRefCode(a);
+    if (!before) changed = true;
+    return a;
+  });
+  if (changed) saveAmbassadors(d);
+  return d.ambassadors;
+}
+
+/** Get ambassador entry with code, ensuring code exists */
+export function getAmbassadorByEmailWithCode(email) {
+  const d = loadAmbassadors();
+  const idx = d.ambassadors.findIndex(a => a.email.toLowerCase() === email.toLowerCase() && a.active);
+  if (idx === -1) return null;
+  const before = d.ambassadors[idx].referralCode;
+  ensureRefCode(d.ambassadors[idx]);
+  if (!before) saveAmbassadors(d);
+  return d.ambassadors[idx];
+}

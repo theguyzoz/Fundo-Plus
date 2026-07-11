@@ -185,17 +185,36 @@
     <div class="stat-card accent"><div class="stat-val" id="stat-exams">—</div><div class="stat-label">Tests Created</div></div>
     <div class="stat-card accent"><div class="stat-val green" id="stat-submissions">—</div><div class="stat-label">Total Submissions</div></div>
     <div class="stat-card accent"><div class="stat-val" id="stat-students">—</div><div class="stat-label">Students Reached</div></div>
+    <div class="stat-card" style="border-color:#a5b4fc;background:linear-gradient(135deg,#eef2ff,#ede9fe)"><div class="stat-val" style="color:#7c3aed" id="stat-referred">—</div><div class="stat-label">Users Referred</div></div>
     <div class="stat-card"><div class="stat-val" style="color:#7c3aed">∞</div><div class="stat-label">AI Messages/day</div></div>
     <div class="stat-card"><div class="stat-val" style="color:#7c3aed">∞</div><div class="stat-label">PDF Exports/day</div></div>
     <div class="stat-card"><div class="stat-val" style="color:#7c3aed">∞</div><div class="stat-label">Study Sessions/day</div></div>
   </div>
 
   <!-- Tabs -->
+  <!-- Referral link card — always visible above tabs -->
+  <div class="panel" id="referral-panel" style="margin-bottom:20px;background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-color:#c4b5fd">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="font-size:1.8rem">🔗</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.95rem;font-weight:800;color:#5b21b6;margin-bottom:4px">Your Ambassador Referral Link</div>
+        <div style="font-size:.75rem;color:var(--mut);margin-bottom:10px">Share this link — anyone who signs up through it is counted as your referral.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div id="ref-link-box" style="flex:1;min-width:0;background:var(--surf);border:1.5px solid #c4b5fd;border-radius:8px;padding:8px 12px;font-size:.78rem;font-family:monospace;color:#5b21b6;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" onclick="copyRefLink()" title="Click to copy">Loading…</div>
+          <button class="btn btn-primary" style="background:#7c3aed;flex-shrink:0" onclick="copyRefLink()">📋 Copy</button>
+          <button class="btn btn-ghost" style="flex-shrink:0" onclick="shareRefLink()">↗ Share</button>
+        </div>
+        <div id="ref-copy-msg" style="font-size:.73rem;color:#7c3aed;margin-top:6px;display:none">✅ Link copied to clipboard!</div>
+      </div>
+    </div>
+  </div>
+
   <div class="section-tabs">
     <button class="stab on" id="tab-exams" onclick="switchTab('exams')">📝 My Tests</button>
     <button class="stab" id="tab-analytics" onclick="switchTab('analytics')">📊 Analytics</button>
+    <button class="stab" id="tab-referrals" onclick="switchTab('referrals')">🔗 Referrals</button>
     <button class="stab" id="tab-perks" onclick="switchTab('perks')">⚡ Perks</button>
-    <button class="stab" id="tab-announcements" onclick="switchTab('announcements')">📣 Post Announcement</button>
+    <button class="stab" id="tab-announcements" onclick="switchTab('announcements')">📣 Announce</button>
   </div>
 
   <!-- Tab: My Tests -->
@@ -230,6 +249,17 @@
         </select>
       </div>
       <div id="lb-list"><div style="color:var(--mut);font-size:.83rem;text-align:center;padding:30px">Select a test above to view its leaderboard</div></div>
+    </div>
+  </div>
+
+  <!-- Tab: Referrals -->
+  <div id="section-referrals" class="hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">🔗 Users Who Joined Through Your Link</div>
+        <div id="ref-total-badge" style="background:#ede9fe;color:#7c3aed;border-radius:99px;padding:4px 14px;font-size:.78rem;font-weight:800">0 referrals</div>
+      </div>
+      <div id="referrals-list"><div style="color:var(--mut);text-align:center;padding:30px;font-size:.85rem"><span class="spin"></span> Loading…</div></div>
     </div>
   </div>
 
@@ -416,26 +446,84 @@ function closeSb() { document.getElementById('sidebar').classList.remove('open')
 async function doLogout() { try { await api('POST', '/api/auth/logout'); } catch {} localStorage.clear(); location.href = '/login'; }
 
 // ── Tab system ──────────────────────────────────────────────────────────
-const TABS = ['exams', 'analytics', 'perks', 'announcements'];
+const TABS = ['exams', 'analytics', 'referrals', 'perks', 'announcements'];
+let myReferralLink = '';
+
 function switchTab(name) {
   TABS.forEach(t => {
     document.getElementById(`section-${t}`).classList.toggle('hidden', t !== name);
     document.getElementById(`tab-${t}`)?.classList.toggle('on', t === name);
   });
-  if (name === 'analytics') populateAnalytics();
+  if (name === 'analytics')   populateAnalytics();
   if (name === 'announcements') loadRecentPosts();
-  // Check hash
+  if (name === 'referrals')   loadReferrals();
   history.replaceState(null, '', `/~/ambassador#${name}`);
 }
 
-// ── Stats ───────────────────────────────────────────────────────────────
+// ── Stats + Referral Link ────────────────────────────────────────────────
 async function loadStats() {
   try {
     const d = await api('GET', '/api/ambassador/me');
-    document.getElementById('stat-exams').textContent = d.stats.examsCreated;
+    document.getElementById('stat-exams').textContent       = d.stats.examsCreated;
     document.getElementById('stat-submissions').textContent = d.stats.totalSubmissions;
-    document.getElementById('stat-students').textContent = d.stats.studentsReached;
+    document.getElementById('stat-students').textContent    = d.stats.studentsReached;
+    document.getElementById('stat-referred').textContent    = d.stats.referredUsers;
+
+    // Populate referral link box
+    myReferralLink = d.referralLink || '';
+    const box = document.getElementById('ref-link-box');
+    if (box) box.textContent = myReferralLink;
   } catch (e) { console.error(e); }
+}
+
+// ── Referral Link Actions ────────────────────────────────────────────────
+async function copyRefLink() {
+  if (!myReferralLink) return;
+  try {
+    await navigator.clipboard.writeText(myReferralLink);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = myReferralLink;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  const msg = document.getElementById('ref-copy-msg');
+  if (msg) { msg.style.display = ''; setTimeout(() => msg.style.display = 'none', 3000); }
+}
+
+function shareRefLink() {
+  if (!myReferralLink) return;
+  if (navigator.share) {
+    navigator.share({ title: 'Join Fundo Plus', text: 'Study smarter with Fundo Plus!', url: myReferralLink }).catch(() => {});
+  } else {
+    copyRefLink();
+  }
+}
+
+// ── Referrals Tab ────────────────────────────────────────────────────────
+async function loadReferrals() {
+  const el = document.getElementById('referrals-list');
+  const badge = document.getElementById('ref-total-badge');
+  try {
+    const d = await api('GET', '/api/ambassador/me');
+    const refs = d.referrals || [];
+    if (badge) badge.textContent = `${refs.length} referral${refs.length !== 1 ? 's' : ''}`;
+    if (!refs.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><h3>No referrals yet</h3><p>Share your link above — every new signup through it appears here.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:2px solid var(--brd)">
+        <th style="text-align:left;padding:8px 10px;font-size:.73rem;color:var(--mut);font-weight:800">#</th>
+        <th style="text-align:left;padding:8px 10px;font-size:.73rem;color:var(--mut);font-weight:800">Email</th>
+        <th style="text-align:left;padding:8px 10px;font-size:.73rem;color:var(--mut);font-weight:800">Joined</th>
+      </tr></thead>
+      <tbody>${refs.map((r, i) => `<tr style="border-bottom:1px solid var(--brd)">
+        <td style="padding:10px;font-size:.78rem;color:var(--mut)">${i + 1}</td>
+        <td style="padding:10px;font-size:.84rem;font-weight:700">${escHtml(r.email || '—')}</td>
+        <td style="padding:10px;font-size:.76rem;color:var(--mut)">${new Date(r.joinedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch (e) { el.innerHTML = `<div style="color:var(--red);padding:16px">${e.message}</div>`; }
 }
 
 // ── Exams ───────────────────────────────────────────────────────────────
