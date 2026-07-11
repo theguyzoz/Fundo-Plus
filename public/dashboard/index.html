@@ -964,7 +964,6 @@
         document.getElementById('user-name').textContent = u.name || 'Student';
         document.getElementById('topbar-name').textContent = u.name || '';
         document.getElementById('avatar-letter').textContent = (u.name || 'S')[0].toUpperCase();
-        document.getElementById('s-school').textContent = u.school || '—';
         document.getElementById('s-wa').textContent = d.pairingStatus === 'paired' ? '✅ Linked' : '❌ Not linked';
 
         const planColors = { free:'#6b7280', lite:'#2563eb', plus:'#7c3aed', pro:'#dc2626' };
@@ -986,8 +985,8 @@
           if (document.getElementById(maxId))  document.getElementById(maxId).textContent  = `/ ${fmtLim(limit)}`;
           if (document.getElementById(barId)) {
             const bar = document.getElementById(barId);
-            setTimeout(() => { bar.style.width = isUnlimited ? '100%' : pct + '%'; }, 100);
-            if (pct >= 90) bar.className = bar.className.replace(/fill-\w+/, 'fill-warn');
+            setTimeout(() => { bar.style.width = isUnlimited ? '30%' : pct + '%'; }, 100);
+            if (!isUnlimited && pct >= 90) bar.className = bar.className.replace(/fill-\w+/, 'fill-warn');
           }
           if (document.getElementById(pctId))  document.getElementById(pctId).textContent  = isUnlimited ? '∞' : pct + '%';
         }
@@ -1147,7 +1146,6 @@
       try {
         const d = await api('GET', '/api/papers');
         allResources = d.papers || [];
-        document.getElementById('s-papers').textContent = allResources.length;
         renderResources(allResources);
       } catch (e) {
         console.error(e);
