@@ -425,12 +425,13 @@ document.getElementById('ex-dt').value=d.toISOString().slice(0,16);
 (async()=>{
   if(!tok){location.href='/login';return;}
   try{
-    const u=await api('GET','/api/auth/me');
-    if(!u.ok){location.href='/login';return;}
-    const n=u.user?.name||u.user?.email||'Admin';
+    const d=await api('GET','/api/auth/me');
+    if(!d.ok){location.href='/login';return;}
+    const me=d.user;
+    const n=me?.name||me?.email||'Admin';
     document.getElementById('av').textContent=n[0].toUpperCase();
     if(d.isAmbassador||me.isAdmin){const el=document.getElementById('amb-nav-item');if(el)el.style.display='';}
-    if(!u.user?.isAdmin&&!u.user?.is_admin){
+    if(!me?.isAdmin&&!me?.is_admin){
       document.querySelector('.main').innerHTML='<div style="text-align:center;padding:80px;color:var(--red)"><h2>Access Denied</h2><p>Admin access required.</p></div>';
       return;
     }

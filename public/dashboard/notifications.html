@@ -361,10 +361,11 @@
     try {
       const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
       if (!r.ok) { location.href = '/login'; return; }
-      const u = await r.json();
+      const d = await r.json();
+      const u = d.user || d;
       document.getElementById('topbar-name').textContent = u.name || '';
       document.getElementById('avatar-letter').textContent = (u.name || 'S')[0].toUpperCase();
-      if (u.isAmbassador || u.user?.isAdmin) { const el = document.getElementById('amb-nav-item'); if (el) el.style.display = ''; }
+      if (d.isAmbassador || u.isAdmin) { const el = document.getElementById('amb-nav-item'); if (el) el.style.display = ''; }
     } catch { location.href = '/login'; return; }
 
     await loadNotifications();

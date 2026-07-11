@@ -208,7 +208,8 @@ router.post('/api/auth/logout', requireAuthAllowBanned, (req, res) => {
 });
 
 router.get('/api/auth/me', requireAuthAllowBanned, (req, res) => {
-  res.json({ ok: true, user: sanitizeUser(req.user), banned: req.banned || false });
+  const isAmb = !!(getAmbassadorByEmail(req.user.email));
+  res.json({ ok: true, user: sanitizeUser(req.user), banned: req.banned || false, isAmbassador: isAmb });
 });
 
 // ═══════════════════════════════════════════════════════════════════
