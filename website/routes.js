@@ -146,7 +146,17 @@ const apkUpload = multer({
 // ── Ban guard helper ─────────────────────────────────────────────────────
 function parseCookies(req) {
   const raw = req.headers.cookie || '';
-  return Object.fromEntries(raw.split(';').map(c => c.trim().split('=').map(decodeURIComponent)));
+  if (!raw.trim()) return {};
+  return Object.fromEntries(
+    raw.split(';')
+      .map(c => c.trim())
+      .filter(Boolean)
+      .map(c => {
+        const idx = c.indexOf('=');
+        if (idx === -1) return [decodeURIComponent(c), ''];
+        return [decodeURIComponent(c.slice(0, idx)), decodeURIComponent(c.slice(idx + 1))];
+      })
+  );
 }
 
 function pageGuardBan(req, res, next) {
@@ -199,14 +209,16 @@ router.get('/samazed',     (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'sam
 //  AUTH API
 // ═══════════════════════════════════════════════════════════════════
 router.post('/api/auth/register', (req, res) => {
-  const { email, phone, password } = req.body || {};
+  const { email, phone, password, refCode: bodyRefCode } = req.body || {};
   if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
   if (!email && !phone) return res.status(400).json({ error: 'Email or phone number required' });
   const result = createUser({ email: email?.trim().toLowerCase(), phone: phone?.trim(), password });
   if (!result.ok) return res.status(400).json({ error: result.error });
 
   // Record referral if they came through an ambassador link
-  const refCode = req.cookies?.amb_ref;
+  // Use parseCookies() since cookie-parser is not mounted, fall back to body refCode
+  const cookies = parseCookies(req);
+  const refCode = cookies.amb_ref || bodyRefCode;
   if (refCode) {
     const amb = getAmbassadorByCode(refCode);
     if (amb) {

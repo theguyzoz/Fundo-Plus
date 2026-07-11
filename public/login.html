@@ -185,8 +185,9 @@
                                                 if(pass.length<6)return showErr('Password must be at least 6 characters.');
                                                 if(pass!==pass2)return showErr('Passwords do not match.');
                                                 const btn=document.getElementById('reg-btn');btn.disabled=true;btn.textContent='Creating account…';
+                                                const refCode=new URLSearchParams(window.location.search).get('ref')||'';
                                                 try{
-                                                const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+                                                const r=await fetch('/api/auth/register',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,refCode:refCode||undefined})});
                                                 const d=await r.json();
                                                 if(!r.ok)return showErr(d.error||'Registration failed');
                                                 localStorage.setItem('fp_session',d.token);localStorage.setItem('fp_user',JSON.stringify(d.user));
