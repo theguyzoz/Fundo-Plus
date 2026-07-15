@@ -299,13 +299,14 @@
     </a>
 
     <div class="sb-section">Community</div>
-    <a class="nav-item" href="/community">
+    <a class="nav-item" href="/community" id="community-nav-item">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
       </svg>
       Community
+      <span id="sb-mention-dot" style="margin-left:auto;background:#dc2626;color:#fff;border-radius:99px;font-size:.6rem;font-weight:900;padding:1px 6px;display:none"></span>
     </a>
     <a class="nav-item" href="/support">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -1771,6 +1772,23 @@ Format with clear ## headings. Be thorough and educational.`;
     // Load notifications after init, then poll every 60s
     setTimeout(loadNotifications, 1500);
     setInterval(loadNotifications, 60000);
+
+    // Poll community mention count every 90s
+    async function loadMentionCount() {
+      try {
+        const r = await apiFetch('/api/community/mentions/count');
+        const dot = document.getElementById('sb-mention-dot');
+        if (!dot) return;
+        if (r && r.count > 0) {
+          dot.textContent = r.count > 9 ? '9+' : r.count;
+          dot.style.display = 'inline-block';
+        } else {
+          dot.style.display = 'none';
+        }
+      } catch(e) {}
+    }
+    setTimeout(loadMentionCount, 2000);
+    setInterval(loadMentionCount, 90000);
   </script>
 </body>
 </html>

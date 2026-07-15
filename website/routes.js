@@ -14,6 +14,8 @@ import {
   submitAppeal, resolveAppeal, hashPassword,
   addCommunityMessage, getCommunityMessages,
   deleteCommunityMessage, getCommunityCount,
+  toggleCommunityLike, getCommunityMentionCount,
+  markCommunityMentionsRead, setCommunityMessageMentions,
   // subscription & usage
   getUserPlan, getPlanLimits, setUserSubscription, getAllSubscriptions,
   getUserSubscription, savePaymentProof, getAllProofs, getPendingProofs,
@@ -908,12 +910,50 @@ router.post('/api/community', requireAuth, (req, res) => {
     userId: user.id, name: displayName, text: text.trim(), replyTo,
     isAmbassador: ambassadorStatus, isAdmin: !!user.isAdmin,
   });
+  // Detect @mentions: extract @FirstName patterns and resolve to user IDs
+  try {
+    const mentionNames = [...text.matchAll(/@([\w]+)/g)].map(m => m[1].toLowerCase());
+    if (mentionNames.length) {
+      const allUsers = getAllWebUsers ? getAllWebUsers() : [];
+      const mentionedIds = allUsers
+        .filter(u => mentionNames.some(mn => (u.name || '').toLowerCase().startsWith(mn)))
+        .map(u => u.id)
+        .filter(id => id !== user.id);
+      if (mentionedIds.length) setCommunityMessageMentions(msg.id, mentionedIds);
+    }
+  } catch(e) { /* silent */ }
   res.json({ ok: true, message: msg });
 });
 
 router.delete('/api/community/:id', requireAuth, (req, res) => {
   const ok = deleteCommunityMessage(req.params.id, req.user.id, false);
   if (!ok) return res.status(403).json({ error: 'Not allowed or not found' });
+  res.json({ ok: true });
+});
+
+// Like / unlike a community message
+router.post('/api/community/:id/like', requireAuth, (req, res) => {
+  const likes = toggleCommunityLike(req.params.id, req.user.id);
+  if (!likes) return res.status(404).json({ error: 'Message not found' });
+  res.json({ ok: true, likes, count: likes.length, liked: likes.includes(req.user.id) });
+});
+
+// Post with mention detection: parse @Name in text, store mentionedUserIds
+router.post('/api/community', requireAuth, (req, res) => {
+  // intentional override — the original POST route above handles this;
+  // mention extraction is done there. This is a no-op placeholder.
+  res.status(400).json({ error: 'Use the community post endpoint above' });
+});
+
+// Get unread mention count for current user
+router.get('/api/community/mentions/count', requireAuth, (req, res) => {
+  const count = getCommunityMentionCount(req.user.id);
+  res.json({ ok: true, count });
+});
+
+// Mark mentions as read
+router.post('/api/community/mentions/read', requireAuth, (req, res) => {
+  markCommunityMentionsRead(req.user.id);
   res.json({ ok: true });
 });
 

@@ -544,6 +544,48 @@ export function deleteCommunityMessage(msgId, userId, isAdmin = false) {
 
 export function getCommunityCount() { return communityData.messages.length; }
 
+/** Toggle a like on a message. Returns updated likes array. */
+export function toggleCommunityLike(msgId, userId) {
+  const msg = communityData.messages.find(m => m.id === msgId);
+  if (!msg) return null;
+  if (!msg.likes) msg.likes = [];
+  const idx = msg.likes.indexOf(userId);
+  if (idx === -1) msg.likes.push(userId);
+  else msg.likes.splice(idx, 1);
+  saveCommunity();
+  return msg.likes;
+}
+
+/** Get unread mention count for a userId */
+export function getCommunityMentionCount(userId) {
+  if (!communityData.mentionReads) communityData.mentionReads = {};
+  const lastRead = communityData.mentionReads[userId] || '1970-01-01T00:00:00.000Z';
+  return communityData.messages.filter(m =>
+    m.mentions && m.mentions.includes(userId) && m.createdAt > lastRead
+  ).length;
+}
+
+/** Mark mentions as read for a userId */
+export function markCommunityMentionsRead(userId) {
+  if (!communityData.mentionReads) communityData.mentionReads = {};
+  communityData.mentionReads[userId] = new Date().toISOString();
+  saveCommunity();
+}
+
+/** Store mention userIds in a message when posting */
+export function setCommunityMessageMentions(msgId, mentionedUserIds) {
+  const msg = communityData.messages.find(m => m.id === msgId);
+  if (!msg) return;
+  msg.mentions = mentionedUserIds;
+  saveCommunity();
+}
+
+/** Get all users (minimal) so community can resolve @names to IDs */
+export function getCommunityUserIndex() {
+  // Returns lightweight array [{id, name}] from web users
+  return []; // routes.js will handle this using getAllWebUsers
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 //  Promo / Free-Premium Links
 // ══════════════════════════════════════════════════════════════════════════
