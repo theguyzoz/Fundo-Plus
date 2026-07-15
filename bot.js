@@ -21,6 +21,7 @@ import {
   incrementPaperUpload, PAPER_UPLOAD_LIMIT,
   getAllWebUsers, banUser, unbanUser,
   getBan, getAllBans, isBanned, resolveAppeal,
+  reloadCommunityFromDisk,
 } from './store.js';
 import websiteRouter from './website/routes.js';
 import { mountAppRoutes, requireAuthOrApp } from './app/index.js';
@@ -536,6 +537,7 @@ export async function startWebServer(port) {
   console.log(`   SUPABASE_URL: ${process.env.SUPABASE_URL ? '✅ SET' : '⚠️  MISSING — sync disabled'}`);
   console.log(`   HF_TOKEN: ${process.env.HF_TOKEN ? '✅ SET' : '⚠️  MISSING — image gen disabled'}\n`);
   await syncFromSupabase();
+  reloadCommunityFromDisk(); // ✅ Re-read community.json now that Supabase has restored it
   _syncReady = true; // ✅ Only start pushing after we've pulled real data
   console.log('[Sync] ✅ Initial pull complete — cron sync now active');
   server.listen(port, '0.0.0.0', () => {

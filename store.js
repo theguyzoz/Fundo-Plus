@@ -512,6 +512,16 @@ const COMMUNITY_LIMIT = 5000;
 let communityData = readJson(COMMUNITY_FILE, { messages: [] });
 function saveCommunity() { writeJson(COMMUNITY_FILE, communityData); }
 
+/** Re-read community.json from disk — call this after Supabase sync on startup
+ *  so that communityData reflects the restored file, not the empty default. */
+export function reloadCommunityFromDisk() {
+  const fresh = readJson(COMMUNITY_FILE, null);
+  if (fresh && Array.isArray(fresh.messages) && fresh.messages.length > communityData.messages.length) {
+    communityData = fresh;
+    console.log(`[store] ✅ Community reloaded from disk: ${communityData.messages.length} messages`);
+  }
+}
+
 export function addCommunityMessage({ userId, name, text, replyTo = null, isAmbassador = false, isAdmin = false }) {
   const msg = {
     id: `cm-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,

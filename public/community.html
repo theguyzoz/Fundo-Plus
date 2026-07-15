@@ -1015,9 +1015,18 @@
 
     // ── Init ──
     (async function() {
+      // Safety net: if loadMessages() hangs for any reason, clear the spinner after 12s
+      const _safetyTimer = setTimeout(() => {
+        const area = document.getElementById('messages-area');
+        if (area && area.querySelector('.loading')) {
+          area.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Took too long to load. <button onclick="loadMessages()" class="btn btn-ghost btn-sm">Retry</button></p></div>`;
+        }
+      }, 12000);
+
       // Render compose immediately (shows login prompt if no token)
       renderComposeArea();
       await loadMessages();
+      clearTimeout(_safetyTimer);
 
       // Then try to auth and re-render if logged in
       if (TOKEN) {
