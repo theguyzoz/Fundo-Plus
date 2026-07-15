@@ -805,16 +805,29 @@
 
     // ── Load messages ──
     async function loadMessages() {
+      const area = document.getElementById('messages-area');
       try {
-        const r = await fetch('/api/community');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const r = await fetch('/api/community', { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!r.ok) {
+          if (area) area.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Could not load messages (${r.status}). <button onclick="loadMessages()" class="btn btn-ghost btn-sm">Retry</button></p></div>`;
+          return;
+        }
         const d = await r.json();
-        if (!d.ok) return;
+        if (!d.ok) {
+          if (area) area.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Server error. <button onclick="loadMessages()" class="btn btn-ghost btn-sm">Retry</button></p></div>`;
+          return;
+        }
         messages = d.messages;
         updateCapacity(d.total);
         buildMentionList();
         renderMessages();
         updateMentionBadge();
-      } catch {}
+      } catch(err) {
+        if (area) area.innerHTML = `<div class="empty"><div class="ei">📶</div><p>Network error — check your connection. <button onclick="loadMessages()" class="btn btn-ghost btn-sm">Retry</button></p></div>`;
+      }
     }
 
     function updateCapacity(total) {
