@@ -894,11 +894,28 @@ router.post('/api/subscription/proof', requireAuth, proofUpload.single('proof'),
 // ═══════════════════════════════════════════════════════════════════
 //  COMMUNITY
 // ═══════════════════════════════════════════════════════════════════
+
+// IMPORTANT: specific sub-routes MUST come before /:id wildcard routes
+
+// Get mention count (before /:id catches it)
+router.get('/api/community/mentions/count', requireAuth, (req, res) => {
+  const count = getCommunityMentionCount(req.user.id);
+  res.json({ ok: true, count });
+});
+
+// Mark mentions as read (before /:id catches it)
+router.post('/api/community/mentions/read', requireAuth, (req, res) => {
+  markCommunityMentionsRead(req.user.id);
+  res.json({ ok: true });
+});
+
+// Get all messages
 router.get('/api/community', (req, res) => {
   const msgs = getCommunityMessages(300);
   res.json({ ok: true, messages: msgs, total: getCommunityCount() });
 });
 
+// Post a new message
 router.post('/api/community', requireAuth, (req, res) => {
   const { text, replyTo = null } = req.body || {};
   if (!text || !text.trim()) return res.status(400).json({ error: 'Message text required' });
@@ -910,7 +927,7 @@ router.post('/api/community', requireAuth, (req, res) => {
     userId: user.id, name: displayName, text: text.trim(), replyTo,
     isAmbassador: ambassadorStatus, isAdmin: !!user.isAdmin,
   });
-  // Detect @mentions: extract @FirstName patterns and resolve to user IDs
+  // Detect @mentions and store mentionedUserIds
   try {
     const mentionNames = [...text.matchAll(/@([\w]+)/g)].map(m => m[1].toLowerCase());
     if (mentionNames.length) {
@@ -925,35 +942,17 @@ router.post('/api/community', requireAuth, (req, res) => {
   res.json({ ok: true, message: msg });
 });
 
-router.delete('/api/community/:id', requireAuth, (req, res) => {
-  const ok = deleteCommunityMessage(req.params.id, req.user.id, false);
-  if (!ok) return res.status(403).json({ error: 'Not allowed or not found' });
-  res.json({ ok: true });
-});
-
-// Like / unlike a community message
+// Like / unlike a message
 router.post('/api/community/:id/like', requireAuth, (req, res) => {
   const likes = toggleCommunityLike(req.params.id, req.user.id);
   if (!likes) return res.status(404).json({ error: 'Message not found' });
   res.json({ ok: true, likes, count: likes.length, liked: likes.includes(req.user.id) });
 });
 
-// Post with mention detection: parse @Name in text, store mentionedUserIds
-router.post('/api/community', requireAuth, (req, res) => {
-  // intentional override — the original POST route above handles this;
-  // mention extraction is done there. This is a no-op placeholder.
-  res.status(400).json({ error: 'Use the community post endpoint above' });
-});
-
-// Get unread mention count for current user
-router.get('/api/community/mentions/count', requireAuth, (req, res) => {
-  const count = getCommunityMentionCount(req.user.id);
-  res.json({ ok: true, count });
-});
-
-// Mark mentions as read
-router.post('/api/community/mentions/read', requireAuth, (req, res) => {
-  markCommunityMentionsRead(req.user.id);
+// Delete a message
+router.delete('/api/community/:id', requireAuth, (req, res) => {
+  const ok = deleteCommunityMessage(req.params.id, req.user.id, false);
+  if (!ok) return res.status(403).json({ error: 'Not allowed or not found' });
   res.json({ ok: true });
 });
 

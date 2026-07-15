@@ -94,7 +94,8 @@
     }
 
     /* ── SIDEBAR ── */
-    .sidebar { position: sticky; top: 80px; height: fit-content; }
+    .sidebar { position: sticky; top: 80px; height: fit-content; grid-area: unset; }
+    .feed { min-width: 0; }
     .sidebar-card {
       background: var(--surf); border: 1px solid var(--border);
       border-radius: var(--rad); padding: 16px; box-shadow: var(--sh);
@@ -360,13 +361,21 @@
 
     /* ── Responsive ── */
     @media (max-width: 1000px) {
-      .layout { grid-template-columns: 1fr; }
-      .sidebar, .right-sidebar { display: none; }
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-areas: "feed";
+        padding: 16px 12px 80px;
+      }
+      .sidebar { display: none; }
+      .right-sidebar { display: none; }
+      .feed { grid-area: feed; width: 100%; min-width: 0; }
     }
     @media (max-width: 640px) {
       .nav-links { display: none; }
       .burger { display: flex; }
       .msg-card.is-reply { margin-left: 12px; }
+      .layout { padding: 12px 10px 60px; gap: 12px; }
+      .compose-card { padding: 12px; }
     }
 
     /* Footer */
@@ -384,8 +393,7 @@
 
   <!-- Ban interceptor -->
   <script>!function(){const _f=window.fetch;window.fetch=async function(...a){const r=await _f(...a);if(403===r.status){const c=r.clone();try{const d=await c.json();if(d&&'BANNED'===d.code)return location.reload(),new Response('{}',{status:403})}catch{}}return r}}()</script>
-  <!-- Session validator -->
-  <script>async function validateSession(o={}){const{requireAuth:q=true,onUser:cb=null}=o,t=localStorage.getItem('fp_session');if(!t)return q?(location.replace('/login'),null):null;try{const r=await fetch('/api/auth/me',{headers:{'x-session-token':t}});if(401===r.status){localStorage.clear();return q?(location.replace('/login'),null):null}if(!r.ok)return q?(location.replace('/login'),null):null;const d=await r.json();return d.ok?(cb&&cb(d.user),d.user):(localStorage.clear(),q?(location.replace('/login'),null):null)}catch{return q?(location.replace('/login'),null):null}}</script>
+
 </head>
 
 <body>
@@ -994,12 +1002,29 @@
 
     // ── Init ──
     (async function() {
-      if (TOKEN) {
-        const u = await validateSession({ requireAuth: false });
-        if (u) { currentUser = u; updateNav(u); }
-      }
+      // Render compose immediately (shows login prompt if no token)
       renderComposeArea();
       await loadMessages();
+
+      // Then try to auth and re-render if logged in
+      if (TOKEN) {
+        try {
+          const r = await fetch('/api/auth/me', { headers: { 'x-session-token': TOKEN } });
+          if (r.ok) {
+            const d = await r.json();
+            if (d.ok && d.user) {
+              currentUser = d.user;
+              updateNav(d.user);
+              renderComposeArea(); // re-render with compose box
+              buildMentionList();
+              updateMentionBadge();
+            }
+          } else if (r.status === 401) {
+            localStorage.clear();
+          }
+        } catch(e) { /* network error — stay as guest */ }
+      }
+
       setInterval(loadMessages, 15000);
     })();
   </script>
