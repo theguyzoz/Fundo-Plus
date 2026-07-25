@@ -1175,3 +1175,149 @@ export function getAmbassadorByEmailWithCode(email) {
   if (!before) saveAmbassadors(d);
   return d.ambassadors[idx];
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Messenger — DMs stored server-side until delivered, then deleted
+//  Community messages stored in community.json (already exists above)
+//  Individual chat history stored in localStorage on client only
+// ══════════════════════════════════════════════════════════════════════════
+const MESSENGER_FILE = path.join(DATA_DIR, 'messenger.json');
+// { settings: { [userId]: { username, bio, profilePublic, profilePicUrl, bgType, bgUrl, blocked: [userId] } },
+//   pending: [ { id, from, to, text, sentAt, expiresAt, readAt } ] }
+let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [] });
+function saveMessenger() { writeJson(MESSENGER_FILE, messengerData); }
+
+// Prune expired pending messages (older than 2 months)
+export function pruneExpiredMessages() {
+  const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(); // 60 days
+  const before = messengerData.pending.length;
+  messengerData.pending = messengerData.pending.filter(m => m.sentAt > cutoff);
+  if (messengerData.pending.length !== before) saveMessenger();
+}
+
+// ── Messenger Settings ──────────────────────────────────────────────────
+export function getMessengerSettings(userId) {
+  return messengerData.settings[userId] || {
+    username: '', bio: '', profilePublic: false, profilePicUrl: '',
+    bgType: 'default', bgUrl: '', blocked: [],
+  };
+}
+
+export function saveMessengerSettings(userId, patch) {
+  const current = getMessengerSettings(userId);
+  messengerData.settings[userId] = { ...current, ...patch };
+  saveMessenger();
+  return messengerData.settings[userId];
+}
+
+export function blockUser(userId, targetId) {
+  const s = getMessengerSettings(userId);
+  if (!s.blocked) s.blocked = [];
+  if (!s.blocked.includes(targetId)) s.blocked.push(targetId);
+  messengerData.settings[userId] = s;
+  saveMessenger();
+}
+
+export function unblockUser(userId, targetId) {
+  const s = getMessengerSettings(userId);
+  if (!s.blocked) s.blocked = [];
+  s.blocked = s.blocked.filter(id => id !== targetId);
+  messengerData.settings[userId] = s;
+  saveMessenger();
+}
+
+export function isBlocked(userId, targetId) {
+  const s = getMessengerSettings(userId);
+  return (s.blocked || []).includes(targetId);
+}
+
+// ── Search users (only those with profilePublic = true) ────────────────
+export function searchPublicUsers(query) {
+  query = (query || '').toLowerCase().trim();
+  if (!query || query.length < 2) return [];
+  const users = Object.values(webUsersData.users);
+  return users
+    .filter(u => {
+      const s = messengerData.settings[u.id];
+      if (!s?.profilePublic) return false;
+      const displayName = s.username || `${u.name} ${u.surname || ''}`.trim();
+      return (
+        displayName.toLowerCase().includes(query) ||
+        u.email.toLowerCase().includes(query)
+      );
+    })
+    .map(u => {
+      const s = messengerData.settings[u.id];
+      return {
+        id: u.id,
+        displayName: s?.username || `${u.name} ${u.surname || ''}`.trim() || u.email,
+        profilePicUrl: s?.profilePicUrl || '',
+        email: u.email,
+      };
+    })
+    .slice(0, 10);
+}
+
+// Find user by email (for starting a chat by email)
+export function findUserByEmail(email) {
+  const u = Object.values(webUsersData.users).find(u => u.email?.toLowerCase() === email.toLowerCase());
+  if (!u) return null;
+  const s = messengerData.settings[u.id] || {};
+  return {
+    id: u.id,
+    displayName: s.username || `${u.name} ${u.surname || ''}`.trim() || u.email,
+    profilePicUrl: s.profilePicUrl || '',
+    email: u.email,
+  };
+}
+
+// Get minimal user info for a list of user IDs (for building inbox contact list)
+export function getUserInfoBulk(userIds) {
+  return userIds.map(id => {
+    const u = webUsersData.users[id];
+    if (!u) return { id, displayName: 'Unknown', profilePicUrl: '', email: '' };
+    const s = messengerData.settings[id] || {};
+    return {
+      id,
+      displayName: s.username || `${u.name} ${u.surname || ''}`.trim() || u.email,
+      profilePicUrl: s.profilePicUrl || '',
+      email: u.email,
+    };
+  });
+}
+
+// ── Pending messages (server stores until recipient fetches) ─────────────
+export function storePendingMessage({ from, to, text, clientId }) {
+  const msg = {
+    id: `msg-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+    clientId: clientId || null,
+    from, to, text: text.slice(0, 5000),
+    sentAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+  messengerData.pending.push(msg);
+  saveMessenger();
+  return msg;
+}
+
+// Fetch and drain pending messages for a recipient (delete after fetch)
+export function drainPendingMessages(toUserId) {
+  const msgs = messengerData.pending.filter(m => m.to === toUserId);
+  messengerData.pending = messengerData.pending.filter(m => m.to !== toUserId);
+  if (msgs.length) saveMessenger();
+  return msgs;
+}
+
+// Peek pending (for badge count) without draining
+export function countPendingMessages(toUserId) {
+  return messengerData.pending.filter(m => m.to === toUserId).length;
+}
+
+// Count pending per sender for badge numbers in inbox
+export function countPendingBySender(toUserId) {
+  const counts = {};
+  messengerData.pending.filter(m => m.to === toUserId).forEach(m => {
+    counts[m.from] = (counts[m.from] || 0) + 1;
+  });
+  return counts;
+}

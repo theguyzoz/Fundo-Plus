@@ -16,6 +16,11 @@ import {
   deleteCommunityMessage, getCommunityCount,
   toggleCommunityLike, getCommunityMentionCount,
   markCommunityMentionsRead, setCommunityMessageMentions,
+  // messenger
+  getMessengerSettings, saveMessengerSettings, blockUser, unblockUser, isBlocked,
+  searchPublicUsers, findUserByEmail, getUserInfoBulk,
+  storePendingMessage, drainPendingMessages, countPendingMessages,
+  countPendingBySender, pruneExpiredMessages,
   // subscription & usage
   getUserPlan, getPlanLimits, setUserSubscription, getAllSubscriptions,
   getUserSubscription, savePaymentProof, getAllProofs, getPendingProofs,
@@ -200,7 +205,8 @@ router.get('/~/exam/:id',   pageGuardBan, (req, res) => res.sendFile(path.join(P
 router.get('/ai',           pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'ai.html')));
 router.get('/about',       (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'about.html')));
 router.get('/terms',       (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'terms.html')));
-router.get('/community',   pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'community.html')));
+router.get('/community',   pageGuardBan, (req, res) => res.redirect('/messenger'));
+router.get('/messenger',   pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'messenger.html')));
 router.get('/support',     pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'support.html')));
 router.get('/resources',   pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'resources.html')));
 router.get('/redeem',      pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'redeem.html')));
@@ -954,6 +960,104 @@ router.delete('/api/community/:id', requireAuth, (req, res) => {
   const ok = deleteCommunityMessage(req.params.id, req.user.id, false);
   if (!ok) return res.status(403).json({ error: 'Not allowed or not found' });
   res.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  MESSENGER
+// ═══════════════════════════════════════════════════════════════════
+
+// Prune expired pending messages on startup + every hour
+pruneExpiredMessages();
+setInterval(pruneExpiredMessages, 60 * 60 * 1000);
+
+// GET /api/messenger/settings — get my messenger settings
+router.get('/api/messenger/settings', requireAuth, (req, res) => {
+  const s = getMessengerSettings(req.user.id);
+  res.json({ ok: true, settings: s });
+});
+
+// PATCH /api/messenger/settings — update settings
+router.patch('/api/messenger/settings', requireAuth, (req, res) => {
+  const { username, bio, profilePublic, profilePicUrl, bgType, bgUrl } = req.body || {};
+  const patch = {};
+  if (username !== undefined) patch.username = String(username).slice(0, 32);
+  if (bio !== undefined) patch.bio = String(bio).slice(0, 120);
+  if (profilePublic !== undefined) patch.profilePublic = !!profilePublic;
+  if (profilePicUrl !== undefined) patch.profilePicUrl = String(profilePicUrl).slice(0, 500);
+  if (bgType !== undefined) patch.bgType = ['none','default','custom'].includes(bgType) ? bgType : 'default';
+  if (bgUrl !== undefined) patch.bgUrl = String(bgUrl).slice(0, 500);
+  const s = saveMessengerSettings(req.user.id, patch);
+  res.json({ ok: true, settings: s });
+});
+
+// POST /api/messenger/block/:targetId
+router.post('/api/messenger/block/:targetId', requireAuth, (req, res) => {
+  blockUser(req.user.id, req.params.targetId);
+  res.json({ ok: true });
+});
+
+// POST /api/messenger/unblock/:targetId
+router.post('/api/messenger/unblock/:targetId', requireAuth, (req, res) => {
+  unblockUser(req.user.id, req.params.targetId);
+  res.json({ ok: true });
+});
+
+// GET /api/messenger/search?q=...  — search public users
+router.get('/api/messenger/search', requireAuth, (req, res) => {
+  const results = searchPublicUsers(req.query.q || '');
+  res.json({ ok: true, results });
+});
+
+// GET /api/messenger/user-by-email?email=...
+router.get('/api/messenger/user-by-email', requireAuth, (req, res) => {
+  const u = findUserByEmail(req.query.email || '');
+  if (!u) return res.status(404).json({ error: 'User not found' });
+  res.json({ ok: true, user: u });
+});
+
+// POST /api/messenger/user-info  body: { ids: [userId, ...] }
+router.post('/api/messenger/user-info', requireAuth, (req, res) => {
+  const ids = (req.body?.ids || []).slice(0, 50);
+  const info = getUserInfoBulk(ids);
+  res.json({ ok: true, users: info });
+});
+
+// POST /api/messenger/send  — store a pending DM
+router.post('/api/messenger/send', requireAuth, (req, res) => {
+  const { to, text, clientId } = req.body || {};
+  if (!to || !text?.trim()) return res.status(400).json({ error: 'to and text required' });
+  // Check if recipient has blocked the sender
+  if (isBlocked(to, req.user.id)) return res.status(403).json({ error: 'blocked' });
+  const msg = storePendingMessage({ from: req.user.id, to, text: text.trim(), clientId });
+  res.json({ ok: true, message: msg });
+});
+
+// GET /api/messenger/drain — fetch and delete pending messages for me
+router.get('/api/messenger/drain', requireAuth, (req, res) => {
+  const msgs = drainPendingMessages(req.user.id);
+  res.json({ ok: true, messages: msgs });
+});
+
+// GET /api/messenger/pending-count — badge count
+router.get('/api/messenger/pending-count', requireAuth, (req, res) => {
+  const total = countPendingMessages(req.user.id);
+  const bySender = countPendingBySender(req.user.id);
+  res.json({ ok: true, total, bySender });
+});
+
+// GET /api/messenger/me — my full user info (name, email, id)
+router.get('/api/messenger/me', requireAuth, (req, res) => {
+  const u = req.user;
+  const s = getMessengerSettings(u.id);
+  res.json({
+    ok: true,
+    id: u.id,
+    email: u.email,
+    name: u.name || '',
+    surname: u.surname || '',
+    displayName: s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email,
+    settings: s,
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════

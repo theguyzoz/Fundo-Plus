@@ -81,7 +81,7 @@ export const MANAGED_FILES = [
   'webusers.json', 'subscriptions.json', 'support.json', 'bans.json',
   'store.json', 'usage.json', 'images.json', 'pdf.json',
   'synced.json', 'premium.json', 'doc.json', 'messages.json',
-  'papers.json', 'wishlist.json', 'community.json', 'promo_links.json',
+  'papers.json', 'wishlist.json', 'community.json', 'messenger.json', 'promo_links.json',
   // App sessions & app config — synced so they survive redeploys
   'app.json', 'sessions.json',
   // ZIMSEC exam data — synced so exams/questions/results survive server crashes
