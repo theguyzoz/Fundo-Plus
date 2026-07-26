@@ -69,7 +69,17 @@ app.use((req, res, next) => {
   if (req.path.toLowerCase() === '/admin.html') return res.status(404).send('Not found');
   next();
 });
-app.use(express.static(PUBLIC_DIR));
+app.use(express.static(PUBLIC_DIR, {
+  etag: false,
+  lastModified: false,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  },
+}));
 
 // ── Bot state ──────────────────────────────────────────────────────────────
 global.botState = {
