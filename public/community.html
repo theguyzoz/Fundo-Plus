@@ -576,7 +576,8 @@
   <div class="err-toast" id="err-toast"></div>
 
   <script>
-    const TOKEN = localStorage.getItem('fp_session');
+    let TOKEN = null;
+    try { TOKEN = localStorage.getItem('fp_session'); } catch (e) { TOKEN = null; }
     let currentUser = null;
     let messages = [];
     let activeReplyTo = null;
