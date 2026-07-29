@@ -694,7 +694,7 @@
       const results = _mentionNames.filter(u => u.name.toLowerCase().includes(query)).slice(0, 5);
       if (!results.length) { dd.className = 'mention-dropdown'; return; }
       dd.innerHTML = results.map(u =>
-        `<div class="mention-item" onmousedown="insertMention('${escAttr(u.name)}')">
+        `<div class="mention-item" data-action="mention" data-name="${escHtml(u.name)}">
           <div class="mini-av">${u.name[0].toUpperCase()}</div>
           <span>${escHtml(u.name)}</span>
         </div>`
@@ -924,18 +924,18 @@
       );
       const cardClass = `msg-card${isReply ? ' is-reply' : ''}${isMentioned && !isReply ? ' is-mention' : ''}`;
 
-      // Actions
+      // Actions — use data-* attributes to avoid all quoting/escaping issues in onclick strings
       let actions = '';
       if (currentUser) {
         actions = `
-          <button class="action-btn${liked ? ' liked' : ''}" onclick="toggleLike('${msg.id}')">
+          <button class="action-btn${liked ? ' liked' : ''}" data-action="like" data-id="${escHtml(msg.id)}">
             ${liked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : 'Like'}
           </button>`;
         if (!isReply) {
-          actions += `<button class="action-btn" onclick="startReply('${msg.id}','${escAttr(msg.name)}','${escAttr(msg.text.slice(0, 55))}')">↩ Reply</button>`;
+          actions += `<button class="action-btn" data-action="reply" data-id="${escHtml(msg.id)}" data-name="${escHtml(msg.name)}" data-snippet="${escHtml(msg.text.slice(0, 55))}">↩ Reply</button>`;
         }
         if (isOwn) {
-          actions += `<button class="action-btn delete" onclick="deleteMsg('${msg.id}')">🗑 Delete</button>`;
+          actions += `<button class="action-btn delete" data-action="delete" data-id="${escHtml(msg.id)}">🗑 Delete</button>`;
         }
       } else {
         actions = `<span style="font-size:.72rem;color:var(--muted)"><a href="/login" style="color:var(--acc);font-weight:700">Sign in</a> to like or reply</span>`;
@@ -1012,6 +1012,28 @@
     }
     function openMobile() { document.getElementById('mobileMenu').classList.add('open'); }
     function closeMobile() { document.getElementById('mobileMenu').classList.remove('open'); }
+
+    // ── Event delegation for message actions (like / reply / delete) ──
+    // Using data-* attributes avoids all quote-escaping bugs in dynamically generated HTML
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id     = btn.dataset.id;
+      if (action === 'like')   { e.preventDefault(); toggleLike(id); }
+      if (action === 'delete') { e.preventDefault(); deleteMsg(id); }
+      if (action === 'reply')  {
+        e.preventDefault();
+        startReply(id, btn.dataset.name || '', btn.dataset.snippet || '');
+      }
+    });
+    // Mention items use mousedown so the textarea doesn't lose focus before insertion
+    document.addEventListener('mousedown', function(e) {
+      const btn = e.target.closest('[data-action="mention"]');
+      if (!btn) return;
+      e.preventDefault(); // prevent textarea blur
+      insertMention(btn.dataset.name || '');
+    });
 
     // ── Init ──
     (async function() {
