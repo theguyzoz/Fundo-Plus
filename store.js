@@ -1231,27 +1231,26 @@ export function isBlocked(userId, targetId) {
   return (s.blocked || []).includes(targetId);
 }
 
-// ── Search users (only those with profilePublic = true) ────────────────
+// ── Search users by name or email (all users are searchable) ─────────────
 export function searchPublicUsers(query) {
   query = (query || '').toLowerCase().trim();
   if (!query || query.length < 2) return [];
   const users = Object.values(webUsersData.users);
   return users
     .filter(u => {
-      const s = messengerData.settings[u.id];
-      if (!s?.profilePublic) return false;
-      const displayName = s.username || `${u.name} ${u.surname || ''}`.trim();
+      const s = messengerData.settings[u.id] || {};
+      const displayName = s.username || `${u.name || ''} ${u.surname || ''}`.trim();
       return (
         displayName.toLowerCase().includes(query) ||
-        u.email.toLowerCase().includes(query)
+        (u.email || '').toLowerCase().includes(query)
       );
     })
     .map(u => {
-      const s = messengerData.settings[u.id];
+      const s = messengerData.settings[u.id] || {};
       return {
         id: u.id,
-        displayName: s?.username || `${u.name} ${u.surname || ''}`.trim() || u.email,
-        profilePicUrl: s?.profilePicUrl || '',
+        displayName: s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email,
+        profilePicUrl: s.profilePicUrl || '',
         email: u.email,
       };
     })

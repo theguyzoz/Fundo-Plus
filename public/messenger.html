@@ -405,14 +405,20 @@ let ncDebounce = null;
 // ════════════════════════════════════════════
 //  API
 // ════════════════════════════════════════════
-async function apiFetch(method, path, body) {
+async function apiFetch(method, url, body) {
   const opts = { method, headers: { 'x-session-token': TOKEN } };
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
-  const r = await fetch(path, opts);
+  const r = await fetch(url, opts);
+  // Guard against non-JSON responses (HTML error pages, redirects, etc.)
+  const ct = r.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    return { ok: false, _status: r.status, error: `Unexpected response (${r.status})` };
+  }
   const j = await r.json();
+  j._status = r.status;
   return j;
 }
 
@@ -451,14 +457,30 @@ async function init() {
   loadInbox();
   renderChatList();
 
+  let r;
   try {
-    const r = await apiFetch('GET', '/api/messenger/me');
-    if (!r || !r.ok) { location.href = '/login'; return; }
-    me = { id: r.id, email: r.email, displayName: r.displayName, settings: r.settings || {} };
+    r = await apiFetch('GET', '/api/messenger/me');
   } catch(e) {
-    showToast('Could not connect to server');
+    // Network failure — clear loading state and show error
+    document.getElementById('myAv').textContent = '!';
+    document.getElementById('myName').textContent = 'Offline';
+    showToast('Could not connect to server — check your connection');
     return;
   }
+
+  // Not authenticated or server error
+  if (!r || !r.ok) {
+    if (r && (r._status === 401 || r._status === 403)) {
+      location.href = '/login';
+    } else {
+      document.getElementById('myAv').textContent = '!';
+      document.getElementById('myName').textContent = 'Error';
+      showToast(r?.error || 'Failed to load — please refresh');
+    }
+    return;
+  }
+
+  me = { id: r.id, email: r.email, displayName: r.displayName, settings: r.settings || {} };
 
   // Render my avatar + name
   const avEl = document.getElementById('myAv');
@@ -757,7 +779,7 @@ async function runSearch() {
     if (r && r.ok) {
       if (!r.results.length) {
         res.innerHTML = '';
-        warn.textContent = 'No users found. They may not have "Allow others to find me" enabled, or try their exact email.';
+        warn.textContent = 'No users found. Try their exact email address to find them directly.';
         warn.style.display = 'block';
       } else {
         renderNCResults(r.results);
