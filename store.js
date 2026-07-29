@@ -522,6 +522,25 @@ export function reloadCommunityFromDisk() {
   }
 }
 
+/** Re-read webusers.json from disk — call this after Supabase sync on startup. */
+export function reloadWebUsersFromDisk() {
+  const fresh = readJson(WEBUSERS_FILE, null);
+  if (fresh && fresh.users && Object.keys(fresh.users).length > Object.keys(webUsersData.users).length) {
+    webUsersData = fresh;
+    console.log(`[store] ✅ WebUsers reloaded from disk: ${Object.keys(webUsersData.users).length} users`);
+  }
+}
+
+/** Re-read messenger.json from disk — call this after Supabase sync on startup. */
+export function reloadMessengerFromDisk() {
+  const fresh = readJson(MESSENGER_FILE, null);
+  if (fresh && fresh.settings) {
+    messengerData = fresh;
+    if (!Array.isArray(messengerData.pending)) messengerData.pending = [];
+    console.log(`[store] ✅ Messenger reloaded from disk: ${Object.keys(messengerData.settings).length} settings, ${messengerData.pending.length} pending`);
+  }
+}
+
 export function addCommunityMessage({ userId, name, text, replyTo = null, isAmbassador = false, isAdmin = false }) {
   const msg = {
     id: `cm-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,

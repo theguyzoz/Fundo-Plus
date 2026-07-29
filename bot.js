@@ -21,12 +21,12 @@ import {
   incrementPaperUpload, PAPER_UPLOAD_LIMIT,
   getAllWebUsers, banUser, unbanUser,
   getBan, getAllBans, isBanned, resolveAppeal,
-  reloadCommunityFromDisk,
+  reloadCommunityFromDisk, reloadWebUsersFromDisk, reloadMessengerFromDisk,
 } from './store.js';
 import websiteRouter from './website/routes.js';
 import { mountAppRoutes, requireAuthOrApp } from './app/index.js';
 import { obfuscateMiddleware, serveObfuscated } from './utils/obfuscate.js';
-import { requireAuth } from './website/auth.js';
+import { requireAuth, reloadSessionsFromDisk } from './website/auth.js';
 
 const __dirname  = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR   = path.join(__dirname, 'data');
@@ -547,7 +547,10 @@ export async function startWebServer(port) {
   console.log(`   SUPABASE_URL: ${process.env.SUPABASE_URL ? '✅ SET' : '⚠️  MISSING — sync disabled'}`);
   console.log(`   HF_TOKEN: ${process.env.HF_TOKEN ? '✅ SET' : '⚠️  MISSING — image gen disabled'}\n`);
   await syncFromSupabase();
-  reloadCommunityFromDisk(); // ✅ Re-read community.json now that Supabase has restored it
+  reloadCommunityFromDisk();   // ✅ Re-read community.json now that Supabase has restored it
+  reloadWebUsersFromDisk();    // ✅ Re-read webusers.json — sessions auth depends on this
+  reloadMessengerFromDisk();   // ✅ Re-read messenger.json — pending messages and settings
+  reloadSessionsFromDisk();    // ✅ Re-read sessions.json — restores logged-in users
   _syncReady = true; // ✅ Only start pushing after we've pulled real data
   console.log('[Sync] ✅ Initial pull complete — cron sync now active');
   server.listen(port, '0.0.0.0', () => {

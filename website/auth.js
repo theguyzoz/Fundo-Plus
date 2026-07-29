@@ -41,6 +41,19 @@ async function syncSessionsToSupabase() {
 // ── In-memory session map (pre-populated from disk on boot) ───────────────
 const sessions = loadSessionsFromDisk();
 
+/** Re-read sessions.json from disk — call this after Supabase sync on startup
+ *  so that sessions reflects the restored file, not the empty map from boot. */
+export function reloadSessionsFromDisk() {
+  const fresh = loadSessionsFromDisk();
+  if (fresh.size > 0) {
+    // Merge: keep any sessions created since boot, add all from disk
+    for (const [token, s] of fresh) {
+      if (!sessions.has(token)) sessions.set(token, s);
+    }
+    console.log("[auth] ✅ Sessions reloaded from disk: " + sessions.size + " active");
+  }
+}
+
 function parseCookieHeader(req) {
   const raw = req.headers.cookie || '';
   const out = {};
