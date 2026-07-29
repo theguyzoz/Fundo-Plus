@@ -728,7 +728,8 @@
   </div><!-- /main -->
 
   <script>
-    const API_TOKEN = localStorage.getItem('fp_session');
+    let API_TOKEN = null;
+    try { API_TOKEN = localStorage.getItem('fp_session'); } catch (e) { API_TOKEN = null; }
     if (!API_TOKEN) window.location.replace('/login');
 
     let generatedContent = '';

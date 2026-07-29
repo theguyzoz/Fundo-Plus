@@ -384,7 +384,8 @@
 // ════════════════════════════════════════════
 //  CONSTANTS
 // ════════════════════════════════════════════
-const TOKEN = localStorage.getItem('fp_session');
+let TOKEN = null;
+try { TOKEN = localStorage.getItem('fp_session'); } catch (e) { TOKEN = null; }
 if (!TOKEN) { location.href = '/login'; }
 
 const LS_KEY = 'fp_msngr_v3';
