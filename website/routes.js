@@ -970,94 +970,143 @@ router.delete('/api/community/:id', requireAuth, (req, res) => {
 pruneExpiredMessages();
 setInterval(pruneExpiredMessages, 60 * 60 * 1000);
 
+// Race a promise against a hard timeout so a hung DB/store call
+// can never leave a messenger request pending forever.
+function withTimeout(fn, ms = 5000) {
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms));
+  return Promise.race([Promise.resolve().then(fn), timeout]);
+}
+function messengerErr(res, err) {
+  console.error('[Messenger]', err.message);
+  res.status(500).json({ ok: false, error: 'Messenger load failed: ' + err.message });
+}
+
 // GET /api/messenger/settings — get my messenger settings
-router.get('/api/messenger/settings', requireAuth, (req, res) => {
-  const s = getMessengerSettings(req.user.id);
-  res.json({ ok: true, settings: s });
+router.get('/api/messenger/settings', requireAuth, async (req, res) => {
+  try {
+    const result = await withTimeout(() => {
+      const s = getMessengerSettings(req.user.id);
+      return { ok: true, settings: s };
+    });
+    res.json(result);
+  } catch (err) { messengerErr(res, err); }
 });
 
 // PATCH /api/messenger/settings — update settings
-router.patch('/api/messenger/settings', requireAuth, (req, res) => {
-  const { username, bio, profilePublic, profilePicUrl, bgType, bgUrl } = req.body || {};
-  const patch = {};
-  if (username !== undefined) patch.username = String(username).slice(0, 32);
-  if (bio !== undefined) patch.bio = String(bio).slice(0, 120);
-  if (profilePublic !== undefined) patch.profilePublic = !!profilePublic;
-  if (profilePicUrl !== undefined) patch.profilePicUrl = String(profilePicUrl).slice(0, 500);
-  if (bgType !== undefined) patch.bgType = ['none','default','custom'].includes(bgType) ? bgType : 'default';
-  if (bgUrl !== undefined) patch.bgUrl = String(bgUrl).slice(0, 500);
-  const s = saveMessengerSettings(req.user.id, patch);
-  res.json({ ok: true, settings: s });
+router.patch('/api/messenger/settings', requireAuth, async (req, res) => {
+  try {
+    const result = await withTimeout(() => {
+      const { username, bio, profilePublic, profilePicUrl, bgType, bgUrl } = req.body || {};
+      const patch = {};
+      if (username !== undefined) patch.username = String(username).slice(0, 32);
+      if (bio !== undefined) patch.bio = String(bio).slice(0, 120);
+      if (profilePublic !== undefined) patch.profilePublic = !!profilePublic;
+      if (profilePicUrl !== undefined) patch.profilePicUrl = String(profilePicUrl).slice(0, 500);
+      if (bgType !== undefined) patch.bgType = ['none','default','custom'].includes(bgType) ? bgType : 'default';
+      if (bgUrl !== undefined) patch.bgUrl = String(bgUrl).slice(0, 500);
+      const s = saveMessengerSettings(req.user.id, patch);
+      return { ok: true, settings: s };
+    });
+    res.json(result);
+  } catch (err) { messengerErr(res, err); }
 });
 
 // POST /api/messenger/block/:targetId
-router.post('/api/messenger/block/:targetId', requireAuth, (req, res) => {
-  blockUser(req.user.id, req.params.targetId);
-  res.json({ ok: true });
+router.post('/api/messenger/block/:targetId', requireAuth, async (req, res) => {
+  try {
+    await withTimeout(() => blockUser(req.user.id, req.params.targetId));
+    res.json({ ok: true });
+  } catch (err) { messengerErr(res, err); }
 });
 
 // POST /api/messenger/unblock/:targetId
-router.post('/api/messenger/unblock/:targetId', requireAuth, (req, res) => {
-  unblockUser(req.user.id, req.params.targetId);
-  res.json({ ok: true });
+router.post('/api/messenger/unblock/:targetId', requireAuth, async (req, res) => {
+  try {
+    await withTimeout(() => unblockUser(req.user.id, req.params.targetId));
+    res.json({ ok: true });
+  } catch (err) { messengerErr(res, err); }
 });
 
 // GET /api/messenger/search?q=...  — search public users
-router.get('/api/messenger/search', requireAuth, (req, res) => {
-  const results = searchPublicUsers(req.query.q || '');
-  res.json({ ok: true, results });
+router.get('/api/messenger/search', requireAuth, async (req, res) => {
+  try {
+    const results = await withTimeout(() => searchPublicUsers(req.query.q || ''));
+    res.json({ ok: true, results });
+  } catch (err) { messengerErr(res, err); }
 });
 
 // GET /api/messenger/user-by-email?email=...
-router.get('/api/messenger/user-by-email', requireAuth, (req, res) => {
-  const u = findUserByEmail(req.query.email || '');
-  if (!u) return res.status(404).json({ error: 'User not found' });
-  res.json({ ok: true, user: u });
+router.get('/api/messenger/user-by-email', requireAuth, async (req, res) => {
+  try {
+    const u = await withTimeout(() => findUserByEmail(req.query.email || ''));
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    res.json({ ok: true, user: u });
+  } catch (err) { messengerErr(res, err); }
 });
 
 // POST /api/messenger/user-info  body: { ids: [userId, ...] }
-router.post('/api/messenger/user-info', requireAuth, (req, res) => {
-  const ids = (req.body?.ids || []).slice(0, 50);
-  const info = getUserInfoBulk(ids);
-  res.json({ ok: true, users: info });
+router.post('/api/messenger/user-info', requireAuth, async (req, res) => {
+  try {
+    const ids = (req.body?.ids || []).slice(0, 50);
+    const info = await withTimeout(() => getUserInfoBulk(ids));
+    res.json({ ok: true, users: info });
+  } catch (err) { messengerErr(res, err); }
 });
 
 // POST /api/messenger/send  — store a pending DM
-router.post('/api/messenger/send', requireAuth, (req, res) => {
-  const { to, text, clientId } = req.body || {};
-  if (!to || !text?.trim()) return res.status(400).json({ error: 'to and text required' });
-  // Check if recipient has blocked the sender
-  if (isBlocked(to, req.user.id)) return res.status(403).json({ error: 'blocked' });
-  const msg = storePendingMessage({ from: req.user.id, to, text: text.trim(), clientId });
-  res.json({ ok: true, message: msg });
+router.post('/api/messenger/send', requireAuth, async (req, res) => {
+  try {
+    const { to, text, clientId } = req.body || {};
+    if (!to || !text?.trim()) return res.status(400).json({ error: 'to and text required' });
+    const result = await withTimeout(() => {
+      // Check if recipient has blocked the sender
+      if (isBlocked(to, req.user.id)) return { blocked: true };
+      const msg = storePendingMessage({ from: req.user.id, to, text: text.trim(), clientId });
+      return { blocked: false, msg };
+    });
+    if (result.blocked) return res.status(403).json({ error: 'blocked' });
+    res.json({ ok: true, message: result.msg });
+  } catch (err) { messengerErr(res, err); }
 });
 
 // GET /api/messenger/drain — fetch and delete pending messages for me
-router.get('/api/messenger/drain', requireAuth, (req, res) => {
-  const msgs = drainPendingMessages(req.user.id);
-  res.json({ ok: true, messages: msgs });
+router.get('/api/messenger/drain', requireAuth, async (req, res) => {
+  try {
+    const msgs = await withTimeout(() => drainPendingMessages(req.user.id));
+    res.json({ ok: true, messages: msgs });
+  } catch (err) { messengerErr(res, err); }
 });
 
 // GET /api/messenger/pending-count — badge count
-router.get('/api/messenger/pending-count', requireAuth, (req, res) => {
-  const total = countPendingMessages(req.user.id);
-  const bySender = countPendingBySender(req.user.id);
-  res.json({ ok: true, total, bySender });
+router.get('/api/messenger/pending-count', requireAuth, async (req, res) => {
+  try {
+    const result = await withTimeout(() => {
+      const total = countPendingMessages(req.user.id);
+      const bySender = countPendingBySender(req.user.id);
+      return { ok: true, total, bySender };
+    });
+    res.json(result);
+  } catch (err) { messengerErr(res, err); }
 });
 
 // GET /api/messenger/me — my full user info (name, email, id)
-router.get('/api/messenger/me', requireAuth, (req, res) => {
-  const u = req.user;
-  const s = getMessengerSettings(u.id);
-  res.json({
-    ok: true,
-    id: u.id,
-    email: u.email,
-    name: u.name || '',
-    surname: u.surname || '',
-    displayName: s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email,
-    settings: s,
-  });
+router.get('/api/messenger/me', requireAuth, async (req, res) => {
+  try {
+    const result = await withTimeout(() => {
+      const u = req.user;
+      const s = getMessengerSettings(u.id);
+      return {
+        ok: true,
+        id: u.id,
+        email: u.email,
+        name: u.name || '',
+        surname: u.surname || '',
+        displayName: s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email,
+        settings: s,
+      };
+    });
+    res.json(result);
+  } catch (err) { messengerErr(res, err); }
 });
 
 // ═══════════════════════════════════════════════════════════════════
