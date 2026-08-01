@@ -516,6 +516,54 @@ try { TOKEN = localStorage.getItem('fp_session'); } catch {}
 // If no localStorage token, the session cookie will carry auth.
 // We'll detect redirect-to-login from 401 responses.
 
+// ══════════════════════════════════════════════════════
+//  SOCKET.IO (real-time messenger)
+// ══════════════════════════════════════════════════════
+let socket = null;
+function initSocket(userId) {
+  if (socket) return;
+  if (typeof io === 'undefined') {
+    // Load Socket.IO client if not present
+    const s = document.createElement('script');
+    s.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+    s.onload = () => connectSocket(userId);
+    document.head.appendChild(s);
+  } else {
+    connectSocket(userId);
+  }
+}
+
+function connectSocket(userId) {
+  if (!userId) return;
+  socket = io({ transports: ['websocket'] });
+  socket.on('connect', () => {
+    socket.emit('messenger:join', userId);
+  });
+  socket.on('messenger:new-message', (msg) => {
+    if (!msg || !msg.from) return;
+    const c = inbox[msg.from];
+    if (!c) {
+      // Create contact on the fly
+      inbox[msg.from] = mkContact({ id: msg.from, displayName: msg.from });
+    }
+    const contact = inbox[msg.from];
+    if (!contact.messages.find(m => m.id === msg.id)) {
+      contact.messages.push({
+        id: msg.id,
+        text: msg.text,
+        sentAt: msg.sentAt || new Date().toISOString(),
+        dir: 'in',
+        status: 'read',
+        replyTo: null
+      });
+      if (msg.from !== activeId) contact.unread = (contact.unread || 0) + 1;
+      saveInbox();
+      renderChatList();
+      if (activeId === msg.from) renderMsgs();
+    }
+  });
+}
+
 const LS_KEY = 'fp_msngr_v4';
 const AV_COLORS = ['#2952e3','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2','#b45309'];
 
@@ -620,6 +668,9 @@ async function init() {
   me = { id: r.id, email: r.email, displayName: r.displayName, settings: r.settings || {} };
   renderMyAvatar();
   applyBg(me.settings);
+
+  // Connect real-time socket
+  initSocket(me.id);
 
   await drain();
   drainTimer = setInterval(drain, 20000);

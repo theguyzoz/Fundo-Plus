@@ -522,9 +522,51 @@ app.get('*', (req,res,next) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  SOCKET.IO
+//  SOCKET.IO + MESSENGER REAL-TIME
 // ═══════════════════════════════════════════════════════════════════════════
-io.on('connection', socket => socket.emit('status', buildStatusPayload()));
+const messengerSockets = new Map(); // userId → Set of sockets
+
+io.on('connection', (socket) => {
+  socket.emit('status', buildStatusPayload());
+
+  // ── Messenger real-time ────────────────────────────────────────────────
+  socket.on('messenger:join', (userId) => {
+    if (!userId) return;
+    socket.userId = userId;
+    if (!messengerSockets.has(userId)) messengerSockets.set(userId, new Set());
+    messengerSockets.get(userId).add(socket);
+    socket.join(`messenger:${userId}`);
+  });
+
+  socket.on('messenger:leave', (userId) => {
+    if (!userId) return;
+    const set = messengerSockets.get(userId);
+    if (set) {
+      set.delete(socket);
+      if (set.size === 0) messengerSockets.delete(userId);
+    }
+    socket.leave(`messenger:${userId}`);
+  });
+
+  socket.on('disconnect', () => {
+    if (socket.userId) {
+      const set = messengerSockets.get(socket.userId);
+      if (set) {
+        set.delete(socket);
+        if (set.size === 0) messengerSockets.delete(socket.userId);
+      }
+    }
+  });
+});
+
+// Helper to push real-time message to a user
+function emitMessengerMessage(toUserId, message) {
+  const room = `messenger:${toUserId}`;
+  io.to(room).emit('messenger:new-message', message);
+}
+
+global.emitMessengerMessage = emitMessengerMessage;
+
 function emitStatus()         { io.emit('status', buildStatusPayload()); }
 function buildStatusPayload() {
   return { status: global.botState.status, phone: global.botState.phoneNumber,

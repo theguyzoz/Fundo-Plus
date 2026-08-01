@@ -1053,7 +1053,7 @@ router.post('/api/messenger/user-info', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// POST /api/messenger/send  — store a pending DM
+// POST /api/messenger/send  — store a pending DM + real-time emit
 router.post('/api/messenger/send', requireAuth, async (req, res) => {
   try {
     const { to, text, clientId } = req.body || {};
@@ -1065,6 +1065,21 @@ router.post('/api/messenger/send', requireAuth, async (req, res) => {
       return { blocked: false, msg };
     });
     if (result.blocked) return res.status(403).json({ error: 'blocked' });
+
+    // Real-time push via Socket.IO
+    try {
+      const { emitMessengerMessage } = await import('../bot.js').catch(() => ({}));
+      if (emitMessengerMessage) {
+        emitMessengerMessage(to, {
+          id: result.msg?.id,
+          from: req.user.id,
+          text: text.trim(),
+          sentAt: new Date().toISOString(),
+          clientId
+        });
+      }
+    } catch (_) {}
+
     res.json({ ok: true, message: result.msg });
   } catch (err) { messengerErr(res, err); }
 });
