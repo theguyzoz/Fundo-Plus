@@ -8,10 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --fp:#2952e3;--bubble-out:#d9fdd3;--bubble-in:#fff;
-      --surf:#ffffff;--bg:#f1f3f9;--border:#e2e6f0;--muted:#6b7a99;--text:#0d1b3e;
-    }
+    :root{--fp:#2952e3;--bubble-out:#d9fdd3;--bubble-in:#fff;--surf:#fff;--bg:#f1f3f9;--border:#e2e6f0;--muted:#6b7a99;--text:#0d1b3e}
     html,body{height:100%;font-family:'Inter',system-ui;background:var(--bg);color:var(--text);overflow:hidden}
     .topbar{height:56px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px}
     .msngr{display:flex;flex:1;height:calc(100vh - 56px);overflow:hidden}
@@ -26,7 +23,7 @@
     .mr{display:flex;flex-direction:column;max-width:78%}
     .mr.out{align-self:flex-end;align-items:flex-end}
     .mr.in{align-self:flex-start;align-items:flex-start}
-    .bubble{padding:8px 14px;border-radius:18px;font-size:0.92rem;line-height:1.4;position:relative}
+    .bubble{padding:8px 14px;border-radius:18px;font-size:0.92rem;line-height:1.4}
     .out .bubble{background:var(--bubble-out);border-bottom-right-radius:4px}
     .in .bubble{background:var(--bubble-in);border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,0.06)}
     .mf{display:flex;align-items:center;gap:6px;margin-top:3px}
@@ -43,7 +40,6 @@
     .ctx-menu{position:fixed;background:white;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:300;min-width:160px;display:none}
     .ctx-item{padding:10px 16px;font-size:0.9rem;cursor:pointer}
     .ctx-item.danger{color:#dc2626}
-    .contact-menu{position:fixed;background:white;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:300;min-width:160px;display:none}
     .online-dot{width:10px;height:10px;background:#22c55e;border-radius:50%;display:inline-block;margin-left:6px}
     @media(max-width:680px){.sidebar{width:100%;position:absolute;z-index:10}.chat-area{display:none;position:absolute;inset:0;z-index:20;background:white}.chat-area.active{display:flex}.sidebar.active{display:none}}
   </style>
@@ -172,10 +168,10 @@ async function init() {
   renderMyProfile();
   renderChatList();
 
-  // Connect to socket for online status
+  // Connect socket
   initSocket();
 
-  // Auto open first chat
+  // Auto open first chat if exists
   const first = Object.keys(inbox)[0];
   if (first) openChat(first);
 }
@@ -205,13 +201,7 @@ function connectSocket() {
     const c = inbox[msg.from];
     if (!c.messages) c.messages = [];
     if (!c.messages.find(m => m.id === msg.id)) {
-      c.messages.push({
-        id: msg.id,
-        text: msg.text,
-        sentAt: msg.sentAt,
-        dir: 'in',
-        status: 'read'
-      });
+      c.messages.push({ id: msg.id, text: msg.text, sentAt: msg.sentAt, dir: 'in', status: 'read' });
       saveInbox();
       renderChatList();
       if (activeId === msg.from) renderMessages();
@@ -460,10 +450,20 @@ async function searchUsers() {
 
 function startChat(id, name, email) {
   closeModal('modalNewChat');
+  
+  // Always ensure contact exists in inbox
   if (!inbox[id]) {
-    inbox[id] = { id, displayName: name, email, messages: [], unread: 0 };
+    inbox[id] = { 
+      id, 
+      displayName: name, 
+      email: email || '', 
+      messages: [], 
+      unread: 0 
+    };
     saveInbox();
+    renderChatList();
   }
+  
   openChat(id);
 }
 
