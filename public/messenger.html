@@ -591,21 +591,40 @@ async function api(method, url, body) {
     opts.body = JSON.stringify(body);
   }
   let r;
-  try { r = await fetch(url, opts); } catch { return { ok: false, error: 'Network error' }; }
+  try { r = await fetch(url, opts); } catch (e) {
+    console.error('[Messenger] Network error:', e);
+    return { ok: false, error: 'Network error' };
+  }
+
   const ct = r.headers.get('content-type') || '';
   if (!ct.includes('application/json')) {
-    if (r.status === 401 || r.status === 403) { location.href = '/login'; return { ok: false }; }
+    console.warn('[Messenger] Non-JSON response from', url, 'status:', r.status);
+    if (r.status === 401 || r.status === 403) {
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      }
+      return { ok: false };
+    }
     return { ok: false, _status: r.status, error: `Server error (${r.status})` };
   }
-  const j = await r.json().catch(() => ({}));
+
+  let j;
+  try {
+    j = await r.json();
+  } catch (e) {
+    console.error('[Messenger] JSON parse error:', e);
+    j = {};
+  }
   j._status = r.status;
+
   if (r.status === 401 || r.status === 403) {
-    // Always redirect to login for messenger (even on messenger endpoints)
+    console.warn('[Messenger] Auth error on', url);
     if (!window.location.pathname.includes('/login')) {
       window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
     }
     return { ok: false };
   }
+
   return j;
 }
 
@@ -650,7 +669,7 @@ async function init() {
   renderChatList();
 
   const r = await api('GET', '/api/messenger/me');
-  if (!r || !r.ok) {
+  if (!r || !r.ok) { console.log("[Messenger] /me failed:", r);
     // Show login prompt instead of hanging
     document.getElementById('myName').innerHTML = 'Please log in';
     document.getElementById('chatList').innerHTML = `
@@ -986,7 +1005,7 @@ async function runSearch() {
 
   // Name search
   const r = await api('GET', `/api/messenger/search?q=${encodeURIComponent(q)}`);
-  if (!r || !r.ok) { toast('Search failed'); return; }
+  if (!r || !r.ok) { console.log("[Messenger] /me failed:", r); toast('Search failed'); return; }
   if (!r.results || !r.results.length) {
     res.innerHTML = '';
     warn.textContent = 'No users found. Users must enable "discoverable" in settings. Try their exact email instead.';
@@ -1031,7 +1050,7 @@ async function toggleBlock() {
   const c = inbox[activeId];
   const action = c.blocked ? 'unblock' : 'block';
   const r = await api('POST', `/api/messenger/${action}/${activeId}`);
-  if (!r || !r.ok) { toast('Action failed'); return; }
+  if (!r || !r.ok) { console.log("[Messenger] /me failed:", r); toast('Action failed'); return; }
   c.blocked = !c.blocked;
   saveInbox();
   refreshBlockedBar(c);
@@ -1044,7 +1063,7 @@ async function doUnblock() {
   if (!activeId) return;
   const c = inbox[activeId];
   const r = await api('POST', `/api/messenger/unblock/${activeId}`);
-  if (!r || !r.ok) { toast('Failed'); return; }
+  if (!r || !r.ok) { console.log("[Messenger] /me failed:", r); toast('Failed'); return; }
   c.blocked = false;
   saveInbox();
   refreshBlockedBar(c);
@@ -1100,7 +1119,7 @@ async function saveSettings() {
     bgUrl: bgType === 'custom' ? document.getElementById('sBgUrl').value.trim() : '',
   };
   const r = await api('PATCH', '/api/messenger/settings', patch);
-  if (!r || !r.ok) { toast(r?.error || 'Could not save settings'); return; }
+  if (!r || !r.ok) { console.log("[Messenger] /me failed:", r); toast(r?.error || 'Could not save settings'); return; }
   if (me) {
     me.settings = r.settings;
     if (r.settings.username) me.displayName = r.settings.username;
@@ -1327,3 +1346,4 @@ init().catch(e => { console.error('[Messenger] init error', e); toast('Failed to
 </script>
 </body>
 </html>
+<!-- v2 messenger fix Sun Aug  2 12:29:17 UTC 2026 -->
