@@ -6,45 +6,59 @@
   <link rel="icon" type="image/png" href="/images/logo.png">
   <link rel="apple-touch-icon" href="/images/logo.png">
   <title>Messenger — Fundo Plus</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --fp:#2952e3;--fp2:#1a3bb5;--fp-light:#eff4ff;
-      --surf:#ffffff;--bg:#f1f3f9;--border:#e2e6f0;
-      --muted:#6b7a99;--text:#0d1b3e;--font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-      --hh:56px;
-    }
-    html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text)}
+    :root{--fp:#2952e3;--fp2:#1a3bb5;--surf:#fff;--bg:#f1f3f9;--border:#e2e6f0;--muted:#6b7a99;--text:#0d1b3e}
+    html,body{height:100%;font-family:'Inter',system-ui;background:var(--bg);color:var(--text)}
     
-    .topbar{height:var(--hh);background:var(--surf);border-bottom:1px solid var(--border);
-      display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+    .topbar{height:56px;background:var(--surf);border-bottom:1px solid var(--border);
+      display:flex;align-items:center;padding:0 16px;gap:12px}
     .topbar-logo{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--fp);text-decoration:none}
     .topbar-logo img{width:26px;height:26px;border-radius:7px}
     
-    .msngr{display:flex;flex:1;height:calc(100vh - var(--hh));overflow:hidden}
+    .msngr{display:flex;flex:1;height:calc(100vh - 56px)}
     
-    .sidebar{width:300px;min-width:260px;border-right:1px solid var(--border);background:var(--surf);display:flex;flex-direction:column}
-    .sb-head{padding:16px;display:flex;align-items:center;gap:12px}
+    .sidebar{width:300px;border-right:1px solid var(--border);background:var(--surf);display:flex;flex-direction:column}
+    .sb-head{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
     .sb-me-name{font-weight:700}
+    .sb-me-email{font-size:0.75rem;color:var(--muted)}
     
     .chat-list{flex:1;overflow-y:auto}
     .empty{padding:40px 20px;text-align:center;color:var(--muted)}
     
     .chat-area{flex:1;display:flex;flex-direction:column}
-    .ch-head{height:var(--hh);background:var(--surf);border-bottom:1px solid var(--border);
+    .ch-head{height:56px;background:var(--surf);border-bottom:1px solid var(--border);
       display:flex;align-items:center;padding:0 16px;gap:12px}
     
     .msgs{flex:1;overflow-y:auto;padding:16px}
-    
     .input-area{background:#eef1f8;border-top:1px solid var(--border);padding:12px;display:flex;gap:8px}
-    .msg-ta{flex:1;border:1px solid var(--border);border-radius:20px;padding:10px 16px;resize:none;font-family:inherit}
-    .send-btn{width:44px;height:44px;border-radius:50%;background:var(--fp);color:white;border:none;cursor:pointer}
+    .msg-ta{flex:1;border:1px solid var(--border);border-radius:20px;padding:10px 16px;resize:none}
+    .send-btn{width:44px;height:44px;border-radius:50%;background:var(--fp);color:white;border:none}
     
-    .loading{text-align:center;padding:60px;color:var(--muted)}
-    .error{text-align:center;padding:60px;color:#dc2626}
+    .btn-new{width:36px;height:36px;border-radius:50%;background:var(--fp);color:white;border:none;
+      display:flex;align-items:center;justify-content:center;font-size:20px}
+    
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:100}
+    .modal.open{display:flex}
+    .modal-content{background:white;border-radius:16px;width:90%;max-width:420px;max-height:80vh;overflow:hidden}
+    .modal-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .modal-body{padding:16px;max-height:60vh;overflow-y:auto}
+    
+    .user-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;cursor:pointer}
+    .user-item:hover{background:#f8f9fd}
+    .user-avatar{width:42px;height:42px;border-radius:50%;background:#2952e3;color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
+    .user-info{flex:1;min-width:0}
+    .user-name{font-weight:600}
+    .user-email{font-size:0.8rem;color:var(--muted)}
+    
+    .search-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+    
+    .settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0}
+    .toggle{width:48px;height:26px;background:#ccc;border-radius:999px;position:relative;cursor:pointer}
+    .toggle.on{background:#2952e3}
+    .toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:white;border-radius:50%;transition:0.2s}
+    .toggle.on::after{left:25px}
   </style>
 </head>
 <body>
@@ -54,8 +68,10 @@
     <img src="/images/logo.png" alt="FP">
     <span>Fundo Plus</span>
   </a>
-  <div style="margin-left:auto">
-    <a href="/~" style="text-decoration:none;color:var(--muted)">Dashboard</a>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button class="btn-new" id="btnNewChat" title="New chat">+</button>
+    <button class="btn-new" id="btnSettings" title="Settings" style="background:#64748b">⚙</button>
+    <a href="/~" style="text-decoration:none;color:var(--muted);font-size:0.9rem">Dashboard</a>
   </div>
 </div>
 
@@ -63,15 +79,15 @@
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sb-head">
-      <div class="av" id="myAv" style="width:40px;height:40px;border-radius:50%;background:#2952e3;color:white;display:flex;align-items:center;justify-content:center;font-weight:700">?</div>
-      <div>
+      <div class="av" id="myAv" style="width:42px;height:42px;border-radius:50%;background:#2952e3;color:white;display:flex;align-items:center;justify-content:center;font-weight:700">?</div>
+      <div style="flex:1;min-width:0">
         <div class="sb-me-name" id="myName">Loading...</div>
-        <div style="font-size:0.75rem;color:var(--muted)" id="myBio"></div>
+        <div class="sb-me-email" id="myBio"></div>
       </div>
     </div>
     
     <div class="chat-list" id="chatList">
-      <div class="loading">Loading conversations...</div>
+      <div class="empty">Loading...</div>
     </div>
   </div>
 
@@ -95,6 +111,42 @@
   </div>
 </div>
 
+<!-- New Chat Modal -->
+<div class="modal" id="modalNewChat">
+  <div class="modal-content">
+    <div class="modal-header">
+      <strong>New Conversation</strong>
+      <button onclick="closeModal('modalNewChat')" style="background:none;border:none;font-size:1.4rem">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search by name or email...">
+      <div id="searchResults"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal" id="modalSettings">
+  <div class="modal-content">
+    <div class="modal-header">
+      <strong>Messenger Settings</strong>
+      <button onclick="closeModal('modalSettings')" style="background:none;border:none;font-size:1.4rem">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-row">
+        <div>
+          <div style="font-weight:600">Make profile public</div>
+          <div style="font-size:0.8rem;color:var(--muted)">Allow others to find you by name</div>
+        </div>
+        <div class="toggle" id="togglePublic" onclick="togglePublicSetting()"></div>
+      </div>
+      <div style="margin-top:20px;font-size:0.85rem;color:var(--muted)">
+        When disabled, users can only find you by searching your exact email.
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 
@@ -104,91 +156,190 @@ let inbox = {};
 let activeId = null;
 
 async function api(method, url, body) {
-  const opts = { 
-    method, 
-    headers: {}, 
-    credentials: 'include' 
-  };
-  
+  const opts = { method, headers: {}, credentials: 'include' };
   if (TOKEN) opts.headers['x-session-token'] = TOKEN;
   if (body) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
-
   const res = await fetch(url, opts);
   if (res.status === 401 || res.status === 403) {
     window.location.href = '/login?redirect=/messenger';
     return { ok: false };
   }
-  
-  const data = await res.json().catch(() => ({}));
-  return data;
+  return await res.json().catch(() => ({}));
 }
 
 async function init() {
-  console.log('[Messenger] Starting simplified version');
-
   const r = await api('GET', '/api/messenger/me');
-  
   if (!r || !r.ok) {
-    document.getElementById('myName').innerHTML = 'Please log in';
-    document.getElementById('chatList').innerHTML = `
-      <div style="padding:40px 20px;text-align:center">
-        <div style="font-size:2rem;margin-bottom:12px">🔒</div>
-        <p>You need to be logged in to use Messenger.</p>
-        <a href="/login?redirect=/messenger" 
-           style="display:inline-block;margin-top:16px;padding:10px 24px;background:#2952e3;color:white;border-radius:10px;text-decoration:none">
-          Log in →
-        </a>
-      </div>`;
+    showLoginPrompt();
     return;
   }
 
   me = r;
   renderProfile();
-  
-  // Load conversations (simplified)
-  await loadConversations();
-  
-  // Setup send button
+
+  document.getElementById('btnNewChat').onclick = openNewChatModal;
+  document.getElementById('btnSettings').onclick = openSettingsModal;
   document.getElementById('btnSend').onclick = sendMessage;
+
+  await loadConversations();
 }
 
 function renderProfile() {
   document.getElementById('myName').textContent = me.displayName || me.email;
   document.getElementById('myBio').textContent = me.email || '';
-  
   const av = document.getElementById('myAv');
   av.style.background = '#2952e3';
   av.textContent = (me.displayName || 'U')[0].toUpperCase();
 }
 
+function showLoginPrompt() {
+  document.getElementById('myName').innerHTML = 'Please log in';
+  document.getElementById('chatList').innerHTML = `
+    <div style="padding:40px 20px;text-align:center">
+      <div style="font-size:2rem;margin-bottom:12px">🔒</div>
+      <p>You need to be logged in.</p>
+      <a href="/login?redirect=/messenger" 
+         style="display:inline-block;margin-top:16px;padding:10px 24px;background:#2952e3;color:white;border-radius:10px;text-decoration:none">
+        Log in →
+      </a>
+    </div>`;
+}
+
 async function loadConversations() {
   const el = document.getElementById('chatList');
-  el.innerHTML = `<div class="loading">Loading conversations...</div>`;
+  el.innerHTML = `<div class="empty">No conversations yet.<br>Tap + to start one.</div>`;
+}
+
+async function openNewChatModal() {
+  document.getElementById('modalNewChat').classList.add('open');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').innerHTML = '';
   
-  // For now, show empty state (we can expand later)
-  el.innerHTML = `
-    <div style="padding:40px 20px;text-align:center;color:#6b7a99">
-      <div style="font-size:2.5rem;margin-bottom:12px">💬</div>
-      <p>No conversations yet.</p>
-      <p style="font-size:0.85rem;margin-top:8px">Start chatting with classmates</p>
-    </div>`;
+  // Load all users initially
+  await searchUsers('');
+  
+  document.getElementById('searchInput').oninput = debounce(() => {
+    searchUsers(document.getElementById('searchInput').value);
+  }, 300);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+async function searchUsers(query) {
+  const container = document.getElementById('searchResults');
+  container.innerHTML = `<div style="padding:20px;text-align:center;color:#888">Searching...</div>`;
+  
+  let results = [];
+  try {
+    if (query.includes('@')) {
+      const r = await api('GET', `/api/messenger/user-by-email?email=${encodeURIComponent(query)}`);
+      if (r.ok && r.user) results = [r.user];
+    } else {
+      const r = await api('GET', `/api/messenger/search?q=${encodeURIComponent(query)}`);
+      if (r.ok) results = r.results || [];
+    }
+  } catch(e) {
+    container.innerHTML = `<div style="color:#dc2626;padding:20px">Search failed</div>`;
+    return;
+  }
+  
+  if (!results.length) {
+    container.innerHTML = `<div style="padding:20px;text-align:center;color:#888">No users found</div>`;
+    return;
+  }
+  
+  container.innerHTML = results.map(u => `
+    <div class="user-item" onclick="startChatWithUser('${u.id}', '${u.displayName}', '${u.email}')">
+      <div class="user-avatar">${(u.displayName || 'U')[0]}</div>
+      <div class="user-info">
+        <div class="user-name">${u.displayName || 'User'}</div>
+        <div class="user-email">${u.email}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function startChatWithUser(id, name, email) {
+  closeModal('modalNewChat');
+  
+  if (!inbox[id]) {
+    inbox[id] = { id, displayName: name, email, messages: [], unread: 0 };
+  }
+  
+  // Open chat
+  activeId = id;
+  document.getElementById('chName').textContent = name;
+  document.getElementById('inputArea').style.display = 'flex';
+  
+  const msgs = document.getElementById('msgs');
+  msgs.innerHTML = `<div style="padding:40px;text-align:center;color:#888">Start chatting with ${name}</div>`;
+  
+  // TODO: Load message history later
 }
 
 async function sendMessage() {
-  alert('Messaging will be enabled in the next update.');
+  if (!activeId) return;
+  const ta = document.getElementById('msgTa');
+  const text = ta.value.trim();
+  if (!text) return;
+  
+  const r = await api('POST', '/api/messenger/send', { to: activeId, text });
+  if (r.ok) {
+    ta.value = '';
+    // For now just show sent message
+    const msgs = document.getElementById('msgs');
+    msgs.innerHTML += `<div style="text-align:right;margin:8px 0"><span style="background:#d9fdd3;padding:8px 14px;border-radius:18px">${text}</span></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+  } else {
+    alert(r.error || 'Failed to send');
+  }
 }
 
-init().catch(err => {
-  console.error('[Messenger] Init error:', err);
-  document.getElementById('chatList').innerHTML = `
-    <div style="padding:40px;text-align:center;color:#dc2626">
-      Failed to load messenger.<br>
-      <button onclick="location.reload()" style="margin-top:16px">Retry</button>
-    </div>`;
-});
+// Settings
+async function openSettingsModal() {
+  document.getElementById('modalSettings').classList.add('open');
+  
+  // Load current setting
+  try {
+    const r = await api('GET', '/api/messenger/settings');
+    const isPublic = r.ok && r.settings ? r.settings.profilePublic : true;
+    const tog = document.getElementById('togglePublic');
+    tog.classList.toggle('on', isPublic);
+    tog.dataset.value = isPublic;
+  } catch(e) {}
+}
+
+async function togglePublicSetting() {
+  const tog = document.getElementById('togglePublic');
+  const current = tog.dataset.value === 'true';
+  const newValue = !current;
+  
+  tog.classList.toggle('on', newValue);
+  tog.dataset.value = newValue;
+  
+  try {
+    await api('PATCH', '/api/messenger/settings', { profilePublic: newValue });
+  } catch(e) {
+    alert('Failed to save setting');
+    tog.classList.toggle('on', current);
+    tog.dataset.value = current;
+  }
+}
+
+function debounce(fn, delay) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), delay);
+  };
+}
+
+init();
 </script>
 </body>
 </html>
