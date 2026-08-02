@@ -584,26 +584,32 @@ let ctxTarget = null;   // message the ctx menu is open for
 //  API
 // ══════════════════════════════════════════════════════
 async function api(method, url, body) {
-  const opts = { method, headers: {}, credentials: 'same-origin' };
+  const opts = { 
+    method, 
+    headers: {}, 
+    credentials: 'include'   // ← Always send cookies (this is the key fix)
+  };
+  
   if (TOKEN) opts.headers['x-session-token'] = TOKEN;
+  
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
+
   let r;
-  try { r = await fetch(url, opts); } catch (e) {
+  try { 
+    r = await fetch(url, opts); 
+  } catch (e) {
     console.error('[Messenger] Network error:', e);
     return { ok: false, error: 'Network error' };
   }
 
   const ct = r.headers.get('content-type') || '';
   if (!ct.includes('application/json')) {
-    console.warn('[Messenger] Non-JSON response from', url, 'status:', r.status);
     if (r.status === 401 || r.status === 403) {
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-      }
-      return { ok: false };
+      console.warn('[Messenger] Auth failed on', url);
+      return { ok: false, _status: r.status };
     }
     return { ok: false, _status: r.status, error: `Server error (${r.status})` };
   }
@@ -612,17 +618,13 @@ async function api(method, url, body) {
   try {
     j = await r.json();
   } catch (e) {
-    console.error('[Messenger] JSON parse error:', e);
     j = {};
   }
   j._status = r.status;
 
   if (r.status === 401 || r.status === 403) {
-    console.warn('[Messenger] Auth error on', url);
-    if (!window.location.pathname.includes('/login')) {
-      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-    }
-    return { ok: false };
+    console.warn('[Messenger] 401/403 on', url);
+    return { ok: false, _status: r.status };
   }
 
   return j;
