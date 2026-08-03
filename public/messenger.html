@@ -212,6 +212,7 @@ async function api(method, url, body) {
 }
 
 async function init() {
+  console.log('[Messenger] Initializing...');
   const r = await api('GET', '/api/messenger/me');
   if (!r || !r.ok) {
     document.getElementById('myName').innerHTML = 'Please log in';
@@ -222,8 +223,15 @@ async function init() {
   renderChatList();
 
   initSocket();
+  
+  // Start aggressive polling immediately
+  setInterval(() => {
+    console.log('[Messenger] Polling for new messages...');
+    drainPendingMessages();
+  }, 600);
+
+  // Initial drain
   await drainPendingMessages();
-  setInterval(drainPendingMessages, 800);
 
   const first = Object.keys(inbox)[0];
   if (first) openChat(first);
@@ -245,10 +253,12 @@ function connectSocket() {
   socket = io({ transports: ['websocket'] });
   
   socket.on('connect', () => {
+    console.log('[Socket] Connected');
     socket.emit('messenger:join', me.id);
   });
   
   socket.on('messenger:new-message', (msg) => {
+    console.log('[Socket] New message received:', msg);
     if (!msg || !msg.from) return;
     if (!inbox[msg.from]) {
       inbox[msg.from] = { id: msg.from, displayName: msg.from, email: '', messages: [] };
@@ -262,29 +272,13 @@ function connectSocket() {
       if (activeId === msg.from) renderMessages();
     }
   });
-  
-  socket.on('user-online', (userId) => {
-    if (inbox[userId]) {
-      inbox[userId].online = true;
-      renderChatList();
-      if (activeId === userId) updateStatus();
-    }
-  });
-  
-  socket.on('user-offline', (userId) => {
-    if (inbox[userId]) {
-      inbox[userId].online = false;
-      inbox[userId].lastSeen = new Date().toISOString();
-      renderChatList();
-      if (activeId === userId) updateStatus();
-    }
-  });
 }
 
 async function drainPendingMessages() {
   try {
     const r = await api('GET', '/api/messenger/drain');
     if (r.ok && r.messages && r.messages.length > 0) {
+      console.log('[Drain] Received messages:', r.messages);
       let changed = false;
       r.messages.forEach(m => {
         if (!inbox[m.from]) inbox[m.from] = { id: m.from, displayName: m.from, email: '', messages: [] };
@@ -301,7 +295,9 @@ async function drainPendingMessages() {
         if (activeId) renderMessages();
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('[Drain] Error:', e);
+  }
 }
 
 function renderMyProfile() {
