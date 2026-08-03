@@ -9,78 +9,91 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --fp:#2952e3;--fp2:#1a3bb5;
-      --bubble-out:#d9fdd3;--bubble-in:#ffffff;
-      --surf:#ffffff;--bg:#f0f4ff;--border:#e2e6f0;
-      --muted:#6b7a99;--text:#0d1b3e;
+      --primary:#2563eb;--primary-dark:#1e40af;
+      --bubble-sent:#2563eb;--bubble-received:#f1f5f9;
+      --bg:#f8fafc;--surface:#ffffff;--border:#e2e8f0;
+      --text:#0f172a;--muted:#64748b;
     }
     html,body{height:100%;font-family:'Inter',system-ui;background:var(--bg);color:var(--text);overflow:hidden}
     
-    .topbar{height:56px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
-    .topbar-logo{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--fp);text-decoration:none}
+    .topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;justify-content:space-between}
+    .topbar-left{display:flex;align-items:center;gap:12px}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--primary);text-decoration:none}
     
-    .msngr{display:flex;flex:1;height:calc(100vh - 56px);overflow:hidden}
+    .msngr{display:flex;flex:1;height:calc(100vh - 60px);overflow:hidden}
     
-    .sidebar{width:300px;border-right:1px solid var(--border);background:var(--surf);display:flex;flex-direction:column;flex-shrink:0}
-    .sb-head{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+    /* Sidebar */
+    .sidebar{width:320px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+    .sidebar-header{padding:20px 20px 12px;display:flex;justify-content:space-between;align-items:center}
+    .search-box{position:relative;margin:0 20px 16px}
+    .search-box input{width:100%;padding:10px 16px 10px 40px;border:1px solid var(--border);border-radius:9999px;background:#f8fafc;font-size:0.9rem}
+    .search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8}
     
     .chat-list{flex:1;overflow-y:auto}
-    .ci{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid #f4f6fb}
-    .ci:hover{background:#f8f9fd}
-    .ci.active{background:#eff6ff}
+    .chat-item{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;border-bottom:1px solid #f1f5f9}
+    .chat-item:hover{background:#f8fafc}
+    .chat-item.active{background:#eff6ff}
+    .chat-avatar{width:48px;height:48px;border-radius:50%;background:#2563eb;color:white;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0}
+    .chat-info{flex:1;min-width:0}
+    .chat-name{font-weight:600;font-size:0.95rem}
+    .chat-preview{font-size:0.82rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     
+    /* Chat Area */
     .chat-area{flex:1;display:flex;flex-direction:column;min-width:0}
-    .ch-head{height:56px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
+    .chat-header{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;justify-content:space-between}
+    .chat-header-left{display:flex;align-items:center;gap:14px}
+    .chat-header-avatar{width:42px;height:42px;border-radius:50%;background:#2563eb;color:white;display:flex;align-items:center;justify-content:center;font-weight:600}
     
-    .msgs{flex:1;overflow-y:auto;padding:16px 4%;display:flex;flex-direction:column;gap:6px}
+    .messages{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:8px;background:#f8fafc}
     
-    .mr{display:flex;flex-direction:column;max-width:78%}
-    .mr.out{align-self:flex-end;align-items:flex-end}
-    .mr.in{align-self:flex-start;align-items:flex-start}
+    .message{display:flex;max-width:75%}
+    .message.sent{align-self:flex-end}
+    .message.received{align-self:flex-start}
     
-    .bubble{padding:9px 14px;border-radius:18px;font-size:0.93rem;line-height:1.45}
-    .out .bubble{background:var(--bubble-out);border-bottom-right-radius:5px}
-    .in .bubble{background:var(--bubble-in);border-bottom-left-radius:5px;box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+    .bubble{padding:10px 16px;border-radius:18px;font-size:0.93rem;line-height:1.4}
+    .message.sent .bubble{background:#2563eb;color:white;border-bottom-right-radius:6px}
+    .message.received .bubble{background:white;border:1px solid #e2e8f0;border-bottom-left-radius:6px}
     
-    .mf{display:flex;align-items:center;gap:6px;margin-top:4px}
-    .mt{font-size:0.65rem;color:#94a3b8}
+    .message-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.7rem;color:#94a3b8}
+    .message.sent .message-meta{justify-content:flex-end}
     
-    .tick{font-size:0.8rem;color:#94a3b8}
-    .tick.read{color:#3b82f6}
+    .ticks{font-size:0.75rem}
+    .ticks.read{color:#3b82f6}
     
-    .input-area{background:#eef1f8;border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;flex-shrink:0}
-    .msg-ta{flex:1;border:none;outline:none;resize:none;border-radius:22px;background:white;padding:11px 18px;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-    .send-btn{width:44px;height:44px;border-radius:50%;background:var(--fp);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .input-area{padding:16px 20px;background:white;border-top:1px solid var(--border);display:flex;gap:10px}
+    .input-area input{flex:1;border:1px solid var(--border);border-radius:9999px;padding:12px 20px;font-size:0.95rem}
+    .send-btn{width:44px;height:44px;border-radius:50%;background:#2563eb;color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
     
-    .empty{text-align:center;padding:60px 20px;color:var(--muted)}
+    .empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#64748b}
+    .empty-state svg{width:64px;height:64px;margin-bottom:16px;opacity:0.6}
     
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200}
+    .modal{position:fixed;inset:0;background:rgba(15,23,42,0.6);display:none;align-items:center;justify-content:center;z-index:100}
     .modal.open{display:flex}
-    .modal-content{background:white;border-radius:16px;width:92%;max-width:420px}
+    .modal-content{background:white;border-radius:16px;width:90%;max-width:420px}
     
-    .ctx-menu{position:fixed;background:white;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:300;min-width:160px;display:none}
-    .ctx-item{padding:10px 16px;font-size:0.9rem;cursor:pointer}
+    .ctx-menu{position:fixed;background:white;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);z-index:200;min-width:160px;display:none}
+    .ctx-item{padding:12px 18px;font-size:0.9rem;cursor:pointer}
+    .ctx-item:hover{background:#f8fafc}
     .ctx-item.danger{color:#dc2626}
     
-    .online-dot{width:10px;height:10px;background:#22c55e;border-radius:50%;display:inline-block;margin-left:6px}
-    
-    @media(max-width:680px){
+    @media(max-width:700px){
       .sidebar{width:100%;position:absolute;z-index:10}
       .chat-area{display:none;position:absolute;inset:0;z-index:20;background:white}
       .chat-area.active{display:flex}
-      .sidebar.active{display:none}
     }
   </style>
 </head>
 <body>
 
 <div class="topbar">
-  <a class="topbar-logo" href="/~">
-    <img src="/images/logo.png" width="26" height="26" style="border-radius:7px">
-    <span>Fundo Plus</span>
-  </a>
-  <div style="margin-left:auto;display:flex;gap:8px">
-    <button onclick="openNewChat()" style="width:36px;height:36px;border-radius:50%;background:#2952e3;color:white;border:none;font-size:20px">+</button>
+  <div class="topbar-left">
+    <a href="/~" class="logo">
+      <img src="/images/logo.png" width="28" height="28" style="border-radius:8px">
+      <span>Fundo Plus</span>
+    </a>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="openNewChat()" style="width:36px;height:36px;border-radius:50%;background:#2563eb;color:white;border:none;font-size:20px">+</button>
     <button onclick="openSettings()" style="width:36px;height:36px;border-radius:50%;background:#64748b;color:white;border:none">⚙</button>
   </div>
 </div>
@@ -88,31 +101,36 @@
 <div class="msngr">
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
-    <div class="sb-head">
-      <div class="av" id="myAv" style="width:42px;height:42px;border-radius:50%;background:#2952e3;color:white;display:flex;align-items:center;justify-content:center;font-weight:700">?</div>
-      <div style="flex:1;min-width:0">
-        <div class="sb-me-name" id="myName">Loading...</div>
-        <div class="sb-me-email" id="myBio"></div>
-      </div>
+    <div class="sidebar-header">
+      <h3 style="font-size:1.1rem">Chats</h3>
     </div>
+    
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search chats..." id="sidebarSearch" oninput="filterChats()">
+    </div>
+    
     <div class="chat-list" id="chatList"></div>
   </div>
 
   <!-- Chat Area -->
   <div class="chat-area" id="chatArea">
-    <div class="ch-head">
-      <button onclick="backToList()" id="backBtn" style="background:none;border:none;font-size:1.6rem;color:#64748b;display:none">←</button>
-      <div style="flex:1">
-        <div class="ch-name" id="chName">Select a chat</div>
-        <div style="font-size:0.75rem;color:var(--muted)" id="chStatus"></div>
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <button onclick="backToList()" id="backBtn" style="background:none;border:none;font-size:1.6rem;color:#64748b;display:none">←</button>
+        <div class="chat-header-avatar" id="chatAvatar">?</div>
+        <div>
+          <div class="ch-name" id="chName">Select a chat</div>
+          <div style="font-size:0.75rem;color:#64748b" id="chStatus"></div>
+        </div>
       </div>
-      <button onclick="openChatMenu()" style="background:none;border:none;font-size:1.5rem;color:#64748b">⋮</button>
+      <button onclick="openChatMenu()" style="background:none;border:none;font-size:1.4rem;color:#64748b">⋮</button>
     </div>
     
-    <div class="msgs" id="msgs"></div>
+    <div class="messages" id="msgs"></div>
     
     <div class="input-area" id="inputArea" style="display:none">
-      <textarea class="msg-ta" id="msgTa" placeholder="Type a message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+      <input type="text" id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
       <button class="send-btn" onclick="sendMessage()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2z"/></svg>
       </button>
@@ -123,12 +141,12 @@
 <!-- New Chat Modal -->
 <div class="modal" id="modalNewChat">
   <div class="modal-content">
-    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <strong>New Chat</strong>
-      <button onclick="closeModal('modalNewChat')" style="background:none;border:none;font-size:1.6rem">×</button>
+    <div style="padding:20px 20px 12px;display:flex;justify-content:space-between;align-items:center">
+      <strong>New Conversation</strong>
+      <button onclick="closeModal('modalNewChat')" style="background:none;border:none;font-size:1.8rem">×</button>
     </div>
-    <div style="padding:16px">
-      <input type="text" id="searchInput" placeholder="Search name or email..." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:12px" oninput="searchUsers()">
+    <div style="padding:0 20px 20px">
+      <input type="text" id="searchInput" placeholder="Search by name or email..." style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;margin-bottom:16px" oninput="searchUsers()">
       <div id="searchResults"></div>
     </div>
   </div>
@@ -137,15 +155,15 @@
 <!-- Settings Modal -->
 <div class="modal" id="modalSettings">
   <div class="modal-content">
-    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+    <div style="padding:20px 20px 12px;display:flex;justify-content:space-between;align-items:center">
       <strong>Settings</strong>
-      <button onclick="closeModal('modalSettings')" style="background:none;border:none;font-size:1.6rem">×</button>
+      <button onclick="closeModal('modalSettings')" style="background:none;border:none;font-size:1.8rem">×</button>
     </div>
-    <div style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0">
+    <div style="padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <div style="font-weight:600">Public profile</div>
-          <div style="font-size:0.8rem;color:var(--muted)">Allow others to find you by name</div>
+          <div style="font-size:0.8rem;color:#64748b">Allow others to find you by name</div>
         </div>
         <div class="toggle" id="togglePublic" onclick="togglePublic()"></div>
       </div>
@@ -153,12 +171,11 @@
   </div>
 </div>
 
-<!-- Message Context Menu -->
+<!-- Context Menus -->
 <div class="ctx-menu" id="msgMenu">
   <div class="ctx-item" onclick="deleteMessage()">Delete Message</div>
 </div>
 
-<!-- Chat Context Menu -->
 <div class="ctx-menu" id="chatMenu">
   <div class="ctx-item" onclick="editContact()">Edit Contact</div>
   <div class="ctx-item" onclick="deleteContact()">Delete Contact</div>
@@ -267,33 +284,43 @@ function renderMyProfile() {
   document.getElementById('myName').textContent = me.displayName || me.email;
   document.getElementById('myBio').textContent = me.email || '';
   const av = document.getElementById('myAv');
-  av.style.background = '#2952e3';
+  av.style.background = '#2563eb';
   av.textContent = (me.displayName || 'U')[0].toUpperCase();
 }
 
-function renderChatList() {
+function renderChatList(filter = '') {
   const el = document.getElementById('chatList');
-  const contacts = Object.values(inbox);
+  let contacts = Object.values(inbox);
+  
+  if (filter) {
+    contacts = contacts.filter(c => 
+      (c.displayName || '').toLowerCase().includes(filter.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(filter.toLowerCase())
+    );
+  }
+  
   if (!contacts.length) {
-    el.innerHTML = `<div class="empty"><div style="font-size:2.5rem;margin-bottom:8px">💬</div>No conversations yet.<br>Tap + to start.</div>`;
+    el.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>No conversations yet</p></div>`;
     return;
   }
+  
   el.innerHTML = contacts.map(c => {
     const last = c.messages && c.messages.length ? c.messages[c.messages.length-1] : null;
-    const prev = last ? last.text.slice(0, 35) : 'Tap to chat';
-    const online = c.online ? `<span class="online-dot"></span>` : '';
+    const prev = last ? last.text.slice(0, 40) : 'Tap to chat';
     return `
-      <div class="ci ${activeId === c.id ? 'active' : ''}" onclick="openChat('${c.id}')" oncontextmenu="showContactMenu(event, '${c.id}')">
-        <div class="user-avatar" style="width:42px;height:42px">${(c.displayName || 'U')[0]}</div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span class="ci-name">${c.displayName}</span>
-            ${online}
-          </div>
-          <div class="ci-prev">${prev}</div>
+      <div class="chat-item ${activeId === c.id ? 'active' : ''}" onclick="openChat('${c.id}')" oncontextmenu="showContactMenu(event, '${c.id}')">
+        <div class="chat-avatar">${(c.displayName || 'U')[0]}</div>
+        <div class="chat-info">
+          <div class="chat-name">${c.displayName}</div>
+          <div class="chat-preview">${prev}</div>
         </div>
       </div>`;
   }).join('');
+}
+
+function filterChats() {
+  const q = document.getElementById('sidebarSearch').value;
+  renderChatList(q);
 }
 
 function openChat(id) {
@@ -303,6 +330,7 @@ function openChat(id) {
   
   document.getElementById('chName').textContent = c.displayName;
   document.getElementById('chStatus').textContent = c.email || '';
+  document.getElementById('chatAvatar').textContent = (c.displayName || 'U')[0];
   document.getElementById('inputArea').style.display = 'flex';
   document.getElementById('chatArea').classList.add('active');
   document.getElementById('sidebar').classList.remove('active');
@@ -335,7 +363,7 @@ function renderMessages() {
   const el = document.getElementById('msgs');
   const c = inbox[activeId];
   if (!c || !c.messages || !c.messages.length) {
-    el.innerHTML = `<div class="empty">Say hello 👋</div>`;
+    el.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>Say hello 👋</p></div>`;
     return;
   }
   
@@ -345,21 +373,21 @@ function renderMessages() {
     
     if (isOut) {
       if (m.status === 'read') {
-        ticks = `<span class="tick read">✓✓</span>`;
+        ticks = `<span class="ticks read">✓✓</span>`;
       } else if (m.status === 'delivered') {
-        ticks = `<span class="tick read">✓✓</span>`;
+        ticks = `<span class="ticks">✓✓</span>`;
       } else if (m.status === 'sent') {
-        ticks = `<span class="tick">✓</span>`;
+        ticks = `<span class="ticks">✓</span>`;
       } else {
-        ticks = `<span class="tick">⏱</span>`;
+        ticks = `<span class="ticks">⏱</span>`;
       }
     }
     
     return `
-      <div class="mr ${isOut ? 'out' : 'in'}" data-index="${index}" oncontextmenu="showMsgMenu(event, ${index})">
+      <div class="message ${isOut ? 'sent' : 'received'}" data-index="${index}" oncontextmenu="showMsgMenu(event, ${index})">
         <div class="bubble">${m.text}
-          <div class="mf">
-            <span class="mt">${new Date(m.sentAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+          <div class="message-meta">
+            <span>${new Date(m.sentAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
             ${ticks}
           </div>
         </div>
@@ -370,8 +398,8 @@ function renderMessages() {
 
 async function sendMessage() {
   if (!activeId) return;
-  const ta = document.getElementById('msgTa');
-  const text = ta.value.trim();
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
   if (!text) return;
 
   const c = inbox[activeId];
@@ -388,7 +416,7 @@ async function sendMessage() {
   c.messages.push(tempMsg);
   saveInbox();
   renderMessages();
-  ta.value = '';
+  input.value = '';
 
   const r = await api('POST', '/api/messenger/send', { to: activeId, text });
   if (r.ok) {
@@ -511,11 +539,11 @@ async function searchUsers() {
   }
   
   container.innerHTML = results.map(u => `
-    <div class="user-item" onclick="startChat('${u.id}', '${u.displayName}', '${u.email}')">
-      <div class="user-avatar">${(u.displayName || 'U')[0]}</div>
-      <div>
-        <div style="font-weight:600">${u.displayName}</div>
-        <div style="font-size:0.8rem;color:#64748b">${u.email}</div>
+    <div class="chat-item" onclick="startChat('${u.id}', '${u.displayName}', '${u.email}')">
+      <div class="chat-avatar">${(u.displayName || 'U')[0]}</div>
+      <div class="chat-info">
+        <div class="chat-name">${u.displayName}</div>
+        <div class="chat-preview">${u.email}</div>
       </div>
     </div>
   `).join('');
@@ -566,7 +594,7 @@ function backToList() {
 
 function checkMobile() {
   const backBtn = document.getElementById('backBtn');
-  backBtn.style.display = window.innerWidth <= 680 ? 'block' : 'none';
+  backBtn.style.display = window.innerWidth <= 700 ? 'block' : 'none';
 }
 window.addEventListener('resize', checkMobile);
 checkMobile();
