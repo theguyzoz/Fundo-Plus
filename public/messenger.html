@@ -9,7 +9,7 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --primary:#2563eb;--primary-dark:#1e40af;
+      --primary:#2563eb;
       --bubble-sent:#2563eb;--bubble-received:#f1f5f9;
       --bg:#f8fafc;--surface:#ffffff;--border:#e2e8f0;
       --text:#0f172a;--muted:#64748b;
@@ -17,7 +17,6 @@
     html,body{height:100%;font-family:'Inter',system-ui;background:var(--bg);color:var(--text);overflow:hidden}
     
     .topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;justify-content:space-between}
-    .topbar-left{display:flex;align-items:center;gap:12px}
     .logo{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--primary);text-decoration:none}
     
     .msngr{display:flex;flex:1;height:calc(100vh - 60px);overflow:hidden}
@@ -26,7 +25,6 @@
     .sidebar-header{padding:20px 20px 12px;display:flex;justify-content:space-between;align-items:center}
     .search-box{position:relative;margin:0 20px 16px}
     .search-box input{width:100%;padding:10px 16px 10px 40px;border:1px solid var(--border);border-radius:9999px;background:#f8fafc;font-size:0.9rem}
-    .search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8}
     
     .chat-list{flex:1;overflow-y:auto}
     .chat-item{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;border-bottom:1px solid #f1f5f9}
@@ -63,7 +61,6 @@
     .send-btn{width:44px;height:44px;border-radius:50%;background:#2563eb;color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
     
     .empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#64748b}
-    .empty-state svg{width:64px;height:64px;margin-bottom:16px;opacity:0.6}
     
     .modal{position:fixed;inset:0;background:rgba(15,23,42,0.6);display:none;align-items:center;justify-content:center;z-index:100}
     .modal.open{display:flex}
@@ -212,7 +209,6 @@ async function api(method, url, body) {
 }
 
 async function init() {
-  console.log('[Messenger] Initializing...');
   const r = await api('GET', '/api/messenger/me');
   if (!r || !r.ok) {
     document.getElementById('myName').innerHTML = 'Please log in';
@@ -223,14 +219,7 @@ async function init() {
   renderChatList();
 
   initSocket();
-  
-  // Start aggressive polling immediately
-  setInterval(() => {
-    console.log('[Messenger] Polling for new messages...');
-    drainPendingMessages();
-  }, 600);
-
-  // Initial drain
+  setInterval(drainPendingMessages, 600);
   await drainPendingMessages();
 
   const first = Object.keys(inbox)[0];
@@ -251,18 +240,10 @@ function initSocket() {
 function connectSocket() {
   if (!me || socket) return;
   socket = io({ transports: ['websocket'] });
-  
-  socket.on('connect', () => {
-    console.log('[Socket] Connected');
-    socket.emit('messenger:join', me.id);
-  });
-  
+  socket.on('connect', () => socket.emit('messenger:join', me.id));
   socket.on('messenger:new-message', (msg) => {
-    console.log('[Socket] New message received:', msg);
     if (!msg || !msg.from) return;
-    if (!inbox[msg.from]) {
-      inbox[msg.from] = { id: msg.from, displayName: msg.from, email: '', messages: [] };
-    }
+    if (!inbox[msg.from]) inbox[msg.from] = { id: msg.from, displayName: msg.from, email: '', messages: [] };
     const c = inbox[msg.from];
     if (!c.messages) c.messages = [];
     if (!c.messages.find(m => m.id === msg.id)) {
@@ -278,7 +259,6 @@ async function drainPendingMessages() {
   try {
     const r = await api('GET', '/api/messenger/drain');
     if (r.ok && r.messages && r.messages.length > 0) {
-      console.log('[Drain] Received messages:', r.messages);
       let changed = false;
       r.messages.forEach(m => {
         if (!inbox[m.from]) inbox[m.from] = { id: m.from, displayName: m.from, email: '', messages: [] };
@@ -295,9 +275,7 @@ async function drainPendingMessages() {
         if (activeId) renderMessages();
       }
     }
-  } catch(e) {
-    console.error('[Drain] Error:', e);
-  }
+  } catch(e) {}
 }
 
 function renderMyProfile() {
@@ -307,7 +285,6 @@ function renderMyProfile() {
 
   if (nameEl) nameEl.textContent = me.displayName || me.email;
   if (bioEl) bioEl.textContent = me.email || '';
-  
   if (avEl) {
     avEl.style.background = '#2563eb';
     avEl.textContent = (me.displayName || 'U')[0].toUpperCase();
@@ -425,6 +402,7 @@ function renderMessages() {
         ticks = `<span class="ticks">⏱</span>`;
       }
     }
+    // Received messages (isOut = false) show NO ticks
     
     return `
       <div class="message ${isOut ? 'sent' : 'received'}" data-index="${index}" oncontextmenu="showMsgMenu(event, ${index})">
