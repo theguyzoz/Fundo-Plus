@@ -1311,6 +1311,7 @@ export function storePendingMessage({ from, to, text, clientId }) {
     clientId: clientId || null,
     from, to, text: text.slice(0, 5000),
     sentAt: new Date().toISOString(),
+    status: 'sent',           // sent → delivered → read
     expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
   };
   messengerData.pending.push(msg);
@@ -1324,6 +1325,32 @@ export function drainPendingMessages(toUserId) {
   messengerData.pending = messengerData.pending.filter(m => m.to !== toUserId);
   if (msgs.length) saveMessenger();
   return msgs;
+}
+
+// Mark a specific message as delivered (when recipient receives it)
+export function markMessageDelivered(msgId) {
+  const msg = messengerData.pending.find(m => m.id === msgId);
+  if (msg) {
+    msg.status = 'delivered';
+    msg.deliveredAt = new Date().toISOString();
+    saveMessenger();
+    return true;
+  }
+  return false;
+}
+
+// Mark all messages from a sender as read (when recipient opens chat)
+export function markMessagesRead(fromUserId, toUserId) {
+  let changed = false;
+  messengerData.pending.forEach(msg => {
+    if (msg.from === fromUserId && msg.to === toUserId && msg.status !== 'read') {
+      msg.status = 'read';
+      msg.readAt = new Date().toISOString();
+      changed = true;
+    }
+  });
+  if (changed) saveMessenger();
+  return changed;
 }
 
 // Peek pending (for badge count) without draining

@@ -20,7 +20,7 @@ import {
   getMessengerSettings, saveMessengerSettings, blockUser, unblockUser, isBlocked,
   searchPublicUsers, findUserByEmail, getUserInfoBulk,
   storePendingMessage, drainPendingMessages, countPendingMessages,
-  countPendingBySender, pruneExpiredMessages,
+  countPendingBySender, pruneExpiredMessages, markMessagesRead,
   // subscription & usage
   getUserPlan, getPlanLimits, setUserSubscription, getAllSubscriptions,
   getUserSubscription, savePaymentProof, getAllProofs, getPendingProofs,
@@ -1089,6 +1089,14 @@ router.get('/api/messenger/drain', requireAuth, async (req, res) => {
   try {
     const msgs = await withTimeout(() => drainPendingMessages(req.user.id));
     res.json({ ok: true, messages: msgs });
+  } catch (err) { messengerErr(res, err); }
+});
+
+// POST /api/messenger/mark-read/:fromId — mark messages from user as read
+router.post('/api/messenger/mark-read/:fromId', requireAuth, async (req, res) => {
+  try {
+    await withTimeout(() => markMessagesRead(req.params.fromId, req.user.id));
+    res.json({ ok: true });
   } catch (err) { messengerErr(res, err); }
 });
 
