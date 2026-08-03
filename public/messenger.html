@@ -171,9 +171,15 @@ async function init() {
   // Connect socket
   initSocket();
 
+  // Drain pending messages on startup
+  await drainPendingMessages();
+
   // Auto open first chat if exists
   const first = Object.keys(inbox)[0];
   if (first) openChat(first);
+
+  // Poll for new messages every 15 seconds
+  setInterval(drainPendingMessages, 15000);
 }
 
 function initSocket() {
@@ -207,6 +213,40 @@ function connectSocket() {
       if (activeId === msg.from) renderMessages();
     }
   });
+}
+
+// Pull pending messages from server
+async function drainPendingMessages() {
+  try {
+    const r = await api('GET', '/api/messenger/drain');
+    if (r.ok && r.messages && r.messages.length > 0) {
+      let changed = false;
+      r.messages.forEach(m => {
+        if (!inbox[m.from]) {
+          inbox[m.from] = { id: m.from, displayName: m.from, email: '', messages: [] };
+        }
+        const c = inbox[m.from];
+        if (!c.messages) c.messages = [];
+        if (!c.messages.find(x => x.id === m.id)) {
+          c.messages.push({
+            id: m.id,
+            text: m.text,
+            sentAt: m.sentAt,
+            dir: 'in',
+            status: 'read'
+          });
+          changed = true;
+        }
+      });
+      if (changed) {
+        saveInbox();
+        renderChatList();
+        if (activeId) renderMessages();
+      }
+    }
+  } catch (e) {
+    console.log('[Messenger] Drain failed (will retry)');
+  }
 }
 
 function renderMyProfile() {
@@ -317,6 +357,7 @@ async function sendMessage() {
   } else {
     const idx = c.messages.findIndex(m => m.id === tempMsg.id);
     if (idx !== -1) c.messages[idx].status = 'failed';
+    alert('Failed to send message: ' + (r.error || 'Unknown error'));
   }
   saveInbox();
   renderMessages();
