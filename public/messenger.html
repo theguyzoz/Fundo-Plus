@@ -171,7 +171,7 @@ async function init() {
   initSocket();
   await drainPendingMessages();
 
-  // Ultra-fast polling (every 800ms)
+  // Fast polling every 800ms
   setInterval(drainPendingMessages, 800);
 
   const first = Object.keys(inbox)[0];
@@ -199,7 +199,7 @@ function connectSocket() {
     const c = inbox[msg.from];
     if (!c.messages) c.messages = [];
     if (!c.messages.find(m => m.id === msg.id)) {
-      c.messages.push({ id: msg.id, text: msg.text, sentAt: msg.sentAt, dir: 'in', status: 'read' });
+      c.messages.push({ id: msg.id, text: msg.text, sentAt: msg.sentAt, dir: 'in', status: 'delivered' });
       saveInbox();
       renderChatList();
       if (activeId === msg.from) renderMessages();
@@ -217,7 +217,7 @@ async function drainPendingMessages() {
         const c = inbox[m.from];
         if (!c.messages) c.messages = [];
         if (!c.messages.find(x => x.id === m.id)) {
-          c.messages.push({ id: m.id, text: m.text, sentAt: m.sentAt, dir: 'in', status: 'read' });
+          c.messages.push({ id: m.id, text: m.text, sentAt: m.sentAt, dir: 'in', status: 'delivered' });
           changed = true;
         }
       });
@@ -277,7 +277,7 @@ function openChat(id) {
   renderMessages();
   renderChatList();
   
-  // Mark all incoming messages as read
+  // Mark incoming messages as read + send read receipt
   markMessagesAsRead(id);
 }
 
@@ -296,7 +296,7 @@ function markMessagesAsRead(contactId) {
   if (changed) {
     saveInbox();
     renderMessages();
-    // Send read receipt to server (optional)
+    // Notify sender that messages were read
     api('POST', `/api/messenger/mark-read/${contactId}`).catch(() => {});
   }
 }
@@ -313,6 +313,7 @@ function renderMessages() {
     let ticks = '';
     if (isOut) {
       if (m.status === 'read') ticks = `<span class="tick read">✓✓</span>`;
+      else if (m.status === 'delivered' || m.status === 'sent') ticks = `<span class="tick read">✓✓</span>`;
       else if (m.status === 'sent') ticks = `<span class="tick">✓</span>`;
       else ticks = `<span class="tick">⏱</span>`;
     }
