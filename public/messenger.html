@@ -8,55 +8,85 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--fp:#2952e3;--bubble-out:#d9fdd3;--bubble-in:#fff;--surf:#fff;--bg:#f1f3f9;--border:#e2e6f0;--muted:#6b7a99;--text:#0d1b3e}
+    :root{
+      --fp:#2952e3;--fp2:#1a3bb5;
+      --bubble-out:#d9fdd3;--bubble-in:#ffffff;
+      --surf:#ffffff;--bg:#f0f4ff;--border:#e2e6f0;
+      --muted:#6b7a99;--text:#0d1b3e;
+    }
     html,body{height:100%;font-family:'Inter',system-ui;background:var(--bg);color:var(--text);overflow:hidden}
-    .topbar{height:56px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px}
+    
+    .topbar{height:56px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
+    .topbar-logo{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--fp);text-decoration:none}
+    
     .msngr{display:flex;flex:1;height:calc(100vh - 56px);overflow:hidden}
+    
     .sidebar{width:300px;border-right:1px solid var(--border);background:var(--surf);display:flex;flex-direction:column;flex-shrink:0}
-    .sb-head{padding:14px 16px;display:flex;align-items:center;gap:12px}
+    .sb-head{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+    
     .chat-list{flex:1;overflow-y:auto}
-    .ci{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #f4f6fb}
+    .ci{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid #f4f6fb}
     .ci:hover{background:#f8f9fd}
+    .ci.active{background:#eff6ff}
+    
     .chat-area{flex:1;display:flex;flex-direction:column;min-width:0}
-    .ch-head{height:56px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:12px}
-    .msgs{flex:1;overflow-y:auto;padding:12px 4%;display:flex;flex-direction:column;gap:4px}
+    .ch-head{height:56px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
+    
+    .msgs{flex:1;overflow-y:auto;padding:16px 4%;display:flex;flex-direction:column;gap:6px}
+    
     .mr{display:flex;flex-direction:column;max-width:78%}
     .mr.out{align-self:flex-end;align-items:flex-end}
     .mr.in{align-self:flex-start;align-items:flex-start}
-    .bubble{padding:8px 14px;border-radius:18px;font-size:0.92rem;line-height:1.4}
-    .out .bubble{background:var(--bubble-out);border-bottom-right-radius:4px}
-    .in .bubble{background:var(--bubble-in);border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,0.06)}
-    .mf{display:flex;align-items:center;gap:6px;margin-top:3px}
+    
+    .bubble{padding:9px 14px;border-radius:18px;font-size:0.93rem;line-height:1.45}
+    .out .bubble{background:var(--bubble-out);border-bottom-right-radius:5px}
+    .in .bubble{background:var(--bubble-in);border-bottom-left-radius:5px;box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+    
+    .mf{display:flex;align-items:center;gap:6px;margin-top:4px}
     .mt{font-size:0.65rem;color:#94a3b8}
-    .tick{font-size:0.75rem;color:#94a3b8}
+    
+    .tick{font-size:0.8rem;color:#94a3b8}
     .tick.read{color:#3b82f6}
-    .input-area{background:#eef1f8;border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;flex-shrink:0}
-    .msg-ta{flex:1;border:none;outline:none;resize:none;border-radius:20px;background:white;padding:10px 16px}
-    .send-btn{width:42px;height:42px;border-radius:50%;background:#2952e3;color:white;border:none}
+    
+    .input-area{background:#eef1f8;border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;flex-shrink:0}
+    .msg-ta{flex:1;border:none;outline:none;resize:none;border-radius:22px;background:white;padding:11px 18px;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+    .send-btn{width:44px;height:44px;border-radius:50%;background:var(--fp);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    
     .empty{text-align:center;padding:60px 20px;color:var(--muted)}
+    
     .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200}
     .modal.open{display:flex}
     .modal-content{background:white;border-radius:16px;width:92%;max-width:420px}
+    
     .ctx-menu{position:fixed;background:white;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:300;min-width:160px;display:none}
     .ctx-item{padding:10px 16px;font-size:0.9rem;cursor:pointer}
     .ctx-item.danger{color:#dc2626}
+    
     .online-dot{width:10px;height:10px;background:#22c55e;border-radius:50%;display:inline-block;margin-left:6px}
-    @media(max-width:680px){.sidebar{width:100%;position:absolute;z-index:10}.chat-area{display:none;position:absolute;inset:0;z-index:20;background:white}.chat-area.active{display:flex}.sidebar.active{display:none}}
+    
+    @media(max-width:680px){
+      .sidebar{width:100%;position:absolute;z-index:10}
+      .chat-area{display:none;position:absolute;inset:0;z-index:20;background:white}
+      .chat-area.active{display:flex}
+      .sidebar.active{display:none}
+    }
   </style>
 </head>
 <body>
 
 <div class="topbar">
-  <a href="/~" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:#2952e3;font-weight:800">
-    <img src="/images/logo.png" width="26" height="26" style="border-radius:7px"> Fundo Plus
+  <a class="topbar-logo" href="/~">
+    <img src="/images/logo.png" width="26" height="26" style="border-radius:7px">
+    <span>Fundo Plus</span>
   </a>
   <div style="margin-left:auto;display:flex;gap:8px">
-    <button onclick="openNewChat()" style="width:34px;height:34px;border-radius:50%;background:#2952e3;color:white;border:none;font-size:20px">+</button>
-    <button onclick="openSettings()" style="width:34px;height:34px;border-radius:50%;background:#64748b;color:white;border:none">⚙</button>
+    <button onclick="openNewChat()" style="width:36px;height:36px;border-radius:50%;background:#2952e3;color:white;border:none;font-size:20px">+</button>
+    <button onclick="openSettings()" style="width:36px;height:36px;border-radius:50%;background:#64748b;color:white;border:none">⚙</button>
   </div>
 </div>
 
 <div class="msngr">
+  <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sb-head">
       <div class="av" id="myAv" style="width:42px;height:42px;border-radius:50%;background:#2952e3;color:white;display:flex;align-items:center;justify-content:center;font-weight:700">?</div>
@@ -68,19 +98,24 @@
     <div class="chat-list" id="chatList"></div>
   </div>
 
+  <!-- Chat Area -->
   <div class="chat-area" id="chatArea">
     <div class="ch-head">
-      <button onclick="backToList()" id="backBtn" style="background:none;border:none;font-size:1.5rem;color:#64748b;display:none">←</button>
+      <button onclick="backToList()" id="backBtn" style="background:none;border:none;font-size:1.6rem;color:#64748b;display:none">←</button>
       <div style="flex:1">
         <div class="ch-name" id="chName">Select a chat</div>
         <div style="font-size:0.75rem;color:var(--muted)" id="chStatus"></div>
       </div>
-      <button onclick="openChatMenu()" style="background:none;border:none;font-size:1.4rem;color:#64748b">⋮</button>
+      <button onclick="openChatMenu()" style="background:none;border:none;font-size:1.5rem;color:#64748b">⋮</button>
     </div>
+    
     <div class="msgs" id="msgs"></div>
+    
     <div class="input-area" id="inputArea" style="display:none">
       <textarea class="msg-ta" id="msgTa" placeholder="Type a message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
-      <button class="send-btn" onclick="sendMessage()">↑</button>
+      <button class="send-btn" onclick="sendMessage()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2z"/></svg>
+      </button>
     </div>
   </div>
 </div>
@@ -170,8 +205,6 @@ async function init() {
 
   initSocket();
   await drainPendingMessages();
-
-  // Fast polling every 800ms
   setInterval(drainPendingMessages, 800);
 
   const first = Object.keys(inbox)[0];
@@ -276,8 +309,6 @@ function openChat(id) {
   
   renderMessages();
   renderChatList();
-  
-  // Mark incoming messages as read + send read receipt
   markMessagesAsRead(id);
 }
 
@@ -296,7 +327,6 @@ function markMessagesAsRead(contactId) {
   if (changed) {
     saveInbox();
     renderMessages();
-    // Notify sender that messages were read
     api('POST', `/api/messenger/mark-read/${contactId}`).catch(() => {});
   }
 }
@@ -308,15 +338,23 @@ function renderMessages() {
     el.innerHTML = `<div class="empty">Say hello 👋</div>`;
     return;
   }
+  
   el.innerHTML = c.messages.map((m, index) => {
     const isOut = m.dir === 'out';
     let ticks = '';
+    
     if (isOut) {
-      if (m.status === 'read') ticks = `<span class="tick read">✓✓</span>`;
-      else if (m.status === 'delivered' || m.status === 'sent') ticks = `<span class="tick read">✓✓</span>`;
-      else if (m.status === 'sent') ticks = `<span class="tick">✓</span>`;
-      else ticks = `<span class="tick">⏱</span>`;
+      if (m.status === 'read') {
+        ticks = `<span class="tick read">✓✓</span>`;
+      } else if (m.status === 'delivered') {
+        ticks = `<span class="tick read">✓✓</span>`;
+      } else if (m.status === 'sent') {
+        ticks = `<span class="tick">✓</span>`;
+      } else {
+        ticks = `<span class="tick">⏱</span>`;
+      }
     }
+    
     return `
       <div class="mr ${isOut ? 'out' : 'in'}" data-index="${index}" oncontextmenu="showMsgMenu(event, ${index})">
         <div class="bubble">${m.text}
