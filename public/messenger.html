@@ -301,11 +301,17 @@ async function drainPendingMessages() {
 }
 
 function renderMyProfile() {
-  document.getElementById('myName').textContent = me.displayName || me.email;
-  document.getElementById('myBio').textContent = me.email || '';
-  const av = document.getElementById('myAv');
-  av.style.background = '#2563eb';
-  av.textContent = (me.displayName || 'U')[0].toUpperCase();
+  const nameEl = document.getElementById('myName');
+  const bioEl = document.getElementById('myBio');
+  const avEl = document.getElementById('myAv');
+
+  if (nameEl) nameEl.textContent = me.displayName || me.email;
+  if (bioEl) bioEl.textContent = me.email || '';
+  
+  if (avEl) {
+    avEl.style.background = '#2563eb';
+    avEl.textContent = (me.displayName || 'U')[0].toUpperCase();
+  }
 }
 
 function renderChatList(filter = '') {
