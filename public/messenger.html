@@ -375,6 +375,7 @@ function markMessagesAsRead(contactId) {
   if (changed) {
     saveInbox();
     renderMessages();
+    // Notify server that messages were read (for blue double tick)
     api('POST', `/api/messenger/mark-read/${contactId}`).catch(() => {});
   }
 }
@@ -446,6 +447,14 @@ async function sendMessage() {
       c.messages[idx].id = r.message?.id || tempMsg.id;
       c.messages[idx].status = 'sent';
     }
+    // Mark as delivered on sender side when we get confirmation
+    setTimeout(() => {
+      if (idx !== -1 && c.messages[idx]) {
+        c.messages[idx].status = 'delivered';
+        saveInbox();
+        if (activeId === contactId) renderMessages();
+      }
+    }, 800);
   } else {
     const idx = c.messages.findIndex(m => m.id === tempMsg.id);
     if (idx !== -1) c.messages[idx].status = 'failed';
