@@ -28,6 +28,8 @@ const WISHLIST_FILE  = path.join(DATA_DIR, 'wishlist.json');
 const SUBS_FILE      = path.join(DATA_DIR, 'subscriptions.json');
 const PROOFS_DIR     = path.join(DATA_DIR, 'payment_proofs');
 const SUPPORT_FILE   = path.join(DATA_DIR, 'support.json');
+const BALANCES_FILE  = path.join(DATA_DIR, 'balances.json');
+const PENDING_FILE   = path.join(DATA_DIR, 'pending_deposits.json');
 
 if (!fs.existsSync(DATA_DIR))   fs.mkdirSync(DATA_DIR,   { recursive: true });
 if (!fs.existsSync(PROOFS_DIR)) fs.mkdirSync(PROOFS_DIR, { recursive: true });
@@ -235,6 +237,101 @@ export async function reviewProof(proofId, status, adminId) {
 }
 
 export function getUserProofs(userId) { return proofMeta.proofs.filter(p => p.userId === userId); }
+
+// ── Virtual balance (cents) ────────────────────────────────────────────────
+// Used by Paynow top-ups: a user's wallet balance they can spend on plans.
+let balancesData = readJson(BALANCES_FILE, { balances: {}, transactions: [] });
+function saveBalances() { writeJson(BALANCES_FILE, balancesData); }
+
+export function getUserBalance(userId) {
+  return balancesData.balances[userId] || 0; // integer cents
+}
+
+export function adjustUserBalance(userId, cents, reason = '') {
+  const before = balancesData.balances[userId] || 0;
+  const after  = before + cents;
+  balancesData.balances[userId] = after;
+  balancesData.transactions.push({
+    id: `tx-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+    userId, cents, reason, balance: after, at: new Date().toISOString(),
+  });
+  if (balancesData.transactions.length > 5000) balancesData.transactions = balancesData.transactions.slice(-5000);
+  saveBalances();
+  return after;
+}
+
+export function getBalanceTransactions(userId, limit = 50) {
+  return balancesData.transactions.filter(t => t.userId === userId).slice(-limit).reverse();
+}
+
+// ── Pending Paynow deposits (polled until confirmed) ───────────────────────
+let pendingData = readJson(PENDING_FILE, { pending: {} });
+function savePending() { writeJson(PENDING_FILE, pendingData); }
+
+export function savePendingDeposit({ reference, userId, plan, amountCents, pollUrl, method, phone }) {
+  pendingData.pending[reference] = {
+    reference, userId, plan: plan || null,
+    amountCents, pollUrl: pollUrl || null,
+    method: method || 'ecocash', phone: phone || '',
+    status: 'pending', // pending | paid | failed
+    createdAt: new Date().toISOString(),
+    paynowReference: null, confirmedAt: null,
+  };
+  savePending();
+  return pendingData.pending[reference];
+}
+
+export function getPendingDeposit(reference) {
+  return pendingData.pending[reference] || null;
+}
+
+export function getPendingDepositsForUser(userId) {
+  return Object.values(pendingData.pending).filter(p => p.userId === userId);
+}
+
+export function deletePendingDeposit(reference) {
+  delete pendingData.pending[reference];
+  savePending();
+}
+
+/**
+ * Finalize a pending deposit on payment confirmation.
+ * Credits the wallet balance and (if a plan was attached) deducts the plan
+ * price and activates the subscription. Idempotent — safe to call from both
+ * the webhook and the poll loop.
+ */
+export function finalizeDeposit(reference, paynowReference = null) {
+  const pend = pendingData.pending[reference];
+  if (!pend) return null;
+  if (pend.status === 'paid') return { already: true, userId: pend.userId, plan: pend.plan, amountCents: pend.amountCents };
+
+  // Credit the wallet (virtual balance)
+  adjustUserBalance(pend.userId, pend.amountCents, `Paynow top-up (ref ${reference})`);
+
+  let activatedPlan = null;
+  if (pend.plan && PLANS[pend.plan] && pend.plan !== 'free') {
+    const costCents = Math.round(PLANS[pend.plan].price * 100);
+    adjustUserBalance(pend.userId, -costCents, `${pend.plan} plan activation`);
+    setUserSubscription(pend.userId, pend.plan, 'paynow');
+    activatedPlan = pend.plan;
+  }
+
+  pend.status = 'paid';
+  pend.paynowReference = paynowReference || null;
+  pend.confirmedAt = new Date().toISOString();
+  savePending();
+  return { userId: pend.userId, plan: activatedPlan, amountCents: pend.amountCents };
+}
+
+/** Mark a pending deposit as failed/cancelled (no credit). */
+export function failDeposit(reference) {
+  const pend = pendingData.pending[reference];
+  if (!pend || pend.status !== 'pending') return null;
+  pend.status = 'failed';
+  pend.confirmedAt = new Date().toISOString();
+  savePending();
+  return pend;
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 //  webusers.json — Web user accounts

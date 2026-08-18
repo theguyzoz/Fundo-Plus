@@ -101,6 +101,13 @@ OPENAI_API_KEY=your_openai_key   # optional fallback
 # Image generation (optional)
 HF_TOKEN=your_huggingface_token
 
+# Paynow (Zimbabwe mobile money — EcoCash / OneMoney) for subscriptions
+# Get these at https://www.paynow.co.zw after creating an integration.
+PAYNOW_INTEGRATION_ID=your_integration_id
+PAYNOW_INTEGRATION_KEY=your_integration_key
+# The email registered on your Paynow merchant account (used as authemail)
+PAYNOW_MERCHANT_EMAIL=you@example.com
+
 # Cloud sync (optional)
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_SERVICE_KEY=your_service_key
@@ -123,6 +130,7 @@ node index.js
 | `/onboarding` | Profile setup (after registration) |
 | `/~` | Dashboard (home, AI chat, quiz, papers, pairing) |
 | `/~/account` | Account settings |
+| `/~/subscription` | Plans, wallet balance & Paynow checkout |
 | `/resources` | Public resource library |
 | `/admin-hidden` | Admin panel |
 | `/sitemap.xml` | Auto-generated sitemap |
@@ -143,6 +151,31 @@ Register → /login (create account)
 ```
 
 **Allowed email providers:** Gmail, Googlemail, Outlook, Hotmail, Live, Yahoo, iCloud, Proton, Zoho, AOL, Mail.com, Yandex, MSN
+
+---
+
+## 💳 Subscriptions — Paynow + Virtual Balance
+
+The subscription page (`/~\/subscription`) now supports **instant mobile-money payments** via [Paynow](https://www.paynow.co.zw):
+
+1. User picks a plan (Lite $2 / Plus $5 / Pro $7 per month).
+2. Chooses **EcoCash** or **OneMoney** and enters their mobile number.
+3. `POST /api/subscription/deposit` initiates a Paynow payment and stores a *pending deposit*.
+4. The page **polls `GET /api/subscription/poll?reference=...` every 4s** until Paynow confirms.
+5. On confirmation the user's **virtual wallet balance** is credited and the plan is **auto-activated** (30 days). A manual screenshot-proof fallback remains for users who can't use Paynow.
+
+**Backend endpoints**
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/subscription/deposit` | Initiate Paynow payment (body: `{ plan, method, phone }`) |
+| `POST /api/paynow/update` | Paynow status-update **webhook** (hash-verified, credits balance) |
+| `GET /api/subscription/poll?reference=` | Client poll — also polls Paynow server-side as fallback |
+| `GET /api/billing/status` | Wallet balance + recent transactions |
+
+**Data files** (auto-created under `data/`): `balances.json` (wallet in cents) and `pending_deposits.json` (in-flight payments).
+
+> Set `PAYNOW_INTEGRATION_ID`, `PAYNOW_INTEGRATION_KEY` and `PAYNOW_MERCHANT_EMAIL` in your environment, and make sure `WEBSITE_URL` points at your public domain (used for the Paynow result/return URLs).
 
 ---
 

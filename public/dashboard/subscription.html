@@ -16,6 +16,14 @@
     .main{max-width:900px;margin:0 auto;padding:32px 20px}
     .page-title{font-size:1.5rem;font-weight:900;margin-bottom:4px}
     .page-sub{font-size:.85rem;color:var(--mut);margin-bottom:28px}
+
+    /* Wallet */
+    .wallet{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(120deg,#1d4ed8,#2563eb);color:#fff;border-radius:16px;padding:20px 22px;margin-bottom:28px;box-shadow:0 10px 30px rgba(37,99,235,.22)}
+    .wallet .wl-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.85}
+    .wallet .wl-bal{font-size:1.9rem;font-weight:900;margin-top:2px}
+    .wallet .wl-plan{font-size:.8rem;opacity:.9;margin-top:4px}
+    .wallet .wl-badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:7px 14px;border-radius:99px;font-size:.75rem;font-weight:800;white-space:nowrap}
+
     .plans-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px}
     .plan-card{background:var(--surf);border:2px solid var(--brd);border-radius:14px;padding:20px;cursor:pointer;transition:.15s;position:relative}
     .plan-card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 6px 28px rgba(37,99,235,.12)}
@@ -34,30 +42,55 @@
     .select-btn{width:100%;margin-top:16px;padding:9px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer;transition:.12s}
     .select-btn:hover{background:var(--acc2)}
     .select-btn.disabled{background:var(--grn);cursor:default}
+
     /* Payment modal */
     .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
     .modal-bg.open{display:flex}
-    .modal{background:var(--surf);border-radius:16px;width:min(480px,100%);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+    .modal{background:var(--surf);border-radius:16px;width:min(480px,100%);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:92vh;overflow:auto}
     .modal h2{font-size:1.1rem;font-weight:900;margin-bottom:6px}
     .modal p{font-size:.84rem;color:var(--mut);margin-bottom:16px;line-height:1.6}
+
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:.78rem;font-weight:700;color:var(--txt);margin-bottom:6px}
+    .field select,.field input{width:100%;padding:11px 13px;border:1.5px solid var(--brd);border-radius:9px;font-size:.9rem;background:var(--surf);color:var(--txt);outline:0}
+    .field select:focus,.field input:focus{border-color:var(--acc)}
+    .method-row{display:flex;gap:8px}
+    .method-pill{flex:1;text-align:center;padding:11px 8px;border:1.5px solid var(--brd);border-radius:9px;cursor:pointer;font-weight:800;font-size:.85rem;color:var(--mut);transition:.12s}
+    .method-pill.on{border-color:var(--acc);background:#eff6ff;color:var(--acc)}
+
     .ecocash-box{background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:18px;text-align:center}
-    .ecocash-box .number{font-size:1.5rem;font-weight:900;color:#166534;letter-spacing:.05em}
+    .ecocash-box .amount{font-size:1.4rem;font-weight:900;color:#166534}
     .ecocash-box .label{font-size:.75rem;color:#16a34a;font-weight:700;margin-bottom:4px}
-    .ecocash-box .amount{font-size:.85rem;color:#166534;margin-top:6px;font-weight:700}
+
+    .status-box{border-radius:12px;padding:22px;text-align:center;margin-bottom:16px;background:#f8faff;border:1.5px solid var(--brd)}
+    .status-box .spin{width:34px;height:34px;border:3px solid #dbeafe;border-top-color:var(--acc);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+    .status-box.ok{background:#f0fdf4;border-color:#bbf7d0}
+    .status-box.err{background:#fef2f2;border-color:#fecaca}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .status-box .s-title{font-size:1rem;font-weight:900;margin-bottom:4px}
+    .status-box .s-sub{font-size:.82rem;color:var(--mut);line-height:1.5}
+    .status-box.ok .s-title{color:#166534}
+    .status-box.err .s-title{color:#991b1b}
+
     .upload-area{border:2px dashed var(--brd);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.12s;margin-bottom:14px}
     .upload-area:hover{border-color:var(--acc);background:#f8faff}
     .upload-area.has-file{border-color:var(--grn);background:#f0fdf4}
     .upload-area p{font-size:.82rem;color:var(--mut);margin-top:6px}
     .upload-area .icon{font-size:2rem}
     input[type=file]{display:none}
-    .btn-acc{padding:10px 24px;background:var(--acc);border:none;border-radius:9px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;width:100%}
+
+    .btn-acc{padding:11px 24px;background:var(--acc);border:none;border-radius:9px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;width:100%}
     .btn-acc:hover{background:var(--acc2)}
     .btn-acc:disabled{opacity:.5;cursor:not-allowed}
-    .btn-cancel{padding:10px 24px;background:#f1f5f9;border:none;border-radius:9px;color:var(--mut);font-weight:700;font-size:.88rem;cursor:pointer;width:100%;margin-top:8px}
+    .btn-cancel{padding:11px 24px;background:#f1f5f9;border:none;border-radius:9px;color:var(--mut);font-weight:700;font-size:.88rem;cursor:pointer;width:100%;margin-top:8px}
     .btn-cancel:hover{background:#e2e8f0}
+    .btn-link{background:none;border:none;color:var(--acc);font-size:.8rem;font-weight:700;cursor:pointer;margin-top:14px;width:100%;text-align:center}
+    .btn-link:hover{text-decoration:underline}
+
     .alert{padding:10px 14px;border-radius:8px;font-size:.83rem;margin-bottom:12px;display:none}
     .alert.err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
     .alert.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+
     .proof-status{background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:16px;margin-bottom:20px}
     .proof-status h3{font-size:.9rem;font-weight:800;margin-bottom:10px}
     .proof-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd);font-size:.82rem}
@@ -80,7 +113,16 @@
 
   <div class="main">
     <div class="page-title">📦 Subscription Plans</div>
-    <div class="page-sub">Choose the plan that fits your study needs. Payments via EcoCash.</div>
+    <div class="page-sub">Choose a plan and pay instantly with EcoCash or OneMoney via Paynow.</div>
+
+    <div class="wallet" id="wallet" style="display:none">
+      <div>
+        <div class="wl-label">Wallet balance</div>
+        <div class="wl-bal" id="wallet-balance">$0.00</div>
+        <div class="wl-plan" id="wallet-plan">Free plan</div>
+      </div>
+      <div class="wl-badge" id="wallet-badge">FREE</div>
+    </div>
 
     <div id="proof-status-wrap"></div>
 
@@ -94,29 +136,60 @@
     </div>
   </div>
 
-  
+
   <div class="modal-bg" id="payModal">
     <div class="modal">
       <h2 id="modal-plan-name">Upgrade to Plus</h2>
-      <p id="modal-plan-desc">Send payment via EcoCash to the number below, then upload a screenshot of your payment receipt.</p>
+      <p id="modal-plan-desc">Pay securely via Paynow and your plan activates automatically.</p>
 
+      <!-- Amount -->
       <div class="ecocash-box">
-        <div class="label">EcoCash Number</div>
-        <div class="number">0781 867 081</div>
+        <div class="label">Amount</div>
         <div class="amount" id="modal-amount"></div>
       </div>
 
-      <div class="alert" id="modal-alert"></div>
-
-      <div class="upload-area" id="upload-area" onclick="document.getElementById('proof-file').click()">
-        <div class="icon">📸</div>
-        <strong style="font-size:.85rem">Click to upload payment screenshot</strong>
-        <p>JPG or PNG, max 5 MB. One image per submission.</p>
+      <!-- STEP 1: choose method + phone -->
+      <div id="paynow-form">
+        <div class="field">
+          <label>Payment method</label>
+          <div class="method-row">
+            <div class="method-pill on" id="m-ecocash" onclick="selectMethod('ecocash')">💚 EcoCash</div>
+            <div class="method-pill" id="m-onemoney" onclick="selectMethod('onemoney')">🟦 OneMoney</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Mobile number</label>
+          <input id="pay-phone" type="tel" placeholder="07X XXX XXXX" inputmode="tel">
+        </div>
+        <div class="alert" id="modal-alert"></div>
+        <button class="btn-acc" id="pay-btn" onclick="startPaynow()">Pay now</button>
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-link" id="proof-toggle" onclick="toggleProofForm(true)">Having trouble? Pay manually &amp; upload screenshot</button>
       </div>
-      <input type="file" id="proof-file" accept="image/*" onchange="handleFileSelect(this)">
 
-      <button class="btn-acc" id="submit-proof-btn" onclick="submitProof()" disabled>Submit Proof</button>
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <!-- STEP 2: waiting for confirmation (polls) -->
+      <div id="paynow-waiting" style="display:none">
+        <div class="status-box" id="waiting-box">
+          <div class="spin"></div>
+          <div class="s-title">Waiting for payment…</div>
+          <div class="s-sub" id="waiting-sub">Approve the prompt on your phone. We'll confirm automatically.</div>
+        </div>
+        <button class="btn-cancel" id="waiting-cancel" onclick="cancelPoll()">Cancel</button>
+      </div>
+
+      <!-- Fallback: manual proof upload -->
+      <div id="proof-form" style="display:none">
+        <div class="alert" id="proof-alert"></div>
+        <div class="upload-area" id="upload-area" onclick="document.getElementById('proof-file').click()">
+          <div class="icon">📸</div>
+          <strong style="font-size:.85rem">Click to upload payment screenshot</strong>
+          <p>JPG or PNG, max 5 MB. One image per submission.</p>
+        </div>
+        <input type="file" id="proof-file" accept="image/*" onchange="handleFileSelect(this)">
+        <button class="btn-acc" id="submit-proof-btn" onclick="submitProof()" disabled>Submit Proof</button>
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-link" onclick="toggleProofForm(false)">← Back to Paynow</button>
+      </div>
     </div>
   </div>
 
@@ -126,7 +199,12 @@
 
     let currentPlan = 'free';
     let selectedPlan = '';
+    let selectedMethod = 'ecocash';
     let proofFile = null;
+    let pollTimer = null;
+    let pollCount = 0;
+    const POLL_INTERVAL = 4000;   // 4s
+    const POLL_MAX = 90;          // ~6 minutes
 
     async function api(method, url, body) {
       const opts = { method, headers: { 'x-session-token': token } };
@@ -142,6 +220,7 @@
       try {
         const d = await api('GET', '/api/subscription');
         currentPlan = d.plan;
+        renderWallet(d);
         renderPlans(d);
         renderUsage(d);
         renderProofStatus(d.proofs || [], d.pendingProof || null);
@@ -159,6 +238,17 @@
 
     const PLAN_PRICES = { free: '$0', lite: '$2/mo', plus: '$5/mo', pro: '$7/mo' };
     const PLAN_COLORS = { free: '#6b7280', lite: '#2563eb', plus: '#7c3aed', pro: '#dc2626' };
+
+    function renderWallet(d) {
+      const w = document.getElementById('wallet');
+      w.style.display = 'flex';
+      document.getElementById('wallet-balance').textContent = '$' + (d.balanceDollars ?? '0.00');
+      const planName = (d.plan || 'free');
+      document.getElementById('wallet-plan').textContent = 'Current plan: ' + planName.charAt(0).toUpperCase() + planName.slice(1);
+      const badge = document.getElementById('wallet-badge');
+      badge.textContent = planName.toUpperCase();
+      badge.style.background = planName === 'free' ? 'rgba(255,255,255,.16)' : '#16a34a';
+    }
 
     function renderPlans(d) {
       const planKeys = ['free','lite','plus','pro'];
@@ -258,17 +348,117 @@
       const prices = { lite: '$2 USD', plus: '$5 USD', pro: '$7 USD' };
       const names  = { lite: 'Lite', plus: 'Plus', pro: 'Pro' };
       document.getElementById('modal-plan-name').textContent = `Upgrade to ${names[plan] || plan}`;
-      document.getElementById('modal-amount').textContent = `Amount: ${prices[plan] || ''} per month`;
+      document.getElementById('modal-amount').textContent = `${prices[plan] || ''} per month`;
       document.getElementById('payModal').classList.add('open');
-      document.getElementById('modal-alert').style.display = 'none';
+      showAlert('', '');
+      // reset to step 1
+      document.getElementById('paynow-form').style.display = 'block';
+      document.getElementById('paynow-waiting').style.display = 'none';
+      document.getElementById('proof-form').style.display = 'none';
+      document.getElementById('proof-toggle').style.display = 'block';
       resetUpload();
     }
 
     function closeModal() {
+      cancelPoll();
       document.getElementById('payModal').classList.remove('open');
       resetUpload();
     }
 
+    function selectMethod(m) {
+      selectedMethod = m;
+      document.getElementById('m-ecocash').classList.toggle('on', m === 'ecocash');
+      document.getElementById('m-onemoney').classList.toggle('on', m === 'onemoney');
+    }
+
+    function toggleProofForm(show) {
+      document.getElementById('paynow-form').style.display = show ? 'none' : 'block';
+      document.getElementById('proof-form').style.display = show ? 'block' : 'none';
+      document.getElementById('proof-toggle').style.display = show ? 'none' : 'block';
+      document.getElementById('modal-alert').style.display = 'none';
+    }
+
+    // ── Paynow flow ──────────────────────────────────────────────────────
+    async function startPaynow() {
+      const phone = (document.getElementById('pay-phone').value || '').trim();
+      if (!/^0?7\d{8}$|^2637\d{8}$/.test(phone)) {
+        showAlert('err', 'Enter a valid mobile number, e.g. 0771 234 567.');
+        return;
+      }
+      const btn = document.getElementById('pay-btn');
+      btn.disabled = true;
+      btn.textContent = 'Contacting Paynow…';
+      showAlert('', '');
+
+      try {
+        const d = await api('POST', '/api/subscription/deposit', { plan: selectedPlan, method: selectedMethod, phone: phone.replace(/\s+/g,'') });
+
+        // Switch to waiting state
+        document.getElementById('paynow-form').style.display = 'none';
+        document.getElementById('paynow-waiting').style.display = 'block';
+        const box = document.getElementById('waiting-box');
+        box.className = 'status-box';
+        document.getElementById('waiting-sub').textContent = d.instructions || 'Approve the prompt on your phone.';
+
+        // Optionally open Paynow's hosted page in a new tab (browser checkout)
+        if (d.redirectUrl) {
+          window.open(d.redirectUrl, '_blank');
+        }
+
+        startPolling(d.reference);
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = 'Pay now';
+        showAlert('err', e.message);
+      }
+    }
+
+    function startPolling(reference) {
+      pollCount = 0;
+      pollTimer = setInterval(() => pollOnce(reference), POLL_INTERVAL);
+    }
+
+    async function pollOnce(reference) {
+      pollCount++;
+      try {
+        const d = await api('GET', `/api/subscription/poll?reference=${encodeURIComponent(reference)}`);
+        if (d.status === 'paid') {
+          stopPolling();
+          showWaitingResult(true, `✅ Payment confirmed! Your ${(d.plan||selectedPlan).toUpperCase()} plan is now active.`);
+          setTimeout(() => { closeModal(); init(); }, 2200);
+        } else if (d.status === 'failed') {
+          stopPolling();
+          showWaitingResult(false, 'Payment failed or was cancelled. You have not been charged.');
+        } else if (pollCount >= POLL_MAX) {
+          stopPolling();
+          showWaitingResult(false, 'Timed out waiting for confirmation. If you were charged, your plan will activate automatically when Paynow confirms.');
+        }
+      } catch (e) {
+        if (pollCount >= POLL_MAX) {
+          stopPolling();
+          showWaitingResult(false, 'Timed out waiting for confirmation.');
+        }
+      }
+    }
+
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    function cancelPoll() {
+      stopPolling();
+    }
+
+    function showWaitingResult(ok, msg) {
+      const box = document.getElementById('waiting-box');
+      box.className = 'status-box ' + (ok ? 'ok' : 'err');
+      box.innerHTML = `
+        <div class="s-title">${ok ? 'Payment complete' : 'Payment not completed'}</div>
+        <div class="s-sub">${msg}</div>`;
+      document.getElementById('waiting-cancel').style.display = 'none';
+    }
+
+    // ── Manual proof fallback ────────────────────────────────────────────
     function resetUpload() {
       proofFile = null;
       document.getElementById('proof-file').value = '';
@@ -284,7 +474,7 @@
       const file = input.files[0];
       if (!file) return;
       if (file.size > 5 * 1024 * 1024) {
-        showAlert('err', 'File too large. Maximum 5 MB.');
+        showProofAlert('err', 'File too large. Maximum 5 MB.');
         return;
       }
       proofFile = file;
@@ -299,18 +489,18 @@
       const btn = document.getElementById('submit-proof-btn');
       btn.disabled = true;
       btn.textContent = 'Submitting…';
-      showAlert('', '');
+      showProofAlert('', '');
 
       try {
         const fd = new FormData();
         fd.append('proof', proofFile);
         fd.append('plan', selectedPlan);
         const d = await api('POST', '/api/subscription/proof', fd);
-        showAlert('ok', '✅ ' + d.message);
+        showProofAlert('ok', '✅ ' + d.message);
         btn.textContent = 'Submitted!';
         setTimeout(() => { closeModal(); init(); }, 2000);
       } catch (e) {
-        showAlert('err', e.message);
+        showProofAlert('err', e.message);
         btn.disabled = false;
         btn.textContent = 'Submit Proof';
       }
@@ -318,6 +508,13 @@
 
     function showAlert(type, msg) {
       const el = document.getElementById('modal-alert');
+      el.className = 'alert ' + type;
+      el.textContent = msg;
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function showProofAlert(type, msg) {
+      const el = document.getElementById('proof-alert');
       el.className = 'alert ' + type;
       el.textContent = msg;
       el.style.display = msg ? 'block' : 'none';
