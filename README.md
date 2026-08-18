@@ -154,26 +154,42 @@ Register → /login (create account)
 
 ---
 
-## 💳 Subscriptions — Paynow + Virtual Balance
+## 💳 Subscriptions — Wallet, Paynow Top-up, Withdrawals
 
-The subscription page (`/~\/subscription`) now supports **instant mobile-money payments** via [Paynow](https://www.paynow.co.zw):
+The subscription page (`/~\/subscription`) now uses a **virtual wallet (USD)**:
 
-1. User picks a plan (Lite $2 / Plus $5 / Pro $7 per month).
-2. Chooses **EcoCash** or **OneMoney** and enters their mobile number.
-3. `POST /api/subscription/deposit` initiates a Paynow payment and stores a *pending deposit*.
-4. The page **polls `GET /api/subscription/poll?reference=...` every 4s** until Paynow confirms.
-5. On confirmation the user's **virtual wallet balance** is credited and the plan is **auto-activated** (30 days). A manual screenshot-proof fallback remains for users who can't use Paynow.
+1. **Top up** the wallet via [Paynow](https://www.paynow.co.zw) (EcoCash / OneMoney). The wallet caps at **$10.00 USD** — the max top-up is the remaining capacity.
+2. **Buy a plan** (Lite $2 / Plus $5 / Pro $7 per month) using wallet balance.
+3. **Withdraw** balance to a mobile-money number. A **5% fee** applies on cash-out, so the *withdrawal balance* is always 5% below the virtual balance (see `TRANSACTION_FEE_PCT`).
+
+`POST /api/topup` initiates a Paynow payment and stores a *pending deposit*; the page **polls `GET /api/subscription/poll?reference=...` every 4s** until confirmation, and the wallet is credited (idempotently) via the webhook or poll.
 
 **Backend endpoints**
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /api/subscription/deposit` | Initiate Paynow payment (body: `{ plan, method, phone }`) |
-| `POST /api/paynow/update` | Paynow status-update **webhook** (hash-verified, credits balance) |
+| `POST /api/topup` | Initiate Paynow top-up (body: `{ amount, method, phone }`) — amount validated/capped server-side |
+| `POST /api/paynow/update` | Paynow status-update **webhook** (hash-verified, credits wallet) |
 | `GET /api/subscription/poll?reference=` | Client poll — also polls Paynow server-side as fallback |
-| `GET /api/billing/status` | Wallet balance + recent transactions |
+| `POST /api/subscription/activate` | Buy a plan with wallet balance (body: `{ plan }`) |
+| `POST /api/withdraw` | Request a withdrawal (5% fee, body: `{ amount, phone }`) |
+| `GET /api/withdrawals` | List my withdrawals |
+| `GET /api/billing/status` | Balance, withdrawal balance, remaining top-up, transactions |
+| `GET /api/admin/withdrawals` · `POST /api/admin/withdrawal/:id/complete` · `:id/fail` | Admin payout review |
 
-**Data files** (auto-created under `data/`): `balances.json` (wallet in cents) and `pending_deposits.json` (in-flight payments).
+**Security (anti-free-money hardening)**
+
+- All amounts are computed **server-side** — the client can never set a credited/debited amount.
+- `sanitizeCents()` rejects NaN, negatives, >2-decimal, and absurd values.
+- Balance ops are **atomic** and enforce the `$10` cap and never go negative.
+- Deposit finalization is **idempotent** (replay-safe webhook/poll).
+- Withdrawals debit atomically and **refund on failure** so money can't vanish.
+- Money endpoints are **rate-limited**.
+- Withdrawals require a valid Zimbabwe mobile number.
+
+**Config constants** (in `store.js`): `MAX_BALANCE_CENTS` ($10), `MIN_TOPUP_CENTS` ($1), `TRANSACTION_FEE_PCT` (5), `FEE_ON_DEPOSIT` (false — fee applies on withdrawal).
+
+**Data files** (auto-created under `data/`): `balances.json`, `pending_deposits.json`, `withdrawals.json`.
 
 > Set `PAYNOW_INTEGRATION_ID`, `PAYNOW_INTEGRATION_KEY` and `PAYNOW_MERCHANT_EMAIL` in your environment, and make sure `WEBSITE_URL` points at your public domain (used for the Paynow result/return URLs).
 

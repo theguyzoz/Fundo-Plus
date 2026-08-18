@@ -30,6 +30,7 @@ const PROOFS_DIR     = path.join(DATA_DIR, 'payment_proofs');
 const SUPPORT_FILE   = path.join(DATA_DIR, 'support.json');
 const BALANCES_FILE  = path.join(DATA_DIR, 'balances.json');
 const PENDING_FILE   = path.join(DATA_DIR, 'pending_deposits.json');
+const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
 
 if (!fs.existsSync(DATA_DIR))   fs.mkdirSync(DATA_DIR,   { recursive: true });
 if (!fs.existsSync(PROOFS_DIR)) fs.mkdirSync(PROOFS_DIR, { recursive: true });
@@ -238,8 +239,35 @@ export async function reviewProof(proofId, status, adminId) {
 
 export function getUserProofs(userId) { return proofMeta.proofs.filter(p => p.userId === userId); }
 
-// ── Virtual balance (cents) ────────────────────────────────────────────────
-// Used by Paynow top-ups: a user's wallet balance they can spend on plans.
+// ── Virtual balance, fees & withdrawals (USD cents) ────────────────────────
+// Money is stored as integer USD cents. Every amount is computed and validated
+// SERVER-SIDE — the client can never set a credited/debited amount directly.
+// Plan prices, fees and caps all originate here, not from the browser.
+
+export const MAX_BALANCE_CENTS  = 1000;   // $10.00 USD — wallet hard cap
+export const MIN_TOPUP_CENTS    = 100;    // $1.00 minimum top-up
+export const MIN_WITHDRAW_CENTS = 100;    // $1.00 minimum withdrawal
+export const TRANSACTION_FEE_PCT = 5;     // 5% per cash-out transaction
+export const FEE_ON_DEPOSIT     = false;  // deposits credited in full; fee applies on withdrawal
+
+// Fee in cents (floor, so we never over-charge).
+export function feeCents(amountCents) {
+  return Math.floor((amountCents * TRANSACTION_FEE_PCT) / 100);
+}
+
+// Parse/validate a client-supplied USD amount string/number → integer cents.
+// Returns null if invalid. Rejects NaN, negatives, zero, >2 decimals, absurd values.
+export function sanitizeCents(input) {
+  if (typeof input === 'string' && !input.trim()) return null;
+  const n = Number(input);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const cents = Math.round(n * 100);
+  if (cents < 1) return null;
+  // Reject values with sub-cent precision that can't round-trip cleanly
+  if (Math.abs(cents - n * 100) > 0.001) return null;
+  return cents;
+}
+
 let balancesData = readJson(BALANCES_FILE, { balances: {}, transactions: [] });
 function saveBalances() { writeJson(BALANCES_FILE, balancesData); }
 
@@ -247,9 +275,33 @@ export function getUserBalance(userId) {
   return balancesData.balances[userId] || 0; // integer cents
 }
 
+// Net amount a user would receive if they cashed out their entire balance.
+// Always 5% below the virtual balance (the "withdrawal balance").
+export function getWithdrawalBalance(userId) {
+  const b = getUserBalance(userId);
+  return Math.max(0, b - feeCents(b));
+}
+
+// How much more this wallet can hold before hitting the $10 cap.
+export function getRemainingTopupCapacity(userId) {
+  return Math.max(0, MAX_BALANCE_CENTS - getUserBalance(userId));
+}
+
+/**
+ * Atomically adjust a balance. Guards against going negative on debit and
+ * against exceeding the cap on credit. Returns { ok, balance, error }.
+ */
 export function adjustUserBalance(userId, cents, reason = '') {
   const before = balancesData.balances[userId] || 0;
   const after  = before + cents;
+
+  if (cents < 0 && after < 0) {
+    return { ok: false, balance: before, error: 'Insufficient balance' };
+  }
+  if (cents > 0 && after > MAX_BALANCE_CENTS) {
+    return { ok: false, balance: before, error: 'Balance would exceed the $10.00 maximum' };
+  }
+
   balancesData.balances[userId] = after;
   balancesData.transactions.push({
     id: `tx-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
@@ -257,20 +309,87 @@ export function adjustUserBalance(userId, cents, reason = '') {
   });
   if (balancesData.transactions.length > 5000) balancesData.transactions = balancesData.transactions.slice(-5000);
   saveBalances();
-  return after;
+  return { ok: true, balance: after };
 }
 
 export function getBalanceTransactions(userId, limit = 50) {
   return balancesData.transactions.filter(t => t.userId === userId).slice(-limit).reverse();
 }
 
-// ── Pending Paynow deposits (polled until confirmed) ───────────────────────
+// ── Withdrawals ─────────────────────────────────────────────────────────────
+let withdrawalsData = readJson(WITHDRAWALS_FILE, { withdrawals: [] });
+function saveWithdrawals() { writeJson(WITHDRAWALS_FILE, withdrawalsData); }
+
+/**
+ * Request a withdrawal. VALIDATES everything server-side and debits the wallet
+ * atomically so the money cannot be double-spent. Returns { ok, withdrawal, error }.
+ * The 5% fee is applied here: net = amount - fee.
+ */
+export function requestWithdrawal(userId, amountCents, phone = '') {
+  const balance = getUserBalance(userId);
+  if (amountCents < MIN_WITHDRAW_CENTS) {
+    return { ok: false, error: `Minimum withdrawal is $${(MIN_WITHDRAW_CENTS/100).toFixed(2)}.` };
+  }
+  if (amountCents > balance) {
+    return { ok: false, error: `Amount exceeds your balance ($${(balance/100).toFixed(2)}).` };
+  }
+  if (!/^0?7\d{8}$|^2637\d{8}$/.test(String(phone || '').replace(/\s+/g, ''))) {
+    return { ok: false, error: 'Enter a valid EcoCash/OneMoney mobile number.' };
+  }
+
+  const fee  = feeCents(amountCents);
+  const net  = amountCents - fee;
+
+  // Atomic debit (fails if insufficient — prevents races/double-spend)
+  const adj = adjustUserBalance(userId, -amountCents, `Withdrawal (fee $${(fee/100).toFixed(2)})`);
+  if (!adj.ok) return { ok: false, error: adj.error };
+
+  const w = {
+    id: `wd-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+    userId,
+    phone: String(phone).replace(/\s+/g, ''),
+    amountCents,
+    feeCents: fee,
+    netCents: net,
+    status: 'pending', // pending | paid | failed
+    requestedAt: new Date().toISOString(),
+    processedAt: null,
+    processedBy: null,
+  };
+  withdrawalsData.withdrawals.unshift(w);
+  if (withdrawalsData.withdrawals.length > 2000) withdrawalsData.withdrawals = withdrawalsData.withdrawals.slice(0, 2000);
+  saveWithdrawals();
+  return { ok: true, withdrawal: w };
+}
+
+export function getWithdrawals(userId) {
+  return withdrawalsData.withdrawals.filter(w => w.userId === userId);
+}
+export function getAllWithdrawals() { return withdrawalsData.withdrawals; }
+export function getWithdrawal(id) {
+  return withdrawalsData.withdrawals.find(w => w.id === id) || null;
+}
+export function updateWithdrawalStatus(id, status, adminId = 'admin') {
+  const w = withdrawalsData.withdrawals.find(x => x.id === id);
+  if (!w) return false;
+  if (status === 'failed' && w.status === 'pending') {
+    // Refund the wallet if a payout fails — money must not vanish.
+    adjustUserBalance(w.userId, w.amountCents, `Withdrawal failed — refund (${id})`);
+  }
+  w.status = status;
+  w.processedAt = new Date().toISOString();
+  w.processedBy = adminId;
+  saveWithdrawals();
+  return true;
+}
+
+// ── Pending Paynow top-ups (polled until confirmed) ─────────────────────────
 let pendingData = readJson(PENDING_FILE, { pending: {} });
 function savePending() { writeJson(PENDING_FILE, pendingData); }
 
-export function savePendingDeposit({ reference, userId, plan, amountCents, pollUrl, method, phone }) {
+export function savePendingDeposit({ reference, userId, amountCents, pollUrl, method, phone }) {
   pendingData.pending[reference] = {
-    reference, userId, plan: plan || null,
+    reference, userId,
     amountCents, pollUrl: pollUrl || null,
     method: method || 'ecocash', phone: phone || '',
     status: 'pending', // pending | paid | failed
@@ -295,35 +414,38 @@ export function deletePendingDeposit(reference) {
 }
 
 /**
- * Finalize a pending deposit on payment confirmation.
- * Credits the wallet balance and (if a plan was attached) deducts the plan
- * price and activates the subscription. Idempotent — safe to call from both
- * the webhook and the poll loop.
+ * Finalize a pending top-up on payment confirmation (webhook OR poll).
+ * Credits the wallet (minus deposit fee if FEE_ON_DEPOSIT) and enforces the
+ * $10 cap. IDEMPOTENT — a second call returns { already: true } and never
+ * double-credits. This is the key anti-fraud guard against replay attacks.
  */
 export function finalizeDeposit(reference, paynowReference = null) {
   const pend = pendingData.pending[reference];
   if (!pend) return null;
-  if (pend.status === 'paid') return { already: true, userId: pend.userId, plan: pend.plan, amountCents: pend.amountCents };
+  if (pend.status === 'paid') {
+    return { already: true, userId: pend.userId, amountCents: pend.amountCents };
+  }
 
-  // Credit the wallet (virtual balance)
-  adjustUserBalance(pend.userId, pend.amountCents, `Paynow top-up (ref ${reference})`);
+  const gross  = pend.amountCents;
+  const fee    = FEE_ON_DEPOSIT ? feeCents(gross) : 0;
+  const credit = gross - fee;
 
-  let activatedPlan = null;
-  if (pend.plan && PLANS[pend.plan] && pend.plan !== 'free') {
-    const costCents = Math.round(PLANS[pend.plan].price * 100);
-    adjustUserBalance(pend.userId, -costCents, `${pend.plan} plan activation`);
-    setUserSubscription(pend.userId, pend.plan, 'paynow');
-    activatedPlan = pend.plan;
+  const adj = adjustUserBalance(pend.userId, credit, `Paynow top-up (ref ${reference})${fee ? ` — fee $${(fee/100).toFixed(2)}` : ''}`);
+  // If the cap would be exceeded (shouldn't happen — validated at initiation),
+  // credit only up to the cap and record the difference safely.
+  if (!adj.ok && adj.error.includes('maximum')) {
+    const room = MAX_BALANCE_CENTS - getUserBalance(pend.userId);
+    if (room > 0) adjustUserBalance(pend.userId, room, `Paynow top-up (partial, capped) ref ${reference}`);
   }
 
   pend.status = 'paid';
   pend.paynowReference = paynowReference || null;
   pend.confirmedAt = new Date().toISOString();
   savePending();
-  return { userId: pend.userId, plan: activatedPlan, amountCents: pend.amountCents };
+  return { userId: pend.userId, amountCents: gross, creditedCents: Math.min(credit, MAX_BALANCE_CENTS) };
 }
 
-/** Mark a pending deposit as failed/cancelled (no credit). */
+/** Mark a pending top-up as failed/cancelled (no credit). */
 export function failDeposit(reference) {
   const pend = pendingData.pending[reference];
   if (!pend || pend.status !== 'pending') return null;

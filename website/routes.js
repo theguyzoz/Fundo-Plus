@@ -32,6 +32,10 @@ import {
   getUserBalance, adjustUserBalance, getBalanceTransactions,
   savePendingDeposit, getPendingDeposit, getPendingDepositsForUser,
   deletePendingDeposit, finalizeDeposit, failDeposit,
+  getWithdrawalBalance, getRemainingTopupCapacity,
+  MAX_BALANCE_CENTS, MIN_TOPUP_CENTS, MIN_WITHDRAW_CENTS, TRANSACTION_FEE_PCT,
+  sanitizeCents, feeCents,
+  requestWithdrawal, getWithdrawals, getAllWithdrawals, getWithdrawal, updateWithdrawalStatus,
   // support
   addSupportMessage, getAllSupportMessages, resolveSupportMessage,
   // messages / wishlist / files
@@ -69,6 +73,7 @@ import {
 import { askWebAI, clearWebHistory } from './ai.js';
 import { createVerifyToken, consumeToken } from '../utils/verify.js';
 import { createPayment, verifyUpdate, pollTransaction, isConfigured as isPaynowConfigured } from '../utils/paynow.js';
+import rateLimit from 'express-rate-limit';
 import {
   uploadUpdateJson, uploadApk, fetchUpdateJson, getApkPublicUrl,
 } from '../utils/update-store.js';
@@ -885,90 +890,84 @@ router.get('/api/subscription', requireAuth, (req, res) => {
   const isLinked = !!req.user.jid;
   const limits = getPlanLimits(uid, isLinked);
   const usage  = getFullUsage(uid);
-  const proofs = getUserProofs(uid);
-  const pendingProof = getUserPendingProof(uid);
   const balanceCents = getUserBalance(uid);
   const pendingDeposits = getPendingDepositsForUser(uid).filter(p => p.status === 'pending');
   res.json({
-    ok: true, plan, sub, limits, usage, proofs,
-    pendingProof: pendingProof || null, plans: PLANS,
+    ok: true, plan, sub, limits, usage, plans: PLANS,
     balance: balanceCents,
     balanceDollars: (balanceCents / 100).toFixed(2),
+    withdrawalBalance: getWithdrawalBalance(uid),
+    withdrawalDollars: (getWithdrawalBalance(uid) / 100).toFixed(2),
+    remainingTopup: getRemainingTopupCapacity(uid),
+    remainingTopupDollars: (getRemainingTopupCapacity(uid) / 100).toFixed(2),
+    maxBalanceDollars: (MAX_BALANCE_CENTS / 100).toFixed(2),
+    feePct: TRANSACTION_FEE_PCT,
     paynowConfigured: isPaynowConfigured(),
     pendingDeposit: pendingDeposits[0] || null,
+    withdrawals: getWithdrawals(uid),
   });
 });
 
-// Submit payment proof
-router.post('/api/subscription/proof', requireAuth, proofUpload.single('proof'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Image file required' });
-  const { plan } = req.body || {};
-  if (!PLANS[plan] || plan === 'free') return res.status(400).json({ error: 'Invalid plan' });
+// ══════════════════════════════════════════════════════════════════════════
+//  WALLET — top up via Paynow, buy plans with balance, withdraw (5% fee)
+// ══════════════════════════════════════════════════════════════════════════
 
-  const ext = req.file.mimetype.split('/')[1] || 'jpg';
-  const result = await savePaymentProof(req.user.id, plan, req.file.buffer, ext);
-  if (!result.ok) return res.status(400).json({ error: result.error });
-  res.json({ ok: true, proofId: result.proofId, message: 'Proof submitted. Admin will review within 24 hours.' });
+// Rate-limit money endpoints (defense against scripting / brute-force)
+const moneyLimiter = rateLimit({
+  windowMs: 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many requests. Please slow down.' },
 });
 
-// ══════════════════════════════════════════════════════════════════════════
-//  PAYNOW — instant mobile-money payments + virtual balance
-// ══════════════════════════════════════════════════════════════════════════
+// Step 1: initiate a Paynow TOP-UP (adds money to the virtual wallet).
+// The amount is validated and capped server-side — never trust the client.
+router.post('/api/topup', requireAuth, moneyLimiter, async (req, res) => {
+  const uid = req.user.id;
+  const { amount, method, phone } = req.body || {};
 
-// Step 1: initiate a Paynow payment for a plan
-router.post('/api/subscription/deposit', requireAuth, async (req, res) => {
-  const { plan, method, phone } = req.body || {};
-  if (!PLANS[plan] || plan === 'free') return res.status(400).json({ error: 'Invalid plan' });
+  const cents = sanitizeCents(amount);
+  if (!cents) return res.status(400).json({ error: 'Enter a valid USD amount (e.g. 5.00).' });
 
-  const priceCents = Math.round(PLANS[plan].price * 100);
-  if (priceCents <= 0) return res.status(400).json({ error: 'This plan has no price' });
+  const remaining = getRemainingTopupCapacity(uid);
 
-  // Block if the user already has a pending deposit in flight
-  const existing = getPendingDepositsForUser(req.user.id).find(p => p.status === 'pending');
-  if (existing) {
-    return res.status(400).json({ error: 'You already have a payment in progress. Wait for it to confirm or fail.', reference: existing.reference });
+  if (cents < MIN_TOPUP_CENTS) {
+    return res.status(400).json({ error: `Minimum top-up is $${(MIN_TOPUP_CENTS/100).toFixed(2)}.` });
+  }
+  if (cents > remaining) {
+    return res.status(400).json({ error: `Maximum top-up is $${(remaining/100).toFixed(2)} — your balance can hold at most $${(MAX_BALANCE_CENTS/100).toFixed(2)}.` });
   }
 
-  const reference = `fp-${req.user.id}-${Date.now()}`;
+  // Block concurrent in-flight top-ups
+  const existing = getPendingDepositsForUser(uid).find(p => p.status === 'pending');
+  if (existing) {
+    return res.status(400).json({ error: 'You already have a top-up in progress. Wait for it to confirm or fail.', reference: existing.reference });
+  }
 
+  const reference = `fp-${uid}-${Date.now()}`;
   try {
     const pay = await createPayment({
-      amount:      PLANS[plan].price,
+      amount:      cents / 100,
       method:      method || 'ecocash',
-      phone:       phone  || '',
+      phone:       String(phone || '').replace(/\s+/g, ''),
       reference,
-      description: `Fundo Plus ${plan} plan`,
+      description: 'Fundo Plus wallet top-up (USD)',
     });
 
-    savePendingDeposit({
-      reference,
-      userId: req.user.id,
-      plan,
-      amountCents: priceCents,
-      pollUrl: pay.pollUrl,
-      method: method || 'ecocash',
-      phone: phone || '',
-    });
+    savePendingDeposit({ reference, userId: uid, amountCents: cents, pollUrl: pay.pollUrl, method: method || 'ecocash', phone: phone || '' });
 
     res.json({
-      ok: true,
-      reference,
-      plan,
-      amountDollars: PLANS[plan].price,
-      redirectUrl:  pay.redirectUrl,
-      pollUrl:      pay.pollUrl,
-      instructions: pay.instructions || `Check your phone — a ${method || 'EcoCash'} prompt has been sent for you to approve.`,
+      ok: true, reference, amountDollars: (cents/100).toFixed(2),
+      redirectUrl: pay.redirectUrl, pollUrl: pay.pollUrl,
+      instructions: pay.instructions || `Check your phone — a ${method || 'EcoCash'} prompt has been sent to approve $${(cents/100).toFixed(2)}.`,
     });
   } catch (e) {
-    console.error('[Paynow deposit error]', e.message);
+    console.error('[Paynow topup error]', e.message);
     const safe = e.message && e.message.length < 200 && !e.message.toLowerCase().includes('hash')
       ? e.message : 'Could not initiate payment. Check your number and try again.';
     res.status(502).json({ error: safe });
   }
 });
 
-// Step 2: Paynow status-update webhook — credits balance + activates plan on confirmation.
-// Paynow POSTs here whenever the payment status changes.
+// Step 2: Paynow status-update webhook — credits the wallet on confirmation.
 router.post('/api/paynow/update', (req, res) => {
   const params = req.body || {};
   if (!verifyUpdate(params)) return res.status(400).send('Invalid hash');
@@ -977,73 +976,119 @@ router.post('/api/paynow/update', (req, res) => {
   const reference = params.reference || '';
   const paynowRef = params.paynowreference || '';
 
-  if (!getPendingDeposit(reference)) {
-    // Unknown / already processed — still ACK so Paynow stops retrying
-    return res.send('OK');
-  }
+  if (!getPendingDeposit(reference)) return res.send('OK'); // unknown/already processed — ACK
 
   if (status === 'paid' || status === 'awaiting delivery') {
     finalizeDeposit(reference, paynowRef);
   } else if (status === 'cancelled' || status === 'failed' || status === 'disputed') {
     failDeposit(reference);
   }
-  // For pending/awaiting statuses Paynow will POST again on change
   res.send('OK');
 });
 
-// Step 3: poll for confirmation (the client calls this every few seconds).
-// Returns the payment status; on "paid" the wallet is credited and the plan
-// is auto-activated.
+// Step 3: poll for top-up confirmation (client calls every few seconds).
 router.get('/api/subscription/poll', requireAuth, async (req, res) => {
   const reference = req.query.reference || '';
   if (!reference) return res.status(400).json({ error: 'reference required' });
 
   const pend = getPendingDeposit(reference);
-  if (!pend || pend.userId !== req.user.id) {
-    return res.status(404).json({ status: 'unknown' });
-  }
+  if (!pend || pend.userId !== req.user.id) return res.status(404).json({ status: 'unknown' });
 
-  // Already settled?
   if (pend.status === 'paid') {
-    return res.json({ status: 'paid', plan: pend.plan, balance: getUserBalance(req.user.id), currentPlan: getUserPlan(req.user.id) });
+    return res.json({ status: 'paid', balance: getUserBalance(req.user.id) });
   }
-  if (pend.status === 'failed') {
-    return res.json({ status: 'failed' });
-  }
+  if (pend.status === 'failed') return res.json({ status: 'failed' });
 
-  // Not settled yet — poll Paynow directly (server-to-server) as a fallback
-  // for when the webhook hasn't fired (e.g. test mode).
   if (pend.pollUrl) {
     try {
       const s = await pollTransaction(pend.pollUrl);
-      const status = (s.status || '').toLowerCase();
-      if (status === 'paid' || status === 'awaiting delivery') {
+      const st = (s.status || '').toLowerCase();
+      if (st === 'paid' || st === 'awaiting delivery') {
         finalizeDeposit(reference, s.paynowreference || '');
-        return res.json({ status: 'paid', plan: pend.plan, balance: getUserBalance(req.user.id), currentPlan: getUserPlan(req.user.id) });
+        return res.json({ status: 'paid', balance: getUserBalance(req.user.id) });
       }
-      if (status === 'cancelled' || status === 'failed' || status === 'disputed') {
+      if (st === 'cancelled' || st === 'failed' || st === 'disputed') {
         failDeposit(reference);
         return res.json({ status: 'failed' });
       }
-      // 'sent to mobile' / 'awaiting delivery' / 'created' → still waiting
-      return res.json({ status: 'pending', paynowStatus: status });
+      return res.json({ status: 'pending', paynowStatus: st });
     } catch (e) {
-      console.warn('[Paynow poll error]', e.message);
       return res.json({ status: 'pending', paynowStatus: 'poll-error' });
     }
   }
-
   return res.json({ status: 'pending' });
 });
 
-// Wallet status (balance + recent transactions) — used to render the wallet UI
+// Buy a plan using virtual balance (no direct Paynow → subscription).
+router.post('/api/subscription/activate', requireAuth, moneyLimiter, (req, res) => {
+  const uid  = req.user.id;
+  const { plan } = req.body || {};
+  if (!PLANS[plan] || plan === 'free') return res.status(400).json({ error: 'Invalid plan' });
+
+  const cost    = Math.round(PLANS[plan].price * 100);
+  const balance = getUserBalance(uid);
+
+  if (balance < cost) {
+    return res.status(400).json({ error: `Insufficient balance. You need $${(cost/100).toFixed(2)} (have $${(balance/100).toFixed(2)}). Top up first.` });
+  }
+  if (getUserPlan(uid) === plan) {
+    return res.status(400).json({ error: 'You are already on this plan.' });
+  }
+
+  const adj = adjustUserBalance(uid, -cost, `${plan} plan (30 days)`);
+  if (!adj.ok) return res.status(400).json({ error: adj.error });
+  setUserSubscription(uid, plan, 'balance');
+
+  import('../utils/supabase-data.js').then(m => {
+    m.uploadDataFile('subscriptions.json'); m.uploadDataFile('balances.json');
+  }).catch(() => {});
+  res.json({ ok: true, plan, balance: adj.balance, balanceDollars: (adj.balance/100).toFixed(2) });
+});
+
+// Request a withdrawal (5% fee, net paid out). Validated + atomic debit server-side.
+router.post('/api/withdraw', requireAuth, moneyLimiter, (req, res) => {
+  const uid = req.user.id;
+  const { amount, phone } = req.body || {};
+  const cents = sanitizeCents(amount);
+  if (!cents) return res.status(400).json({ error: 'Enter a valid USD amount (e.g. 3.00).' });
+
+  const result = requestWithdrawal(uid, cents, phone);
+  if (!result.ok) return res.status(400).json({ error: result.error });
+
+  import('../utils/supabase-data.js').then(m => {
+    m.uploadDataFile('withdrawals.json'); m.uploadDataFile('balances.json');
+  }).catch(() => {});
+
+  const w = result.withdrawal;
+  res.json({
+    ok: true, withdrawal: w,
+    feeDollars: (w.feeCents/100).toFixed(2),
+    netDollars: (w.netCents/100).toFixed(2),
+    balance: getUserBalance(uid),
+  });
+});
+
+// List my withdrawals
+router.get('/api/withdrawals', requireAuth, (req, res) => {
+  res.json({ ok: true, withdrawals: getWithdrawals(req.user.id) });
+});
+
+// Wallet status (balance + withdrawal balance + transactions + pending)
 router.get('/api/billing/status', requireAuth, (req, res) => {
   const uid = req.user.id;
+  const balance = getUserBalance(uid);
   res.json({
-    balance: getUserBalance(uid),
-    balanceDollars: (getUserBalance(uid) / 100).toFixed(2),
+    balance,
+    balanceDollars: (balance/100).toFixed(2),
+    withdrawalBalance: getWithdrawalBalance(uid),
+    withdrawalDollars: (getWithdrawalBalance(uid)/100).toFixed(2),
+    remainingTopup: getRemainingTopupCapacity(uid),
+    remainingTopupDollars: (getRemainingTopupCapacity(uid)/100).toFixed(2),
+    feePct: TRANSACTION_FEE_PCT,
+    maxBalanceDollars: (MAX_BALANCE_CENTS/100).toFixed(2),
     plan: getUserPlan(uid),
     transactions: getBalanceTransactions(uid, 20),
+    withdrawals: getWithdrawals(uid),
     pendingDeposits: getPendingDepositsForUser(uid).filter(p => p.status === 'pending'),
   });
 });
@@ -1474,6 +1519,29 @@ router.post('/api/admin/grant-sub', requireAdmin, (req, res) => {
   const ok = setUserSubscription(userId, plan, 'admin');
   if (!ok) return res.status(400).json({ error: 'Invalid plan' });
   res.json({ ok: true });
+});
+
+// ── Admin: withdrawals ─────────────────────────────────────────────────────
+router.get('/api/admin/withdrawals', requireAdmin, (req, res) => {
+  res.json({ ok: true, withdrawals: getAllWithdrawals() });
+});
+
+// Mark a withdrawal as paid out (net amount sent to the user's mobile number)
+router.post('/api/admin/withdrawal/:id/complete', requireAdmin, (req, res) => {
+  const w = getWithdrawal(req.params.id);
+  if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
+  if (w.status !== 'pending') return res.status(400).json({ error: `Already ${w.status}` });
+  updateWithdrawalStatus(req.params.id, 'paid', 'admin');
+  res.json({ ok: true, withdrawal: getWithdrawal(req.params.id) });
+});
+
+// Mark a withdrawal as failed — refunds the wallet (money must not vanish)
+router.post('/api/admin/withdrawal/:id/fail', requireAdmin, (req, res) => {
+  const w = getWithdrawal(req.params.id);
+  if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
+  if (w.status !== 'pending') return res.status(400).json({ error: `Already ${w.status}` });
+  updateWithdrawalStatus(req.params.id, 'failed', 'admin');
+  res.json({ ok: true, withdrawal: getWithdrawal(req.params.id) });
 });
 
 // Resolve support message

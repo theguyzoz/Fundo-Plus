@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
-  <title>Fundo Plus — Subscription</title>
+  <title>Fundo Plus — Wallet &amp; Subscription</title>
   <style>
     *,::after,::before{box-sizing:border-box;margin:0;padding:0}
     :root{--bg:#f6f8ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--warn:#f59e0b;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
@@ -15,19 +15,30 @@
     .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt);margin-left:8px}
     .main{max-width:900px;margin:0 auto;padding:32px 20px}
     .page-title{font-size:1.5rem;font-weight:900;margin-bottom:4px}
-    .page-sub{font-size:.85rem;color:var(--mut);margin-bottom:28px}
+    .page-sub{font-size:.85rem;color:var(--mut);margin-bottom:24px}
 
     /* Wallet */
-    .wallet{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(120deg,#1d4ed8,#2563eb);color:#fff;border-radius:16px;padding:20px 22px;margin-bottom:28px;box-shadow:0 10px 30px rgba(37,99,235,.22)}
+    .wallet{background:linear-gradient(120deg,#1d4ed8,#2563eb);color:#fff;border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:0 10px 30px rgba(37,99,235,.22)}
+    .wallet .wl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
     .wallet .wl-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.85}
-    .wallet .wl-bal{font-size:1.9rem;font-weight:900;margin-top:2px}
-    .wallet .wl-plan{font-size:.8rem;opacity:.9;margin-top:4px}
+    .wallet .wl-bal{font-size:2.1rem;font-weight:900;margin-top:2px}
+    .wallet .wl-plan{font-size:.8rem;opacity:.9;margin-top:2px}
     .wallet .wl-badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:7px 14px;border-radius:99px;font-size:.75rem;font-weight:800;white-space:nowrap}
+    .wallet .wl-rows{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.2)}
+    .wallet .wl-item{font-size:.8rem}
+    .wallet .wl-item .k{opacity:.8;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+    .wallet .wl-item .v{font-weight:800;font-size:.95rem;margin-top:2px}
+    .wallet .wl-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+    .wl-btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;padding:9px 18px;border-radius:9px;font-weight:800;font-size:.82rem;cursor:pointer;transition:.12s}
+    .wl-btn:hover{background:rgba(255,255,255,.26)}
+    .wl-btn.solid{background:#fff;color:var(--acc);border:none}
+
+    .notice{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:12px 16px;font-size:.8rem;line-height:1.55;margin-bottom:20px}
+    .notice b{font-weight:800}
 
     .plans-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px}
-    .plan-card{background:var(--surf);border:2px solid var(--brd);border-radius:14px;padding:20px;cursor:pointer;transition:.15s;position:relative}
+    .plan-card{background:var(--surf);border:2px solid var(--brd);border-radius:14px;padding:20px;position:relative;transition:.15s}
     .plan-card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 6px 28px rgba(37,99,235,.12)}
-    .plan-card.active{border-color:var(--acc);background:#f0f7ff}
     .plan-card.current{border-color:var(--grn);background:#f0fdf4}
     .plan-badge{position:absolute;top:10px;right:10px;font-size:.65rem;font-weight:800;border-radius:99px;padding:3px 9px}
     .badge-current{background:#dcfce7;color:#166534}
@@ -39,29 +50,45 @@
     .plan-features li{font-size:.78rem;color:var(--mut);display:flex;align-items:flex-start;gap:6px}
     .plan-features li::before{content:'✓';color:var(--grn);font-weight:900;flex-shrink:0;margin-top:1px}
     .plan-features li.limit::before{content:'•';color:var(--acc)}
-    .select-btn{width:100%;margin-top:16px;padding:9px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer;transition:.12s}
-    .select-btn:hover{background:var(--acc2)}
-    .select-btn.disabled{background:var(--grn);cursor:default}
+    .buy-btn{width:100%;margin-top:16px;padding:9px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer;transition:.12s}
+    .buy-btn:hover{background:var(--acc2)}
+    .buy-btn.disabled{background:var(--grn);cursor:default}
 
-    /* Payment modal */
+    .usage-card{background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:18px;margin-bottom:24px}
+    .usage-card h3{font-size:.9rem;font-weight:800;margin-bottom:12px}
+    .usage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+    .usage-bar{background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden;margin-top:4px}
+    .usage-bar-fill{height:100%;background:var(--acc);border-radius:99px;transition:width .3s}
+
+    /* Withdrawals list */
+    .wd-card{background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:18px;margin-bottom:24px}
+    .wd-card h3{font-size:.9rem;font-weight:800;margin-bottom:12px}
+    .wd-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--brd);font-size:.83rem}
+    .wd-row:last-child{border:none}
+    .wd-badge{font-size:.68rem;font-weight:800;border-radius:99px;padding:3px 9px}
+    .wd-pending{background:#fef3c7;color:#92400e}
+    .wd-paid{background:#dcfce7;color:#166534}
+    .wd-failed{background:#fef2f2;color:#991b1b}
+
+    /* Modal */
     .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
     .modal-bg.open{display:flex}
-    .modal{background:var(--surf);border-radius:16px;width:min(480px,100%);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:92vh;overflow:auto}
+    .modal{background:var(--surf);border-radius:16px;width:min(460px,100%);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:92vh;overflow:auto}
     .modal h2{font-size:1.1rem;font-weight:900;margin-bottom:6px}
     .modal p{font-size:.84rem;color:var(--mut);margin-bottom:16px;line-height:1.6}
-
     .field{margin-bottom:14px}
     .field label{display:block;font-size:.78rem;font-weight:700;color:var(--txt);margin-bottom:6px}
-    .field select,.field input{width:100%;padding:11px 13px;border:1.5px solid var(--brd);border-radius:9px;font-size:.9rem;background:var(--surf);color:var(--txt);outline:0}
-    .field select:focus,.field input:focus{border-color:var(--acc)}
+    .field input,.field select{width:100%;padding:11px 13px;border:1.5px solid var(--brd);border-radius:9px;font-size:.9rem;background:var(--surf);color:var(--txt);outline:0}
+    .field input:focus,.field select:focus{border-color:var(--acc)}
     .method-row{display:flex;gap:8px}
     .method-pill{flex:1;text-align:center;padding:11px 8px;border:1.5px solid var(--brd);border-radius:9px;cursor:pointer;font-weight:800;font-size:.85rem;color:var(--mut);transition:.12s}
     .method-pill.on{border-color:var(--acc);background:#eff6ff;color:var(--acc)}
-
-    .ecocash-box{background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:18px;text-align:center}
-    .ecocash-box .amount{font-size:1.4rem;font-weight:900;color:#166534}
-    .ecocash-box .label{font-size:.75rem;color:#16a34a;font-weight:700;margin-bottom:4px}
-
+    .quick-amounts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .qa{flex:1;min-width:64px;text-align:center;padding:10px 6px;border:1.5px solid var(--brd);border-radius:9px;cursor:pointer;font-weight:800;font-size:.82rem;color:var(--mut)}
+    .qa.on{border-color:var(--acc);background:#eff6ff;color:var(--acc)}
+    .fee-box{background:#f8faff;border:1.5px solid var(--brd);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:.83rem}
+    .fee-box .row{display:flex;justify-content:space-between;padding:3px 0}
+    .fee-box .row.total{border-top:1px solid var(--brd);margin-top:6px;padding-top:8px;font-weight:900}
     .status-box{border-radius:12px;padding:22px;text-align:center;margin-bottom:16px;background:#f8faff;border:1.5px solid var(--brd)}
     .status-box .spin{width:34px;height:34px;border:3px solid #dbeafe;border-top-color:var(--acc);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
     .status-box.ok{background:#f0fdf4;border-color:#bbf7d0}
@@ -71,36 +98,14 @@
     .status-box .s-sub{font-size:.82rem;color:var(--mut);line-height:1.5}
     .status-box.ok .s-title{color:#166534}
     .status-box.err .s-title{color:#991b1b}
-
-    .upload-area{border:2px dashed var(--brd);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.12s;margin-bottom:14px}
-    .upload-area:hover{border-color:var(--acc);background:#f8faff}
-    .upload-area.has-file{border-color:var(--grn);background:#f0fdf4}
-    .upload-area p{font-size:.82rem;color:var(--mut);margin-top:6px}
-    .upload-area .icon{font-size:2rem}
-    input[type=file]{display:none}
-
     .btn-acc{padding:11px 24px;background:var(--acc);border:none;border-radius:9px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;width:100%}
     .btn-acc:hover{background:var(--acc2)}
     .btn-acc:disabled{opacity:.5;cursor:not-allowed}
     .btn-cancel{padding:11px 24px;background:#f1f5f9;border:none;border-radius:9px;color:var(--mut);font-weight:700;font-size:.88rem;cursor:pointer;width:100%;margin-top:8px}
     .btn-cancel:hover{background:#e2e8f0}
-    .btn-link{background:none;border:none;color:var(--acc);font-size:.8rem;font-weight:700;cursor:pointer;margin-top:14px;width:100%;text-align:center}
-    .btn-link:hover{text-decoration:underline}
-
     .alert{padding:10px 14px;border-radius:8px;font-size:.83rem;margin-bottom:12px;display:none}
     .alert.err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
     .alert.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
-
-    .proof-status{background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:16px;margin-bottom:20px}
-    .proof-status h3{font-size:.9rem;font-weight:800;margin-bottom:10px}
-    .proof-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd);font-size:.82rem}
-    .proof-row:last-child{border:none}
-    .proof-badge{font-size:.68rem;font-weight:800;border-radius:99px;padding:3px 9px}
-    .pb-pending{background:#fef3c7;color:#92400e}
-    .pb-approved{background:#dcfce7;color:#166534}
-    .pb-rejected{background:#fef2f2;color:#991b1b}
-    .usage-bar{background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden;margin-top:4px}
-    .usage-bar-fill{height:100%;background:var(--acc);border-radius:99px;transition:width .3s}
     @media(max-width:600px){.plans-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:400px){.plans-grid{grid-template-columns:1fr}}
   </style>
@@ -108,88 +113,111 @@
 <body>
   <div class="topbar">
     <a href="/~">← Dashboard</a>
-    <span class="topbar-title">Subscription</span>
+    <span class="topbar-title">Wallet &amp; Subscription</span>
   </div>
 
   <div class="main">
-    <div class="page-title">📦 Subscription Plans</div>
-    <div class="page-sub">Choose a plan and pay instantly with EcoCash or OneMoney via Paynow.</div>
+    <div class="page-title">💳 Wallet &amp; Plans</div>
+    <div class="page-sub">Top up your wallet (max $10.00), then buy a plan with your balance — or withdraw.</div>
 
+    <!-- Wallet -->
     <div class="wallet" id="wallet" style="display:none">
-      <div>
-        <div class="wl-label">Wallet balance</div>
-        <div class="wl-bal" id="wallet-balance">$0.00</div>
-        <div class="wl-plan" id="wallet-plan">Free plan</div>
+      <div class="wl-top">
+        <div>
+          <div class="wl-label">Virtual balance</div>
+          <div class="wl-bal" id="wallet-balance">$0.00</div>
+          <div class="wl-plan" id="wallet-plan">Free plan</div>
+        </div>
+        <div class="wl-badge" id="wallet-badge">FREE</div>
       </div>
-      <div class="wl-badge" id="wallet-badge">FREE</div>
+      <div class="wl-rows">
+        <div class="wl-item"><div class="k">Withdrawal balance</div><div class="v" id="wallet-withdraw">$0.00</div></div>
+        <div class="wl-item"><div class="k">Can top up</div><div class="v" id="wallet-remaining">$10.00</div></div>
+        <div class="wl-item"><div class="k">Fee</div><div class="v" id="wallet-fee">5%</div></div>
+      </div>
+      <div class="wl-actions">
+        <button class="wl-btn solid" onclick="openTopup()">＋ Top up</button>
+        <button class="wl-btn" onclick="openWithdraw()">Withdraw</button>
+      </div>
     </div>
 
-    <div id="proof-status-wrap"></div>
+    <div class="notice" id="fee-notice" style="display:none">
+      ⚠️ <b>5% transaction fee:</b> a 5% fee is deducted on withdrawals (and deposits, if enabled). Your <b>virtual balance</b> shows what you hold; the <b>withdrawal balance</b> shows what you'd actually receive after the fee. Deposited funds do not expire.
+    </div>
 
+    <!-- Plans -->
     <div class="plans-grid" id="plans-grid">
       <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--mut)">Loading plans…</div>
     </div>
 
-    <div style="background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:18px;margin-bottom:24px">
-      <div style="font-size:.9rem;font-weight:800;margin-bottom:12px">📊 Your Current Usage Today</div>
-      <div id="usage-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
+    <!-- Withdrawals history -->
+    <div class="wd-card" id="wd-card" style="display:none">
+      <h3>🧾 Withdrawals</h3>
+      <div id="wd-list"></div>
+    </div>
+
+    <!-- Usage -->
+    <div class="usage-card">
+      <h3>📊 Your Current Usage Today</h3>
+      <div class="usage-grid" id="usage-grid"></div>
     </div>
   </div>
 
-
-  <div class="modal-bg" id="payModal">
+  <!-- TOP-UP modal -->
+  <div class="modal-bg" id="topupModal">
     <div class="modal">
-      <h2 id="modal-plan-name">Upgrade to Plus</h2>
-      <p id="modal-plan-desc">Pay securely via Paynow and your plan activates automatically.</p>
-
-      <!-- Amount -->
-      <div class="ecocash-box">
-        <div class="label">Amount</div>
-        <div class="amount" id="modal-amount"></div>
+      <h2>Top up wallet</h2>
+      <p id="topup-max-hint"></p>
+      <div class="field"><label>Amount (USD)</label>
+        <div class="quick-amounts" id="quick-amounts"></div>
+        <input id="topup-amount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="e.g. 5.00">
       </div>
-
-      <!-- STEP 1: choose method + phone -->
-      <div id="paynow-form">
-        <div class="field">
-          <label>Payment method</label>
-          <div class="method-row">
-            <div class="method-pill on" id="m-ecocash" onclick="selectMethod('ecocash')">💚 EcoCash</div>
-            <div class="method-pill" id="m-onemoney" onclick="selectMethod('onemoney')">🟦 OneMoney</div>
-          </div>
+      <div class="field"><label>Payment method</label>
+        <div class="method-row">
+          <div class="method-pill on" id="m-ecocash" onclick="selectMethod('ecocash')">💚 EcoCash</div>
+          <div class="method-pill" id="m-onemoney" onclick="selectMethod('onemoney')">🟦 OneMoney</div>
         </div>
-        <div class="field">
-          <label>Mobile number</label>
-          <input id="pay-phone" type="tel" placeholder="07X XXX XXXX" inputmode="tel">
-        </div>
-        <div class="alert" id="modal-alert"></div>
-        <button class="btn-acc" id="pay-btn" onclick="startPaynow()">Pay now</button>
-        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button class="btn-link" id="proof-toggle" onclick="toggleProofForm(true)">Having trouble? Pay manually &amp; upload screenshot</button>
       </div>
-
-      <!-- STEP 2: waiting for confirmation (polls) -->
-      <div id="paynow-waiting" style="display:none">
-        <div class="status-box" id="waiting-box">
-          <div class="spin"></div>
-          <div class="s-title">Waiting for payment…</div>
-          <div class="s-sub" id="waiting-sub">Approve the prompt on your phone. We'll confirm automatically.</div>
-        </div>
-        <button class="btn-cancel" id="waiting-cancel" onclick="cancelPoll()">Cancel</button>
+      <div class="field"><label>Mobile number</label>
+        <input id="pay-phone" type="tel" placeholder="07X XXX XXXX" inputmode="tel">
       </div>
+      <div class="alert" id="topup-alert"></div>
+      <button class="btn-acc" id="topup-btn" onclick="startTopup()">Pay now</button>
+      <button class="btn-cancel" onclick="closeTopup()">Cancel</button>
+    </div>
+  </div>
 
-      <!-- Fallback: manual proof upload -->
-      <div id="proof-form" style="display:none">
-        <div class="alert" id="proof-alert"></div>
-        <div class="upload-area" id="upload-area" onclick="document.getElementById('proof-file').click()">
-          <div class="icon">📸</div>
-          <strong style="font-size:.85rem">Click to upload payment screenshot</strong>
-          <p>JPG or PNG, max 5 MB. One image per submission.</p>
-        </div>
-        <input type="file" id="proof-file" accept="image/*" onchange="handleFileSelect(this)">
-        <button class="btn-acc" id="submit-proof-btn" onclick="submitProof()" disabled>Submit Proof</button>
-        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button class="btn-link" onclick="toggleProofForm(false)">← Back to Paynow</button>
+  <!-- Top-up WAITING modal -->
+  <div class="modal-bg" id="waitingModal">
+    <div class="modal">
+      <div class="status-box" id="waiting-box">
+        <div class="spin"></div>
+        <div class="s-title">Waiting for payment…</div>
+        <div class="s-sub" id="waiting-sub">Approve the prompt on your phone.</div>
       </div>
+      <button class="btn-cancel" onclick="cancelPoll()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- WITHDRAW modal -->
+  <div class="modal-bg" id="withdrawModal">
+    <div class="modal">
+      <h2>Withdraw balance</h2>
+      <p id="withdraw-max-hint"></p>
+      <div class="field"><label>Amount to withdraw (USD)</label>
+        <input id="withdraw-amount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="e.g. 5.00">
+      </div>
+      <div class="field"><label>Receive to (EcoCash / OneMoney number)</label>
+        <input id="withdraw-phone" type="tel" placeholder="07X XXX XXXX" inputmode="tel">
+      </div>
+      <div class="fee-box" id="withdraw-fee-box" style="display:none">
+        <div class="row"><span>Amount</span><span id="wd-f-amount">$0.00</span></div>
+        <div class="row"><span>Fee (5%)</span><span id="wd-f-fee">$0.00</span></div>
+        <div class="row total"><span>You receive</span><span id="wd-f-net">$0.00</span></div>
+      </div>
+      <div class="alert" id="withdraw-alert"></div>
+      <button class="btn-acc" id="withdraw-btn" onclick="doWithdraw()">Request withdrawal</button>
+      <button class="btn-cancel" onclick="closeWithdraw()">Cancel</button>
     </div>
   </div>
 
@@ -197,19 +225,16 @@
     const token = localStorage.getItem('fp_session');
     if (!token) window.location.replace('/login');
 
+    let state = null;
     let currentPlan = 'free';
-    let selectedPlan = '';
     let selectedMethod = 'ecocash';
-    let proofFile = null;
     let pollTimer = null;
     let pollCount = 0;
-    const POLL_INTERVAL = 4000;   // 4s
-    const POLL_MAX = 90;          // ~6 minutes
+    const POLL_INTERVAL = 4000, POLL_MAX = 90;
 
     async function api(method, url, body) {
       const opts = { method, headers: { 'x-session-token': token } };
-      if (body instanceof FormData) { opts.body = body; }
-      else if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+      if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
       const r = await fetch(url, opts);
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Error');
@@ -218,15 +243,13 @@
 
     async function init() {
       try {
-        const d = await api('GET', '/api/subscription');
-        currentPlan = d.plan;
-        renderWallet(d);
-        renderPlans(d);
-        renderUsage(d);
-        renderProofStatus(d.proofs || [], d.pendingProof || null);
-      } catch (e) {
-        console.error(e);
-      }
+        state = await api('GET', '/api/subscription');
+        currentPlan = state.plan;
+        renderWallet(state);
+        renderPlans(state);
+        renderUsage(state);
+        renderWithdrawals(state.withdrawals || []);
+      } catch (e) { console.error(e); }
     }
 
     const PLAN_FEATURES = {
@@ -235,181 +258,146 @@
       plus: ['200 AI messages/day', '25 Projects total', '25 Study sessions/day', '30 PDF exports/day', '20 Quizzes/day', '20 Paper downloads per 6 hrs'],
       pro:  ['Unlimited AI messages', 'Unlimited projects', 'Unlimited study sessions', 'Unlimited PDF exports', 'Unlimited quizzes', 'Unlimited paper downloads'],
     };
-
-    const PLAN_PRICES = { free: '$0', lite: '$2/mo', plus: '$5/mo', pro: '$7/mo' };
+    const PLAN_PRICES = { free: 0, lite: 2, plus: 5, pro: 7 };
     const PLAN_COLORS = { free: '#6b7280', lite: '#2563eb', plus: '#7c3aed', pro: '#dc2626' };
 
     function renderWallet(d) {
-      const w = document.getElementById('wallet');
-      w.style.display = 'flex';
+      document.getElementById('wallet').style.display = 'block';
       document.getElementById('wallet-balance').textContent = '$' + (d.balanceDollars ?? '0.00');
-      const planName = (d.plan || 'free');
-      document.getElementById('wallet-plan').textContent = 'Current plan: ' + planName.charAt(0).toUpperCase() + planName.slice(1);
+      document.getElementById('wallet-withdraw').textContent = '$' + (d.withdrawalDollars ?? '0.00');
+      document.getElementById('wallet-remaining').textContent = '$' + (d.remainingTopupDollars ?? '10.00');
+      document.getElementById('wallet-fee').textContent = (d.feePct ?? 5) + '%';
+      const pn = d.plan || 'free';
+      document.getElementById('wallet-plan').textContent = 'Current plan: ' + pn.charAt(0).toUpperCase() + pn.slice(1);
       const badge = document.getElementById('wallet-badge');
-      badge.textContent = planName.toUpperCase();
-      badge.style.background = planName === 'free' ? 'rgba(255,255,255,.16)' : '#16a34a';
+      badge.textContent = pn.toUpperCase();
+      badge.style.background = pn === 'free' ? 'rgba(255,255,255,.16)' : '#16a34a';
+      document.getElementById('fee-notice').style.display = 'block';
     }
 
     function renderPlans(d) {
-      const planKeys = ['free','lite','plus','pro'];
       const grid = document.getElementById('plans-grid');
-      grid.innerHTML = planKeys.map(key => {
-        const p = d.plans?.[key] || {};
+      grid.innerHTML = ['free','lite','plus','pro'].map(key => {
         const isCurrent = key === currentPlan;
         const features = PLAN_FEATURES[key] || [];
         const price = PLAN_PRICES[key];
         const color = PLAN_COLORS[key];
         return `
-          <div class="plan-card ${isCurrent ? 'current' : ''}" onclick="selectPlan('${key}')">
+          <div class="plan-card ${isCurrent ? 'current' : ''}">
             ${isCurrent ? '<div class="plan-badge badge-current">✓ Current</div>' : ''}
             ${key === 'plus' && !isCurrent ? '<div class="plan-badge badge-popular">Popular</div>' : ''}
             <div class="plan-name" style="color:${color}">${key.charAt(0).toUpperCase()+key.slice(1)}</div>
-            <div class="plan-price" style="color:${color}">${price.split('/')[0]}<span>${price.includes('/') ? '/mo' : ''}</span></div>
-            <ul class="plan-features">
-              ${features.map(f => `<li class="limit">${f}</li>`).join('')}
-            </ul>
+            <div class="plan-price" style="color:${color}">$${price}<span>/mo</span></div>
+            <ul class="plan-features">${features.map(f => `<li class="limit">${f}</li>`).join('')}</ul>
             ${key === 'free'
-              ? `<button class="select-btn disabled" style="background:var(--grn)" disabled>Free Plan</button>`
+              ? `<button class="buy-btn disabled" style="background:var(--grn)" disabled>Free Plan</button>`
               : isCurrent
-                ? `<button class="select-btn disabled" style="background:var(--grn)" disabled>Active ✓</button>`
-                : `<button class="select-btn" onclick="event.stopPropagation();openPayModal('${key}')">Upgrade →</button>`
-            }
+                ? `<button class="buy-btn disabled" style="background:var(--grn)" disabled>Active ✓</button>`
+                : `<button class="buy-btn" onclick="buyPlan('${key}')">Buy with balance — $${price}</button>`}
           </div>`;
       }).join('');
     }
 
     function renderUsage(d) {
-      const limits = d.limits || {};
-      const usage  = d.usage  || {};
-      const isLinked = !!d.user?.jid;
-      const aiLimit = limits.aiMsg ?? '—';
-      const aiUsed  = usage.chat ?? 0;
-
+      const limits = d.limits || {}, usage = d.usage || {};
       const items = [
-        { label: 'AI Messages', used: aiUsed, max: aiLimit },
-        { label: 'Quizzes', used: usage.quizzes ?? 0, max: limits.quizzes ?? '—' },
-        { label: 'PDF Exports', used: usage.pdf ?? 0, max: limits.pdfExports ?? '—' },
-        { label: 'Study Sessions', used: usage.studySessions ?? 0, max: limits.studySessions ?? '—' },
-        { label: 'Projects (total)', used: usage.projectsTotal ?? 0, max: limits.projects ?? '—' },
-        { label: 'Paper DL (6h)', used: (usage.paperDlWindows?.[usage.paperDlWindows?.length-1]?.count ?? 0), max: limits.paperDl ?? '—' },
+        { label: 'AI Messages', used: usage.chat ?? 0, max: limits.aiMsg },
+        { label: 'Quizzes', used: usage.quizzes ?? 0, max: limits.quizzes },
+        { label: 'PDF Exports', used: usage.pdf ?? 0, max: limits.pdfExports },
+        { label: 'Study Sessions', used: usage.studySessions ?? 0, max: limits.studySessions },
+        { label: 'Projects (total)', used: usage.projectsTotal ?? 0, max: limits.projects },
+        { label: 'Paper DL (6h)', used: usage.paperDlWindows?.[usage.paperDlWindows.length-1]?.count ?? 0, max: limits.paperDl },
       ];
-
       document.getElementById('usage-grid').innerHTML = items.map(item => {
-        const pct = (item.max && item.max !== Infinity && item.max !== 'unlimited' && item.max !== '—') ? Math.min(100, (item.used / item.max) * 100) : 0;
+        const max = item.max, isUnl = max === Infinity || max === 'unlimited' || max === '—' || max == null;
+        const pct = isUnl ? 0 : Math.min(100, (item.used / max) * 100);
         const color = pct > 85 ? '#dc2626' : pct > 60 ? '#f59e0b' : '#2563eb';
-        return `
-          <div style="background:var(--bg);border-radius:10px;padding:12px">
-            <div style="font-size:.72rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${item.label}</div>
-            <div style="font-size:1.1rem;font-weight:900;color:${color}">${item.used} <span style="font-size:.8rem;color:var(--mut);font-weight:500">/ ${(item.max === Infinity || item.max === 'unlimited') ? '∞' : item.max}</span></div>
-            ${item.max !== '—' && item.max !== Infinity && item.max !== 'unlimited' ? `<div class="usage-bar"><div class="usage-bar-fill" style="width:${pct}%;background:${color}"></div></div>` : ''}
-          </div>`;
+        return `<div style="background:var(--bg);border-radius:10px;padding:12px">
+          <div style="font-size:.72rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${item.label}</div>
+          <div style="font-size:1.1rem;font-weight:900;color:${color}">${item.used} <span style="font-size:.8rem;color:var(--mut);font-weight:500">/ ${isUnl ? '∞' : max}</span></div>
+          ${!isUnl ? `<div class="usage-bar"><div class="usage-bar-fill" style="width:${pct}%;background:${color}"></div></div>` : ''}
+        </div>`;
       }).join('');
     }
 
-    let _hasPendingProof = false;
-
-    function renderProofStatus(proofs, pendingProof) {
-      _hasPendingProof = !!pendingProof;
-      const wrap = document.getElementById('proof-status-wrap');
-      if (!proofs.length && !pendingProof) { wrap.innerHTML = ''; return; }
-
-      const recentProofs = proofs.slice(0, 5);
-      wrap.innerHTML = `
-        <div class="proof-status" style="${pendingProof ? 'border-color:#f59e0b;background:#fffbeb' : ''}">
-          ${pendingProof ? `
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#fef3c7;border-radius:8px;padding:12px">
-              <span style="font-size:1.4rem">⏳</span>
-              <div>
-                <div style="font-size:.9rem;font-weight:900;color:#92400e">Proof Under Review</div>
-                <div style="font-size:.78rem;color:#78350f">Your ${pendingProof.plan.toUpperCase()} plan proof submitted ${new Date(pendingProof.submittedAt).toLocaleDateString()} is awaiting admin approval. You cannot submit another proof until this one is reviewed.</div>
-              </div>
-            </div>` : ''}
-          ${recentProofs.length ? `
-            <h3>📋 Recent Submissions</h3>
-            ${recentProofs.map(p => `
-              <div class="proof-row">
-                <span style="flex:1">${p.plan.toUpperCase()} — ${new Date(p.submittedAt).toLocaleDateString()}</span>
-                <span class="proof-badge pb-${p.status}">${p.status}</span>
-              </div>`).join('')}` : ''}
+    function renderWithdrawals(list) {
+      const card = document.getElementById('wd-card');
+      if (!list.length) { card.style.display = 'none'; return; }
+      card.style.display = 'block';
+      document.getElementById('wd-list').innerHTML = list.slice(0, 10).map(w => {
+        const cls = { pending:'wd-pending', paid:'wd-paid', failed:'wd-failed' }[w.status] || 'wd-pending';
+        return `<div class="wd-row">
+          <span>$${(w.netCents/100).toFixed(2)} → ${w.phone} <span style="color:var(--mut)">($${(w.amountCents/100).toFixed(2)} − $${(w.feeCents/100).toFixed(2)} fee)</span></span>
+          <span class="wd-badge ${cls}">${w.status}</span>
         </div>`;
+      }).join('');
     }
 
-    function selectPlan(key) {
-      if (key === 'free' || key === currentPlan) return;
-      if (_hasPendingProof) {
-        alert('⏳ You already have a proof pending review. Please wait for admin approval before submitting a new one.');
+    // ── Buy plan with balance ───────────────────────────────────────────
+    async function buyPlan(plan) {
+      try {
+        const d = await api('POST', '/api/subscription/activate', { plan });
+        alert(`✅ You are now on the ${plan.toUpperCase()} plan!`);
+        init();
+      } catch (e) {
+        alert(e.message);
+        init();
+      }
+    }
+
+    // ── Top up ──────────────────────────────────────────────────────────
+    function openTopup() {
+      const remaining = state.remainingTopupDollars;
+      if (parseFloat(remaining) < 1) {
+        alert('Your wallet is at its $' + state.maxBalanceDollars + ' maximum. You cannot top up any more.');
         return;
       }
-      openPayModal(key);
+      document.getElementById('topup-max-hint').textContent = `Top up between $1.00 and $${remaining} (your wallet can hold up to $${state.maxBalanceDollars}).`;
+      const qa = document.getElementById('quick-amounts');
+      qa.innerHTML = '';
+      [1, 2, 5, 10].forEach(a => {
+        if (a <= parseFloat(remaining)) {
+          const b = document.createElement('div');
+          b.className = 'qa'; b.textContent = '$' + a;
+          b.onclick = () => { document.getElementById('topup-amount').value = a; qa.querySelectorAll('.qa').forEach(x => x.classList.remove('on')); b.classList.add('on'); };
+          qa.appendChild(b);
+        }
+      });
+      document.getElementById('topup-amount').value = '';
+      document.getElementById('pay-phone').value = '';
+      showTopupAlert('', '');
+      document.getElementById('topupModal').classList.add('open');
     }
-
-    function openPayModal(plan) {
-      selectedPlan = plan;
-      const prices = { lite: '$2 USD', plus: '$5 USD', pro: '$7 USD' };
-      const names  = { lite: 'Lite', plus: 'Plus', pro: 'Pro' };
-      document.getElementById('modal-plan-name').textContent = `Upgrade to ${names[plan] || plan}`;
-      document.getElementById('modal-amount').textContent = `${prices[plan] || ''} per month`;
-      document.getElementById('payModal').classList.add('open');
-      showAlert('', '');
-      // reset to step 1
-      document.getElementById('paynow-form').style.display = 'block';
-      document.getElementById('paynow-waiting').style.display = 'none';
-      document.getElementById('proof-form').style.display = 'none';
-      document.getElementById('proof-toggle').style.display = 'block';
-      resetUpload();
-    }
-
-    function closeModal() {
-      cancelPoll();
-      document.getElementById('payModal').classList.remove('open');
-      resetUpload();
-    }
-
+    function closeTopup() { document.getElementById('topupModal').classList.remove('open'); }
     function selectMethod(m) {
       selectedMethod = m;
       document.getElementById('m-ecocash').classList.toggle('on', m === 'ecocash');
       document.getElementById('m-onemoney').classList.toggle('on', m === 'onemoney');
     }
-
-    function toggleProofForm(show) {
-      document.getElementById('paynow-form').style.display = show ? 'none' : 'block';
-      document.getElementById('proof-form').style.display = show ? 'block' : 'none';
-      document.getElementById('proof-toggle').style.display = show ? 'none' : 'block';
-      document.getElementById('modal-alert').style.display = 'none';
+    function showTopupAlert(type, msg) {
+      const el = document.getElementById('topup-alert');
+      el.className = 'alert ' + type; el.textContent = msg; el.style.display = msg ? 'block' : 'none';
     }
 
-    // ── Paynow flow ──────────────────────────────────────────────────────
-    async function startPaynow() {
+    async function startTopup() {
+      const amount = (document.getElementById('topup-amount').value || '').trim();
       const phone = (document.getElementById('pay-phone').value || '').trim();
-      if (!/^0?7\d{8}$|^2637\d{8}$/.test(phone)) {
-        showAlert('err', 'Enter a valid mobile number, e.g. 0771 234 567.');
-        return;
-      }
-      const btn = document.getElementById('pay-btn');
-      btn.disabled = true;
-      btn.textContent = 'Contacting Paynow…';
-      showAlert('', '');
-
+      if (!amount || isNaN(amount) || parseFloat(amount) < 1) { showTopupAlert('err', 'Enter a valid amount (minimum $1.00).'); return; }
+      if (!/^0?7\d{8}$|^2637\d{8}$/.test(phone.replace(/\s+/g,''))) { showTopupAlert('err', 'Enter a valid mobile number, e.g. 0771 234 567.'); return; }
+      const btn = document.getElementById('topup-btn');
+      btn.disabled = true; btn.textContent = 'Contacting Paynow…';
+      showTopupAlert('', '');
       try {
-        const d = await api('POST', '/api/subscription/deposit', { plan: selectedPlan, method: selectedMethod, phone: phone.replace(/\s+/g,'') });
-
-        // Switch to waiting state
-        document.getElementById('paynow-form').style.display = 'none';
-        document.getElementById('paynow-waiting').style.display = 'block';
-        const box = document.getElementById('waiting-box');
-        box.className = 'status-box';
+        const d = await api('POST', '/api/topup', { amount, method: selectedMethod, phone: phone.replace(/\s+/g,'') });
+        closeTopup();
+        document.getElementById('waiting-box').className = 'status-box';
         document.getElementById('waiting-sub').textContent = d.instructions || 'Approve the prompt on your phone.';
-
-        // Optionally open Paynow's hosted page in a new tab (browser checkout)
-        if (d.redirectUrl) {
-          window.open(d.redirectUrl, '_blank');
-        }
-
+        document.getElementById('waitingModal').classList.add('open');
+        if (d.redirectUrl) window.open(d.redirectUrl, '_blank');
         startPolling(d.reference);
       } catch (e) {
-        btn.disabled = false;
-        btn.textContent = 'Pay now';
-        showAlert('err', e.message);
+        btn.disabled = false; btn.textContent = 'Pay now';
+        showTopupAlert('err', e.message);
       }
     }
 
@@ -417,107 +405,78 @@
       pollCount = 0;
       pollTimer = setInterval(() => pollOnce(reference), POLL_INTERVAL);
     }
-
     async function pollOnce(reference) {
       pollCount++;
       try {
         const d = await api('GET', `/api/subscription/poll?reference=${encodeURIComponent(reference)}`);
         if (d.status === 'paid') {
           stopPolling();
-          showWaitingResult(true, `✅ Payment confirmed! Your ${(d.plan||selectedPlan).toUpperCase()} plan is now active.`);
-          setTimeout(() => { closeModal(); init(); }, 2200);
+          showWaitingResult(true, `✅ Top-up confirmed! Your wallet now has $${(d.balance/100).toFixed(2)}.`);
+          setTimeout(() => { closeWaiting(); init(); }, 2000);
         } else if (d.status === 'failed') {
           stopPolling();
-          showWaitingResult(false, 'Payment failed or was cancelled. You have not been charged.');
+          showWaitingResult(false, 'Payment failed or was cancelled. You have not been credited.');
         } else if (pollCount >= POLL_MAX) {
           stopPolling();
-          showWaitingResult(false, 'Timed out waiting for confirmation. If you were charged, your plan will activate automatically when Paynow confirms.');
+          showWaitingResult(false, 'Timed out. If you were charged, your wallet will update automatically when Paynow confirms.');
         }
       } catch (e) {
-        if (pollCount >= POLL_MAX) {
-          stopPolling();
-          showWaitingResult(false, 'Timed out waiting for confirmation.');
-        }
+        if (pollCount >= POLL_MAX) { stopPolling(); showWaitingResult(false, 'Timed out.'); }
       }
     }
-
-    function stopPolling() {
-      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-    }
-
-    function cancelPoll() {
-      stopPolling();
-    }
-
+    function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+    function cancelPoll() { stopPolling(); closeWaiting(); }
+    function closeWaiting() { document.getElementById('waitingModal').classList.remove('open'); }
     function showWaitingResult(ok, msg) {
       const box = document.getElementById('waiting-box');
       box.className = 'status-box ' + (ok ? 'ok' : 'err');
-      box.innerHTML = `
-        <div class="s-title">${ok ? 'Payment complete' : 'Payment not completed'}</div>
-        <div class="s-sub">${msg}</div>`;
-      document.getElementById('waiting-cancel').style.display = 'none';
+      box.innerHTML = `<div class="s-title">${ok ? 'Payment complete' : 'Payment not completed'}</div><div class="s-sub">${msg}</div>`;
     }
 
-    // ── Manual proof fallback ────────────────────────────────────────────
-    function resetUpload() {
-      proofFile = null;
-      document.getElementById('proof-file').value = '';
-      document.getElementById('upload-area').classList.remove('has-file');
-      document.getElementById('upload-area').innerHTML = `
-        <div class="icon">📸</div>
-        <strong style="font-size:.85rem">Click to upload payment screenshot</strong>
-        <p>JPG or PNG, max 5 MB. One image per submission.</p>`;
-      document.getElementById('submit-proof-btn').disabled = true;
+    // ── Withdraw ────────────────────────────────────────────────────────
+    function openWithdraw() {
+      const wd = state.withdrawalDollars;
+      if (parseFloat(wd) < 1) { alert('Your withdrawal balance is below $1.00. Top up first.'); return; }
+      document.getElementById('withdraw-max-hint').textContent = `You can withdraw up to $${(state.balanceDollars)}. A 5% fee is deducted — you receive 95%.`;
+      document.getElementById('withdraw-amount').value = '';
+      document.getElementById('withdraw-phone').value = '';
+      document.getElementById('withdraw-fee-box').style.display = 'none';
+      showWithdrawAlert('', '');
+      document.getElementById('withdrawModal').classList.add('open');
     }
-
-    function handleFileSelect(input) {
-      const file = input.files[0];
-      if (!file) return;
-      if (file.size > 5 * 1024 * 1024) {
-        showProofAlert('err', 'File too large. Maximum 5 MB.');
-        return;
-      }
-      proofFile = file;
-      const area = document.getElementById('upload-area');
-      area.classList.add('has-file');
-      area.innerHTML = `<div class="icon">✅</div><strong style="font-size:.85rem">${file.name}</strong><p>${(file.size/1024).toFixed(0)} KB selected</p>`;
-      document.getElementById('submit-proof-btn').disabled = false;
+    function closeWithdraw() { document.getElementById('withdrawModal').classList.remove('open'); }
+    function showWithdrawAlert(type, msg) {
+      const el = document.getElementById('withdraw-alert');
+      el.className = 'alert ' + type; el.textContent = msg; el.style.display = msg ? 'block' : 'none';
     }
+    document.getElementById('withdraw-amount').addEventListener('input', function () {
+      const a = parseFloat(this.value);
+      const box = document.getElementById('withdraw-fee-box');
+      if (!a || a <= 0) { box.style.display = 'none'; return; }
+      const fee = a * 0.05, net = a - fee;
+      document.getElementById('wd-f-amount').textContent = '$' + a.toFixed(2);
+      document.getElementById('wd-f-fee').textContent = '$' + fee.toFixed(2);
+      document.getElementById('wd-f-net').textContent = '$' + net.toFixed(2);
+      box.style.display = 'block';
+    });
 
-    async function submitProof() {
-      if (!proofFile || !selectedPlan) return;
-      const btn = document.getElementById('submit-proof-btn');
-      btn.disabled = true;
-      btn.textContent = 'Submitting…';
-      showProofAlert('', '');
-
+    async function doWithdraw() {
+      const amount = (document.getElementById('withdraw-amount').value || '').trim();
+      const phone = (document.getElementById('withdraw-phone').value || '').trim();
+      if (!amount || isNaN(amount) || parseFloat(amount) < 1) { showWithdrawAlert('err', 'Enter a valid amount (minimum $1.00).'); return; }
+      if (!/^0?7\d{8}$|^2637\d{8}$/.test(phone.replace(/\s+/g,''))) { showWithdrawAlert('err', 'Enter a valid mobile number.'); return; }
+      const btn = document.getElementById('withdraw-btn');
+      btn.disabled = true; btn.textContent = 'Requesting…';
+      showWithdrawAlert('', '');
       try {
-        const fd = new FormData();
-        fd.append('proof', proofFile);
-        fd.append('plan', selectedPlan);
-        const d = await api('POST', '/api/subscription/proof', fd);
-        showProofAlert('ok', '✅ ' + d.message);
-        btn.textContent = 'Submitted!';
-        setTimeout(() => { closeModal(); init(); }, 2000);
+        const d = await api('POST', '/api/withdraw', { amount, phone: phone.replace(/\s+/g,'') });
+        showWithdrawAlert('ok', `✅ Withdrawal requested. You'll receive $${d.netDollars} (fee $${d.feeDollars}). Payout is processed shortly.`);
+        btn.textContent = 'Done';
+        setTimeout(() => { closeWithdraw(); init(); }, 2000);
       } catch (e) {
-        showProofAlert('err', e.message);
-        btn.disabled = false;
-        btn.textContent = 'Submit Proof';
+        btn.disabled = false; btn.textContent = 'Request withdrawal';
+        showWithdrawAlert('err', e.message);
       }
-    }
-
-    function showAlert(type, msg) {
-      const el = document.getElementById('modal-alert');
-      el.className = 'alert ' + type;
-      el.textContent = msg;
-      el.style.display = msg ? 'block' : 'none';
-    }
-
-    function showProofAlert(type, msg) {
-      const el = document.getElementById('proof-alert');
-      el.className = 'alert ' + type;
-      el.textContent = msg;
-      el.style.display = msg ? 'block' : 'none';
     }
 
     init();
