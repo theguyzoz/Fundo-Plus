@@ -251,6 +251,13 @@
             🚀 Publish Notification
           </button>
           <div style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:8px" id="publish-status"></div>
+
+          <div style="border-top:1px dashed var(--border);margin-top:16px;padding-top:14px">
+            <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:8px">🧪 Diagnostics</div>
+            <button class="btn btn-ghost" style="width:100%;padding:9px" onclick="sendTestPush()">🔔 Send test push to my browser</button>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5">Tests the full push pipeline. Make sure you've enabled notifications in your own account (Dashboard → Notifications → toggle ON) and kept this browser open/backgrounded.</div>
+            <div style="font-size:.75rem;margin-top:6px" id="test-status"></div>
+          </div>
         </div>
       </div>
 
@@ -521,6 +528,41 @@
       loadNotifications();
     } else {
       statusEl.style.color = 'var(--red)'; statusEl.textContent = '⚠ ' + (data.error || 'Failed');
+    }
+  }
+
+  // ── Send a test push (diagnostic) ────────────────────────────────────
+  async function sendTestPush() {
+    const statusEl = document.getElementById('test-status');
+    statusEl.style.color = 'var(--muted)';
+    statusEl.textContent = 'Sending test push…';
+
+    try {
+      const res = await fetch('/api/admin/notifications/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+        body: JSON.stringify({
+          title: '🔔 Fundo Plus Test',
+          body:  'Push is working! 🎉',
+          image: bgImageUrl || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok && data.message) {
+        statusEl.style.color = 'var(--yellow)';
+        statusEl.textContent = data.message;
+        return;
+      }
+      if (data.failed === 0) {
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = `✅ Sent to ${data.sent} subscriber(s). Check this browser — a notification should appear.`;
+      } else {
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = `⚠ Sent ${data.sent}, failed ${data.failed}. First error: ${(data.errors[0] && data.errors[0].statusCode + ' ' + data.errors[0].message) || 'unknown'}`;
+      }
+    } catch (e) {
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = 'Error: ' + e.message;
     }
   }
 

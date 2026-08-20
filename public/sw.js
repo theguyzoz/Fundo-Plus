@@ -8,7 +8,10 @@ self.addEventListener('push', function (event) {
     body:  data.body  || '',
     icon:  data.icon  || '/images/logo.png',
     badge: data.badge || '/images/logo.png',
+    image: data.image || undefined,       // big banner image (Android/desktop)
     data:  { url: data.url || '/~/notifications' },
+    tag:   data.tag,                       // unique tag → always re-shows
+    renotify: !!data.renotify,
     requireInteraction: false,
   };
 

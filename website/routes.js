@@ -88,12 +88,51 @@ const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY  || 'BEPEHkkKDM0XGZVnCphAAq2I
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || 'K-4QFQ4WJ__l5zoQ5zZlqYcsyalMi1q3DtEesGhnbDI';
 webpush.setVapidDetails('mailto:support@fundoplus.co.zw', VAPID_PUBLIC, VAPID_PRIVATE);
 
+const SITE_BASE = () => (process.env.WEBSITE_URL || '').replace(/\/+$/, '');
+
 async function sendPushToSubscriptions(subscriptions, payload) {
+  if (!subscriptions.length) return { sent: 0, failed: 0, errors: [] };
+
+  // Absolute URLs are REQUIRED by push services — relative icons/images fail.
+  const base = SITE_BASE();
+  const abs = (p) => (p && /^https?:\/\//i.test(p) ? p : (base ? base + (p || '') : p));
+
+  const data = {
+    title:       payload.title,
+    body:        payload.body || '',
+    icon:        abs(payload.icon || '/images/logo.png'),
+    badge:       abs(payload.badge || '/images/logo.png'),
+    image:       abs(payload.image) || undefined,      // big banner image (Android/desktop)
+    url:         payload.url || '/~/notifications',
+    tag:         payload.tag || ('notif-' + Date.now()), // unique tag → always re-shows
+    renotify:    true,
+    requireInteraction: false,
+  };
+
   const results = await Promise.allSettled(
-    subscriptions.map(sub => webpush.sendNotification(sub, JSON.stringify(payload)))
+    subscriptions.map(sub => webpush.sendNotification(sub, JSON.stringify(data)))
   );
-  const failed = results.filter(r => r.status === 'rejected').length;
-  if (failed) console.warn(`[Push] ${failed}/${subscriptions.length} pushes failed`);
+
+  const errors = [];
+  let failed = 0;
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      failed++;
+      const reason = r.reason || {};
+      // 404/410 = stale subscription (browser revoked it) — safe to log & prune
+      const code = reason.statusCode || reason.code || '';
+      errors.push({
+        endpoint: (subscriptions[i]?.endpoint || '').slice(0, 80),
+        statusCode: code,
+        message: String(reason.message || reason).slice(0, 160),
+      });
+      console.error(`[Push] ❌ failed (${code}):`, errors[errors.length - 1].message);
+    }
+  });
+
+  if (failed) console.warn(`[Push] ${failed}/${subscriptions.length} failed`);
+  else console.log(`[Push] ✅ sent ${subscriptions.length} notification(s)`);
+  return { sent: subscriptions.length - failed, failed, errors };
 }
 
 // Run expired exam backup purge on startup (non-blocking)
@@ -2540,13 +2579,14 @@ router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
       subscriptions = getPushSubscriptionsForUsers(users.map(u => u.id));
     }
     if (subscriptions.length > 0) {
-      sendPushToSubscriptions(subscriptions, {
+      await sendPushToSubscriptions(subscriptions, {
         title,
         body:  description || '',
         icon:  '/images/logo.png',
         badge: '/images/logo.png',
+        image: bgImage || undefined,   // big banner image in the push notification
         url:   '/~/notifications',
-      }); // fire-and-forget
+      });
     }
   } catch (e) {
     console.warn('[Push] Failed to send push notifications:', e.message);
@@ -2554,6 +2594,25 @@ router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
 
   res.json({ ok: true, notification: notif });
   import('../utils/supabase-data.js').then(m => m.uploadDataFile('notifications.json')).catch(() => {});
+});
+
+// ── Admin: send a TEST push to all subscribers (diagnostic) ────────────────
+router.post('/api/admin/notifications/test', requireAdmin, async (req, res) => {
+  const { title, body, image } = req.body || {};
+  const subscriptions = getAllPushSubscriptions();
+  if (!subscriptions.length) {
+    return res.json({ ok: false, sent: 0, failed: 0, errors: [], message: 'No push subscriptions found. Users must enable notifications from their dashboard (Notifications → toggle ON).' });
+  }
+  const result = await sendPushToSubscriptions(subscriptions, {
+    title: title || '🔔 Fundo Plus Test',
+    body:  body  || 'This is a test notification — push is working!',
+    icon:  '/images/logo.png',
+    badge: '/images/logo.png',
+    image: image || undefined,
+    url:   '/~/notifications',
+    tag:   'test-' + Date.now(),
+  });
+  res.json({ ok: true, ...result, totalSubscribers: subscriptions.length });
 });
 
 router.delete('/api/admin/notifications/:id', requireAdmin, (req, res) => {
