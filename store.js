@@ -1662,3 +1662,77 @@ export function countPendingBySender(toUserId) {
   });
   return counts;
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Startup reload — re-read remaining module-level stores from disk after the
+//  Supabase pull, so restored data is visible in memory (not just on disk).
+// ══════════════════════════════════════════════════════════════════════════
+export function reloadRemainingFromDisk() {
+  const freshProof = readJson(path.join(DATA_DIR, 'proofmeta.json'), null);
+  if (freshProof && Array.isArray(freshProof.proofs)) {
+    proofMeta = freshProof;
+    console.log(`[store] ✅ Proofs reloaded: ${proofMeta.proofs.length}`);
+  }
+
+  const freshStore = readJson(STORE_FILE, null);
+  if (freshStore && freshStore.pairInfo && typeof freshStore.pairInfo === 'object') {
+    storeData = freshStore;
+    console.log('[store] ✅ Pair info reloaded');
+  }
+
+  const freshWa = readJson(WA_FILE, null);
+  if (freshWa && Array.isArray(freshWa.knownJids)) {
+    waData = freshWa;
+    knownJids.clear();
+    waData.knownJids.forEach(j => knownJids.add(j));
+    console.log(`[store] ✅ WhatsApp JIDs reloaded: ${knownJids.size}`);
+  }
+
+  const freshUsage = readJson(USAGE_FILE, null);
+  if (freshUsage && typeof freshUsage === 'object' && !Array.isArray(freshUsage)) {
+    usageData = freshUsage;
+    console.log(`[store] ✅ Usage reloaded: ${Object.keys(usageData).length} users`);
+  }
+
+  const freshImages = readJson(IMAGES_FILE, null);
+  if (freshImages && Array.isArray(freshImages.queue)) {
+    imageStore = freshImages;
+    console.log(`[store] ✅ Image queue reloaded: ${imageStore.queue.length}`);
+  }
+
+  const freshDocs = readJson(DOC_FILE, null);
+  if (freshDocs && Array.isArray(freshDocs.jobs)) {
+    docStore = freshDocs;
+    console.log(`[store] ✅ Doc jobs reloaded: ${docStore.jobs.length}`);
+  }
+
+  const freshMsg = readJson(MESSAGES_FILE, null);
+  if (freshMsg && typeof freshMsg === 'object' && !Array.isArray(freshMsg)) {
+    msgStore = freshMsg;
+    console.log(`[store] ✅ Message history reloaded: ${Object.keys(msgStore).length} chats`);
+  }
+
+  const freshWish = readJson(WISHLIST_FILE, null);
+  if (freshWish && typeof freshWish === 'object') {
+    wishlist = { upgrade: 0, voters: [], ...freshWish };
+    console.log(`[store] ✅ Wishlist reloaded: ${wishlist.upgrade} votes`);
+  }
+
+  const freshBans = readJson(BANS_FILE, null);
+  if (freshBans && freshBans.bans && typeof freshBans.bans === 'object') {
+    bansData = freshBans;
+    console.log(`[store] ✅ Bans reloaded: ${Object.keys(bansData.bans || {}).length} active`);
+  }
+
+  const freshSupport = readJson(SUPPORT_FILE, null);
+  if (freshSupport && Array.isArray(freshSupport.messages)) {
+    supportData = freshSupport;
+    console.log(`[store] ✅ Support messages reloaded: ${supportData.messages.length}`);
+  }
+
+  const freshPromo = readJson(PROMO_FILE, null);
+  if (freshPromo && freshPromo.links && typeof freshPromo.links === 'object') {
+    promoData = freshPromo;
+    console.log(`[store] ✅ Promo links reloaded: ${Object.keys(promoData.links || {}).length}`);
+  }
+}
