@@ -1736,3 +1736,34 @@ export function reloadRemainingFromDisk() {
     console.log(`[store] ✅ Promo links reloaded: ${Object.keys(promoData.links || {}).length}`);
   }
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Recent logins — IN-MEMORY ONLY (deliberately not persisted / no Supabase).
+//  A rolling log of the last N successful web logins, for admin visibility.
+// ══════════════════════════════════════════════════════════════════════════
+const MAX_LOGINS = 300;
+let loginLog = []; // [{ id, userId, email, phone, name, at, ip, ua }]
+
+export function recordLogin(user, meta = {}) {
+  if (!user) return;
+  const name = `${user.name || ''} ${user.surname || ''}`.trim();
+  loginLog.unshift({
+    id:     `lg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    userId: user.id,
+    email:  user.email || '',
+    phone:  user.phone || '',
+    name:   name || '',
+    onboarded: !!user.onboarded,
+    plan:   getUserPlan(user.id),
+    at:     new Date().toISOString(),
+    ip:     meta.ip || '',
+    ua:     meta.ua || '',
+  });
+  if (loginLog.length > MAX_LOGINS) loginLog.length = MAX_LOGINS;
+}
+
+export function getRecentLogins(limit = 100) {
+  return loginLog.slice(0, limit);
+}
+
+export function getLoginCount() { return loginLog.length; }

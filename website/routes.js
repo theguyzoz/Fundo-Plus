@@ -37,6 +37,8 @@ import {
   sanitizeCents, feeCents,
   requestWithdrawal, getWithdrawals, getAllWithdrawals, getWithdrawal, updateWithdrawalStatus,
   flushMoneyBackup,
+  // recent logins (in-memory)
+  recordLogin, getRecentLogins, getLoginCount,
   // support
   addSupportMessage, getAllSupportMessages, resolveSupportMessage,
   // messages / wishlist / files
@@ -84,9 +86,30 @@ import {
 import webpush from 'web-push';
 
 // ── Web Push (VAPID) setup ─────────────────────────────────────────────────
-const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY  || 'BEPEHkkKDM0XGZVnCphAAq2IjX_V2kaVSOUfIEYBi2l33bAW9_GY4xbDS0WHAU5SOeceWuMrfTmtm3tHfc6izKs';
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || 'K-4QFQ4WJ__l5zoQ5zZlqYcsyalMi1q3DtEesGhnbDI';
-webpush.setVapidDetails('mailto:support@fundoplus.co.zw', VAPID_PUBLIC, VAPID_PRIVATE);
+// Priority: env vars → data/vapid.json (set via admin) → hardcoded defaults.
+const VAPID_FILE = path.join(DATA_DIR, 'vapid.json');
+const VAPID_DEFAULT_PUBLIC  = 'BEPEHkkKDM0XGZVnCphAAq2IjX_V2kaVSOUfIEYBi2l33bAW9_GY4xbDS0WHAU5SOeceWuMrfTmtm3tHfc6izKs';
+const VAPID_DEFAULT_PRIVATE = 'K-4QFQ4WJ__l5zoQ5zZlqYcsyalMi1q3DtEesGhnbDI';
+
+function loadVapidKeys() {
+  if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    return { publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY, source: 'env' };
+  }
+  try {
+    if (fs.existsSync(VAPID_FILE)) {
+      const v = JSON.parse(fs.readFileSync(VAPID_FILE, 'utf8'));
+      if (v.publicKey && v.privateKey) return { ...v, source: 'custom' };
+    }
+  } catch {}
+  return { publicKey: VAPID_DEFAULT_PUBLIC, privateKey: VAPID_DEFAULT_PRIVATE, source: 'default' };
+}
+
+let vapidKeys = loadVapidKeys();
+function applyVapid() {
+  webpush.setVapidDetails('mailto:support@fundoplus.co.zw', vapidKeys.publicKey, vapidKeys.privateKey);
+}
+applyVapid();
+const VAPID_PUBLIC = () => vapidKeys.publicKey;
 
 const SITE_BASE = () => (process.env.WEBSITE_URL || '').replace(/\/+$/, '');
 
@@ -298,6 +321,12 @@ router.post('/api/auth/login', (req, res) => {
   const user = verifyLogin({ email: email?.trim().toLowerCase(), phone: phone?.trim(), password });
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
   const token = createSession(user.id);
+  // Record login (in-memory only)
+  const fwd = req.headers['x-forwarded-for'];
+  recordLogin(user, {
+    ip: (typeof fwd === 'string' && fwd.split(',')[0].trim()) || req.ip || '',
+    ua: req.headers['user-agent'] || '',
+  });
   res.cookie('session', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
   res.json({ ok: true, token, user: sanitizeUser(user), onboarded: user.onboarded });
 });
@@ -1691,6 +1720,39 @@ router.get('/api/admin/server', requireAdmin, async (req, res) => {
   });
 });
 
+// ── Admin: recent logins (in-memory only) ─────────────────────────────────
+router.get('/api/admin/logins', requireAdmin, (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 100, 300);
+  res.json({ ok: true, count: getLoginCount(), logins: getRecentLogins(limit) });
+});
+
+// ── Admin: VAPID (web-push keys) management ────────────────────────────────
+router.get('/api/admin/vapid', requireAdmin, (req, res) => {
+  res.json({
+    ok: true,
+    publicKey: vapidKeys.publicKey,
+    source: vapidKeys.source,
+    subscriberCount: getAllPushSubscriptions().length,
+    mailto: 'support@fundoplus.co.zw',
+  });
+});
+
+router.post('/api/admin/vapid/generate', requireAdmin, (req, res) => {
+  // Generate a fresh VAPID keypair and persist it to data/vapid.json.
+  // ⚠️ Rotating keys INVALIDATES all existing push subscriptions — browsers
+  // must re-subscribe (toggle notifications off → on) to receive pushes again.
+  const keys = webpush.generateVAPIDKeys();
+  vapidKeys = { publicKey: keys.publicKey, privateKey: keys.privateKey, source: 'custom' };
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(VAPID_FILE, JSON.stringify(vapidKeys, null, 2));
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to persist keys: ' + e.message });
+  }
+  applyVapid();
+  res.json({ ok: true, publicKey: vapidKeys.publicKey, source: 'custom', note: 'Keys rotated. Existing subscriptions are now invalid — users must re-enable notifications.' });
+});
+
 // List data files in DATA_DIR
 router.get('/api/admin/files', requireAdmin, (req, res) => {
   try {
@@ -2526,11 +2588,14 @@ router.get('/admin/notifications', (req, res) =>
 
 // ── Push subscription endpoints ────────────────────────────────────────────
 router.get('/api/push/vapid-public-key', (req, res) => {
-  res.json({ key: VAPID_PUBLIC });
+  res.json({ key: VAPID_PUBLIC() });
 });
 
 router.post('/api/push/subscribe', requireAuth, (req, res) => {
-  const user = getSessionUser(req);
+  // NOTE: use req.user (set by requireAuth) — previously getSessionUser(req)
+  // was passed the req object instead of a token, returned null, and threw,
+  // so subscriptions were never saved (the "enabled but no push" bug).
+  const user = req.user;
   const sub  = req.body;
   if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Invalid subscription' });
   savePushSubscription(user.id, sub);
@@ -2539,7 +2604,7 @@ router.post('/api/push/subscribe', requireAuth, (req, res) => {
 });
 
 router.post('/api/push/unsubscribe', requireAuth, (req, res) => {
-  const user = getSessionUser(req);
+  const user = req.user;
   const { endpoint } = req.body || {};
   if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
   removePushSubscription(user.id, endpoint);

@@ -167,6 +167,20 @@
     .uc-actions .uc-ban { color: var(--red); border-color: #fca5a5; background: var(--red-light); }
     .uc-actions .uc-unban { color: #166534; border-color: #86efac; background: var(--green-light); }
 
+    /* ── LOGIN LIST ── */
+    .login-list { display: flex; flex-direction: column; gap: 8px; }
+    .login-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: .12s; background: var(--surface); }
+    .login-row:hover { border-color: var(--blue); background: #f8fafc; }
+    .login-row.active { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
+    .lr-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: .9rem; }
+    .lr-meta { flex: 1; min-width: 0; }
+    .lr-name { font-weight: 800; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lr-sub { font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lr-time { font-size: .72rem; color: var(--muted); white-space: nowrap; text-align: right; }
+    .login-detail { margin-top: 14px; }
+    .kv { font-size: .76rem; color: var(--muted); word-break: break-all; margin-top: 4px; }
+    .kv b { color: var(--text); }
+
     /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--surface2); }
@@ -209,6 +223,7 @@
         <button class="ntab active" onclick='showPage("overview")'>📊 Overview</button>
         <button class="ntab" onclick='showPage("bot")'>🤖 Bot</button>
         <button class="ntab" onclick='showPage("users")'>👥 Users</button>
+        <button class="ntab" onclick='showPage("logins")'>🕐 Logins</button>
         <button class="ntab" onclick='showPage("bans")'>🚫 Bans</button>
         <button class="ntab" onclick='showPage("subscriptions")'>💳 Subs</button>
         <button class="ntab" onclick='showPage("proofs")'>🧾 Proofs</button>
@@ -221,6 +236,7 @@
         <button class="ntab" onclick='showPage("datafiles")'>🗄 Data</button>
         <button class="ntab" onclick='showPage("appupdate")'>🚀 App Update</button>
         <button class="ntab" onclick='showPage("ambassadors")'>🌟 Ambassadors</button>
+        <button class="ntab" onclick='showPage("push")'>🔔 Push</button>
         <a class="ntab" href="/admin/notifications" style="text-decoration:none">📣 Notify</a>
       </div>
       <div class="nav-right">
@@ -279,6 +295,23 @@
         </div>
       </div>
       <div id="users-table" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
+    </div>
+
+    <!-- Logins -->
+    <div class="page" id="page-logins">
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div>
+            <h3 style="margin-bottom:.4rem">🕐 Recently Logged-in Users</h3>
+            <p style="font-size:.82rem;color:var(--muted)">Live session log (in-memory only — resets on server restart). Click a user to see their full profile.</p>
+          </div>
+          <button class="btn btn-ghost" style="font-size:.82rem;padding:7px 14px" onclick="loadLogins()">↺ Refresh</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="login-list" id="login-list"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
+        <div class="login-detail" id="login-detail"></div>
+      </div>
     </div>
 
     <!-- Bans -->
@@ -577,6 +610,31 @@
       <div id="ambassadors-table"><div style="color:var(--muted);font-size:.85rem;padding:20px;text-align:center">Loading…</div></div>
     </div>
 
+    <!-- Push / VAPID -->
+    <div class="page" id="page-push">
+      <div class="card">
+        <h3 style="margin-bottom:.5rem">🔔 Web Push — VAPID Keys</h3>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">VAPID identifies your server to the push services (FCM / Mozilla). Manage keys and test delivery here.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+          <div class="stat"><div class="stat-val" id="vapid-subs">—</div><div class="stat-label">Subscribers</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:1rem" id="vapid-source">—</div><div class="stat-label">Key source</div></div>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label style="font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Public key</label>
+          <input id="vapid-public" readonly style="width:100%;font-family:monospace;font-size:.78rem;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text)">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-ghost" onclick="copyVapid()">📋 Copy</button>
+          <button class="btn btn-danger" onclick="generateVapid()">🔄 Generate new keys</button>
+          <button class="btn btn-primary" onclick="sendTestPushFromAdmin()">🔔 Send test push</button>
+        </div>
+        <div id="vapid-status" style="font-size:.8rem;color:var(--muted)"></div>
+        <div style="background:var(--yellow-light);border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:12px 14px;font-size:.78rem;line-height:1.55;margin-top:14px">
+          ⚠️ <b>Rotating keys invalidates all existing push subscriptions.</b> After generating new keys, every user must toggle notifications OFF then ON again to re-subscribe. Only rotate if the current keys are compromised or you're setting up a fresh instance.
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Add Ambassador Modal -->
@@ -652,11 +710,13 @@
       document.querySelectorAll('.ntab').forEach(el => el.classList.remove('active'));
       const page = document.getElementById('page-' + p);
       if (page) page.classList.add('active');
-      const order = ['overview', 'bot', 'users', 'bans', 'subscriptions', 'proofs', 'support', 'papers', 'freelinks', 'files', 'chats', 'wishlist', 'datafiles', 'appupdate', 'ambassadors'];
+      const order = ['overview', 'bot', 'users', 'logins', 'bans', 'subscriptions', 'proofs', 'support', 'papers', 'freelinks', 'files', 'chats', 'wishlist', 'datafiles', 'appupdate', 'ambassadors', 'push'];
       const idx = order.indexOf(p);
       const tabs = document.querySelectorAll('.ntab');
       if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
       if (p === 'users')         loadUsers();
+      if (p === 'logins')        loadLogins();
+      if (p === 'push')          loadVapid();
       if (p === 'bans')          loadBans();
       if (p === 'papers')        loadPapers();
       if (p === 'appupdate')     loadUpdateInfo();
@@ -868,6 +928,120 @@
     function searchUsers() {
       clearTimeout(window._st);
       window._st = setTimeout(loadUsers, 350);
+    }
+
+    // ── Logins (in-memory) ─────────────────────────────────────────────
+    let _logins = [];
+
+    async function loadLogins() {
+      const list = document.getElementById('login-list');
+      if (!list) return;
+      list.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Loading…</div>';
+      try {
+        const res = await api('/api/admin/logins');
+        if (!res.ok) { list.innerHTML = `<div style="color:#ef4444">Error: ${res.status}</div>`; return; }
+        _logins = (await res.json()).logins || [];
+        if (!_logins.length) {
+          list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">No logins recorded yet. (Logins are tracked in memory only — they appear after a user signs in following this deploy.)</div>';
+          return;
+        }
+        list.innerHTML = _logins.map(l => {
+          const name = l.name || l.email || l.phone || 'Unknown';
+          const sub = [l.email, l.phone].filter(Boolean).join(' · ') || '—';
+          const when = new Date(l.at).toLocaleString('en-GB');
+          const initial = (name[0] || '?').toUpperCase();
+          const color = AVATAR_COLORS[(l.userId.length + name.length) % AVATAR_COLORS.length];
+          const uid = String(l.userId).replace(/'/g, '');
+          return `<div class="login-row" data-id="${uid}" onclick="showLoginDetail('${uid}', this)">
+            <div class="lr-avatar" style="background:${color}">${initial}</div>
+            <div class="lr-meta">
+              <div class="lr-name">${name}</div>
+              <div class="lr-sub">${sub} · ${l.plan ? l.plan.toUpperCase() : 'free'}</div>
+            </div>
+            <div class="lr-time">${when}</div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        list.innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+      }
+    }
+
+    async function showLoginDetail(uid, rowEl) {
+      document.querySelectorAll('.login-row').forEach(r => r.classList.remove('active'));
+      if (rowEl) rowEl.classList.add('active');
+      const detail = document.getElementById('login-detail');
+      const login = _logins.find(l => l.userId === uid);
+      const meta = login ? `
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:.78rem">
+          <div class="kv"><b>Logged in:</b> ${new Date(login.at).toLocaleString('en-GB')}</div>
+          <div class="kv"><b>IP:</b> ${login.ip || '—'}</div>
+          <div class="kv"><b>Device:</b> ${login.ua || '—'}</div>
+        </div>` : '';
+      detail.innerHTML = meta + '<div style="color:var(--muted);font-size:.85rem">Loading profile…</div>';
+      try {
+        const res = await api('/api/admin/users/search?q=' + encodeURIComponent(uid));
+        if (!res.ok) { detail.innerHTML = meta + '<div style="color:#ef4444">Failed to load user.</div>'; return; }
+        const users = (await res.json()).users || [];
+        const u = users.find(x => x.id === uid) || users[0];
+        if (!u) { detail.innerHTML = meta + '<div style="color:var(--muted)">User no longer exists.</div>'; return; }
+        detail.innerHTML = meta + `<div class="user-grid">${renderUserCard(u)}</div>`;
+      } catch (e) {
+        detail.innerHTML = meta + `<div style="color:#ef4444">Error: ${e.message}</div>`;
+      }
+    }
+
+    // ── Push / VAPID management ────────────────────────────────────────
+    async function loadVapid() {
+      try {
+        const res = await api('/api/admin/vapid');
+        if (!res.ok) return;
+        const d = await res.json();
+        document.getElementById('vapid-public').value = d.publicKey;
+        document.getElementById('vapid-subs').textContent = d.subscriberCount;
+        const srcLabels = { env: 'Env vars', custom: 'Custom (generated)', default: 'Built-in default' };
+        document.getElementById('vapid-source').textContent = srcLabels[d.source] || d.source;
+      } catch (e) {
+        document.getElementById('vapid-status').textContent = 'Error: ' + e.message;
+      }
+    }
+
+    function copyVapid() {
+      const inp = document.getElementById('vapid-public');
+      inp.select();
+      try { document.execCommand('copy'); } catch {}
+      if (navigator.clipboard) navigator.clipboard.writeText(inp.value).catch(() => {});
+      const s = document.getElementById('vapid-status');
+      s.style.color = 'var(--green)'; s.textContent = '✅ Copied';
+      setTimeout(() => { s.style.color = 'var(--muted)'; s.textContent = ''; }, 2000);
+    }
+
+    async function generateVapid() {
+      if (!confirm('Generate NEW VAPID keys?\n\nThis INVALIDATES all existing push subscriptions — every user must re-enable notifications afterwards.')) return;
+      const s = document.getElementById('vapid-status');
+      s.style.color = 'var(--muted)'; s.textContent = 'Generating…';
+      try {
+        const res = await api('/api/admin/vapid/generate', { method: 'POST' });
+        const d = await res.json();
+        if (!res.ok) { s.style.color = 'var(--red)'; s.textContent = 'Error: ' + (d.error || res.status); return; }
+        loadVapid();
+        s.style.color = 'var(--green)'; s.textContent = '✅ New keys generated. Users must re-enable notifications.';
+      } catch (e) {
+        s.style.color = 'var(--red)'; s.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    async function sendTestPushFromAdmin() {
+      const s = document.getElementById('vapid-status');
+      s.style.color = 'var(--muted)'; s.textContent = 'Sending test push…';
+      try {
+        const res = await api('/api/admin/notifications/test', { method: 'POST', body: JSON.stringify({ title: '🔔 Fundo Plus Test', body: 'Push is working! 🎉' }) });
+        const d = await res.json();
+        if (d.message) { s.style.color = 'var(--yellow)'; s.textContent = d.message; return; }
+        if (d.failed === 0) { s.style.color = 'var(--green)'; s.textContent = `✅ Sent to ${d.sent} subscriber(s).`; }
+        else { s.style.color = 'var(--red)'; s.textContent = `⚠ Sent ${d.sent}, failed ${d.failed} — ${(d.errors[0] && d.errors[0].statusCode + ' ' + d.errors[0].message) || ''}`; }
+      } catch (e) {
+        s.style.color = 'var(--red)'; s.textContent = 'Error: ' + e.message;
+      }
     }
 
     async function loadBans() {
