@@ -22,6 +22,7 @@ import {
   getAllWebUsers, banUser, unbanUser,
   getBan, getAllBans, isBanned, resolveAppeal,
   reloadCommunityFromDisk, reloadWebUsersFromDisk, reloadMessengerFromDisk,
+  reloadPapersFromDisk, reloadMoneyFromDisk,
 } from './store.js';
 import websiteRouter from './website/routes.js';
 import { mountAppRoutes, requireAuthOrApp } from './app/index.js';
@@ -593,6 +594,8 @@ export async function startWebServer(port) {
   reloadWebUsersFromDisk();    // ✅ Re-read webusers.json — sessions auth depends on this
   reloadMessengerFromDisk();   // ✅ Re-read messenger.json — pending messages and settings
   reloadSessionsFromDisk();    // ✅ Re-read sessions.json — restores logged-in users
+  reloadPapersFromDisk();      // ✅ Re-read papers.json — restored papers visible in memory
+  reloadMoneyFromDisk();       // ✅ Re-read wallet/subscription files — restored balances visible
   _syncReady = true; // ✅ Only start pushing after we've pulled real data
   console.log('[Sync] ✅ Initial pull complete — cron sync now active');
   server.listen(port, '0.0.0.0', () => {

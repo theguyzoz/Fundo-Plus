@@ -497,6 +497,31 @@ export function failDeposit(reference) {
   return pend;
 }
 
+/** Re-read all money files from disk — call after Supabase sync on startup so
+ *  restored wallets/pending/withdrawals/subscriptions are visible in memory. */
+export function reloadMoneyFromDisk() {
+  const freshSubs = readJson(SUBS_FILE, null);
+  if (freshSubs && freshSubs.subscriptions && typeof freshSubs.subscriptions === 'object') {
+    subsData = freshSubs;
+    console.log(`[store] ✅ Subscriptions reloaded: ${Object.keys(subsData.subscriptions || {}).length}`);
+  }
+  const freshBal = readJson(BALANCES_FILE, null);
+  if (freshBal && freshBal.balances && typeof freshBal.balances === 'object') {
+    balancesData = freshBal;
+    console.log(`[store] ✅ Balances reloaded: ${Object.keys(balancesData.balances || {}).length} wallets`);
+  }
+  const freshWd = readJson(WITHDRAWALS_FILE, null);
+  if (freshWd && Array.isArray(freshWd.withdrawals)) {
+    withdrawalsData = freshWd;
+    console.log(`[store] ✅ Withdrawals reloaded: ${withdrawalsData.withdrawals.length}`);
+  }
+  const freshPend = readJson(PENDING_FILE, null);
+  if (freshPend && freshPend.pending && typeof freshPend.pending === 'object') {
+    pendingData = freshPend;
+    console.log(`[store] ✅ Pending deposits reloaded: ${Object.keys(pendingData.pending || {}).length}`);
+  }
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 //  webusers.json — Web user accounts
 // ══════════════════════════════════════════════════════════════════════════
@@ -684,6 +709,16 @@ export function removePaper(id){ const idx=papersStore.papers.findIndex(p=>p.id=
 export function listPapersLocal()     { return papersStore.papers; }
 export function getPapersTotalBytes() { return papersStore.totalBytes||0; }
 export function getPaperById(id)      { return papersStore.papers.find(p=>p.id===id)||null; }
+
+/** Re-read papers.json from disk — call after Supabase sync on startup so
+ *  restored papers are visible in memory (otherwise listPapersLocal() is empty). */
+export function reloadPapersFromDisk() {
+  const fresh = readJson(PAPERS_FILE, null);
+  if (fresh && Array.isArray(fresh.papers)) {
+    papersStore = fresh;
+    console.log(`[store] ✅ Papers reloaded from disk: ${papersStore.papers.length} papers`);
+  }
+}
 
 // ── Wishlist ───────────────────────────────────────────────────────────────
 let wishlist = readJson(WISHLIST_FILE, { upgrade:0,voters:[] });
