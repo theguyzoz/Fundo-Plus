@@ -1592,7 +1592,45 @@ router.get('/api/admin/users/search', requireAdmin, (req, res) => {
       String(u.id || '').includes(q)
     );
   }
-  res.json({ users: users.map(sanitizeUser) });
+  // Enrich each user with plan, wallet balance and subscription status so the
+  // admin "Users" page can render full cards without extra round-trips.
+  const enriched = users.map(u => {
+    const base = sanitizeUser(u);
+    const plan = getUserPlan(u.id);
+    const sub  = getUserSubscription(u.id);
+    const balance = getUserBalance(u.id);
+    return {
+      ...base,
+      plan,
+      balance,
+      balanceDollars: (balance / 100).toFixed(2),
+      subscription: sub ? {
+        plan: sub.plan,
+        status: sub.status,
+        expiresAt: sub.expiresAt,
+        grantedBy: sub.grantedBy,
+      } : null,
+      banned: isBanned(u.id),
+    };
+  });
+  res.json({ users: enriched });
+});
+
+// ── Admin: upload a notification/announcement image → returns a public URL ──
+router.post('/api/admin/notifications/upload-image', requireAdmin, proofUpload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+  const extRaw = (req.file.mimetype.split('/')[1] || 'jpg').toLowerCase().replace('jpeg', 'jpg');
+  const filename = `notif_${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extRaw}`;
+  try {
+    const { uploadResource } = await import('../utils/supabase-resources.js');
+    const url = await uploadResource(filename, req.file.buffer, req.file.mimetype);
+    return res.json({ ok: true, url });
+  } catch (e) {
+    console.warn('[Notifications] Supabase upload failed, using data URI:', e.message);
+    // Fallback: embed as data URI so image uploads work even without Supabase
+    const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    return res.json({ ok: true, url: dataUri, fallback: true });
+  }
 });
 
 // Server stats

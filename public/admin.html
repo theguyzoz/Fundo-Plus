@@ -136,6 +136,37 @@
     .proof-modal-inner { background: var(--surface); border-radius: 16px; padding: 20px; max-width: 600px; width: 100%; box-shadow: var(--shadow-md); }
     .proof-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 
+    /* ── USER CARDS + FILTER TABS ── */
+    .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .ftab { padding: 6px 14px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface); color: var(--muted); cursor: pointer; font-size: .78rem; font-weight: 700; transition: .12s; }
+    .ftab:hover { border-color: var(--green); color: var(--green); }
+    .ftab.active { background: var(--green); color: #fff; border-color: var(--green); }
+    .ftab .cnt { opacity: .75; font-weight: 800; margin-left: 4px; }
+    .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+    .user-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); transition: .14s; display: flex; flex-direction: column; gap: 12px; }
+    .user-card:hover { border-color: #93c5fd; box-shadow: 0 0 0 3px var(--blue-light); }
+    .uc-head { display: flex; align-items: center; gap: 12px; }
+    .uc-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem; color: #fff; }
+    .uc-name { font-size: .95rem; font-weight: 800; line-height: 1.25; }
+    .uc-sub { font-size: .75rem; color: var(--muted); margin-top: 2px; word-break: break-all; }
+    .uc-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+    .uc-badge { font-size: .66rem; font-weight: 800; border-radius: 99px; padding: 3px 9px; }
+    .uc-plan-free { background: #f1f5f9; color: #64748b; }
+    .uc-plan-lite { background: var(--blue-light); color: var(--blue); }
+    .uc-plan-plus { background: #ede9fe; color: #7c3aed; }
+    .uc-plan-pro { background: var(--red-light); color: var(--red); }
+    .uc-wa { background: var(--green-light); color: #166534; }
+    .uc-nowa { background: #f1f5f9; color: #94a3b8; }
+    .uc-rows { display: flex; flex-direction: column; gap: 7px; }
+    .uc-row { display: flex; justify-content: space-between; gap: 10px; font-size: .78rem; }
+    .uc-row .k { color: var(--muted); font-weight: 600; flex-shrink: 0; }
+    .uc-row .v { text-align: right; font-weight: 600; word-break: break-all; }
+    .uc-actions { display: flex; gap: 7px; margin-top: 2px; }
+    .uc-actions button { flex: 1; padding: 7px; border-radius: 7px; cursor: pointer; font-size: .74rem; font-weight: 800; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); transition: .12s; }
+    .uc-actions button:hover { background: var(--surface); }
+    .uc-actions .uc-ban { color: var(--red); border-color: #fca5a5; background: var(--red-light); }
+    .uc-actions .uc-unban { color: #166534; border-color: #86efac; background: var(--green-light); }
+
     /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--surface2); }
@@ -238,10 +269,16 @@
           <input id="user-search" placeholder="Search email, name, phone, ID…" style="flex:1;padding:7px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:.83rem;outline:0;min-width:200px;margin-bottom:0" oninput="searchUsers()">
           <button class="btn btn-primary" style="font-size:.82rem;padding:7px 14px" onclick="loadUsers()">Refresh</button>
         </div>
+        <div class="filter-tabs" id="user-filter-tabs" style="margin-top:12px">
+          <div class="ftab active" data-f="all" onclick="setUserFilter('all')">All <span class="cnt" id="fc-all"></span></div>
+          <div class="ftab" data-f="linked" onclick="setUserFilter('linked')">WA Linked <span class="cnt" id="fc-linked"></span></div>
+          <div class="ftab" data-f="paid" onclick="setUserFilter('paid')">Paid <span class="cnt" id="fc-paid"></span></div>
+          <div class="ftab" data-f="banned" onclick="setUserFilter('banned')">Banned <span class="cnt" id="fc-banned"></span></div>
+          <div class="ftab" data-f="admin" onclick="setUserFilter('admin')">Admins <span class="cnt" id="fc-admin"></span></div>
+          <div class="ftab" data-f="incomplete" onclick="setUserFilter('incomplete')">Not Onboarded <span class="cnt" id="fc-incomplete"></span></div>
+        </div>
       </div>
-      <div class="card">
-        <div id="users-table"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
-      </div>
+      <div id="users-table" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
     </div>
 
     <!-- Bans -->
@@ -571,6 +608,8 @@
   <script>
     let adminToken = localStorage.getItem('adminToken') || '';
     let _banTargetId = '';
+    let _allUsers = [];
+    let _userFilter = 'all';
     const socket = io();
 
     function api(url, opts) {
@@ -715,83 +754,115 @@
       const q = (document.getElementById('user-search') || {}).value || '';
       const box = document.getElementById('users-table');
       if (!box) return;
-      box.innerHTML = '<div style="color:var(--muted);font-size:.82rem">Loading users...</div>';
+      box.innerHTML = '<div style="color:var(--muted);font-size:.82rem;grid-column:1/-1">Loading users...</div>';
       try {
         const res = await api('/api/admin/users/search?q=' + encodeURIComponent(q));
         if (!res.ok) {
-          box.innerHTML = `<div style="color:#ef4444">Error loading users: ${res.status} ${res.statusText}</div>`;
+          box.innerHTML = `<div style="color:#ef4444;grid-column:1/-1">Error loading users: ${res.status} ${res.statusText}</div>`;
           return;
         }
-        const users = (await res.json()).users || [];
-        const total = users.length;
-        const linked = users.filter(u => u.jid).length;
-        const banned = users.filter(u => u.banned).length;
-
-        const statsEl = document.getElementById('webUserStats');
-        if (statsEl) {
-          statsEl.innerHTML = [
-            ['Web Users', total, ''],
-            ['WA Linked', linked, 'color:var(--green)'],
-            ['Banned', banned, 'color:#ef4444'],
-            ['Not Linked', total - linked, 'color:var(--yellow)']
-          ].map(([l, v, s]) => `
-            <div class="stat">
-              <div class="stat-val" style="${s}">${v}</div>
-              <div class="stat-label">${l}</div>
-            </div>
-          `).join('');
-        }
-
-        if (!users.length) {
-          box.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No users found.</div>';
-          return;
-        }
-
-        const rows = users.map(u => {
-          const uid = String(u.id || '').replace(/'/g, '');
-          const uemail = String(u.email || u.phone || '').replace(/['"]/g, '');
-          const uname = (String(u.name || '') + ' ' + String(u.surname || '')).trim().replace(/['"]/g, '');
-          const joined = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('en-GB') : '—';
-          const badge = u.banned
-            ? '<span class="badge-banned">BANNED</span>'
-            : '<span class="badge-active">Active</span>';
-          const action = u.banned
-            ? `<button class="btn-unban" onclick="doUnban('${uid}')">Unban</button>`
-            : `<button class="btn-ban" onclick="openBanModal('${uid}','${uemail}','${uname}')">Ban</button>`;
-          return `
-            <tr>
-              <td style="font-family:monospace;font-size:.76rem">${u.email || u.phone || '—'}</td>
-              <td>${u.name || ''} ${u.surname || ''}</td>
-              <td style="font-size:.76rem">${u.school || '—'}</td>
-              <td>${u.age || '—'}</td>
-              <td>${u.jid ? '✅' : '❌'}</td>
-              <td style="font-size:.73rem;color:var(--muted)">${joined}</td>
-              <td>${badge}</td>
-              <td>${action}</td>
-            </tr>
-          `;
-        }).join('');
-
-        box.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Email / Phone</th>
-                <th>Name</th>
-                <th>School</th>
-                <th>Age</th>
-                <th>WA</th>
-                <th>Joined</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
+        _allUsers = (await res.json()).users || [];
+        renderUserCards();
       } catch (e) {
-        box.innerHTML = `<div style="color:#ef4444">Error loading users: ${e.message}</div>`;
+        box.innerHTML = `<div style="color:#ef4444;grid-column:1/-1">Error loading users: ${e.message}</div>`;
       }
+    }
+
+    function setUserFilter(f) {
+      _userFilter = f;
+      document.querySelectorAll('.ftab').forEach(el => el.classList.toggle('active', el.getAttribute('data-f') === f));
+      renderUserCards();
+    }
+
+    const AVATAR_COLORS = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#0891b2', '#4f46e5', '#ca8a04'];
+
+    function renderUserCards() {
+      const box = document.getElementById('users-table');
+      if (!box) return;
+      const users = _allUsers;
+
+      // Update filter counts
+      const cnt = (f) => {
+        const n = users.filter(matchesFilter(f)).length;
+        const el = document.getElementById('fc-' + f);
+        if (el) el.textContent = n;
+        return n;
+      };
+      cnt('all'); cnt('linked'); cnt('paid'); cnt('banned'); cnt('admin'); cnt('incomplete');
+
+      const filtered = users.filter(matchesFilter(_userFilter));
+
+      if (!filtered.length) {
+        box.innerHTML = '<div style="color:var(--muted);font-size:.82rem;grid-column:1/-1">No users found.</div>';
+        return;
+      }
+
+      box.className = 'user-grid';
+      box.innerHTML = filtered.map(renderUserCard).join('');
+    }
+
+    function matchesFilter(f) {
+      return (u) => {
+        const plan = u.plan || 'free';
+        switch (f) {
+          case 'linked':     return !!u.jid;
+          case 'paid':       return plan !== 'free';
+          case 'banned':     return !!u.banned;
+          case 'admin':      return !!u.isAdmin;
+          case 'incomplete': return !u.onboarded;
+          default:           return true;
+        }
+      };
+    }
+
+    function renderUserCard(u) {
+      const uid = String(u.id || '').replace(/'/g, '');
+      const uemail = String(u.email || u.phone || '—').replace(/['"]/g, '');
+      const uname = (String(u.name || '') + ' ' + String(u.surname || '')).trim().replace(/['"]/g, '') || '—';
+      const joined = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('en-GB') : '—';
+      const initial = (uname !== '—' ? uname[0] : (uemail[0] || '?')).toUpperCase();
+      const color = AVATAR_COLORS[(uid.length + uname.length) % AVATAR_COLORS.length];
+      const plan = u.plan || 'free';
+      const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+      const sub = u.subscription;
+      const exp = sub && sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString('en-GB') : null;
+
+      const badges = [
+        `<span class="uc-badge uc-plan-${plan}">${planLabel} Plan</span>`,
+        u.jid ? '<span class="uc-badge uc-wa">📱 WA Linked</span>' : '<span class="uc-badge uc-nowa">WA ✗</span>',
+        u.isAdmin ? '<span class="uc-badge" style="background:#fef3c7;color:#92400e">👑 Admin</span>' : '',
+        u.banned ? '<span class="uc-badge badge-banned">Banned</span>' : '',
+        !u.onboarded ? '<span class="uc-badge uc-nowa">Incomplete</span>' : '',
+      ].join('');
+
+      const rows = [
+        ['Email', u.email || '—'],
+        ['Phone', u.phone || '—'],
+        ['School', u.school || '—'],
+        ['Age', u.age || '—'],
+        ['Wallet', '$' + (u.balanceDollars || '0.00')],
+        ['Joined', joined],
+        ['Sub expires', exp || '—'],
+        ['User ID', `<span style="font-family:monospace;font-size:.68rem">${uid}</span>`],
+      ].map(([k, v]) => `<div class="uc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+
+      const action = u.banned
+        ? `<button class="uc-unban" onclick="doUnban('${uid}')">✓ Unban</button>`
+        : `<button class="uc-ban" onclick="openBanModal('${uid}','${uemail}','${uname}')">🚫 Ban</button>`;
+
+      return `
+        <div class="user-card">
+          <div class="uc-head">
+            <div class="uc-avatar" style="background:${color}">${initial}</div>
+            <div style="min-width:0">
+              <div class="uc-name">${uname}</div>
+              <div class="uc-sub">${uemail}</div>
+            </div>
+          </div>
+          <div class="uc-badges">${badges}</div>
+          <div class="uc-rows">${rows}</div>
+          <div class="uc-actions">${action}</div>
+        </div>`;
     }
 
     function searchUsers() {
