@@ -36,6 +36,7 @@ import {
   MAX_BALANCE_CENTS, MIN_TOPUP_CENTS, MIN_WITHDRAW_CENTS, TRANSACTION_FEE_PCT,
   sanitizeCents, feeCents,
   requestWithdrawal, getWithdrawals, getAllWithdrawals, getWithdrawal, updateWithdrawalStatus,
+  flushMoneyBackup,
   // support
   addSupportMessage, getAllSupportMessages, resolveSupportMessage,
   // messages / wishlist / files
@@ -954,6 +955,8 @@ router.post('/api/topup', requireAuth, moneyLimiter, async (req, res) => {
 
     savePendingDeposit({ reference, userId: uid, amountCents: cents, pollUrl: pay.pollUrl, method: method || 'ecocash', phone: phone || '' });
 
+    await flushMoneyBackup(); // persist the pending deposit BEFORE returning — else a crash could lose the in-flight payment
+
     res.json({
       ok: true, reference, amountDollars: (cents/100).toFixed(2),
       redirectUrl: pay.redirectUrl, pollUrl: pay.pollUrl,
@@ -968,7 +971,9 @@ router.post('/api/topup', requireAuth, moneyLimiter, async (req, res) => {
 });
 
 // Step 2: Paynow status-update webhook — credits the wallet on confirmation.
-router.post('/api/paynow/update', (req, res) => {
+// Awaits the durable Supabase backup BEFORE ACKing, so Paynow won't consider the
+// update lost if we crash immediately after — and the credit can't be lost.
+router.post('/api/paynow/update', async (req, res) => {
   const params = req.body || {};
   if (!verifyUpdate(params)) return res.status(400).send('Invalid hash');
 
@@ -983,6 +988,7 @@ router.post('/api/paynow/update', (req, res) => {
   } else if (status === 'cancelled' || status === 'failed' || status === 'disputed') {
     failDeposit(reference);
   }
+  await flushMoneyBackup(); // durable before ACK
   res.send('OK');
 });
 
@@ -1005,10 +1011,12 @@ router.get('/api/subscription/poll', requireAuth, async (req, res) => {
       const st = (s.status || '').toLowerCase();
       if (st === 'paid' || st === 'awaiting delivery') {
         finalizeDeposit(reference, s.paynowreference || '');
+        await flushMoneyBackup();
         return res.json({ status: 'paid', balance: getUserBalance(req.user.id) });
       }
       if (st === 'cancelled' || st === 'failed' || st === 'disputed') {
         failDeposit(reference);
+        await flushMoneyBackup();
         return res.json({ status: 'failed' });
       }
       return res.json({ status: 'pending', paynowStatus: st });
@@ -1020,7 +1028,7 @@ router.get('/api/subscription/poll', requireAuth, async (req, res) => {
 });
 
 // Buy a plan using virtual balance (no direct Paynow → subscription).
-router.post('/api/subscription/activate', requireAuth, moneyLimiter, (req, res) => {
+router.post('/api/subscription/activate', requireAuth, moneyLimiter, async (req, res) => {
   const uid  = req.user.id;
   const { plan } = req.body || {};
   if (!PLANS[plan] || plan === 'free') return res.status(400).json({ error: 'Invalid plan' });
@@ -1039,14 +1047,12 @@ router.post('/api/subscription/activate', requireAuth, moneyLimiter, (req, res) 
   if (!adj.ok) return res.status(400).json({ error: adj.error });
   setUserSubscription(uid, plan, 'balance');
 
-  import('../utils/supabase-data.js').then(m => {
-    m.uploadDataFile('subscriptions.json'); m.uploadDataFile('balances.json');
-  }).catch(() => {});
+  await flushMoneyBackup(); // durable before confirming to the user
   res.json({ ok: true, plan, balance: adj.balance, balanceDollars: (adj.balance/100).toFixed(2) });
 });
 
 // Request a withdrawal (5% fee, net paid out). Validated + atomic debit server-side.
-router.post('/api/withdraw', requireAuth, moneyLimiter, (req, res) => {
+router.post('/api/withdraw', requireAuth, moneyLimiter, async (req, res) => {
   const uid = req.user.id;
   const { amount, phone } = req.body || {};
   const cents = sanitizeCents(amount);
@@ -1055,9 +1061,7 @@ router.post('/api/withdraw', requireAuth, moneyLimiter, (req, res) => {
   const result = requestWithdrawal(uid, cents, phone);
   if (!result.ok) return res.status(400).json({ error: result.error });
 
-  import('../utils/supabase-data.js').then(m => {
-    m.uploadDataFile('withdrawals.json'); m.uploadDataFile('balances.json');
-  }).catch(() => {});
+  await flushMoneyBackup(); // durable before confirming
 
   const w = result.withdrawal;
   res.json({
@@ -1527,20 +1531,22 @@ router.get('/api/admin/withdrawals', requireAdmin, (req, res) => {
 });
 
 // Mark a withdrawal as paid out (net amount sent to the user's mobile number)
-router.post('/api/admin/withdrawal/:id/complete', requireAdmin, (req, res) => {
+router.post('/api/admin/withdrawal/:id/complete', requireAdmin, async (req, res) => {
   const w = getWithdrawal(req.params.id);
   if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
   if (w.status !== 'pending') return res.status(400).json({ error: `Already ${w.status}` });
   updateWithdrawalStatus(req.params.id, 'paid', 'admin');
+  await flushMoneyBackup();
   res.json({ ok: true, withdrawal: getWithdrawal(req.params.id) });
 });
 
 // Mark a withdrawal as failed — refunds the wallet (money must not vanish)
-router.post('/api/admin/withdrawal/:id/fail', requireAdmin, (req, res) => {
+router.post('/api/admin/withdrawal/:id/fail', requireAdmin, async (req, res) => {
   const w = getWithdrawal(req.params.id);
   if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
   if (w.status !== 'pending') return res.status(400).json({ error: `Already ${w.status}` });
   updateWithdrawalStatus(req.params.id, 'failed', 'admin');
+  await flushMoneyBackup();
   res.json({ ok: true, withdrawal: getWithdrawal(req.params.id) });
 });
 

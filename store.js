@@ -12,6 +12,48 @@ async function getSupabaseData() {
   return _supabaseData;
 }
 
+// ── Immediate Supabase backup engine (money safety) ────────────────────────
+// Every money mutation writes its JSON file synchronously, then schedules an
+// immediate Supabase upload so a redeploy/crash mid-transaction can't lose
+// (or replay) funds. Rapid writes are coalesced by a tiny debounce, and
+// critical request handlers additionally AWAIT flushMoneyBackup() before
+// responding, so the caller only succeeds once state is durably saved.
+const MONEY_FILES = ['balances.json', 'pending_deposits.json', 'withdrawals.json', 'subscriptions.json'];
+const MONEY_BACKUP_DEBOUNCE_MS = 100;
+
+let _moneyTimer   = null;
+let _moneyInFlight = null;
+
+async function _uploadMoneyFiles() {
+  try {
+    const sb = await getSupabaseData();
+    if (!sb || typeof sb.uploadDataFile !== 'function') return false;
+    for (const f of MONEY_FILES) {
+      await sb.uploadDataFile(f);
+    }
+    return true;
+  } catch (e) {
+    console.error('[MoneyBackup] Supabase backup failed:', e.message);
+    return false;
+  }
+}
+
+/** Coalesced immediate backup — called after every money write. */
+function scheduleMoneyBackup() {
+  if (_moneyTimer) clearTimeout(_moneyTimer);
+  _moneyTimer = setTimeout(() => {
+    _moneyTimer = null;
+    _moneyInFlight = _uploadMoneyFiles();
+  }, MONEY_BACKUP_DEBOUNCE_MS);
+}
+
+/** Await a durable backup now. Used at the end of critical request handlers. */
+export function flushMoneyBackup() {
+  if (_moneyTimer) { clearTimeout(_moneyTimer); _moneyTimer = null; }
+  if (_moneyInFlight) return _moneyInFlight;
+  return _uploadMoneyFiles();
+}
+
 const __dirname      = path.dirname(fileURLToPath(import.meta.url));
 export const DATA_DIR = path.join(__dirname, 'data');
 
@@ -101,7 +143,7 @@ function writeJson(fp, data) {
 //  Subscriptions
 // ══════════════════════════════════════════════════════════════════════════
 let subsData = readJson(SUBS_FILE, { subscriptions: {} });
-function saveSubs() { writeJson(SUBS_FILE, subsData); }
+function saveSubs() { writeJson(SUBS_FILE, subsData); scheduleMoneyBackup(); }
 
 export function getUserPlan(userId) {
   const sub = subsData.subscriptions[userId];
@@ -269,7 +311,7 @@ export function sanitizeCents(input) {
 }
 
 let balancesData = readJson(BALANCES_FILE, { balances: {}, transactions: [] });
-function saveBalances() { writeJson(BALANCES_FILE, balancesData); }
+function saveBalances() { writeJson(BALANCES_FILE, balancesData); scheduleMoneyBackup(); }
 
 export function getUserBalance(userId) {
   return balancesData.balances[userId] || 0; // integer cents
@@ -318,7 +360,7 @@ export function getBalanceTransactions(userId, limit = 50) {
 
 // ── Withdrawals ─────────────────────────────────────────────────────────────
 let withdrawalsData = readJson(WITHDRAWALS_FILE, { withdrawals: [] });
-function saveWithdrawals() { writeJson(WITHDRAWALS_FILE, withdrawalsData); }
+function saveWithdrawals() { writeJson(WITHDRAWALS_FILE, withdrawalsData); scheduleMoneyBackup(); }
 
 /**
  * Request a withdrawal. VALIDATES everything server-side and debits the wallet
@@ -385,7 +427,7 @@ export function updateWithdrawalStatus(id, status, adminId = 'admin') {
 
 // ── Pending Paynow top-ups (polled until confirmed) ─────────────────────────
 let pendingData = readJson(PENDING_FILE, { pending: {} });
-function savePending() { writeJson(PENDING_FILE, pendingData); }
+function savePending() { writeJson(PENDING_FILE, pendingData); scheduleMoneyBackup(); }
 
 export function savePendingDeposit({ reference, userId, amountCents, pollUrl, method, phone }) {
   pendingData.pending[reference] = {
