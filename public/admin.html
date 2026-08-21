@@ -723,14 +723,21 @@
       const idx = order.indexOf(p);
       const tabs = document.querySelectorAll('.ntab');
       if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
-      const loaders = {
-        users: loadUsers, logins: loadLogins, push: loadVapid, bans: loadBans,
-        papers: loadPapers, appupdate: loadUpdateInfo, files: loadFiles,
-        chats: loadChats, wishlist: loadWishlist, subscriptions: loadSubs,
-        proofs: loadProofs, support: loadSupport, freelinks: loadFreeLinks,
-        datafiles: loadDataFiles, ambassadors: loadAmbassadors,
+      // Resolve the loader by NAME (string) so a missing function can never
+      // throw a ReferenceError and leave the tab stuck on "Loading…".
+      const loaderNames = {
+        users: 'loadUsers', logins: 'loadLogins', push: 'loadVapid', bans: 'loadBans',
+        papers: 'loadPapers', files: 'loadFiles', chats: 'loadChats',
+        wishlist: 'loadWishlist', subscriptions: 'loadSubs', proofs: 'loadProofs',
+        support: 'loadSupport', freelinks: 'loadFreeLinks', datafiles: 'loadDataFiles',
+        ambassadors: 'loadAmbassadors',
       };
-      if (loaders[p]) safeCall(loaders[p], p);
+      const name = loaderNames[p];
+      if (name && typeof window[name] === 'function') {
+        try { window[name](); } catch (e) { console.error('[admin] loader error (' + name + '):', e); }
+      } else if (name) {
+        console.warn('[admin] loader missing:', name);
+      }
     }
 
     function loadAll() {
