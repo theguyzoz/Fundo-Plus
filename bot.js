@@ -82,6 +82,18 @@ app.use(express.static(PUBLIC_DIR, {
   },
 }));
 
+// Never cache dynamic responses (custom-route HTML pages + JSON APIs).
+// Static assets above may still be cached; everything served by the routers
+// below (dashboard, subscription, admin, API endpoints) must always be fresh,
+// otherwise browsers keep stale copies after a deploy (e.g. the admin page
+// throwing "loadBans is not defined" from an old cached bundle).
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // ── Bot state ──────────────────────────────────────────────────────────────
 global.botState = {
   startTime: Date.now(), messagesCount: 0, commandsCount: 0,
@@ -93,8 +105,12 @@ const ADMIN_PASSWORD = 'smarttech@#2';
 const adminSessions  = new Set();
 function requireAdmin(req, res, next) {
   const token = req.headers['x-admin-token'] || req.query.token;
-  if (!token || !adminSessions.has(token)) return res.status(401).json({ error: 'Unauthorized' });
-  next();
+  // Accept either a session token issued here OR the admin password itself
+  // (website/routes.js login returns the password as the token, and it is
+  // mounted first, so it wins the /api/admin/login request).
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  if (token === ADMIN_PASSWORD || adminSessions.has(token)) return next();
+  return res.status(401).json({ error: 'Unauthorized' });
 }
 
 // ── Cron jobs ──────────────────────────────────────────────────────────────
@@ -511,7 +527,14 @@ app.get('/api/admin/appeals', requireAdmin, (req, res) => {
 app.get('/',             (req,res) => res.sendFile(path.join(PUBLIC_DIR,'index.html')));
 app.get('/resources',    (req,res) => res.sendFile(path.join(PUBLIC_DIR,'resources.html')));
 app.get('/banned',       (req,res) => serveObfuscated(path.join(PUBLIC_DIR,'banned.html'))(req,res));
-app.get('/fundopageadmin', (req,res) => res.sendFile(path.join(PUBLIC_DIR,'admin.html')));
+app.get('/fundopageadmin', (req,res) => {
+  // Serve admin.html with no-store so browsers can NEVER show a stale copy
+  // (a cached page was causing "loadBans is not defined" after deploys).
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(PUBLIC_DIR,'admin.html'));
+});
 app.get('/redeem/:code', (req,res) => res.sendFile(path.join(PUBLIC_DIR,'redeem.html')));
 // Legacy redirect
 app.get('/dashboard',    (req,res) => res.redirect('/~'));
