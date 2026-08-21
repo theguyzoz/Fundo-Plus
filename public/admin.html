@@ -705,6 +705,15 @@
       location.reload();
     }
 
+    // Safely invoke a loader — never let a missing/broken loader crash the rest.
+    function safeCall(fn, label) {
+      if (typeof fn !== 'function') {
+        console.warn('[admin] loader missing:', label);
+        return;
+      }
+      try { fn(); } catch (e) { console.error('[admin] loader error (' + label + '):', e); }
+    }
+
     function showPage(p) {
       document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.ntab').forEach(el => el.classList.remove('active'));
@@ -714,28 +723,21 @@
       const idx = order.indexOf(p);
       const tabs = document.querySelectorAll('.ntab');
       if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
-      if (p === 'users')         loadUsers();
-      if (p === 'logins')        loadLogins();
-      if (p === 'push')          loadVapid();
-      if (p === 'bans')          loadBans();
-      if (p === 'papers')        loadPapers();
-      if (p === 'appupdate')     loadUpdateInfo();
-      if (p === 'files')         loadFiles();
-      if (p === 'chats')         loadChats();
-      if (p === 'wishlist')      loadWishlist();
-      if (p === 'subscriptions') loadSubs();
-      if (p === 'proofs')        loadProofs();
-      if (p === 'support')       loadSupport();
-      if (p === 'freelinks')     loadFreeLinks();
-      if (p === 'datafiles')     loadDataFiles();
-      if (p === 'ambassadors')   loadAmbassadors();
+      const loaders = {
+        users: loadUsers, logins: loadLogins, push: loadVapid, bans: loadBans,
+        papers: loadPapers, appupdate: loadUpdateInfo, files: loadFiles,
+        chats: loadChats, wishlist: loadWishlist, subscriptions: loadSubs,
+        proofs: loadProofs, support: loadSupport, freelinks: loadFreeLinks,
+        datafiles: loadDataFiles, ambassadors: loadAmbassadors,
+      };
+      if (loaders[p]) safeCall(loaders[p], p);
     }
 
     function loadAll() {
-      loadOverview();
-      loadServer();
-      loadUsers();
-      loadBans();
+      safeCall(loadOverview, 'overview');
+      safeCall(loadServer, 'server');
+      safeCall(loadUsers, 'users');
+      safeCall(loadBans, 'bans');
     }
 
     async function loadOverview() {

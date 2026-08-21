@@ -110,6 +110,10 @@ export function serveMinified(filePath) {
         cache.mtime = stat.mtimeMs;
       }
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      // Never let the browser cache a stale copy of a dynamic HTML page.
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.send(cache.html);
     } catch (e) {
       console.error('[minify]', filePath, e.message);
