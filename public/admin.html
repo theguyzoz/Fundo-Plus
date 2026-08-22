@@ -501,7 +501,7 @@
         </div>
       </div>
       <div id="proofs-table"><div style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Loading…</div></div>
-
+    </div>
 
     <!-- ═══════════════ DATA FILE MANAGEMENT ═══════════════ -->
     <div class="page" id="page-datafiles">
@@ -566,15 +566,15 @@
     </div>
     <!-- ═══════════════════════════════════════════════════════ -->
 
-      <div id="proof-img-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px">
-        <div class="proof-modal-inner">
-          <div class="proof-modal-header">
-            <h3 style="font-size:.95rem;font-weight:900;color:var(--text)" id="proof-modal-title">Payment Proof</h3>
-            <button onclick="closeProofModal()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;color:var(--muted)">✕</button>
-          </div>
-          <img id="proof-img" src="" alt="Payment proof" style="width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface2);border:1px solid var(--border)">
-          <div style="display:flex;gap:8px;margin-top:14px" id="proof-modal-actions"></div>
+    <!-- Proof image modal (fixed overlay, outside all page divs) -->
+    <div id="proof-img-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px">
+      <div class="proof-modal-inner">
+        <div class="proof-modal-header">
+          <h3 style="font-size:.95rem;font-weight:900;color:var(--text)" id="proof-modal-title">Payment Proof</h3>
+          <button onclick="closeProofModal()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;color:var(--muted)">✕</button>
         </div>
+        <img id="proof-img" src="" alt="Payment proof" style="width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface2);border:1px solid var(--border)">
+        <div style="display:flex;gap:8px;margin-top:14px" id="proof-modal-actions"></div>
       </div>
     </div>
 
@@ -668,7 +668,8 @@
     let _banTargetId = '';
     let _allUsers = [];
     let _userFilter = 'all';
-    const socket = io();
+    let socket;
+    try { socket = io(); } catch(e) { console.warn('[admin] socket.io unavailable:', e.message); socket = { on: function(){} }; }
 
     function api(url, opts) {
       opts = opts || {};
@@ -679,6 +680,8 @@
     async function doLogin() {
       const pass = document.getElementById('passInput').value;
       if (!pass) return;
+      const errEl = document.getElementById('loginErr');
+      errEl.classList.remove('show');
       try {
         const res = await fetch('/api/admin/login', {
           method: 'POST',
@@ -687,17 +690,24 @@
         });
         const data = await res.json();
         if (!res.ok) {
-          document.getElementById('loginErr').classList.add('show');
+          errEl.textContent = data.error || 'Incorrect password';
+          errEl.classList.add('show');
           return;
         }
         adminToken = data.token;
         localStorage.setItem('adminToken', adminToken);
-        document.getElementById('authScreen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        loadAll();
+        showDashboard();
       } catch (e) {
-        alert('Login failed: ' + e.message);
+        errEl.textContent = 'Network error — check your connection.';
+        errEl.classList.add('show');
+        console.error('[admin] Login error:', e);
       }
+    }
+
+    function showDashboard() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadAll();
     }
 
     function doLogout() {
@@ -750,27 +760,37 @@
     async function loadOverview() {
       const statsEl = document.getElementById('webUserStats');
       const botEl   = document.getElementById('botStatusBlock');
-      if (!adminToken) return; // not logged in yet
+      if (!adminToken) return;
 
       try {
         const uRes = await api('/api/admin/users/search?q=');
         if (uRes.status === 401) {
-          // Token expired — force re-login
+          // Token invalid — clear and redirect to login
           localStorage.removeItem('adminToken');
           adminToken = '';
-          document.getElementById('authScreen').style.display = 'block';
+          document.getElementById('authScreen').style.display = 'flex';
           document.getElementById('dashboard').style.display  = 'none';
           return;
         }
         if (!uRes.ok) throw new Error('Server error ' + uRes.status);
-        const users  = (await uRes.json()).users || [];
-        const total  = users.length;
-        const banned = users.filter(u => u.banned).length;
+        const users   = (await uRes.json()).users || [];
+        const total   = users.length;
+        const banned  = users.filter(u => u.banned).length;
+        const paid    = users.filter(u => u.plan && u.plan !== 'free').length;
+        const linked  = users.filter(u => u.jid).length;
+        const lite    = users.filter(u => u.plan === 'lite').length;
+        const plus    = users.filter(u => u.plan === 'plus').length;
+        const pro     = users.filter(u => u.plan === 'pro').length;
         if (statsEl) {
           statsEl.innerHTML = [
-            ['Total Users', total,          ''],
-            ['Active',      total - banned, 'color:var(--green)'],
-            ['Banned',      banned,         'color:#ef4444'],
+            ['Total Users',  total,           ''],
+            ['Active',       total - banned,  'color:var(--green)'],
+            ['Banned',       banned,          'color:#ef4444'],
+            ['Paid',         paid,            'color:#7c3aed'],
+            ['WA Linked',    linked,          'color:#0891b2'],
+            ['Lite',         lite,            'color:#2563eb'],
+            ['Plus',         plus,            'color:#7c3aed'],
+            ['Pro',          pro,             'color:#ef4444'],
           ].map(([l, v, s]) => `
             <div class="stat">
               <div class="stat-val" style="${s}">${v}</div>
@@ -1484,9 +1504,21 @@
     });
 
     if (adminToken) {
-      document.getElementById('authScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      loadAll();
+      // Verify the stored token is still valid before showing dashboard
+      fetch('/api/admin/server', { headers: { 'x-admin-token': adminToken } })
+        .then(r => {
+          if (r.ok) {
+            showDashboard();
+          } else {
+            // Token expired/invalid — clear it and show login
+            localStorage.removeItem('adminToken');
+            adminToken = '';
+          }
+        })
+        .catch(() => {
+          // Network error — still try to show dashboard optimistically
+          showDashboard();
+        });
     }
 
     const PLAN_LABELS = { lite: '🥈 Lite', plus: '🥇 Plus', pro: '💎 Pro' };
