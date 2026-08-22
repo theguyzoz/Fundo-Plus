@@ -733,20 +733,17 @@
       const idx = order.indexOf(p);
       const tabs = document.querySelectorAll('.ntab');
       if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
-      // Resolve the loader by NAME (string) so a missing function can never
-      // throw a ReferenceError and leave the tab stuck on "Loading…".
-      const loaderNames = {
-        users: 'loadUsers', logins: 'loadLogins', push: 'loadVapid', bans: 'loadBans',
-        papers: 'loadPapers', files: 'loadFiles', chats: 'loadChats',
-        wishlist: 'loadWishlist', subscriptions: 'loadSubs', proofs: 'loadProofs',
-        support: 'loadSupport', freelinks: 'loadFreeLinks', datafiles: 'loadDataFiles',
-        ambassadors: 'loadAmbassadors',
+      // Use a direct function reference map — window[name] won't work for locally-scoped functions
+      const loaders = {
+        users: loadUsers, logins: loadLogins, push: loadVapid, bans: loadBans,
+        papers: loadPapers, files: loadFiles, chats: loadChats,
+        wishlist: loadWishlist, subscriptions: loadSubs, proofs: loadProofs,
+        support: loadSupport, freelinks: loadFreeLinks, datafiles: loadDataFiles,
+        ambassadors: loadAmbassadors,
       };
-      const name = loaderNames[p];
-      if (name && typeof window[name] === 'function') {
-        try { window[name](); } catch (e) { console.error('[admin] loader error (' + name + '):', e); }
-      } else if (name) {
-        console.warn('[admin] loader missing:', name);
+      const fn = loaders[p];
+      if (typeof fn === 'function') {
+        try { fn(); } catch (e) { console.error('[admin] loader error (' + p + '):', e); }
       }
     }
 
@@ -1157,33 +1154,45 @@
       const reason = document.getElementById('ban-reason-input').value.trim();
       if (!reason) { alert('Reason is required.'); return; }
       try {
-        const r = await api('/api/admin/ban', { method: 'POST', body: JSON.stringify({ userId: _banTargetId, reason }) });
+        const token = adminToken || localStorage.getItem('adminToken') || '';
+        const r = await fetch('/api/admin/ban', {
+          method: 'POST',
+          headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: _banTargetId, reason })
+        });
         const d = await r.json();
+        if (r.status === 403) throw new Error('Admin token rejected — try logging out and back in.');
         if (!r.ok) throw new Error(d.error || 'Failed');
         closeBanModal();
         loadUsers();
         loadBans();
       } catch (e) {
-        alert('Failed: ' + e.message);
+        alert('Ban failed: ' + e.message);
       }
     }
 
     async function doUnban(userId) {
       if (!confirm('Unban this user?')) return;
       try {
-        const r = await api('/api/admin/unban', { method: 'POST', body: JSON.stringify({ userId }) });
+        const token = adminToken || localStorage.getItem('adminToken') || '';
+        const r = await fetch('/api/admin/unban', {
+          method: 'POST',
+          headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
         const d = await r.json();
+        if (r.status === 403) throw new Error('Admin token rejected — try logging out and back in.');
         if (!r.ok) throw new Error(d.error || 'Failed');
         loadUsers();
         loadBans();
       } catch (e) {
-        alert('Failed: ' + e.message);
+        alert('Unban failed: ' + e.message);
       }
     }
 
     async function resolveAppeal(userId, decision) {
       try {
-        const r = await api('/api/admin/appeals/' + userId + '/resolve', { method: 'POST', body: JSON.stringify({ decision }) });
+        const r = await api('/api/admin/appeal/' + userId + '/' + decision, { method: 'POST' });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Failed');
         loadBans();
