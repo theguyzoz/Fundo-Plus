@@ -1,1868 +1,1767 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="icon" type="image/png" href="/images/logo.png">
-    <link rel="apple-touch-icon" href="/images/logo.png">
-  <title>FundaPlus Admin — XTech</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
-  <style>
-    *, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --surface2: #f1f5f9;
-      --border: #e2e8f0;
-      --green: #16a34a;
-      --green-dim: #15803d;
-      --green-light: #dcfce7;
-      --yellow: #d97706;
-      --yellow-light: #fef3c7;
-      --red: #dc2626;
-      --red-light: #fee2e2;
-      --blue: #2563eb;
-      --blue-light: #dbeafe;
-      --text: #0f172a;
-      --muted: #64748b;
-      --radius: 12px;
-      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
-    }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" href="/images/logo.png">
+<title>FundaPlus Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-    /* ── NAV ── */
-    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 58px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
-    .logo-text { font-size: 1rem; font-weight: 900; color: var(--green); letter-spacing: -.3px; }
-    .nav-divider { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
-    .nav-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
-    .ntab { padding: 6px 13px; border: none; background: transparent; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; color: var(--muted); transition: .12s; white-space: nowrap; }
-    .ntab:hover { background: var(--surface2); color: var(--text); }
-    .ntab.active { color: var(--green); background: var(--green-light); }
-    .ntab.has-badge { position: relative; }
-    .tab-badge { position: absolute; top: 2px; right: 4px; background: var(--red); color: #fff; border-radius: 99px; font-size: .6rem; font-weight: 900; padding: 1px 5px; min-width: 16px; text-align: center; }
-    .nav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+*,::after,::before{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f1a;
+  --surface:#111827;
+  --surface2:#1a2235;
+  --surface3:#1f2d45;
+  --border:#1e2d45;
+  --border2:#263348;
+  --green:#22c55e;
+  --green-dim:#16a34a;
+  --green-bg:rgba(34,197,94,.08);
+  --green-bg2:rgba(34,197,94,.15);
+  --red:#ef4444;
+  --red-bg:rgba(239,68,68,.08);
+  --red-bg2:rgba(239,68,68,.15);
+  --yellow:#f59e0b;
+  --yellow-bg:rgba(245,158,11,.08);
+  --blue:#3b82f6;
+  --blue-bg:rgba(59,130,246,.08);
+  --purple:#a855f7;
+  --purple-bg:rgba(168,85,247,.08);
+  --cyan:#06b6d4;
+  --cyan-bg:rgba(6,182,212,.08);
+  --text:#f1f5f9;
+  --text2:#94a3b8;
+  --text3:#64748b;
+  --radius:12px;
+  --radius-sm:8px;
+  --radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.5);
+  --font:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
 
-    /* ── BUTTONS ── */
-    .btn { padding: 7px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .82rem; font-weight: 700; transition: .12s; }
-    .btn-primary { background: var(--green); color: #fff; }
-    .btn-primary:hover { background: var(--green-dim); }
-    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
-    .btn-danger { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
-    .btn-danger:hover { background: #fecaca; }
+/* ── AUTH ── */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,rgba(34,197,94,.06) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(59,130,246,.06) 0%,transparent 60%),var(--bg)}
+.auth-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:44px 40px;width:min(400px,95vw);box-shadow:var(--shadow-lg)}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+.auth-logo img{width:36px;height:36px;border-radius:10px}
+.auth-logo span{font-size:1.15rem;font-weight:700;color:var(--text)}
+.auth-title{font-size:1.5rem;font-weight:700;color:var(--text);margin-bottom:6px}
+.auth-sub{font-size:.85rem;color:var(--text2);margin-bottom:28px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.field input{width:100%;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:.9rem;font-family:var(--font);outline:0;transition:.15s}
+.field input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.12)}
+.auth-err{font-size:.8rem;color:var(--red);background:var(--red-bg);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:8px 12px;margin-bottom:12px;display:none}
+.auth-err.show{display:block}
 
-    /* ── AUTH ── */
-    .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); }
-    .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 40px; width: min(400px, 95vw); text-align: center; box-shadow: var(--shadow-md); }
-    .auth-card h2 { margin-bottom: 6px; font-size: 1.4rem; font-weight: 900; color: var(--text); }
-    .auth-card p { color: var(--muted); font-size: .85rem; margin-bottom: 28px; }
-    input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: .9rem; outline: 0; margin-bottom: 12px; transition: .12s; }
-    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.12); }
-    .err { color: var(--red); font-size: .8rem; margin-bottom: 10px; display: none; background: var(--red-light); border-radius: 7px; padding: 6px 10px; }
-    .err.show { display: block; }
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:.82rem;font-weight:600;font-family:var(--font);transition:.15s;text-decoration:none;white-space:nowrap}
+.btn svg{flex-shrink:0}
+.btn-primary{background:var(--green);color:#fff}
+.btn-primary:hover{background:var(--green-dim)}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--surface3);color:var(--text)}
+.btn-danger{background:var(--red-bg2);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-warn{background:var(--yellow-bg);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+.btn-sm{padding:5px 10px;font-size:.76rem}
+.btn-full{width:100%;justify-content:center;padding:12px}
 
-    /* ── LAYOUT ── */
-    .page { display: none; padding: 24px; max-width: 1180px; margin: 0 auto; }
-    .page.active { display: block; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; box-shadow: var(--shadow); }
-    .card h3 { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 800; margin-bottom: 16px; }
-    .card-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-    .card-sub { font-size: .82rem; color: var(--muted); margin-bottom: 16px; }
+/* ── LAYOUT ── */
+#app{display:none}
+.shell{display:flex;height:100vh;overflow:hidden}
 
-    /* ── STATS ── */
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-    .stat { background: var(--surface2); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
-    .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--green); letter-spacing: -.5px; }
-    .stat-label { font-size: .75rem; color: var(--muted); margin-top: 3px; font-weight: 600; }
+/* ── SIDEBAR ── */
+.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo img{width:28px;height:28px;border-radius:8px}
+.sidebar-logo span{font-size:.95rem;font-weight:700;color:var(--text)}
+.sidebar-section{padding:8px 0}
+.sidebar-label{font-size:.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:8px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;margin:1px 8px;border-radius:var(--radius-sm);cursor:pointer;transition:.12s;color:var(--text2);font-size:.83rem;font-weight:500;border:none;background:transparent;width:calc(100% - 16px);text-align:left;position:relative}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--green-bg2);color:var(--green)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.8}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
 
-    /* ── TABLES ── */
-    .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
-    th { text-align: left; padding: 10px 12px; background: var(--surface2); color: var(--muted); font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
-    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8fafc; }
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:10}
+.topbar-title{font-size:1rem;font-weight:700;color:var(--text)}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.content{padding:24px;flex:1}
+.page{display:none}
+.page.active{display:block}
 
-    /* ── BADGES ── */
-    .status-badge { padding: 3px 10px; border-radius: 99px; font-size: .72rem; font-weight: 800; }
-    .status-connected { background: var(--green-light); color: var(--green); }
-    .status-disconnected { background: var(--red-light); color: var(--red); }
-    .status-connecting { background: var(--yellow-light); color: var(--yellow); }
-    .badge-active { background: var(--green-light); color: #166534; border-radius: 99px; padding: 3px 10px; font-size: .72rem; font-weight: 800; display: inline-block; }
-    .badge-banned { background: var(--red-light); color: #991b1b; border-radius: 99px; padding: 3px 10px; font-size: .72rem; font-weight: 800; display: inline-block; }
-    .badge-pending { background: var(--yellow-light); color: #92400e; border-radius: 99px; padding: 3px 10px; font-size: .72rem; font-weight: 800; display: inline-block; }
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.card-title{font-size:.95rem;font-weight:700;color:var(--text)}
+.card-sub{font-size:.78rem;color:var(--text2);margin-top:2px}
+.card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-    /* ── ACTION BUTTONS ── */
-    .btn-ban    { padding: 4px 10px; background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; }
-    .btn-unban  { padding: 4px 10px; background: var(--green-light); color: #166534; border: 1px solid #86efac; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; }
-    .btn-approve { padding: 4px 12px; background: var(--green-light); color: #166534; border: 1px solid #86efac; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; margin-right: 4px; }
-    .btn-reject  { padding: 4px 12px; background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; font-size: .73rem; font-weight: 700; }
+/* ── STAT GRID ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;transform:translate(20px,-20px);opacity:.4}
+.stat-card.green::before{background:var(--green)}
+.stat-card.red::before{background:var(--red)}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.purple::before{background:var(--purple)}
+.stat-card.yellow::before{background:var(--yellow)}
+.stat-card.cyan::before{background:var(--cyan)}
+.stat-val{font-size:1.8rem;font-weight:700;line-height:1;margin-bottom:4px;font-family:var(--mono)}
+.stat-card.green .stat-val{color:var(--green)}
+.stat-card.red .stat-val{color:var(--red)}
+.stat-card.blue .stat-val{color:var(--blue)}
+.stat-card.purple .stat-val{color:var(--purple)}
+.stat-card.yellow .stat-val{color:var(--yellow)}
+.stat-card.cyan .stat-val{color:var(--cyan)}
+.stat-label{font-size:.72rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 
-    /* ── BOT ── */
-    .pair-code { font-size: 2.2rem; font-weight: 900; letter-spacing: .2em; color: var(--green); background: var(--green-light); border: 2px dashed #86efac; border-radius: 12px; padding: 18px; text-align: center; margin: 14px 0; font-family: 'Courier New', monospace; }
-    .pair-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .pair-input-row input { flex: 1; margin: 0; }
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead{background:var(--surface2)}
+th{text-align:left;padding:10px 14px;color:var(--text3);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
 
-    /* ── MODAL ── */
-    #ban-modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
-    #ban-modal.open { display: flex; }
-    #proof-img-modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); backdrop-filter: blur(4px); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
-    #proof-img-modal.open { display: flex; }
-    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.75rem; max-width: 440px; width: 100%; box-shadow: var(--shadow-md); }
-    .modal-box h3 { margin-bottom: .75rem; color: var(--red); font-size: 1rem; font-weight: 900; }
-    #ban-modal-user { font-size: .85rem; color: var(--muted); margin-bottom: .75rem; }
-    #ban-reason-input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text); font-size: .83rem; resize: vertical; min-height: 80px; outline: 0; margin-bottom: .75rem; font-family: inherit; }
-    #ban-reason-input:focus { border-color: var(--red); }
-    .modal-actions { display: flex; gap: .5rem; }
-    .modal-actions button { flex: 1; padding: 9px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; font-size: .85rem; }
-    .modal-confirm { background: var(--red); color: #fff; }
-    .modal-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border) !important; }
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:.7rem;font-weight:700}
+.badge-green{background:var(--green-bg2);color:var(--green)}
+.badge-red{background:var(--red-bg2);color:var(--red)}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.badge-purple{background:var(--purple-bg);color:var(--purple)}
+.badge-cyan{background:var(--cyan-bg);color:var(--cyan)}
+.badge-gray{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
 
-    /* ── SUPPORT CARD ── */
-    .msg-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 10px; transition: .12s; }
-    .msg-card:hover { border-color: #93c5fd; box-shadow: 0 0 0 3px var(--blue-light); }
-    .msg-card .msg-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-    .msg-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-light); color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 900; flex-shrink: 0; }
-    .msg-meta { flex: 1; min-width: 0; }
-    .msg-name { font-size: .88rem; font-weight: 800; }
-    .msg-email { font-size: .75rem; color: var(--muted); }
-    .msg-subject { font-size: .82rem; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
-    .msg-body { font-size: .82rem; color: #374151; line-height: 1.6; background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
-    .msg-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
-    .msg-time { font-size: .72rem; color: var(--muted); }
+/* ── USER CARD GRID ── */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:.15s}
+.user-card:hover{border-color:var(--border2);box-shadow:0 0 0 1px var(--blue),var(--shadow)}
+.uc-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.uc-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:#fff;flex-shrink:0}
+.uc-name{font-size:.9rem;font-weight:600;color:var(--text)}
+.uc-email{font-size:.74rem;color:var(--text2);word-break:break-all}
+.uc-meta{display:flex;flex-direction:column;gap:5px;font-size:.76rem;margin-bottom:12px}
+.uc-row{display:flex;justify-content:space-between;gap:8px}
+.uc-row .k{color:var(--text3)}
+.uc-row .v{color:var(--text);font-weight:500;text-align:right}
+.uc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.uc-actions{display:flex;gap:6px;flex-wrap:wrap}
 
-    /* ── PROOF MODAL IMAGE ── */
-    .proof-modal-inner { background: var(--surface); border-radius: 16px; padding: 20px; max-width: 600px; width: 100%; box-shadow: var(--shadow-md); }
-    .proof-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+/* ── SEARCH ── */
+.search-bar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:9px 14px 9px 36px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;font-family:var(--font);outline:0;transition:.15s;position:relative}
+.search-input:focus{border-color:var(--blue)}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
 
-    /* ── USER CARDS + FILTER TABS ── */
-    .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-    .ftab { padding: 6px 14px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface); color: var(--muted); cursor: pointer; font-size: .78rem; font-weight: 700; transition: .12s; }
-    .ftab:hover { border-color: var(--green); color: var(--green); }
-    .ftab.active { background: var(--green); color: #fff; border-color: var(--green); }
-    .ftab .cnt { opacity: .75; font-weight: 800; margin-left: 4px; }
-    .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-    .user-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); transition: .14s; display: flex; flex-direction: column; gap: 12px; }
-    .user-card:hover { border-color: #93c5fd; box-shadow: 0 0 0 3px var(--blue-light); }
-    .uc-head { display: flex; align-items: center; gap: 12px; }
-    .uc-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem; color: #fff; }
-    .uc-name { font-size: .95rem; font-weight: 800; line-height: 1.25; }
-    .uc-sub { font-size: .75rem; color: var(--muted); margin-top: 2px; word-break: break-all; }
-    .uc-badges { display: flex; gap: 5px; flex-wrap: wrap; }
-    .uc-badge { font-size: .66rem; font-weight: 800; border-radius: 99px; padding: 3px 9px; }
-    .uc-plan-free { background: #f1f5f9; color: #64748b; }
-    .uc-plan-lite { background: var(--blue-light); color: var(--blue); }
-    .uc-plan-plus { background: #ede9fe; color: #7c3aed; }
-    .uc-plan-pro { background: var(--red-light); color: var(--red); }
-    .uc-wa { background: var(--green-light); color: #166534; }
-    .uc-nowa { background: #f1f5f9; color: #94a3b8; }
-    .uc-rows { display: flex; flex-direction: column; gap: 7px; }
-    .uc-row { display: flex; justify-content: space-between; gap: 10px; font-size: .78rem; }
-    .uc-row .k { color: var(--muted); font-weight: 600; flex-shrink: 0; }
-    .uc-row .v { text-align: right; font-weight: 600; word-break: break-all; }
-    .uc-actions { display: flex; gap: 7px; margin-top: 2px; }
-    .uc-actions button { flex: 1; padding: 7px; border-radius: 7px; cursor: pointer; font-size: .74rem; font-weight: 800; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); transition: .12s; }
-    .uc-actions button:hover { background: var(--surface); }
-    .uc-actions .uc-ban { color: var(--red); border-color: #fca5a5; background: var(--red-light); }
-    .uc-actions .uc-unban { color: #166534; border-color: #86efac; background: var(--green-light); }
+/* ── FILTER TABS ── */
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ftab{padding:5px 12px;border:1px solid var(--border2);border-radius:99px;background:transparent;color:var(--text3);cursor:pointer;font-size:.76rem;font-weight:600;transition:.12s;font-family:var(--font)}
+.ftab:hover{border-color:var(--green);color:var(--green)}
+.ftab.active{background:var(--green-bg2);border-color:var(--green);color:var(--green)}
+.ftab .cnt{opacity:.75;margin-left:3px}
 
-    /* ── LOGIN LIST ── */
-    .login-list { display: flex; flex-direction: column; gap: 8px; }
-    .login-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: .12s; background: var(--surface); }
-    .login-row:hover { border-color: var(--blue); background: #f8fafc; }
-    .login-row.active { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
-    .lr-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: .9rem; }
-    .lr-meta { flex: 1; min-width: 0; }
-    .lr-name { font-weight: 800; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lr-sub { font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lr-time { font-size: .72rem; color: var(--muted); white-space: nowrap; text-align: right; }
-    .login-detail { margin-top: 14px; }
-    .kv { font-size: .76rem; color: var(--muted); word-break: break-all; margin-top: 4px; }
-    .kv b { color: var(--text); }
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px;width:min(480px,100%);box-shadow:var(--shadow-lg)}
+.modal-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:.8rem;color:var(--text2);margin-bottom:20px}
+.modal-actions{display:flex;gap:8px;margin-top:20px}
+.modal-actions .btn{flex:1;justify-content:center}
+.field textarea{width:100%;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;font-family:var(--font);outline:0;resize:vertical;min-height:80px;transition:.15s}
+.field textarea:focus{border-color:var(--green)}
+.field select{width:100%;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;font-family:var(--font);outline:0;transition:.15s}
+.field select:focus{border-color:var(--green)}
 
-    /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--surface2); }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* ── EMPTY / LOADING ── */
+.empty{padding:48px 20px;text-align:center;color:var(--text3)}
+.empty svg{margin:0 auto 12px;display:block;opacity:.4}
+.empty p{font-size:.85rem}
+.loading-row{padding:40px 20px;text-align:center;color:var(--text3);font-size:.82rem}
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      nav { flex-wrap: wrap; height: auto; padding: 10px 16px; gap: 8px; }
-      .nav-tabs { order: 3; width: 100%; overflow-x: auto; padding-bottom: 4px; }
-      .page { padding: 16px; }
-    }
-  </style>
+/* ── PROOF IMAGE ── */
+.proof-img-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:20px}
+.proof-img-modal.open{display:flex}
+.proof-img-inner{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:20px;max-width:600px;width:100%;box-shadow:var(--shadow-lg)}
+.proof-img-inner img{width:100%;max-height:440px;object-fit:contain;border-radius:var(--radius-sm);background:var(--surface2)}
+
+/* ── DATA FILES ── */
+.data-banner{background:var(--yellow-bg);border:1px solid rgba(245,158,11,.3);border-radius:var(--radius-sm);padding:8px 14px;font-size:.8rem;color:var(--yellow);font-weight:600;margin-bottom:12px;display:none}
+
+/* ── STATUS DOT ── */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green)}
+.dot-red{background:var(--red)}
+.dot-yellow{background:var(--yellow)}
+
+/* ── INPUT ROW ── */
+.input-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.input-row .field{flex:1;min-width:160px}
+.input-row .field:last-child{flex:0 0 auto}
+
+/* ── LOGIN ITEM ── */
+.login-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:.12s;background:var(--surface);margin-bottom:6px}
+.login-item:hover{border-color:var(--blue);background:var(--surface2)}
+.login-item.active{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.login-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.85rem;flex-shrink:0}
+.login-meta{flex:1;min-width:0}
+.login-name{font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.login-sub{font-size:.72rem;color:var(--text2)}
+.login-time{font-size:.72rem;color:var(--text3);white-space:nowrap}
+
+/* ── PUSH PAGE ── */
+.vapid-key{font-family:var(--mono);font-size:.72rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;word-break:break-all;color:var(--text2)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{width:100%}
+  .content{padding:16px}
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.page.active{animation:fadeIn .18s ease}
+</style>
 </head>
 <body>
 
-  
-  <div class="auth-screen" id="authScreen">
-    <div class="auth-card">
-      <svg width="44" height="44" viewBox="0 0 36 36" fill="none" style="margin:0 auto 14px">
-        <rect width="36" height="36" rx="9" fill="#161b22" stroke="#30363d"/>
-        <path d="M10 12h16M10 18h10M10 24h13" stroke="#23d18b" stroke-width="2.2" stroke-linecap="round"/>
-        <circle cx="27" cy="24" r="4" fill="#388bfd"/>
-      </svg>
-      <h2>FundaPlus Admin</h2>
-      <p>Admin access — FundaPlus Edu Platform</p>
-      <input type="password" id="passInput" placeholder="Admin password" onkeydown='if(event.key==="Enter") doLogin()'>
-      <div class="err" id="loginErr">Incorrect password</div>
-      <button class="btn btn-primary" style="width:100%;padding:11px" onclick="doLogin()">Sign in</button>
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="/images/logo.png" alt="FundaPlus">
+      <span>FundaPlus Admin</span>
     </div>
+    <div class="auth-title">Sign in</div>
+    <div class="auth-sub">Admin access only</div>
+    <div class="auth-err" id="auth-err">Incorrect password</div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="pass-input" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Sign in
+    </button>
   </div>
+</div>
 
-  <!-- Dashboard -->
-  <div id="dashboard" style="display:none">
-    <nav>
-      <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
-      <span class="logo-text">FundaPlus Admin</span>
-      <div class="nav-divider"></div>
-      <div class="nav-tabs">
-        <button class="ntab active" onclick='showPage("overview")'>📊 Overview</button>
-        <button class="ntab" onclick='showPage("bot")'>🤖 Bot</button>
-        <button class="ntab" onclick='showPage("users")'>👥 Users</button>
-        <button class="ntab" onclick='showPage("logins")'>🕐 Logins</button>
-        <button class="ntab" onclick='showPage("bans")'>🚫 Bans</button>
-        <button class="ntab" onclick='showPage("subscriptions")'>💳 Subs</button>
-        <button class="ntab" onclick='showPage("proofs")'>🧾 Proofs</button>
-        <button class="ntab" onclick='showPage("support")'>💬 Support</button>
-        <button class="ntab" onclick='showPage("papers")'>📄 Papers</button>
-        <button class="ntab" onclick='showPage("freelinks")'>🔗 Free Links</button>
-        <button class="ntab" onclick='showPage("files")'>Files</button>
-        <button class="ntab" onclick='showPage("chats")'>Chats</button>
-        <button class="ntab" onclick='showPage("wishlist")'>Wishlist</button>
-        <button class="ntab" onclick='showPage("datafiles")'>🗄 Data</button>
-        <button class="ntab" onclick='showPage("appupdate")'>🚀 App Update</button>
-        <button class="ntab" onclick='showPage("ambassadors")'>🌟 Ambassadors</button>
-        <button class="ntab" onclick='showPage("push")'>🔔 Push</button>
-        <a class="ntab" href="/admin/notifications" style="text-decoration:none">📣 Notify</a>
+<!-- APP -->
+<div id="app">
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <img src="/images/logo.png" alt="">
+        <span>FundaPlus</span>
       </div>
-      <div class="nav-right">
-        <button class="btn btn-ghost" onclick="doSync()">⬆ Sync Now</button>
-        <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
-      </div>
-    </nav>
 
-    <!-- Overview -->
-    <div class="page active" id="page-overview">
-      <div class="card">
-        <h3>Web Users</h3>
-        <div class="stat-grid" id="webUserStats"><div style="color:var(--muted)">Loading...</div></div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Main</div>
+        <button class="nav-item active" data-page="overview" onclick="showPage('overview')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Overview
+        </button>
+        <button class="nav-item" data-page="users" onclick="showPage('users')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Users
+        </button>
+        <button class="nav-item" data-page="logins" onclick="showPage('logins')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Recent Logins
+        </button>
       </div>
-      <div class="card">
-        <h3>Server</h3>
-        <div class="stat-grid" id="serverStats"><div style="color:var(--muted)">Loading...</div></div>
-      </div>
-      <div class="card">
-        <h3>Bot Status</h3>
-        <div id="botStatusBlock">Loading...</div>
-      </div>
-    </div>
 
-    <!-- Bot -->
-    <div class="page" id="page-bot">
-      <div class="card">
-        <h3>WhatsApp Pairing</h3>
-        <div class="pair-input-row">
-          <input type="tel" id="phoneInput" placeholder="Phone number (e.g. 263712345678)">
-          <button class="btn btn-primary" onclick="doPair()">Pair</button>
-          <button class="btn btn-danger" onclick="doDisconnect()">Disconnect</button>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Moderation</div>
+        <button class="nav-item" data-page="bans" onclick="showPage('bans')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          Bans &amp; Appeals
+          <span class="nav-badge" id="badge-bans" style="display:none"></span>
+        </button>
+        <button class="nav-item" data-page="support" onclick="showPage('support')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Support
+          <span class="nav-badge" id="badge-support" style="display:none"></span>
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Billing</div>
+        <button class="nav-item" data-page="subs" onclick="showPage('subs')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Subscriptions
+        </button>
+        <button class="nav-item" data-page="proofs" onclick="showPage('proofs')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Proofs
+          <span class="nav-badge" id="badge-proofs" style="display:none"></span>
+        </button>
+        <button class="nav-item" data-page="freelinks" onclick="showPage('freelinks')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Promo Links
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Content</div>
+        <button class="nav-item" data-page="papers" onclick="showPage('papers')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Papers
+        </button>
+        <button class="nav-item" data-page="ambassadors" onclick="showPage('ambassadors')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Ambassadors
+        </button>
+        <button class="nav-item" data-page="push" onclick="showPage('push')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Push / VAPID
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">System</div>
+        <button class="nav-item" data-page="chats" onclick="showPage('chats')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chats
+        </button>
+        <button class="nav-item" data-page="files" onclick="showPage('files')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Files
+        </button>
+        <button class="nav-item" data-page="datafiles" onclick="showPage('datafiles')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          Data Sync
+        </button>
+        <button class="nav-item" data-page="wishlist" onclick="showPage('wishlist')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Wishlist
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="doSync()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+          Sync to Supabase
+        </button>
+        <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;margin-top:6px" onclick="doLogout()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbar-title">Overview</div>
+        <div class="topbar-right">
+          <span id="server-uptime" style="font-size:.75rem;color:var(--text3)"></span>
         </div>
-        <div class="pair-code" id="pairCode" style="display:none">—</div>
-        <div style="font-size:.78rem;color:var(--muted)">Enter the code in WhatsApp → Linked Devices → Link a Device</div>
-        <div style="margin-top:12px">
-          <button class="btn btn-danger" onclick="doReset()">Reset session</button>
-        </div>
       </div>
-    </div>
 
-    <!-- Users -->
-    <div class="page" id="page-users">
-      <div class="card" style="margin-bottom:12px">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input id="user-search" placeholder="Search email, name, phone, ID…" style="flex:1;padding:7px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:.83rem;outline:0;min-width:200px;margin-bottom:0" oninput="searchUsers()">
-          <button class="btn btn-primary" style="font-size:.82rem;padding:7px 14px" onclick="loadUsers()">Refresh</button>
-        </div>
-        <div class="filter-tabs" id="user-filter-tabs" style="margin-top:12px">
-          <div class="ftab active" data-f="all" onclick="setUserFilter('all')">All <span class="cnt" id="fc-all"></span></div>
-          <div class="ftab" data-f="linked" onclick="setUserFilter('linked')">WA Linked <span class="cnt" id="fc-linked"></span></div>
-          <div class="ftab" data-f="paid" onclick="setUserFilter('paid')">Paid <span class="cnt" id="fc-paid"></span></div>
-          <div class="ftab" data-f="banned" onclick="setUserFilter('banned')">Banned <span class="cnt" id="fc-banned"></span></div>
-          <div class="ftab" data-f="admin" onclick="setUserFilter('admin')">Admins <span class="cnt" id="fc-admin"></span></div>
-          <div class="ftab" data-f="incomplete" onclick="setUserFilter('incomplete')">Not Onboarded <span class="cnt" id="fc-incomplete"></span></div>
-        </div>
-      </div>
-      <div id="users-table" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
-    </div>
+      <div class="content">
 
-    <!-- Logins -->
-    <div class="page" id="page-logins">
-      <div class="card" style="margin-bottom:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <div>
-            <h3 style="margin-bottom:.4rem">🕐 Recently Logged-in Users</h3>
-            <p style="font-size:.82rem;color:var(--muted)">Live session log (in-memory only — resets on server restart). Click a user to see their full profile.</p>
+        <!-- ══ OVERVIEW ══ -->
+        <div class="page active" id="page-overview">
+          <div class="stat-grid" id="stat-grid">
+            <div class="stat-card green"><div class="stat-val" id="st-total">—</div><div class="stat-label">Total Users</div></div>
+            <div class="stat-card blue"><div class="stat-val" id="st-active">—</div><div class="stat-label">Active</div></div>
+            <div class="stat-card red"><div class="stat-val" id="st-banned">—</div><div class="stat-label">Banned</div></div>
+            <div class="stat-card purple"><div class="stat-val" id="st-paid">—</div><div class="stat-label">Paid</div></div>
+            <div class="stat-card cyan"><div class="stat-val" id="st-linked">—</div><div class="stat-label">WA Linked</div></div>
+            <div class="stat-card yellow"><div class="stat-val" id="st-lite">—</div><div class="stat-label">Lite</div></div>
+            <div class="stat-card purple"><div class="stat-val" id="st-plus">—</div><div class="stat-label">Plus</div></div>
+            <div class="stat-card red"><div class="stat-val" id="st-pro">—</div><div class="stat-label">Pro</div></div>
           </div>
-          <button class="btn btn-ghost" style="font-size:.82rem;padding:7px 14px" onclick="loadLogins()">↺ Refresh</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="login-list" id="login-list"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
-        <div class="login-detail" id="login-detail"></div>
-      </div>
-    </div>
-
-    <!-- Bans -->
-    <div class="page" id="page-bans">
-      <div class="card" style="margin-bottom:12px">
-        <h3 style="margin-bottom:.5rem">🚫 Active Bans &amp; Appeals</h3>
-        <p style="font-size:.82rem;color:var(--muted)">Manage suspended accounts and review user appeals.</p>
-      </div>
-      <div class="card" style="margin-bottom:12px">
-        <h4 style="font-size:.82rem;font-weight:800;margin-bottom:.75rem;color:#f59e0b">⏳ Pending Appeals</h4>
-        <div id="appeals-table"><div style="color:var(--muted);font-size:.82rem">Loading…</div></div>
-      </div>
-      <div class="card">
-        <h4 style="font-size:.82rem;font-weight:800;margin-bottom:.75rem">All Active Bans</h4>
-        <div id="bans-table"><div style="color:var(--muted);font-size:.82rem">Loading…</div></div>
-      </div>
-    </div>
-
-    <!-- Papers -->
-    <div class="page" id="page-papers">
-      <div class="card">
-        <h3>Uploaded Papers</h3>
-        <div id="papersStorageInfo" style="font-size:.82rem;color:var(--muted);margin-bottom:12px"></div>
-        <table>
-          <thead>
-            <tr>
-              <th>Filename</th>
-              <th>Uploader</th>
-              <th>Size</th>
-              <th>Date</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="papersTable">
-            <tr><td colspan="5" style="color:var(--muted)">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Free Premium Links -->
-    <div class="page" id="page-freelinks">
-      <div class="card">
-        <div class="card-title">🔗 Create Free Premium Link</div>
-        <div class="card-sub">Generate a shareable link that grants users a free premium plan.</div>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
-          <div>
-            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Plan</label>
-            <select id="fl-plan" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
-              <option value="lite">Lite</option>
-              <option value="plus" selected>Plus</option>
-              <option value="pro">Pro</option>
-            </select>
-          </div>
-          <div>
-            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Max Uses (0 = unlimited)</label>
-            <input type="number" id="fl-maxuses" value="1" min="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
-          </div>
-          <div>
-            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Expires (optional)</label>
-            <input type="datetime-local" id="fl-expires" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
-          </div>
-          <div>
-            <label style="display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Note / Label</label>
-            <input type="text" id="fl-note" placeholder="e.g. Discord promo, School event…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:.9rem;outline:0">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Server Status</div></div>
+            </div>
+            <div class="stat-grid" id="server-stats">
+              <div class="loading-row" style="grid-column:1/-1">Loading…</div>
+            </div>
           </div>
         </div>
 
-        <button class="btn btn-primary" style="width:auto;padding:10px 26px" onclick="createFreeLink()">Generate Link</button>
-
-        <!-- Generated link display -->
-        <div id="fl-result" style="display:none;margin-top:18px;padding:16px;background:var(--green-light);border:1.5px solid #86efac;border-radius:10px">
-          <div style="font-size:.75rem;font-weight:700;color:#166534;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">✅ Link Created — Share this URL:</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input type="text" id="fl-result-url" readonly style="flex:1;background:#fff;border:1px solid #86efac;font-family:monospace;font-size:.85rem;color:var(--text)">
-            <button onclick="copyLink()" class="btn btn-primary" style="width:auto;padding:9px 16px;white-space:nowrap">Copy</button>
+        <!-- ══ USERS ══ -->
+        <div class="page" id="page-users">
+          <div class="card" style="margin-bottom:14px">
+            <div class="search-bar">
+              <div class="search-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-input" id="user-search" placeholder="Search name, email, phone, ID…" oninput="debounce(loadUsers,350)()">
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="loadUsers()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+                Refresh
+              </button>
+            </div>
+            <div class="filter-tabs">
+              <button class="ftab active" data-f="all" onclick="setFilter('all',this)">All <span class="cnt" id="fc-all"></span></button>
+              <button class="ftab" data-f="paid" onclick="setFilter('paid',this)">Paid <span class="cnt" id="fc-paid"></span></button>
+              <button class="ftab" data-f="linked" onclick="setFilter('linked',this)">WA Linked <span class="cnt" id="fc-linked"></span></button>
+              <button class="ftab" data-f="banned" onclick="setFilter('banned',this)">Banned <span class="cnt" id="fc-banned"></span></button>
+              <button class="ftab" data-f="admin" onclick="setFilter('admin',this)">Admins <span class="cnt" id="fc-admin"></span></button>
+              <button class="ftab" data-f="incomplete" onclick="setFilter('incomplete',this)">Incomplete <span class="cnt" id="fc-incomplete"></span></button>
+            </div>
           </div>
+          <div id="users-container"><div class="loading-row">Loading users…</div></div>
         </div>
-      </div>
 
-      <!-- Existing Links Table -->
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div class="card-title" style="margin-bottom:0">All Promo Links</div>
-          <button class="btn btn-ghost" style="width:auto;padding:7px 14px" onclick="loadFreeLinks()">↻ Refresh</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Note</th>
-                <th>Uses</th>
-                <th>Max Uses</th>
-                <th>Expires</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Link</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="fl-table-body">
-              <tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Loading…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Files -->
-    <div class="page" id="page-files">
-      <div class="card">
-        <h3>Data Files</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>File</th>
-              <th>Size</th>
-              <th>Modified</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="filesTable">
-            <tr><td colspan="4" style="color:var(--muted)">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Chats -->
-    <div class="page" id="page-chats">
-      <div class="card">
-        <h3>Synced Chats</h3>
-        <table>
-          <thead>
-            <tr><th>JID</th><th>Messages</th><th>Last Active</th></tr>
-          </thead>
-          <tbody id="chatsTable">
-            <tr><td colspan="3" style="color:var(--muted)">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Wishlist -->
-    <div class="page" id="page-wishlist">
-      <div class="card">
-        <h3>Upgrade Wishlist</h3>
-        <div id="wishlistInfo" style="font-size:2rem;font-weight:800;color:var(--green)">—</div>
-        <div style="color:var(--muted);font-size:.85rem;margin-top:4px">users want to upgrade</div>
-      </div>
-    </div>
-
-    
-    <div class="page" id="page-subscriptions">
-      <div class="card">
-        <h3>💳 Active Subscriptions</h3>
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-          <input id="sub-user-id" placeholder="User ID" style="flex:1;min-width:200px;margin:0;padding:7px 12px;font-size:.83rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:0">
-          <select id="sub-plan" style="padding:7px 12px;font-size:.83rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:0">
-            <option value="lite">Lite</option>
-            <option value="plus">Plus</option>
-            <option value="pro">Pro</option>
-            <option value="free">Free (remove)</option>
-          </select>
-          <button class="btn btn-primary" onclick="grantSub()">Grant Sub</button>
-          <button class="btn btn-ghost" onclick="loadSubs()">Refresh</button>
-        </div>
-        <div id="subs-result" style="font-size:.8rem;margin-bottom:10px"></div>
-        <div id="subs-table"><div style="color:var(--muted);font-size:.85rem">Loading…</div></div>
-      </div>
-    </div>
-
-    
-    <div class="page" id="page-proofs">
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div class="card-title">🧾 Payment Proofs</div>
-            <div class="card-sub">Review and approve subscription payment proofs. Approved images are stored to Supabase and deleted locally.</div>
+        <!-- ══ LOGINS ══ -->
+        <div class="page" id="page-logins">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+              <div><div class="card-title">Recent Logins</div><div class="card-sub">In-memory only — resets on server restart</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadLogins()">Refresh</button></div>
+            </div>
+            <div id="logins-list"><div class="loading-row">Loading…</div></div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span id="proofs-pending-count" style="font-size:.8rem;font-weight:700;color:var(--yellow);background:var(--yellow-light);padding:4px 10px;border-radius:99px"></span>
-            <button class="btn btn-ghost" onclick="loadProofs()">↺ Refresh</button>
-          </div>
+          <div id="login-detail"></div>
         </div>
-      </div>
-      <div id="proofs-table"><div style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Loading…</div></div>
-    </div>
 
-    <!-- ═══════════════ DATA FILE MANAGEMENT ═══════════════ -->
-    <div class="page" id="page-datafiles">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
-          <div>
-            <div class="card-title">🗄 Data File Management</div>
-            <div class="card-sub">Sync JSON data files between Supabase and the server's data directory</div>
+        <!-- ══ BANS ══ -->
+        <div class="page" id="page-bans">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+              <div><div class="card-title">Pending Appeals</div><div class="card-sub">Users appealing their ban</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadBans()">Refresh</button></div>
+            </div>
+            <div id="appeals-container"><div class="loading-row">Loading…</div></div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost" onclick="loadDataFiles()" style="font-size:.8rem">🔄 Refresh</button>
-            <button class="btn btn-ghost" onclick="dataPullAll()" style="font-size:.8rem">⬇ Pull All from Supabase</button>
-            <button class="btn btn-primary" onclick="dataPushSelected()" style="font-size:.8rem">⬆ Push Selected → Supabase</button>
-            <button class="btn btn-ghost" onclick="dataPullSelected()" style="font-size:.8rem">⬇ Pull Selected from Supabase</button>
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Active Bans</div></div>
+            </div>
+            <div id="bans-container"><div class="loading-row">Loading…</div></div>
           </div>
         </div>
 
-        <!-- Upload from device -->
-        <div style="background:var(--surface2);border:1.5px dashed var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
-          <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">📱 Upload JSON files from your device → Server</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <label style="flex:1;min-width:200px;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:.83rem;color:var(--muted);display:flex;align-items:center;gap:6px">
-              <span>📂</span>
-              <span id="uploadFileLabel">Select JSON file(s)…</span>
-              <input type="file" id="dataFileInput" accept=".json" multiple style="display:none" onchange="updateUploadLabel()">
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text);cursor:pointer;white-space:nowrap">
-              <input type="checkbox" id="pushAfterUpload"> Also push to Supabase
-            </label>
-            <button class="btn btn-primary" onclick="uploadDataFiles()" style="font-size:.8rem">Upload to Server</button>
+        <!-- ══ SUPPORT ══ -->
+        <div class="page" id="page-support">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+              <div><div class="card-title">Support Messages</div></div>
+              <div class="card-actions">
+                <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text2);cursor:pointer">
+                  <input type="checkbox" id="supp-unresolved" onchange="loadSupport()"> Unresolved only
+                </label>
+                <button class="btn btn-ghost btn-sm" onclick="loadSupport()">Refresh</button>
+              </div>
+            </div>
           </div>
-          <div id="uploadResult" style="margin-top:8px;font-size:.78rem;min-height:16px"></div>
+          <div id="support-container"><div class="loading-row">Loading…</div></div>
         </div>
 
-        <div id="dataSyncBanner" style="display:none;background:var(--yellow-light);color:var(--yellow);border-radius:8px;padding:8px 12px;font-size:.8rem;margin-bottom:10px;font-weight:700"></div>
-
-        <!-- Select + refresh row -->
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--muted)">
-            <input type="checkbox" id="selectAllData" onchange="toggleSelectAllData(this)"> Select all
-          </label>
-          <span id="dataFilesStatus" style="font-size:.78rem;color:var(--muted)"></span>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:36px"></th>
-                <th>File</th>
-                <th>Server</th>
-                <th>Supabase</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="dataFilesTable">
-              <tr><td colspan="5" style="color:var(--muted);padding:24px;text-align:center">Loading…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <!-- ═══════════════════════════════════════════════════════ -->
-
-    <!-- Proof image modal (fixed overlay, outside all page divs) -->
-    <div id="proof-img-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px">
-      <div class="proof-modal-inner">
-        <div class="proof-modal-header">
-          <h3 style="font-size:.95rem;font-weight:900;color:var(--text)" id="proof-modal-title">Payment Proof</h3>
-          <button onclick="closeProofModal()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;color:var(--muted)">✕</button>
-        </div>
-        <img id="proof-img" src="" alt="Payment proof" style="width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--surface2);border:1px solid var(--border)">
-        <div style="display:flex;gap:8px;margin-top:14px" id="proof-modal-actions"></div>
-      </div>
-    </div>
-
-    
-    <div class="page" id="page-support">
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div class="card-title">💬 Support Messages</div>
-            <div class="card-sub">Messages submitted by users via the support page</div>
+        <!-- ══ SUBSCRIPTIONS ══ -->
+        <div class="page" id="page-subs">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+              <div><div class="card-title">Grant Subscription</div></div>
+            </div>
+            <div class="input-row">
+              <div class="field"><label>User ID</label><input type="text" id="grant-uid" placeholder="User ID"></div>
+              <div class="field"><label>Plan</label>
+                <select id="grant-plan">
+                  <option value="lite">Lite</option>
+                  <option value="plus">Plus</option>
+                  <option value="pro">Pro</option>
+                  <option value="free">Free (remove)</option>
+                </select>
+              </div>
+              <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="grantSub()">Grant</button></div>
+            </div>
+            <div id="grant-result" style="font-size:.8rem;margin-top:8px"></div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 10px">
-              <input type="checkbox" id="supp-unresolved" onchange="loadSupport()" style="width:auto;margin:0;padding:0"> Unresolved only
-            </label>
-            <button class="btn btn-ghost" onclick="loadSupport()">↺ Refresh</button>
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Active Subscriptions</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadSubs()">Refresh</button></div>
+            </div>
+            <div id="subs-container"><div class="loading-row">Loading…</div></div>
           </div>
         </div>
-      </div>
-      <div id="support-table"><div style="color:var(--muted);font-size:.85rem;padding:20px;text-align:center">Loading…</div></div>
-    </div>
 
-    <div class="page" id="page-ambassadors">
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div class="card-title">🌟 Ambassador Management</div>
-            <div class="card-sub">Add users by email — they get unlimited usage, exam creation rights, a blue ✓ badge in community, and their own Ambassador Hub.</div>
+        <!-- ══ PROOFS ══ -->
+        <div class="page" id="page-proofs">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Payment Proofs</div><div class="card-sub">Review and approve/reject payment screenshots</div></div>
+              <div class="card-actions">
+                <span id="proofs-pending-badge" class="badge badge-yellow" style="display:none"></span>
+                <button class="btn btn-ghost btn-sm" onclick="loadProofs()">Refresh</button>
+              </div>
+            </div>
+            <div id="proofs-container"><div class="loading-row">Loading…</div></div>
           </div>
-          <button class="btn btn-primary" onclick="showAddAmbassadorModal()">+ Add Ambassador</button>
         </div>
-      </div>
-      <div id="ambassadors-table"><div style="color:var(--muted);font-size:.85rem;padding:20px;text-align:center">Loading…</div></div>
-    </div>
 
-    <!-- Push / VAPID -->
-    <div class="page" id="page-push">
-      <div class="card">
-        <h3 style="margin-bottom:.5rem">🔔 Web Push — VAPID Keys</h3>
-        <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">VAPID identifies your server to the push services (FCM / Mozilla). Manage keys and test delivery here.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px">
-          <div class="stat"><div class="stat-val" id="vapid-subs">—</div><div class="stat-label">Subscribers</div></div>
-          <div class="stat"><div class="stat-val" style="font-size:1rem" id="vapid-source">—</div><div class="stat-label">Key source</div></div>
+        <!-- ══ PROMO LINKS ══ -->
+        <div class="page" id="page-freelinks">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header"><div><div class="card-title">Create Promo Link</div></div></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px">
+              <div class="field"><label>Plan</label>
+                <select id="fl-plan">
+                  <option value="lite">Lite</option>
+                  <option value="plus" selected>Plus</option>
+                  <option value="pro">Pro</option>
+                </select>
+              </div>
+              <div class="field"><label>Max Uses (0 = ∞)</label><input type="number" id="fl-maxuses" value="1" min="0"></div>
+              <div class="field"><label>Expires (optional)</label><input type="datetime-local" id="fl-expires"></div>
+              <div class="field"><label>Note / Label</label><input type="text" id="fl-note" placeholder="e.g. Discord promo"></div>
+            </div>
+            <button class="btn btn-primary" onclick="createPromoLink()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Generate Link
+            </button>
+            <div id="fl-result" style="display:none;margin-top:14px;padding:14px;background:var(--green-bg);border:1px solid rgba(34,197,94,.3);border-radius:var(--radius-sm)">
+              <div style="font-size:.74rem;font-weight:700;color:var(--green);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">✅ Link Created</div>
+              <div style="display:flex;gap:8px">
+                <input id="fl-url" readonly style="flex:1;font-family:var(--mono);font-size:.78rem;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);outline:0">
+                <button class="btn btn-ghost btn-sm" onclick="copyPromoUrl()">Copy</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">All Promo Links</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadPromoLinks()">Refresh</button></div>
+            </div>
+            <div id="promolinks-container"><div class="loading-row">Loading…</div></div>
+          </div>
         </div>
-        <div class="field" style="margin-bottom:10px">
-          <label style="font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Public key</label>
-          <input id="vapid-public" readonly style="width:100%;font-family:monospace;font-size:.78rem;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text)">
+
+        <!-- ══ PAPERS ══ -->
+        <div class="page" id="page-papers">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Uploaded Papers</div></div>
+              <div class="card-actions">
+                <span id="papers-storage" style="font-size:.75rem;color:var(--text3)"></span>
+                <button class="btn btn-ghost btn-sm" onclick="loadPapers()">Refresh</button>
+              </div>
+            </div>
+            <div id="papers-container"><div class="loading-row">Loading…</div></div>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-          <button class="btn btn-ghost" onclick="copyVapid()">📋 Copy</button>
-          <button class="btn btn-danger" onclick="generateVapid()">🔄 Generate new keys</button>
-          <button class="btn btn-primary" onclick="sendTestPushFromAdmin()">🔔 Send test push</button>
+
+        <!-- ══ AMBASSADORS ══ -->
+        <div class="page" id="page-ambassadors">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header"><div><div class="card-title">Add Ambassador</div></div></div>
+            <div class="input-row">
+              <div class="field"><label>Email</label><input type="email" id="amb-email" placeholder="user@email.com"></div>
+              <div class="field"><label>Note (optional)</label><input type="text" id="amb-note" placeholder="e.g. Top referrer"></div>
+              <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addAmbassador()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add
+              </button></div>
+            </div>
+            <div id="amb-result" style="font-size:.8rem;margin-top:8px"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">All Ambassadors</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadAmbassadors()">Refresh</button></div>
+            </div>
+            <div id="ambassadors-container"><div class="loading-row">Loading…</div></div>
+          </div>
         </div>
-        <div id="vapid-status" style="font-size:.8rem;color:var(--muted)"></div>
-        <div style="background:var(--yellow-light);border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:12px 14px;font-size:.78rem;line-height:1.55;margin-top:14px">
-          ⚠️ <b>Rotating keys invalidates all existing push subscriptions.</b> After generating new keys, every user must toggle notifications OFF then ON again to re-subscribe. Only rotate if the current keys are compromised or you're setting up a fresh instance.
+
+        <!-- ══ PUSH / VAPID ══ -->
+        <div class="page" id="page-push">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header"><div><div class="card-title">VAPID Keys</div><div class="card-sub">Web push encryption keys</div></div></div>
+            <div class="stat-grid" style="margin-bottom:16px">
+              <div class="stat-card cyan"><div class="stat-val" id="vapid-subs">—</div><div class="stat-label">Subscribers</div></div>
+              <div class="stat-card blue"><div class="stat-val" id="vapid-source" style="font-size:.9rem">—</div><div class="stat-label">Key Source</div></div>
+            </div>
+            <div style="margin-bottom:12px">
+              <div style="font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Public Key</div>
+              <div class="vapid-key" id="vapid-public-key">Loading…</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="copyVapidKey()">Copy Key</button>
+              <button class="btn btn-warn btn-sm" onclick="generateVapid()">⚠ Rotate Keys</button>
+              <button class="btn btn-primary btn-sm" onclick="sendTestPush()">Send Test Push</button>
+            </div>
+            <div id="vapid-status" style="font-size:.78rem;margin-top:10px;color:var(--text2)"></div>
+          </div>
         </div>
-      </div>
-    </div>
 
-  </div>
+        <!-- ══ CHATS ══ -->
+        <div class="page" id="page-chats">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">WhatsApp Chat Activity</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadChats()">Refresh</button></div>
+            </div>
+            <div id="chats-container"><div class="loading-row">Loading…</div></div>
+          </div>
+        </div>
 
-  <!-- Add Ambassador Modal -->
-  <div id="amb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center">
-    <div style="background:var(--surface);border-radius:14px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-      <h3 style="margin:0 0 16px;font-size:1.1rem">🌟 Add Ambassador</h3>
-      <input id="amb-email-input" type="email" placeholder="user@gmail.com" style="width:100%;margin-bottom:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.9rem;box-sizing:border-box">
-      <input id="amb-note-input" type="text" placeholder="Note (optional)" style="width:100%;margin-bottom:16px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.9rem;box-sizing:border-box">
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-primary" onclick="confirmAddAmbassador()" style="flex:1">Add</button>
-        <button class="btn btn-ghost" onclick="closeAmbModal()" style="flex:1">Cancel</button>
-      </div>
-    </div>
-  </div>
+        <!-- ══ FILES ══ -->
+        <div class="page" id="page-files">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Data Files</div><div class="card-sub">Files on server disk</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadFiles()">Refresh</button></div>
+            </div>
+            <div id="files-container"><div class="loading-row">Loading…</div></div>
+          </div>
+        </div>
 
-  <!-- Ban Modal -->
-  <div id="ban-modal">
-    <div class="modal-box">
-      <h3>🚫 Ban User</h3>
-      <p id="ban-modal-user"></p>
-      <textarea id="ban-reason-input" placeholder="Reason for ban (required)…"></textarea>
-      <div class="modal-actions">
-        <button class="modal-confirm" onclick="confirmBan()">Confirm Ban</button>
-        <button class="modal-cancel" onclick="closeBanModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
+        <!-- ══ DATA SYNC ══ -->
+        <div class="page" id="page-datafiles">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Data Sync</div><div class="card-sub">Sync JSON files between server and Supabase</div></div>
+              <div class="card-actions">
+                <button class="btn btn-ghost btn-sm" onclick="loadDataFiles()">Refresh</button>
+                <button class="btn btn-ghost btn-sm" onclick="dataPullAll()">⬇ Pull All</button>
+                <button class="btn btn-primary btn-sm" onclick="dataPushSelected()">⬆ Push Selected</button>
+              </div>
+            </div>
+            <div class="data-banner" id="data-banner"></div>
+            <div style="margin-bottom:12px;padding:14px;background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--radius-sm)">
+              <div style="font-size:.74rem;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Upload JSON to Server</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <label style="cursor:pointer;flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;font-size:.8rem;color:var(--text2);display:flex;align-items:center;gap:6px">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <span id="upload-label">Select JSON file(s)…</span>
+                  <input type="file" id="data-upload-input" accept=".json" multiple style="display:none" onchange="updateUploadLabel()">
+                </label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--text2);cursor:pointer;white-space:nowrap">
+                  <input type="checkbox" id="push-after-upload"> Push to Supabase too
+                </label>
+                <button class="btn btn-primary btn-sm" onclick="uploadDataFiles()">Upload</button>
+              </div>
+              <div id="upload-result" style="margin-top:6px;font-size:.76rem;min-height:14px"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--text2);cursor:pointer">
+                <input type="checkbox" id="select-all-data" onchange="toggleSelectAll(this)"> Select all
+              </label>
+              <span id="data-status" style="font-size:.76rem;color:var(--text3)"></span>
+            </div>
+            <div id="datafiles-container"><div class="loading-row">Loading…</div></div>
+          </div>
+        </div>
 
-  <script>
-    let adminToken = localStorage.getItem('adminToken') || '';
-    let _banTargetId = '';
-    let _allUsers = [];
-    let _userFilter = 'all';
-    let socket;
-    try { socket = io(); } catch(e) { console.warn('[admin] socket.io unavailable:', e.message); socket = { on: function(){} }; }
-
-    function api(url, opts) {
-      opts = opts || {};
-      opts.headers = Object.assign({ 'x-admin-token': adminToken, 'Content-Type': 'application/json' }, opts.headers || {});
-      return fetch(url, opts);
-    }
-
-    async function doLogin() {
-      const pass = document.getElementById('passInput').value;
-      if (!pass) return;
-      const errEl = document.getElementById('loginErr');
-      errEl.classList.remove('show');
-      try {
-        const res = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pass })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          errEl.textContent = data.error || 'Incorrect password';
-          errEl.classList.add('show');
-          return;
-        }
-        adminToken = data.token;
-        localStorage.setItem('adminToken', adminToken);
-        showDashboard();
-      } catch (e) {
-        errEl.textContent = 'Network error — check your connection.';
-        errEl.classList.add('show');
-        console.error('[admin] Login error:', e);
-      }
-    }
-
-    function showDashboard() {
-      document.getElementById('authScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      loadAll();
-    }
-
-    function doLogout() {
-      localStorage.removeItem('adminToken');
-      location.reload();
-    }
-
-    // Safely invoke a loader — never let a missing/broken loader crash the rest.
-    function safeCall(fn, label) {
-      if (typeof fn !== 'function') {
-        console.warn('[admin] loader missing:', label);
-        return;
-      }
-      try { fn(); } catch (e) { console.error('[admin] loader error (' + label + '):', e); }
-    }
-
-    function showPage(p) {
-      document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.ntab').forEach(el => el.classList.remove('active'));
-      const page = document.getElementById('page-' + p);
-      if (page) page.classList.add('active');
-      const order = ['overview', 'bot', 'users', 'logins', 'bans', 'subscriptions', 'proofs', 'support', 'papers', 'freelinks', 'files', 'chats', 'wishlist', 'datafiles', 'appupdate', 'ambassadors', 'push'];
-      const idx = order.indexOf(p);
-      const tabs = document.querySelectorAll('.ntab');
-      if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
-      // Use a direct function reference map — window[name] won't work for locally-scoped functions
-      const loaders = {
-        users: loadUsers, logins: loadLogins, push: loadVapid, bans: loadBans,
-        papers: loadPapers, files: loadFiles, chats: loadChats,
-        wishlist: loadWishlist, subscriptions: loadSubs, proofs: loadProofs,
-        support: loadSupport, freelinks: loadFreeLinks, datafiles: loadDataFiles,
-        ambassadors: loadAmbassadors,
-      };
-      const fn = loaders[p];
-      if (typeof fn === 'function') {
-        try { fn(); } catch (e) { console.error('[admin] loader error (' + p + '):', e); }
-      }
-    }
-
-    function loadAll() {
-      safeCall(loadOverview, 'overview');
-      safeCall(loadServer, 'server');
-      safeCall(loadUsers, 'users');
-      safeCall(loadBans, 'bans');
-    }
-
-    async function loadOverview() {
-      const statsEl = document.getElementById('webUserStats');
-      const botEl   = document.getElementById('botStatusBlock');
-      if (!adminToken) return;
-
-      try {
-        const uRes = await api('/api/admin/users/search?q=');
-        if (uRes.status === 401) {
-          // Token invalid — clear and redirect to login
-          localStorage.removeItem('adminToken');
-          adminToken = '';
-          document.getElementById('authScreen').style.display = 'flex';
-          document.getElementById('dashboard').style.display  = 'none';
-          return;
-        }
-        if (!uRes.ok) throw new Error('Server error ' + uRes.status);
-        const users   = (await uRes.json()).users || [];
-        const total   = users.length;
-        const banned  = users.filter(u => u.banned).length;
-        const paid    = users.filter(u => u.plan && u.plan !== 'free').length;
-        const linked  = users.filter(u => u.jid).length;
-        const lite    = users.filter(u => u.plan === 'lite').length;
-        const plus    = users.filter(u => u.plan === 'plus').length;
-        const pro     = users.filter(u => u.plan === 'pro').length;
-        if (statsEl) {
-          statsEl.innerHTML = [
-            ['Total Users',  total,           ''],
-            ['Active',       total - banned,  'color:var(--green)'],
-            ['Banned',       banned,          'color:#ef4444'],
-            ['Paid',         paid,            'color:#7c3aed'],
-            ['WA Linked',    linked,          'color:#0891b2'],
-            ['Lite',         lite,            'color:#2563eb'],
-            ['Plus',         plus,            'color:#7c3aed'],
-            ['Pro',          pro,             'color:#ef4444'],
-          ].map(([l, v, s]) => `
-            <div class="stat">
-              <div class="stat-val" style="${s}">${v}</div>
-              <div class="stat-label">${l}</div>
-            </div>`).join('');
-        }
-      } catch (e) {
-        if (statsEl) statsEl.innerHTML = `<div style="color:#ef4444;font-size:.82rem">Error: ${e.message}</div>`;
-      }
-
-      try {
-        const sRes = await api('/api/admin/server');
-        if (!sRes.ok) throw new Error('Server error ' + sRes.status);
-        const s = await sRes.json();
-        if (botEl) {
-          botEl.innerHTML = `
+        <!-- ══ WISHLIST ══ -->
+        <div class="page" id="page-wishlist">
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Upgrade Wishlist</div></div>
+            <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadWishlist()">Refresh</button></div>
+            </div>
             <div class="stat-grid">
-              <div class="stat"><div class="stat-val" style="color:var(--green);font-size:.9rem">WATI</div><div class="stat-label">Provider</div></div>
-              <div class="stat"><div class="stat-val" style="font-size:.9rem">${s.uptime || '—'}</div><div class="stat-label">Uptime</div></div>
-              <div class="stat"><div class="stat-val" style="font-size:.9rem">${s.heapUsed || '—'}</div><div class="stat-label">Heap Used</div></div>
-              <div class="stat"><div class="stat-val" style="font-size:.9rem">${s.nodeVersion || '—'}</div><div class="stat-label">Node</div></div>
-            </div>`;
-        }
-      } catch (e) {
-        if (botEl) botEl.innerHTML = `<div style="color:#ef4444;font-size:.82rem">Error: ${e.message}</div>`;
-      }
-    }
-
-    async function loadServer() {
-      const el = document.getElementById('serverStats');
-      if (!el) return;
-      try {
-        const res = await api('/api/admin/server');
-        if (!res.ok) { el.innerHTML = `<div style="color:#ef4444;font-size:.8rem">Auth error ${res.status}</div>`; return; }
-        const d = await res.json();
-        el.innerHTML = `
-          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.uptime || '—'}</div><div class="stat-label">Uptime</div></div>
-          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.platform || '—'}/${d.arch || ''}</div><div class="stat-label">Platform</div></div>
-          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.nodeVersion || '—'}</div><div class="stat-label">Node</div></div>
-          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.cpus || '—'}</div><div class="stat-label">CPUs</div></div>
-          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.heapUsed || '—'} / ${d.totalMem || '—'}</div><div class="stat-label">Memory</div></div>
-          <div class="stat"><div class="stat-val" style="font-size:.9rem">${d.freeMem || '—'}</div><div class="stat-label">Free</div></div>
-        `;
-      } catch (e) {
-        el.innerHTML = `<div style="color:#ef4444;font-size:.8rem">Error: ${e.message}</div>`;
-      }
-    }
-
-    async function loadUsers() {
-      const q = (document.getElementById('user-search') || {}).value || '';
-      const box = document.getElementById('users-table');
-      if (!box) return;
-      box.innerHTML = '<div style="color:var(--muted);font-size:.82rem;grid-column:1/-1">Loading users...</div>';
-      try {
-        const res = await api('/api/admin/users/search?q=' + encodeURIComponent(q));
-        if (!res.ok) {
-          box.innerHTML = `<div style="color:#ef4444;grid-column:1/-1">Error loading users: ${res.status} ${res.statusText}</div>`;
-          return;
-        }
-        _allUsers = (await res.json()).users || [];
-        renderUserCards();
-      } catch (e) {
-        box.innerHTML = `<div style="color:#ef4444;grid-column:1/-1">Error loading users: ${e.message}</div>`;
-      }
-    }
-
-    function setUserFilter(f) {
-      _userFilter = f;
-      document.querySelectorAll('.ftab').forEach(el => el.classList.toggle('active', el.getAttribute('data-f') === f));
-      renderUserCards();
-    }
-
-    const AVATAR_COLORS = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#0891b2', '#4f46e5', '#ca8a04'];
-
-    function renderUserCards() {
-      const box = document.getElementById('users-table');
-      if (!box) return;
-      const users = _allUsers;
-
-      // Update filter counts
-      const cnt = (f) => {
-        const n = users.filter(matchesFilter(f)).length;
-        const el = document.getElementById('fc-' + f);
-        if (el) el.textContent = n;
-        return n;
-      };
-      cnt('all'); cnt('linked'); cnt('paid'); cnt('banned'); cnt('admin'); cnt('incomplete');
-
-      const filtered = users.filter(matchesFilter(_userFilter));
-
-      if (!filtered.length) {
-        box.innerHTML = '<div style="color:var(--muted);font-size:.82rem;grid-column:1/-1">No users found.</div>';
-        return;
-      }
-
-      box.className = 'user-grid';
-      box.innerHTML = filtered.map(renderUserCard).join('');
-    }
-
-    function matchesFilter(f) {
-      return (u) => {
-        const plan = u.plan || 'free';
-        switch (f) {
-          case 'linked':     return !!u.jid;
-          case 'paid':       return plan !== 'free';
-          case 'banned':     return !!u.banned;
-          case 'admin':      return !!u.isAdmin;
-          case 'incomplete': return !u.onboarded;
-          default:           return true;
-        }
-      };
-    }
-
-    function renderUserCard(u) {
-      const uid = String(u.id || '').replace(/'/g, '');
-      const uemail = String(u.email || u.phone || '—').replace(/['"]/g, '');
-      const uname = (String(u.name || '') + ' ' + String(u.surname || '')).trim().replace(/['"]/g, '') || '—';
-      const joined = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('en-GB') : '—';
-      const initial = (uname !== '—' ? uname[0] : (uemail[0] || '?')).toUpperCase();
-      const color = AVATAR_COLORS[(uid.length + uname.length) % AVATAR_COLORS.length];
-      const plan = u.plan || 'free';
-      const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
-      const sub = u.subscription;
-      const exp = sub && sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString('en-GB') : null;
-
-      const badges = [
-        `<span class="uc-badge uc-plan-${plan}">${planLabel} Plan</span>`,
-        u.jid ? '<span class="uc-badge uc-wa">📱 WA Linked</span>' : '<span class="uc-badge uc-nowa">WA ✗</span>',
-        u.isAdmin ? '<span class="uc-badge" style="background:#fef3c7;color:#92400e">👑 Admin</span>' : '',
-        u.banned ? '<span class="uc-badge badge-banned">Banned</span>' : '',
-        !u.onboarded ? '<span class="uc-badge uc-nowa">Incomplete</span>' : '',
-      ].join('');
-
-      const rows = [
-        ['Email', u.email || '—'],
-        ['Phone', u.phone || '—'],
-        ['School', u.school || '—'],
-        ['Age', u.age || '—'],
-        ['Wallet', '$' + (u.balanceDollars || '0.00')],
-        ['Joined', joined],
-        ['Sub expires', exp || '—'],
-        ['User ID', `<span style="font-family:monospace;font-size:.68rem">${uid}</span>`],
-      ].map(([k, v]) => `<div class="uc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
-
-      const action = u.banned
-        ? `<button class="uc-unban" onclick="doUnban('${uid}')">✓ Unban</button>`
-        : `<button class="uc-ban" onclick="openBanModal('${uid}','${uemail}','${uname}')">🚫 Ban</button>`;
-
-      return `
-        <div class="user-card">
-          <div class="uc-head">
-            <div class="uc-avatar" style="background:${color}">${initial}</div>
-            <div style="min-width:0">
-              <div class="uc-name">${uname}</div>
-              <div class="uc-sub">${uemail}</div>
+              <div class="stat-card purple"><div class="stat-val" id="wishlist-count">—</div><div class="stat-label">Waiting to Upgrade</div></div>
             </div>
           </div>
-          <div class="uc-badges">${badges}</div>
-          <div class="uc-rows">${rows}</div>
-          <div class="uc-actions">${action}</div>
-        </div>`;
-    }
-
-    function searchUsers() {
-      clearTimeout(window._st);
-      window._st = setTimeout(loadUsers, 350);
-    }
-
-    // ── Logins (in-memory) ─────────────────────────────────────────────
-    let _logins = [];
-
-    async function loadLogins() {
-      const list = document.getElementById('login-list');
-      if (!list) return;
-      list.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Loading…</div>';
-      try {
-        const res = await api('/api/admin/logins');
-        if (!res.ok) { list.innerHTML = `<div style="color:#ef4444">Error: ${res.status}</div>`; return; }
-        _logins = (await res.json()).logins || [];
-        if (!_logins.length) {
-          list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">No logins recorded yet. (Logins are tracked in memory only — they appear after a user signs in following this deploy.)</div>';
-          return;
-        }
-        list.innerHTML = _logins.map(l => {
-          const name = l.name || l.email || l.phone || 'Unknown';
-          const sub = [l.email, l.phone].filter(Boolean).join(' · ') || '—';
-          const when = new Date(l.at).toLocaleString('en-GB');
-          const initial = (name[0] || '?').toUpperCase();
-          const color = AVATAR_COLORS[(l.userId.length + name.length) % AVATAR_COLORS.length];
-          const uid = String(l.userId).replace(/'/g, '');
-          return `<div class="login-row" data-id="${uid}" onclick="showLoginDetail('${uid}', this)">
-            <div class="lr-avatar" style="background:${color}">${initial}</div>
-            <div class="lr-meta">
-              <div class="lr-name">${name}</div>
-              <div class="lr-sub">${sub} · ${l.plan ? l.plan.toUpperCase() : 'free'}</div>
-            </div>
-            <div class="lr-time">${when}</div>
-          </div>`;
-        }).join('');
-      } catch (e) {
-        list.innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
-      }
-    }
-
-    async function showLoginDetail(uid, rowEl) {
-      document.querySelectorAll('.login-row').forEach(r => r.classList.remove('active'));
-      if (rowEl) rowEl.classList.add('active');
-      const detail = document.getElementById('login-detail');
-      const login = _logins.find(l => l.userId === uid);
-      const meta = login ? `
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:.78rem">
-          <div class="kv"><b>Logged in:</b> ${new Date(login.at).toLocaleString('en-GB')}</div>
-          <div class="kv"><b>IP:</b> ${login.ip || '—'}</div>
-          <div class="kv"><b>Device:</b> ${login.ua || '—'}</div>
-        </div>` : '';
-      detail.innerHTML = meta + '<div style="color:var(--muted);font-size:.85rem">Loading profile…</div>';
-      try {
-        const res = await api('/api/admin/users/search?q=' + encodeURIComponent(uid));
-        if (!res.ok) { detail.innerHTML = meta + '<div style="color:#ef4444">Failed to load user.</div>'; return; }
-        const users = (await res.json()).users || [];
-        const u = users.find(x => x.id === uid) || users[0];
-        if (!u) { detail.innerHTML = meta + '<div style="color:var(--muted)">User no longer exists.</div>'; return; }
-        detail.innerHTML = meta + `<div class="user-grid">${renderUserCard(u)}</div>`;
-      } catch (e) {
-        detail.innerHTML = meta + `<div style="color:#ef4444">Error: ${e.message}</div>`;
-      }
-    }
-
-    // ── Push / VAPID management ────────────────────────────────────────
-    async function loadVapid() {
-      try {
-        const res = await api('/api/admin/vapid');
-        if (!res.ok) return;
-        const d = await res.json();
-        document.getElementById('vapid-public').value = d.publicKey;
-        document.getElementById('vapid-subs').textContent = d.subscriberCount;
-        const srcLabels = { env: 'Env vars', custom: 'Custom (generated)', default: 'Built-in default' };
-        document.getElementById('vapid-source').textContent = srcLabels[d.source] || d.source;
-      } catch (e) {
-        document.getElementById('vapid-status').textContent = 'Error: ' + e.message;
-      }
-    }
-
-    function copyVapid() {
-      const inp = document.getElementById('vapid-public');
-      inp.select();
-      try { document.execCommand('copy'); } catch {}
-      if (navigator.clipboard) navigator.clipboard.writeText(inp.value).catch(() => {});
-      const s = document.getElementById('vapid-status');
-      s.style.color = 'var(--green)'; s.textContent = '✅ Copied';
-      setTimeout(() => { s.style.color = 'var(--muted)'; s.textContent = ''; }, 2000);
-    }
-
-    async function generateVapid() {
-      if (!confirm('Generate NEW VAPID keys?\n\nThis INVALIDATES all existing push subscriptions — every user must re-enable notifications afterwards.')) return;
-      const s = document.getElementById('vapid-status');
-      s.style.color = 'var(--muted)'; s.textContent = 'Generating…';
-      try {
-        const res = await api('/api/admin/vapid/generate', { method: 'POST' });
-        const d = await res.json();
-        if (!res.ok) { s.style.color = 'var(--red)'; s.textContent = 'Error: ' + (d.error || res.status); return; }
-        loadVapid();
-        s.style.color = 'var(--green)'; s.textContent = '✅ New keys generated. Users must re-enable notifications.';
-      } catch (e) {
-        s.style.color = 'var(--red)'; s.textContent = 'Error: ' + e.message;
-      }
-    }
-
-    async function sendTestPushFromAdmin() {
-      const s = document.getElementById('vapid-status');
-      s.style.color = 'var(--muted)'; s.textContent = 'Sending test push…';
-      try {
-        const res = await api('/api/admin/notifications/test', { method: 'POST', body: JSON.stringify({ title: '🔔 Fundo Plus Test', body: 'Push is working! 🎉' }) });
-        const d = await res.json();
-        if (d.message) { s.style.color = 'var(--yellow)'; s.textContent = d.message; return; }
-        if (d.failed === 0) { s.style.color = 'var(--green)'; s.textContent = `✅ Sent to ${d.sent} subscriber(s).`; }
-        else { s.style.color = 'var(--red)'; s.textContent = `⚠ Sent ${d.sent}, failed ${d.failed} — ${(d.errors[0] && d.errors[0].statusCode + ' ' + d.errors[0].message) || ''}`; }
-      } catch (e) {
-        s.style.color = 'var(--red)'; s.textContent = 'Error: ' + e.message;
-      }
-    }
-
-    async function loadBans() {
-      const bansBox = document.getElementById('bans-table');
-      const appealsBox = document.getElementById('appeals-table');
-      try {
-        const [bRes, aRes] = await Promise.all([
-          api('/api/admin/bans'),
-          api('/api/admin/appeals')
-        ]);
-        const bans = (await bRes.json()).bans || [];
-        const appeals = (await aRes.json()).appeals || [];
-
-        if (appealsBox) {
-          if (appeals.length) {
-            const rows = appeals.map(a => {
-              const uid = String(a.userId || '').replace(/'/g, '');
-              return `
-                <tr>
-                  <td><div style="font-weight:700;font-size:.82rem">${a.name || '—'}</div><div style="font-size:.75rem;color:var(--muted)">${a.email || '—'}</div></td>
-                  <td style="font-size:.78rem">${a.reason || '—'}</td>
-                  <td style="font-size:.78rem;font-style:italic">${a.appealMessage || '—'}</td>
-                  <td>
-                    <button class="btn-approve" onclick="resolveAppeal('${uid}','approved')">✅ Approve</button>
-                    <button class="btn-reject" onclick="resolveAppeal('${uid}','rejected')">❌ Reject</button>
-                  </td>
-                </tr>
-              `;
-            }).join('');
-            appealsBox.innerHTML = `
-              <table>
-                <thead><tr><th>User</th><th>Banned For</th><th>Appeal</th><th>Actions</th></tr></thead>
-                <tbody>${rows}</tbody>
-              </table>
-            `;
-          } else {
-            appealsBox.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No pending appeals.</div>';
-          }
-        }
-
-        if (bansBox) {
-          if (bans.length) {
-            const rows = bans.map(b => {
-              const bid = String(b.userId || '').replace(/'/g, '');
-              const aBg = b.appealStatus === 'pending' ? '#fef9c3' : b.appealStatus === 'rejected' ? '#fef2f2' : '#f1f5f9';
-              const aCol = b.appealStatus === 'pending' ? '#854d0e' : b.appealStatus === 'rejected' ? '#ef4444' : '#64748b';
-              return `
-                <tr>
-                  <td><div style="font-weight:700;font-size:.82rem">${b.name || '—'}</div><div style="font-size:.75rem;color:var(--muted)">${b.email || '—'}</div></td>
-                  <td style="font-size:.78rem">${b.reason || '—'}</td>
-                  <td><span style="font-size:.72rem;font-weight:800;border-radius:99px;padding:2px 8px;background:${aBg};color:${aCol}">${b.appealStatus || 'none'}</span></td>
-                  <td style="font-size:.75rem;color:var(--muted)">${b.bannedAt ? new Date(b.bannedAt).toLocaleDateString('en-GB') : '—'}</td>
-                  <td><button class="btn-unban" onclick="doUnban('${bid}')">Unban</button></td>
-                </tr>
-              `;
-            }).join('');
-            bansBox.innerHTML = `
-              <table>
-                <thead><tr><th>User</th><th>Reason</th><th>Appeal</th><th>Banned At</th><th>Actions</th></tr></thead>
-                <tbody>${rows}</tbody>
-              </table>
-            `;
-          } else {
-            bansBox.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No active bans.</div>';
-          }
-        }
-      } catch (e) {
-        if (bansBox) bansBox.innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
-      }
-    }
-
-    function openBanModal(id, email, name) {
-      _banTargetId = id;
-      document.getElementById('ban-modal-user').textContent = `${name} <${email}>`;
-      document.getElementById('ban-reason-input').value = '';
-      document.getElementById('ban-modal').classList.add('open');
-    }
-
-    function closeBanModal() {
-      document.getElementById('ban-modal').classList.remove('open');
-    }
-
-    async function confirmBan() {
-      const reason = document.getElementById('ban-reason-input').value.trim();
-      if (!reason) { alert('Reason is required.'); return; }
-      try {
-        const token = adminToken || localStorage.getItem('adminToken') || '';
-        const r = await fetch('/api/admin/ban', {
-          method: 'POST',
-          headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: _banTargetId, reason })
-        });
-        const d = await r.json();
-        if (r.status === 403) throw new Error('Admin token rejected — try logging out and back in.');
-        if (!r.ok) throw new Error(d.error || 'Failed');
-        closeBanModal();
-        loadUsers();
-        loadBans();
-      } catch (e) {
-        alert('Ban failed: ' + e.message);
-      }
-    }
-
-    async function doUnban(userId) {
-      if (!confirm('Unban this user?')) return;
-      try {
-        const token = adminToken || localStorage.getItem('adminToken') || '';
-        const r = await fetch('/api/admin/unban', {
-          method: 'POST',
-          headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId })
-        });
-        const d = await r.json();
-        if (r.status === 403) throw new Error('Admin token rejected — try logging out and back in.');
-        if (!r.ok) throw new Error(d.error || 'Failed');
-        loadUsers();
-        loadBans();
-      } catch (e) {
-        alert('Unban failed: ' + e.message);
-      }
-    }
-
-    async function resolveAppeal(userId, decision) {
-      try {
-        const r = await api('/api/admin/appeal/' + userId + '/' + decision, { method: 'POST' });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Failed');
-        loadBans();
-        loadUsers();
-      } catch (e) {
-        alert('Failed: ' + e.message);
-      }
-    }
-
-    async function doPair() {
-      const phone = document.getElementById('phoneInput').value.trim();
-      if (!phone) return;
-      await fetch('/api/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
-    }
-
-    async function doDisconnect() {
-      await fetch('/api/disconnect', { method: 'POST' });
-    }
-
-    async function doReset() {
-      if (confirm('Delete auth session and reset?')) await fetch('/api/reset', { method: 'POST' });
-    }
-
-    async function doSync() {
-      try {
-        await api('/api/admin/sync', { method: 'POST' });
-        alert('Synced!');
-      } catch (e) {
-        alert('Sync failed: ' + e.message);
-      }
-    }
-
-    async function loadPapers() {
-      const tbody = document.getElementById('papersTable');
-      if (!tbody) return;
-      try {
-        const res = await api('/api/admin/papers');
-        const papers = (await res.json()).papers || [];
-        if (!papers.length) {
-          tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No papers uploaded.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = papers.map(p => `
-          <tr>
-            <td>${p.originalName || p.filename || '—'}</td>
-            <td>${p.uploader || '—'}</td>
-            <td>${((p.size || 0) / 1024 / 1024).toFixed(2)} MB</td>
-            <td>${p.uploadedAt ? new Date(p.uploadedAt).toLocaleDateString('en-GB') : '—'}</td>
-            <td><button class="btn-ban" onclick="deletePaper('${p.id}')">Delete</button></td>
-          </tr>
-        `).join('');
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:#ef4444">Error: ${e.message}</td></tr>`;
-      }
-    }
-
-    async function deletePaper(id) {
-      if (!confirm('Delete this paper?')) return;
-      try {
-        await api('/api/admin/papers/' + id, { method: 'DELETE' });
-        loadPapers();
-      } catch (e) {
-        alert('Failed: ' + e.message);
-      }
-    }
-
-    async function loadFiles() {
-      const tbody = document.getElementById('filesTable');
-      if (!tbody) return;
-      try {
-        const res = await api('/api/admin/files');
-        const files = (await res.json()).files || [];
-        if (!files.length) {
-          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">No files.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = files.map(f => `
-          <tr>
-            <td style="font-family:monospace">${f.name}</td>
-            <td>${((f.size || 0) / 1024).toFixed(1)} KB</td>
-            <td>${f.modified ? new Date(f.modified).toLocaleDateString('en-GB') : '—'}</td>
-            <td><a href="/api/admin/files/${f.name}?token=${adminToken}" download style="color:var(--blue)">Download</a></td>
-          </tr>
-        `).join('');
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="4" style="color:#ef4444">Error: ${e.message}</td></tr>`;
-      }
-    }
-
-    async function loadChats() {
-      const tbody = document.getElementById('chatsTable');
-      if (!tbody) return;
-      try {
-        const res = await api('/api/admin/messages');
-        const data = await res.json();
-        const keys = Object.keys(data);
-        if (!keys.length) {
-          tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">No messages yet.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = keys.map(jid => {
-          const msgs = data[jid] || [];
-          const last = msgs[msgs.length - 1];
-          return `
-            <tr>
-              <td style="font-family:monospace;font-size:.76rem">${jid.split('@')[0]}</td>
-              <td>${msgs.length}</td>
-              <td style="font-size:.75rem;color:var(--muted)">${last?.ts ? new Date(last.ts).toLocaleString('en-GB') : '—'}</td>
-            </tr>
-          `;
-        }).join('');
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="3" style="color:#ef4444">Error: ${e.message}</td></tr>`;
-      }
-    }
-
-    async function loadWishlist() {
-      try {
-        const res = await api('/api/admin/wishlist');
-        const data = await res.json();
-        const el = document.getElementById('wishlistInfo');
-        if (el) el.textContent = data.upgrade || 0;
-      } catch (e) {}
-    }
-
-    async function loadSubs() {
-      const el = document.getElementById('subs-table');
-      if (!el) return;
-      try {
-        const res = await api('/api/admin/subs');
-        const d = await res.json();
-        const subs = d.subscriptions || {};
-        const rows = Object.entries(subs);
-        if (!rows.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.82rem">No active subscriptions.</div>'; return; }
-        const planColors = { free:'#8b949e', lite:'#388bfd', plus:'#7c3aed', pro:'#ef4444' };
-        el.innerHTML = `<table><thead><tr><th>User ID</th><th>Plan</th><th>Status</th><th>Expires</th><th>Granted By</th><th>Action</th></tr></thead><tbody>
-          ${rows.map(([uid, s]) => `<tr>
-            <td style="font-family:monospace;font-size:.74rem">${uid}</td>
-            <td><span style="font-weight:800;color:${planColors[s.plan]||'#8b949e'}">${s.plan?.toUpperCase()}</span></td>
-            <td><span class="status-badge ${s.status==='active'?'status-connected':'status-disconnected'}">${s.status}</span></td>
-            <td style="font-size:.75rem;color:var(--muted)">${s.expiresAt ? new Date(s.expiresAt).toLocaleDateString() : 'Never'}</td>
-            <td style="font-size:.75rem;color:var(--muted)">${s.grantedBy||'—'}</td>
-            <td><button class="btn-unban" onclick="quickGrant('${uid}','free')">Remove</button></td>
-          </tr>`).join('')}
-        </tbody></table>`;
-      } catch(e) { el.innerHTML = `<div style="color:var(--red)">Error: ${e.message}</div>`; }
-    }
-
-    async function grantSub() {
-      const uid  = document.getElementById('sub-user-id').value.trim();
-      const plan = document.getElementById('sub-plan').value;
-      const res  = document.getElementById('subs-result');
-      if (!uid) { res.textContent = '⚠ Enter a user ID'; res.style.color = 'var(--yellow)'; return; }
-      try {
-        const r = await api('/api/admin/grant-sub', { method:'POST', body: JSON.stringify({ userId: uid, plan }) });
-        const d = await r.json();
-        res.textContent = d.ok ? `✅ Granted ${plan} to ${uid}` : ('Error: ' + d.error);
-        res.style.color = d.ok ? 'var(--green)' : 'var(--red)';
-        if (d.ok) loadSubs();
-      } catch(e) { res.textContent = 'Error: ' + e.message; res.style.color = 'var(--red)'; }
-    }
-
-    async function quickGrant(uid, plan) {
-      if (!confirm(`Set ${uid} to ${plan}?`)) return;
-      try {
-        await api('/api/admin/grant-sub', { method:'POST', body: JSON.stringify({ userId: uid, plan }) });
-        loadSubs();
-      } catch(e) { alert('Error: ' + e.message); }
-    }
-
-    async function loadProofs() {
-      const el = document.getElementById('proofs-table');
-      if (!el) return;
-      try {
-        const res = await api('/api/admin/proofs');
-        const d = await res.json();
-        const proofs = d.proofs || [];
-        const pending = proofs.filter(p => p.status === 'pending');
-        const cntEl = document.getElementById('proofs-pending-count');
-        if (cntEl) cntEl.textContent = pending.length ? `⏳ ${pending.length} pending` : '';
-        updateTabBadge('proofs', pending.length);
-        if (!proofs.length) {
-          el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">No payment proofs submitted yet.</div>';
-          return;
-        }
-        const stBadge = {
-          pending:  `<span class="badge-pending">⏳ Pending</span>`,
-          approved: `<span class="badge-active">✅ Approved</span>`,
-          rejected: `<span style="background:#fee2e2;color:#991b1b;border-radius:99px;padding:3px 10px;font-size:.72rem;font-weight:800;display:inline-block">❌ Rejected</span>`,
-        };
-        el.innerHTML = `<div class="table-wrap"><table><thead><tr>
-          <th>User</th><th>Plan</th><th>Status</th><th>Storage</th><th>Submitted</th><th>Image</th><th>Actions</th>
-          </tr></thead><tbody>
-          ${proofs.map(p => `<tr>
-            <td style="font-family:monospace;font-size:.74rem;color:var(--muted)">${p.userId}</td>
-            <td><span class="badge-active" style="background:var(--blue-light);color:var(--blue)">${p.plan?.toUpperCase()}</span></td>
-            <td>${stBadge[p.status] || p.status}</td>
-            <td style="font-size:.72rem">${p.supabaseUploaded ? '<span style="color:var(--green);font-weight:700">☁ Supabase</span>' : '<span style="color:var(--muted)">📁 Local</span>'}</td>
-            <td style="font-size:.75rem;color:var(--muted);white-space:nowrap">${new Date(p.submittedAt).toLocaleString()}</td>
-            <td>${p.status === 'pending' ? `<button class="btn-ghost btn" style="padding:3px 8px;font-size:.73rem" onclick="viewProofImg('${p.filename}','${p.id}','${p.userId}','${p.plan}','${p.status}')">🖼 View</button>` : (p.supabaseUploaded ? '<span style="font-size:.72rem;color:var(--muted)">☁ Stored</span>' : '<span style="font-size:.72rem;color:var(--muted)">Deleted</span>')}</td>
-            <td>${p.status === 'pending' ? `
-              <button class="btn-approve" onclick="reviewProofAction('${p.id}','approved')">✅ Approve</button>
-              <button class="btn-reject"  onclick="reviewProofAction('${p.id}','rejected')">❌ Reject</button>` :
-              `<span style="font-size:.74rem;color:var(--muted)">Reviewed ${p.reviewedAt ? '· ' + new Date(p.reviewedAt).toLocaleDateString() : ''}</span>`
-            }</td>
-          </tr>`).join('')}
-        </tbody></table></div>`;
-      } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`; }
-    }
-
-    function viewProofImg(filename, proofId, userId, plan, status) {
-      const modal = document.getElementById('proof-img-modal');
-      document.getElementById('proof-img').src = `/api/admin/proof-image/${filename}?adminKey=${adminToken}`;
-      document.getElementById('proof-modal-title').textContent = `${plan.toUpperCase()} Plan · ${userId}`;
-      const actEl = document.getElementById('proof-modal-actions');
-      actEl.innerHTML = status === 'pending' ? `
-        <button class="btn btn-primary" style="flex:1" onclick="reviewProofAction('${proofId}','approved');closeProofModal()">✅ Approve & Store to Supabase</button>
-        <button class="btn btn-danger"  onclick="reviewProofAction('${proofId}','rejected');closeProofModal()">❌ Reject</button>
-        <button class="btn btn-ghost"   onclick="closeProofModal()">Close</button>` :
-        `<button class="btn btn-ghost" style="width:100%" onclick="closeProofModal()">Close</button>`;
-      modal.style.display = 'flex';
-    }
-
-    function closeProofModal() { document.getElementById('proof-img-modal').style.display = 'none'; }
-
-    async function reviewProofAction(proofId, status) {
-      try {
-        const r = await api(`/api/admin/proof/${proofId}/review`, { method:'POST', body: JSON.stringify({ status }) });
-        const d = await r.json();
-        if (d.ok) {
-          const msg = status === 'approved'
-            ? 'Proof approved! Subscription activated. Image uploaded to Supabase and removed locally.'
-            : 'Proof rejected. Image deleted.';
-          alert(msg);
-          loadProofs();
-        } else alert('Error: ' + d.error);
-      } catch(e) { alert('Error: ' + e.message); }
-    }
-
-    async function loadSupport() {
-      const el = document.getElementById('support-table');
-      if (!el) return;
-      const unresolvedOnly = document.getElementById('supp-unresolved')?.checked;
-      try {
-        const res = await api('/api/admin/support');
-        const d = await res.json();
-        let msgs = d.messages || [];
-        if (unresolvedOnly) msgs = msgs.filter(m => !m.resolved);
-        if (!msgs.length) {
-          el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem">No messages found.</div>';
-          return;
-        }
-        el.innerHTML = msgs.map(m => {
-          const initials = (m.name||'?')[0].toUpperCase();
-          const date = new Date(m.createdAt).toLocaleString();
-          const resolved = m.resolved;
-          return `<div class="msg-card">
-            <div class="msg-header">
-              <div class="msg-avatar">${initials}</div>
-              <div class="msg-meta">
-                <div class="msg-name">${m.name || 'Unknown'} ${resolved ? '<span class="badge-active" style="font-size:.65rem">✓ Resolved</span>' : '<span class="badge-pending" style="font-size:.65rem">● Open</span>'}</div>
-                <div class="msg-email">${m.email || '—'} · ${date}</div>
-              </div>
-            </div>
-            <div class="msg-subject">📌 ${m.subject || 'No subject'}</div>
-            <div class="msg-body">${(m.message||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-            <div class="msg-footer">
-              <span class="msg-time">${m.userId ? '🔗 User ID: ' + m.userId : '👤 Guest'}</span>
-              ${!resolved ? `<button class="btn-approve" onclick="resolveSupport('${m.id}')">✓ Mark Resolved</button>` : ''}
-            </div>
-          </div>`;
-        }).join('');
-        const openCount = msgs.filter(m => !m.resolved).length;
-        updateTabBadge('support', openCount);
-      } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`; }
-    }
-
-    async function resolveSupport(id) {
-      try {
-        await api(`/api/admin/support/${id}/resolve`, { method:'POST' });
-        loadSupport();
-      } catch(e) { alert('Error: ' + e.message); }
-    }
-
-    function updateTabBadge(tabName, count) {
-      const tabs = document.querySelectorAll('.ntab');
-      tabs.forEach(t => {
-        if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(`'${tabName}'`)) {
-          let badge = t.querySelector('.tab-badge');
-          if (count > 0) {
-            if (!badge) { badge = document.createElement('span'); badge.className = 'tab-badge'; t.classList.add('has-badge'); t.appendChild(badge); }
-            badge.textContent = count > 99 ? '99+' : count;
-          } else if (badge) {
-            badge.remove(); t.classList.remove('has-badge');
-          }
-        }
-      });
-    }
-
-    socket.on('status', function(data) {
-      const pb = document.getElementById('botStatusBlock');
-      if (!pb) return;
-      pb.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <span class="status-badge status-${data.status}">${data.status}</span>
-          <span style="color:var(--muted);font-size:.82rem">Phone: ${data.phone || '—'}</span>
         </div>
-        <div style="font-size:.82rem;color:var(--muted)">
-          Messages: ${data.messages || 0} &nbsp;·&nbsp; Commands: ${data.commands || 0}
-          ${data.pairingCode ? `<br><strong style="color:var(--yellow)">Pairing code: ${data.pairingCode}</strong>` : ''}
-        </div>
-      `;
-      const pc = document.getElementById('pairCode');
-      if (pc) {
-        pc.textContent = data.pairingCode || '';
-        pc.style.display = data.pairingCode ? 'block' : 'none';
-      }
+
+      </div><!-- content -->
+    </main>
+  </div>
+</div>
+
+<!-- BAN MODAL -->
+<div class="modal-overlay" id="ban-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--red)">Ban User</div>
+    <div class="modal-sub" id="ban-modal-sub">—</div>
+    <div class="field"><label>Reason</label><textarea id="ban-reason" placeholder="State the reason for banning this user…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="confirmBan()">Confirm Ban</button>
+      <button class="btn btn-ghost" onclick="closeModal('ban-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- AMBASSADOR EDIT MODAL -->
+<div class="modal-overlay" id="amb-modal">
+  <div class="modal">
+    <div class="modal-title">Edit Ambassador</div>
+    <div class="modal-sub" id="amb-modal-sub"></div>
+    <div class="field"><label>Note</label><input type="text" id="amb-edit-note" placeholder="Notes…"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveAmbassador()">Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('amb-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROOF IMAGE MODAL -->
+<div class="proof-img-modal" id="proof-img-modal">
+  <div class="proof-img-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-weight:700;font-size:.9rem;color:var(--text)" id="proof-modal-title">Payment Proof</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeProofModal()">✕</button>
+    </div>
+    <img id="proof-img-el" src="" alt="Payment proof">
+    <div id="proof-modal-actions" style="display:flex;gap:8px;margin-top:12px"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+//  CORE
+// ══════════════════════════════════════════════════════
+let TOKEN = localStorage.getItem('adminToken') || '';
+let _allUsers = [], _userFilter = 'all', _banTargetId = '', _editAmbId = '';
+let _logins = [], _dataFiles = [];
+const AVATAR_COLORS = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2','#4f46e5','#ca8a04'];
+
+// Socket.io (optional — bot status)
+let socket;
+try { socket = io(); socket.on('status', onBotStatus); } catch(e) { socket = null; }
+
+function api(url, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({ 'x-admin-token': TOKEN, 'Content-Type': 'application/json' }, opts.headers || {});
+  return fetch(url, opts);
+}
+
+function avatar(seed, name) {
+  const c = AVATAR_COLORS[seed.length % AVATAR_COLORS.length];
+  const i = (name && name !== '—' ? name[0] : '?').toUpperCase();
+  return { color: c, initial: i };
+}
+
+function debounce(fn, ms) {
+  let t;
+  return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms); };
+}
+
+function fmt(date) { return date ? new Date(date).toLocaleDateString('en-GB') : '—'; }
+function fmtDT(date) { return date ? new Date(date).toLocaleString('en-GB') : '—'; }
+function fmtBytes(b) {
+  if (!b) return '—';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+// ── AUTH ──────────────────────────────────────────────
+async function doLogin() {
+  const pass = document.getElementById('pass-input').value.trim();
+  if (!pass) return;
+  const errEl = document.getElementById('auth-err');
+  errEl.classList.remove('show');
+  try {
+    const r = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass })
     });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Incorrect password'; errEl.classList.add('show'); return; }
+    TOKEN = d.token;
+    localStorage.setItem('adminToken', TOKEN);
+    showApp();
+  } catch(e) {
+    errEl.textContent = 'Network error: ' + e.message;
+    errEl.classList.add('show');
+  }
+}
 
-    if (adminToken) {
-      // Verify the stored token is still valid before showing dashboard
-      fetch('/api/admin/server', { headers: { 'x-admin-token': adminToken } })
-        .then(r => {
-          if (r.ok) {
-            showDashboard();
-          } else {
-            // Token expired/invalid — clear it and show login
-            localStorage.removeItem('adminToken');
-            adminToken = '';
-          }
-        })
-        .catch(() => {
-          // Network error — still try to show dashboard optimistically
-          showDashboard();
-        });
+function doLogout() {
+  localStorage.removeItem('adminToken');
+  TOKEN = '';
+  location.reload();
+}
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadAll();
+}
+
+// On load — verify stored token
+if (TOKEN) {
+  fetch('/api/admin/server', { headers: { 'x-admin-token': TOKEN } })
+    .then(r => { if (r.ok) showApp(); else { localStorage.removeItem('adminToken'); TOKEN = ''; } })
+    .catch(() => showApp()); // offline — try anyway
+}
+
+// ── NAV ───────────────────────────────────────────────
+const PAGE_TITLES = {
+  overview:'Overview', users:'Users', logins:'Recent Logins', bans:'Bans & Appeals',
+  support:'Support', subs:'Subscriptions', proofs:'Payment Proofs', freelinks:'Promo Links',
+  papers:'Papers', ambassadors:'Ambassadors', push:'Push / VAPID', chats:'Chats',
+  files:'Data Files', datafiles:'Data Sync', wishlist:'Wishlist'
+};
+const PAGE_LOADERS = {
+  users: loadUsers, logins: loadLogins, bans: loadBans, support: loadSupport,
+  subs: loadSubs, proofs: loadProofs, freelinks: loadPromoLinks,
+  papers: loadPapers, ambassadors: loadAmbassadors, push: loadVapid,
+  chats: loadChats, files: loadFiles, datafiles: loadDataFiles, wishlist: loadWishlist
+};
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + p);
+  if (pageEl) pageEl.classList.add('active');
+  const navEl = document.querySelector('.nav-item[data-page="' + p + '"]');
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[p] || p;
+  const loader = PAGE_LOADERS[p];
+  if (typeof loader === 'function') { try { loader(); } catch(e) { console.error(p, e); } }
+}
+
+function loadAll() {
+  loadOverview();
+  loadBans();  // for sidebar badge
+  loadProofs(); // for sidebar badge
+  loadSupport(); // for sidebar badge
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function empty(msg) { return `<div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>${msg}</p></div>`; }
+function errBox(msg) { return `<div style="padding:20px;color:var(--red);font-size:.82rem">⚠ ${msg}</div>`; }
+function setBadge(id, n) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = n; el.style.display = n > 0 ? '' : 'none';
+}
+
+// ══════════════════════════════════════════════════════
+//  OVERVIEW
+// ══════════════════════════════════════════════════════
+async function loadOverview() {
+  try {
+    const r = await api('/api/admin/users/search?q=');
+    if (r.status === 403 || r.status === 401) { doLogout(); return; }
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const users = (await r.json()).users || [];
+    const t = users.length, b = users.filter(u=>u.banned).length;
+    const paid = users.filter(u=>u.plan && u.plan!=='free').length;
+    const linked = users.filter(u=>u.jid).length;
+    const lite = users.filter(u=>u.plan==='lite').length;
+    const plus = users.filter(u=>u.plan==='plus').length;
+    const pro  = users.filter(u=>u.plan==='pro').length;
+    ['total','active','banned','paid','linked','lite','plus','pro'].forEach((k,i) => {
+      const el = document.getElementById('st-'+k);
+      if (el) el.textContent = [t, t-b, b, paid, linked, lite, plus, pro][i];
+    });
+  } catch(e) { console.warn('Overview stats:', e.message); }
+
+  try {
+    const r = await api('/api/admin/server');
+    if (!r.ok) return;
+    const s = await r.json();
+    document.getElementById('server-uptime').textContent = '⏱ ' + (s.uptime || '—');
+    document.getElementById('server-stats').innerHTML = [
+      ['Uptime', s.uptime], ['Platform', (s.platform||'')+'/'+(s.arch||'')],
+      ['Node', s.nodeVersion], ['CPUs', s.cpus],
+      ['Heap', s.heapUsed], ['Memory', s.heapUsed+' / '+s.totalMem], ['Free', s.freeMem]
+    ].map(([l,v]) => `<div class="stat-card blue" style="padding:12px"><div class="stat-val" style="font-size:.9rem;color:var(--blue)">${v||'—'}</div><div class="stat-label">${l}</div></div>`).join('');
+  } catch(e) { document.getElementById('server-stats').innerHTML = errBox(e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  USERS
+// ══════════════════════════════════════════════════════
+async function loadUsers() {
+  const q = (document.getElementById('user-search')||{}).value || '';
+  const box = document.getElementById('users-container');
+  if (box) box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/users/search?q=' + encodeURIComponent(q));
+    if (!r.ok) throw new Error('Status ' + r.status);
+    _allUsers = (await r.json()).users || [];
+    renderUsers();
+  } catch(e) {
+    if (box) box.innerHTML = errBox(e.message);
+  }
+}
+
+function setFilter(f, el) {
+  _userFilter = f;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderUsers();
+}
+
+function matchFilter(u) {
+  const p = u.plan || 'free';
+  switch(_userFilter) {
+    case 'paid': return p !== 'free';
+    case 'linked': return !!u.jid;
+    case 'banned': return !!u.banned;
+    case 'admin': return !!u.isAdmin;
+    case 'incomplete': return !u.onboarded;
+    default: return true;
+  }
+}
+
+function renderUsers() {
+  const box = document.getElementById('users-container');
+  if (!box) return;
+  ['all','paid','linked','banned','admin','incomplete'].forEach(f => {
+    const el = document.getElementById('fc-'+f);
+    if (el) el.textContent = _allUsers.filter(f === 'all' ? ()=>true : matchFilter.bind(null)).length;
+  });
+  // count per filter properly
+  const counts = { all:0, paid:0, linked:0, banned:0, admin:0, incomplete:0 };
+  _allUsers.forEach(u => {
+    const p = u.plan||'free';
+    counts.all++;
+    if(p!=='free') counts.paid++;
+    if(u.jid) counts.linked++;
+    if(u.banned) counts.banned++;
+    if(u.isAdmin) counts.admin++;
+    if(!u.onboarded) counts.incomplete++;
+  });
+  ['all','paid','linked','banned','admin','incomplete'].forEach(f => {
+    const el = document.getElementById('fc-'+f); if(el) el.textContent = counts[f];
+  });
+
+  const filtered = _allUsers.filter(u => {
+    const p = u.plan||'free';
+    switch(_userFilter) {
+      case 'paid': return p!=='free';
+      case 'linked': return !!u.jid;
+      case 'banned': return !!u.banned;
+      case 'admin': return !!u.isAdmin;
+      case 'incomplete': return !u.onboarded;
+      default: return true;
     }
+  });
 
-    const PLAN_LABELS = { lite: '🥈 Lite', plus: '🥇 Plus', pro: '💎 Pro' };
-    const BASE_URL = location.origin;
+  if (!filtered.length) { box.innerHTML = empty('No users found'); return; }
+  box.innerHTML = '<div class="user-grid">' + filtered.map(renderUserCard).join('') + '</div>';
+}
 
-    async function createFreeLink() {
-      const plan     = document.getElementById('fl-plan').value;
-      const maxUses  = parseInt(document.getElementById('fl-maxuses').value) || 1;
-      const expiresRaw = document.getElementById('fl-expires').value;
-      const expiresAt  = expiresRaw ? new Date(expiresRaw).toISOString() : null;
-      const note     = document.getElementById('fl-note').value.trim();
+function renderUserCard(u) {
+  const uid = String(u.id||'').replace(/'/g,'');
+  const uemail = String(u.email||u.phone||'—').replace(/['"]/g,'');
+  const uname = ((u.name||'')+' '+(u.surname||'')).trim().replace(/['"]/g,'')||'—';
+  const av = avatar(uid, uname);
+  const plan = u.plan||'free';
+  const planBadge = plan === 'free' ? '<span class="badge badge-gray">Free</span>'
+    : plan === 'lite' ? '<span class="badge badge-blue">Lite</span>'
+    : plan === 'plus' ? '<span class="badge badge-purple">Plus</span>'
+    : '<span class="badge badge-red">Pro</span>';
+  const tags = [
+    u.banned ? '<span class="badge badge-red">Banned</span>' : '',
+    u.isAdmin ? '<span class="badge badge-yellow">Admin</span>' : '',
+    u.jid ? '<span class="badge badge-green">WA Linked</span>' : '',
+    !u.onboarded ? '<span class="badge badge-gray">Incomplete</span>' : '',
+    planBadge
+  ].filter(Boolean).join('');
+  const sub = u.subscription;
+  const banBtn = u.banned
+    ? `<button class="btn btn-ghost btn-sm" onclick="doUnban('${uid}')">✓ Unban</button>`
+    : `<button class="btn btn-danger btn-sm" onclick="openBanModal('${uid}','${uemail}','${uname}')">🚫 Ban</button>`;
+  return `<div class="user-card">
+    <div class="uc-head">
+      <div class="uc-avatar" style="background:${av.color}">${av.initial}</div>
+      <div><div class="uc-name">${uname}</div><div class="uc-email">${uemail}</div></div>
+    </div>
+    <div class="uc-tags">${tags}</div>
+    <div class="uc-meta">
+      <div class="uc-row"><span class="k">Phone</span><span class="v">${u.phone||'—'}</span></div>
+      <div class="uc-row"><span class="k">School</span><span class="v">${u.school||'—'}</span></div>
+      <div class="uc-row"><span class="k">Joined</span><span class="v">${fmt(u.registeredAt)}</span></div>
+      <div class="uc-row"><span class="k">Sub expires</span><span class="v">${sub&&sub.expiresAt ? fmt(sub.expiresAt) : '—'}</span></div>
+      <div class="uc-row"><span class="k">Wallet</span><span class="v">$${u.balanceDollars||'0.00'}</span></div>
+      <div class="uc-row"><span class="k">ID</span><span class="v" style="font-family:var(--mono);font-size:.68rem">${uid.slice(0,16)}…</span></div>
+    </div>
+    <div class="uc-actions">${banBtn}</div>
+  </div>`;
+}
 
-      try {
-        const r = await fetch('/api/admin/promo-links', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
-          body: JSON.stringify({ plan, maxUses, expiresAt, note }),
-        });
-        const d = await r.json();
-        if (!d.ok) { alert('Error: ' + (d.error || 'Unknown')); return; }
-        const url = `${BASE_URL}/redeem/${d.link.code}`;
-        document.getElementById('fl-result-url').value = url;
-        document.getElementById('fl-result').style.display = 'block';
-        loadFreeLinks();
-      } catch (e) { alert('Network error: ' + e.message); }
-    }
+// ── BAN MODAL ─────────────────────────────────────────
+function openBanModal(id, email, name) {
+  _banTargetId = id;
+  document.getElementById('ban-modal-sub').textContent = name + ' <' + email + '>';
+  document.getElementById('ban-reason').value = '';
+  openModal('ban-modal');
+}
 
-    function copyLink() {
-      const url = document.getElementById('fl-result-url').value;
-      navigator.clipboard.writeText(url).then(() => {
-        const btn = document.querySelector('#fl-result .btn-primary');
-        btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000);
-      });
-    }
+async function confirmBan() {
+  const reason = document.getElementById('ban-reason').value.trim();
+  if (!reason) return alert('Reason is required.');
+  try {
+    const r = await api('/api/admin/ban', { method:'POST', body: JSON.stringify({ userId: _banTargetId, reason }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Status ' + r.status);
+    closeModal('ban-modal');
+    loadUsers(); loadBans();
+  } catch(e) { alert('Ban failed: ' + e.message); }
+}
 
-    async function loadFreeLinks() {
-      const tbody = document.getElementById('fl-table-body');
-      tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Loading…</td></tr>';
-      try {
-        const r = await fetch('/api/admin/promo-links', { headers: { 'x-admin-token': adminToken } });
-        const d = await r.json();
-        const links = Object.values(d.links || {}).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-        if (!links.length) {
-          tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">No links created yet.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = links.map(l => {
-          const url = `${BASE_URL}/redeem/${l.code}`;
-          const expired = l.expiresAt && new Date(l.expiresAt) < new Date();
-          const exhausted = l.maxUses > 0 && l.uses >= l.maxUses;
-          const statusClass = l.active && !expired && !exhausted ? 'badge-active' : 'badge-banned';
-          const statusText  = !l.active ? 'Deactivated' : expired ? 'Expired' : exhausted ? 'Exhausted' : 'Active';
-          return `<tr>
-            <td><span class="status-badge badge-active">${PLAN_LABELS[l.plan] || l.plan}</span></td>
-            <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.note}">${l.note || '—'}</td>
-            <td>${l.uses}</td>
-            <td>${l.maxUses === 0 ? '∞' : l.maxUses}</td>
-            <td style="font-size:.78rem">${l.expiresAt ? new Date(l.expiresAt).toLocaleString() : '—'}</td>
-            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td style="font-size:.78rem">${new Date(l.createdAt).toLocaleDateString()}</td>
-            <td>
-              <button onclick="copyPromoUrl('${url}')" style="padding:4px 8px;font-size:.72rem;background:var(--blue-light);color:var(--blue);border:1px solid #93c5fd;border-radius:6px;cursor:pointer;font-weight:700">Copy URL</button>
-            </td>
-            <td style="white-space:nowrap">
-              ${l.active ? `<button onclick="deactivateLink('${l.code}')" class="btn-ban">Deactivate</button> ` : ''}
-              <button onclick="deleteLink('${l.code}')" class="btn-reject">Delete</button>
-            </td>
-          </tr>`;
-        }).join('');
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="9" style="color:var(--red);text-align:center;padding:24px">Error: ${e.message}</td></tr>`;
-      }
-    }
+async function doUnban(userId) {
+  if (!confirm('Unban this user?')) return;
+  try {
+    const r = await api('/api/admin/unban', { method:'POST', body: JSON.stringify({ userId }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Status ' + r.status);
+    loadUsers(); loadBans();
+  } catch(e) { alert('Unban failed: ' + e.message); }
+}
 
-    function copyPromoUrl(url) {
-      navigator.clipboard.writeText(url);
-    }
+// ══════════════════════════════════════════════════════
+//  LOGINS
+// ══════════════════════════════════════════════════════
+async function loadLogins() {
+  const box = document.getElementById('logins-list');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/logins');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    _logins = (await r.json()).logins || [];
+    if (!_logins.length) { box.innerHTML = empty('No logins recorded yet'); return; }
+    box.innerHTML = _logins.map(l => {
+      const name = l.name || l.email || l.phone || 'Unknown';
+      const sub = [l.email, l.phone].filter(Boolean).join(' · ') || '—';
+      const av = avatar(String(l.userId||''), name);
+      return `<div class="login-item" onclick="showLoginDetail('${String(l.userId||'').replace(/'/g,'')}', this)">
+        <div class="login-avatar" style="background:${av.color}">${av.initial}</div>
+        <div class="login-meta">
+          <div class="login-name">${name}</div>
+          <div class="login-sub">${sub} · ${(l.plan||'free').toUpperCase()}</div>
+        </div>
+        <div class="login-time">${fmtDT(l.at)}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
 
-    async function deactivateLink(code) {
-      if (!confirm('Deactivate this link? Users will no longer be able to use it.')) return;
-      await fetch(`/api/admin/promo-links/${code}/deactivate`, { method: 'POST', headers: { 'x-admin-token': adminToken } });
-      loadFreeLinks();
-    }
+async function showLoginDetail(uid, rowEl) {
+  document.querySelectorAll('.login-item').forEach(r => r.classList.remove('active'));
+  if (rowEl) rowEl.classList.add('active');
+  const detail = document.getElementById('login-detail');
+  if (!detail) return;
+  const login = _logins.find(l => String(l.userId) === uid);
+  let html = '';
+  if (login) html = `<div class="card" style="margin-bottom:14px">
+    <div class="card-title" style="margin-bottom:10px">Login Event</div>
+    <div style="display:flex;flex-direction:column;gap:5px;font-size:.78rem">
+      <div class="uc-row"><span class="k">Time</span><span class="v" style="color:var(--text)">${fmtDT(login.at)}</span></div>
+      <div class="uc-row"><span class="k">IP</span><span class="v" style="color:var(--text)">${login.ip||'—'}</span></div>
+      <div class="uc-row"><span class="k">Device</span><span class="v" style="color:var(--text);max-width:200px;text-overflow:ellipsis;overflow:hidden">${login.ua||'—'}</span></div>
+    </div>
+  </div>`;
+  detail.innerHTML = html + '<div class="loading-row">Loading profile…</div>';
+  try {
+    const r = await api('/api/admin/users/search?q=' + encodeURIComponent(uid));
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const users = (await r.json()).users || [];
+    const u = users.find(x => x.id === uid) || users[0];
+    if (!u) { detail.innerHTML = html + empty('User not found'); return; }
+    detail.innerHTML = html + '<div class="user-grid">' + renderUserCard(u) + '</div>';
+  } catch(e) { detail.innerHTML = html + errBox(e.message); }
+}
 
-    async function deleteLink(code) {
-      if (!confirm('Permanently delete this link?')) return;
-      await fetch(`/api/admin/promo-links/${code}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken } });
-      loadFreeLinks();
-    }
+// ══════════════════════════════════════════════════════
+//  BANS & APPEALS
+// ══════════════════════════════════════════════════════
+async function loadBans() {
+  const bansBox = document.getElementById('bans-container');
+  const appealsBox = document.getElementById('appeals-container');
+  try {
+    const [bRes, aRes] = await Promise.all([api('/api/admin/bans'), api('/api/admin/appeals')]);
+    const bans = (await bRes.json()).bans || [];
+    const appeals = (await aRes.json()).appeals || [];
+    setBadge('badge-bans', appeals.length);
 
-
-    let _dataFiles = [];
-
-    function fmtBytes(b) {
-      if (!b) return '—';
-      if (b < 1024) return b + ' B';
-      if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
-      return (b/(1024*1024)).toFixed(2) + ' MB';
-    }
-    function fmtDate(s) {
-      if (!s) return '—';
-      const d = new Date(s);
-      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    }
-
-    async function loadDataFiles() {
-      const tbody = document.getElementById('dataFilesTable');
-      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);padding:24px;text-align:center">Loading…</td></tr>';
-      try {
-        const res = await api('/api/admin/data/status');
-        const { files } = await res.json();
-        _dataFiles = files || [];
-        renderDataFiles();
-      } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red);padding:16px">${e.message}</td></tr>`;
-      }
-    }
-
-    function renderDataFiles() {
-      const tbody = document.getElementById('dataFilesTable');
-      const status = document.getElementById('dataFilesStatus');
-      if (!_dataFiles.length) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);padding:24px;text-align:center">No files found.</td></tr>'; return; }
-
-      const localCount = _dataFiles.filter(f => f.localExists).length;
-      const bucketCount = _dataFiles.filter(f => f.inBucket).length;
-      status.textContent = `${_dataFiles.length} files — ${localCount} on server, ${bucketCount} in Supabase`;
-
-      tbody.innerHTML = _dataFiles.map(f => {
-        const localBadge = f.localExists
-          ? `<span class="badge-active">✓ ${fmtBytes(f.localSize)}</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">${fmtDate(f.localModified)}</div>`
-          : `<span class="badge-banned">✗ Missing</span>`;
-        const bucketBadge = f.inBucket
-          ? `<span class="badge-active">☁ ${fmtBytes(f.bucketSize)}</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">${fmtDate(f.bucketUpdated)}</div>`
-          : `<span style="background:var(--surface2);color:var(--muted);border-radius:99px;padding:3px 10px;font-size:.72rem;font-weight:700">Not in bucket</span>`;
-        const extraBadge = f.extra ? ' <span style="font-size:.65rem;background:var(--blue-light);color:var(--blue);border-radius:99px;padding:2px 7px;font-weight:700">extra</span>' : '';
-        return `
-          <tr>
-            <td><input type="checkbox" class="datafile-cb" data-name="${f.name}" style="width:16px;height:16px"></td>
-            <td style="font-weight:700;font-size:.83rem">${f.name}${extraBadge}</td>
-            <td>${localBadge}</td>
-            <td>${bucketBadge}</td>
-            <td>
-              <div style="display:flex;gap:5px;flex-wrap:wrap">
-                ${f.inBucket ? `<button class="btn btn-ghost" style="padding:3px 8px;font-size:.72rem" onclick="dataPull('${f.name}')">⬇ Pull</button>` : ''}
-                ${f.localExists ? `<button class="btn btn-ghost" style="padding:3px 8px;font-size:.72rem" onclick="dataPush('${f.name}')">⬆ Push</button>` : ''}
-                ${f.localExists ? `<a href="/api/admin/data/download/${f.name}?token=${adminToken}" download class="btn btn-ghost" style="padding:3px 8px;font-size:.72rem;text-decoration:none">⬇ DL</a>` : ''}
-                ${f.localExists ? `<button class="btn btn-danger" style="padding:3px 8px;font-size:.72rem" onclick="dataDelete('${f.name}')">🗑</button>` : ''}
-              </div>
-            </td>
-          </tr>`;
-      }).join('');
-    }
-
-    function toggleSelectAllData(cb) {
-      document.querySelectorAll('.datafile-cb').forEach(el => el.checked = cb.checked);
-    }
-
-    function getSelectedDataFiles() {
-      return [...document.querySelectorAll('.datafile-cb:checked')].map(el => el.dataset.name);
-    }
-
-    async function dataPull(name) {
-      const banner = document.getElementById('dataSyncBanner');
-      banner.style.display = 'block';
-      banner.textContent = `Pulling ${name} from Supabase…`;
-      const res = await api('/api/admin/data/pull', { method: 'POST', body: JSON.stringify({ files: [name] }) });
-      const { results } = await res.json();
-      const r = results?.[0];
-      banner.textContent = r?.ok ? `✅ ${name} pulled successfully.` : `❌ Pull failed: ${r?.error || 'unknown'}`;
-      loadDataFiles();
-      setTimeout(() => { banner.style.display = 'none'; }, 4000);
-    }
-
-    async function dataPush(name) {
-      const banner = document.getElementById('dataSyncBanner');
-      banner.style.display = 'block';
-      banner.textContent = `Pushing ${name} to Supabase…`;
-      const res = await api('/api/admin/data/push', { method: 'POST', body: JSON.stringify({ files: [name] }) });
-      const { results } = await res.json();
-      const r = results?.[0];
-      banner.textContent = r?.ok ? `✅ ${name} pushed to Supabase.` : `❌ Push failed: ${r?.error || 'unknown'}`;
-      loadDataFiles();
-      setTimeout(() => { banner.style.display = 'none'; }, 4000);
-    }
-
-    async function dataPullAll() {
-      const banner = document.getElementById('dataSyncBanner');
-      banner.style.display = 'block';
-      banner.textContent = '⏳ Pulling all managed files from Supabase…';
-      try {
-        await api('/api/admin/data/pull-all', { method: 'POST' });
-        banner.textContent = '✅ All files pulled from Supabase.';
-        loadDataFiles();
-      } catch(e) {
-        banner.textContent = '❌ Pull failed: ' + e.message;
-      }
-      setTimeout(() => { banner.style.display = 'none'; }, 5000);
-    }
-
-    async function dataPullSelected() {
-      const files = getSelectedDataFiles();
-      if (!files.length) return alert('Select files to pull first.');
-      const banner = document.getElementById('dataSyncBanner');
-      banner.style.display = 'block';
-      banner.textContent = `⏳ Pulling ${files.length} file(s) from Supabase…`;
-      const res = await api('/api/admin/data/pull', { method: 'POST', body: JSON.stringify({ files }) });
-      const { results } = await res.json();
-      const ok = results.filter(r => r.ok).length;
-      banner.textContent = `✅ ${ok}/${files.length} pulled.`;
-      loadDataFiles();
-      setTimeout(() => { banner.style.display = 'none'; }, 4000);
-    }
-
-    async function dataPushSelected() {
-      const files = getSelectedDataFiles();
-      if (!files.length) return alert('Select files to push first.');
-      const banner = document.getElementById('dataSyncBanner');
-      banner.style.display = 'block';
-      banner.textContent = `⏳ Pushing ${files.length} file(s) to Supabase…`;
-      const res = await api('/api/admin/data/push', { method: 'POST', body: JSON.stringify({ files }) });
-      const { results } = await res.json();
-      const ok = results.filter(r => r.ok).length;
-      banner.textContent = `✅ ${ok}/${files.length} pushed to Supabase.`;
-      loadDataFiles();
-      setTimeout(() => { banner.style.display = 'none'; }, 4000);
-    }
-
-    async function dataDelete(name) {
-      if (!confirm(`Delete ${name} from the server's data directory? (Supabase copy stays.)\nThis cannot be undone.`)) return;
-      const res = await fetch(`/api/admin/data/${name}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken } });
-      const j = await res.json();
-      if (j.ok) loadDataFiles();
-      else alert('Delete failed: ' + (j.error || 'unknown'));
-    }
-
-    function updateUploadLabel() {
-      const input = document.getElementById('dataFileInput');
-      const label = document.getElementById('uploadFileLabel');
-      const count = input.files?.length || 0;
-      label.textContent = count === 0 ? 'Select JSON file(s)…' : count === 1 ? input.files[0].name : `${count} files selected`;
-    }
-
-    async function uploadDataFiles() {
-      const input = document.getElementById('dataFileInput');
-      if (!input.files?.length) return alert('Select at least one JSON file.');
-      const push = document.getElementById('pushAfterUpload').checked;
-      const resultEl = document.getElementById('uploadResult');
-      resultEl.innerHTML = '<span style="color:var(--muted)">Uploading…</span>';
-      const fd = new FormData();
-      for (const f of input.files) fd.append('files', f);
-      if (push) fd.append('push', 'true');
-      try {
-        const res = await fetch('/api/admin/data/upload', { method: 'POST', headers: { 'x-admin-token': adminToken }, body: fd });
-        const { results } = await res.json();
-        const ok = results.filter(r => r.ok);
-        const fail = results.filter(r => !r.ok);
-        let html = '';
-        if (ok.length) html += `<span style="color:var(--green);font-weight:700">✅ ${ok.map(r => r.name + (r.pushed ? ' (pushed to Supabase)' : ' (server only)')).join(', ')}</span>`;
-        if (fail.length) html += `<span style="color:var(--red);font-weight:700"> ❌ ${fail.map(r => r.name + ': ' + r.error).join(', ')}</span>`;
-        resultEl.innerHTML = html;
-        input.value = '';
-        updateUploadLabel();
-        loadDataFiles();
-      } catch(e) {
-        resultEl.innerHTML = '<span style="color:var(--red)">Upload failed: ' + e.message + '</span>';
-      }
-    }
-
-    // ── Ambassador CRUD ──────────────────────────────────────────────
-    async function loadAmbassadors() {
-      const el = document.getElementById('ambassadors-table');
-      el.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">Loading…</div>';
-      try {
-        const r = await api('/api/admin/ambassadors');
-        const d = await r.json();
-        const ambs = d.ambassadors || [];
-        if (!ambs.length) { el.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">No ambassadors yet. Add one above!</div>'; return; }
-        el.innerHTML = `<div class="table-wrap"><table>
-          <thead><tr><th>Email</th><th>Status</th><th>Note</th><th>Added By</th><th>Added At</th><th>Actions</th></tr></thead>
-          <tbody>${ambs.map(a => `<tr>
-            <td><strong>${a.email}</strong></td>
-            <td><span style="padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:700;background:${a.active?'#dbeafe':'#f1f5f9'};color:${a.active?'#1d4ed8':'#64748b'}">${a.active?'✓ Active':'Inactive'}</span></td>
-            <td style="color:var(--muted);font-size:.82rem">${a.note||'—'}</td>
-            <td style="font-size:.8rem;color:var(--muted)">${a.addedBy||'admin'}</td>
-            <td style="font-size:.78rem;color:var(--muted)">${new Date(a.addedAt).toLocaleDateString()}</td>
-            <td style="display:flex;gap:6px;flex-wrap:wrap">
-              <button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem" onclick="toggleAmbassador('${a.id}',${!a.active})">${a.active?'Deactivate':'Activate'}</button>
-              <button class="btn" style="padding:4px 10px;font-size:.78rem;background:#fef2f2;color:#dc2626;border:none" onclick="deleteAmbassador('${a.id}','${a.email}')">Remove</button>
-            </td>
-          </tr>`).join('')}</tbody>
+    if (appealsBox) {
+      if (!appeals.length) { appealsBox.innerHTML = empty('No pending appeals'); }
+      else {
+        appealsBox.innerHTML = `<div class="table-wrap"><table>
+          <thead><tr><th>User</th><th>Banned For</th><th>Appeal</th><th>Actions</th></tr></thead>
+          <tbody>${appeals.map(a => {
+            const uid = String(a.userId||'').replace(/'/g,'');
+            return `<tr>
+              <td><div style="font-weight:600;color:var(--text)">${a.name||'—'}</div><div style="font-size:.73rem">${a.email||'—'}</div></td>
+              <td style="max-width:180px">${a.reason||'—'}</td>
+              <td style="max-width:200px;font-style:italic">${a.appealMessage||'—'}</td>
+              <td><div style="display:flex;gap:6px">
+                <button class="btn btn-ghost btn-sm" style="color:var(--green);border-color:rgba(34,197,94,.3)" onclick="resolveAppeal('${uid}','approved')">✅ Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="resolveAppeal('${uid}','rejected')">❌ Reject</button>
+              </div></td>
+            </tr>`;
+          }).join('')}</tbody>
         </table></div>`;
-      } catch(e) { el.innerHTML = `<div style="color:var(--red);padding:20px">${e.message}</div>`; }
+      }
     }
 
-    function showAddAmbassadorModal() {
-      document.getElementById('amb-modal').style.display = 'flex';
-      setTimeout(() => document.getElementById('amb-email-input').focus(), 50);
+    if (bansBox) {
+      if (!bans.length) { bansBox.innerHTML = empty('No active bans'); }
+      else {
+        bansBox.innerHTML = `<div class="table-wrap"><table>
+          <thead><tr><th>User</th><th>Reason</th><th>Appeal</th><th>Banned At</th><th>Action</th></tr></thead>
+          <tbody>${bans.map(b => {
+            const bid = String(b.userId||'').replace(/'/g,'');
+            const aStatus = b.appealStatus || 'none';
+            const aBadge = aStatus === 'pending' ? '<span class="badge badge-yellow">Pending</span>'
+              : aStatus === 'rejected' ? '<span class="badge badge-red">Rejected</span>'
+              : '<span class="badge badge-gray">None</span>';
+            return `<tr>
+              <td><div style="font-weight:600;color:var(--text)">${b.name||'—'}</div><div style="font-size:.73rem">${b.email||'—'}</div></td>
+              <td>${b.reason||'—'}</td>
+              <td>${aBadge}</td>
+              <td>${fmt(b.bannedAt)}</td>
+              <td><button class="btn btn-ghost btn-sm" style="color:var(--green);border-color:rgba(34,197,94,.3)" onclick="doUnban('${bid}')">Unban</button></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>`;
+      }
     }
-    function closeAmbModal() {
-      document.getElementById('amb-modal').style.display = 'none';
-      document.getElementById('amb-email-input').value = '';
-      document.getElementById('amb-note-input').value = '';
-    }
+  } catch(e) {
+    if (bansBox) bansBox.innerHTML = errBox(e.message);
+    if (appealsBox) appealsBox.innerHTML = errBox(e.message);
+  }
+}
 
-    async function confirmAddAmbassador() {
-      const email = document.getElementById('amb-email-input').value.trim();
-      const note  = document.getElementById('amb-note-input').value.trim();
-      if (!email) return alert('Enter an email address');
-      try {
-        const r = await api('/api/admin/ambassadors', { method:'POST', body: JSON.stringify({ email, note }) });
-        const d = await r.json();
-        if (!r.ok) return alert(d.error || 'Failed');
-        closeAmbModal();
-        loadAmbassadors();
-        alert(`✅ ${email} is now an Ambassador!`);
-      } catch(e) { alert(e.message); }
-    }
+async function resolveAppeal(userId, decision) {
+  try {
+    const r = await api('/api/admin/appeal/' + userId + '/' + decision, { method:'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Status ' + r.status);
+    loadBans(); loadUsers();
+  } catch(e) { alert('Failed: ' + e.message); }
+}
 
-    async function toggleAmbassador(id, active) {
-      try {
-        const r = await api(`/api/admin/ambassadors/${id}`, { method:'PUT', body: JSON.stringify({ active }) });
-        if (!r.ok) { const d = await r.json(); return alert(d.error||'Failed'); }
-        loadAmbassadors();
-      } catch(e) { alert(e.message); }
-    }
+// ══════════════════════════════════════════════════════
+//  SUPPORT
+// ══════════════════════════════════════════════════════
+async function loadSupport() {
+  const box = document.getElementById('support-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/support');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    let msgs = (await r.json()).messages || [];
+    const unresolved = document.getElementById('supp-unresolved');
+    if (unresolved && unresolved.checked) msgs = msgs.filter(m => !m.resolved);
+    const open = msgs.filter(m => !m.resolved).length;
+    setBadge('badge-support', open);
+    if (!msgs.length) { box.innerHTML = empty('No messages found'); return; }
+    box.innerHTML = msgs.map(m => {
+      const init = (m.name||'?')[0].toUpperCase();
+      return `<div class="card" style="margin-bottom:10px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--blue-bg);border:1px solid var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue);flex-shrink:0">${init}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap">
+              <span style="font-weight:700;color:var(--text);font-size:.88rem">${m.name||'Unknown'}</span>
+              ${m.resolved ? '<span class="badge badge-green">✓ Resolved</span>' : '<span class="badge badge-yellow">● Open</span>'}
+            </div>
+            <div style="font-size:.74rem;color:var(--text2);margin-bottom:8px">${m.email||'—'} · ${fmtDT(m.createdAt)}</div>
+            <div style="font-weight:600;color:var(--blue);font-size:.82rem;margin-bottom:6px">📌 ${m.subject||'No subject'}</div>
+            <div style="font-size:.82rem;color:var(--text2);background:var(--surface2);border-radius:8px;padding:10px 12px;line-height:1.6">${(m.message||'').replace(/</g,'&lt;')}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px">
+              <span style="font-size:.72rem;color:var(--text3)">${m.userId ? '🔗 ' + m.userId : '👤 Guest'}</span>
+              ${!m.resolved ? `<button class="btn btn-ghost btn-sm" style="color:var(--green);border-color:rgba(34,197,94,.3)" onclick="resolveSupport('${m.id}')">✓ Mark Resolved</button>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
 
-    async function deleteAmbassador(id, email) {
-      if (!confirm(`Remove ${email} as Ambassador? This will revoke all ambassador privileges.`)) return;
-      try {
-        const r = await api(`/api/admin/ambassadors/${id}`, { method:'DELETE' });
-        if (!r.ok) { const d = await r.json(); return alert(d.error||'Failed'); }
-        loadAmbassadors();
-      } catch(e) { alert(e.message); }
-    }
+async function resolveSupport(id) {
+  try {
+    const r = await api('/api/admin/support/' + id + '/resolve', { method:'POST' });
+    if (!r.ok) throw new Error('Status ' + r.status);
+    loadSupport();
+  } catch(e) { alert('Failed: ' + e.message); }
+}
 
-  </script>
+// ══════════════════════════════════════════════════════
+//  SUBSCRIPTIONS
+// ══════════════════════════════════════════════════════
+async function loadSubs() {
+  const box = document.getElementById('subs-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/subs');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const subs = (await r.json()).subscriptions || {};
+    const rows = Object.entries(subs);
+    if (!rows.length) { box.innerHTML = empty('No active subscriptions'); return; }
+    const planColor = { free:'var(--text3)', lite:'var(--blue)', plus:'var(--purple)', pro:'var(--red)' };
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>User ID</th><th>Plan</th><th>Status</th><th>Expires</th><th>Granted By</th><th>Action</th></tr></thead>
+      <tbody>${rows.map(([uid, s]) => `<tr>
+        <td style="font-family:var(--mono);font-size:.73rem;color:var(--text2)">${uid}</td>
+        <td><span style="font-weight:700;color:${planColor[s.plan]||'var(--text2)'}">${(s.plan||'').toUpperCase()}</span></td>
+        <td>${s.status === 'active' ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-gray">'+s.status+'</span>'}</td>
+        <td>${s.expiresAt ? fmt(s.expiresAt) : 'Never'}</td>
+        <td style="font-size:.75rem">${s.grantedBy||'—'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="quickGrant('${uid}','free')">Remove</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+async function grantSub() {
+  const uid = document.getElementById('grant-uid').value.trim();
+  const plan = document.getElementById('grant-plan').value;
+  const resEl = document.getElementById('grant-result');
+  if (!uid) { resEl.style.color = 'var(--yellow)'; resEl.textContent = '⚠ Enter a User ID'; return; }
+  try {
+    const r = await api('/api/admin/grant-sub', { method:'POST', body: JSON.stringify({ userId:uid, plan }) });
+    const d = await r.json();
+    resEl.style.color = r.ok ? 'var(--green)' : 'var(--red)';
+    resEl.textContent = r.ok ? `✅ Granted ${plan} to ${uid}` : ('Error: ' + (d.error||'Failed'));
+    if (r.ok) loadSubs();
+  } catch(e) { resEl.style.color='var(--red)'; resEl.textContent='Error: '+e.message; }
+}
+
+async function quickGrant(uid, plan) {
+  if (!confirm('Remove subscription for '+uid+'?')) return;
+  try {
+    await api('/api/admin/grant-sub', { method:'POST', body: JSON.stringify({ userId:uid, plan }) });
+    loadSubs();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  PROOFS
+// ══════════════════════════════════════════════════════
+async function loadProofs() {
+  const box = document.getElementById('proofs-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/proofs');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const proofs = (await r.json()).proofs || [];
+    const pending = proofs.filter(p => p.status === 'pending').length;
+    setBadge('badge-proofs', pending);
+    const badge = document.getElementById('proofs-pending-badge');
+    if (badge) { badge.textContent = pending ? pending + ' pending' : ''; badge.style.display = pending ? '' : 'none'; }
+    if (!proofs.length) { box.innerHTML = empty('No payment proofs submitted yet'); return; }
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>User</th><th>Plan</th><th>Status</th><th>Storage</th><th>Submitted</th><th>Image</th><th>Actions</th></tr></thead>
+      <tbody>${proofs.map(p => {
+        const sBadge = p.status === 'pending' ? '<span class="badge badge-yellow">Pending</span>'
+          : p.status === 'approved' ? '<span class="badge badge-green">Approved</span>'
+          : '<span class="badge badge-red">Rejected</span>';
+        return `<tr>
+          <td style="font-family:var(--mono);font-size:.72rem;color:var(--text2)">${p.userId}</td>
+          <td><span class="badge badge-blue">${(p.plan||'').toUpperCase()}</span></td>
+          <td>${sBadge}</td>
+          <td>${p.supabaseUploaded ? '<span class="badge badge-green">☁ Supabase</span>' : '<span class="badge badge-gray">Local</span>'}</td>
+          <td style="font-size:.75rem">${fmtDT(p.submittedAt)}</td>
+          <td>${p.status==='pending' ? `<button class="btn btn-ghost btn-sm" onclick="viewProof('${p.filename}','${p.id}','${p.userId}','${p.plan}','${p.status}')">🖼 View</button>` : '<span style="font-size:.72rem;color:var(--text3)">—</span>'}</td>
+          <td>${p.status==='pending' ? `
+            <div style="display:flex;gap:5px">
+              <button class="btn btn-ghost btn-sm" style="color:var(--green);border-color:rgba(34,197,94,.3)" onclick="reviewProof('${p.id}','approved')">✅</button>
+              <button class="btn btn-danger btn-sm" onclick="reviewProof('${p.id}','rejected')">❌</button>
+            </div>` : `<span style="font-size:.73rem;color:var(--text3)">Reviewed ${p.reviewedAt ? fmt(p.reviewedAt) : ''}</span>`}
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+function viewProof(filename, proofId, userId, plan, status) {
+  document.getElementById('proof-modal-title').textContent = plan.toUpperCase() + ' Plan · ' + userId;
+  document.getElementById('proof-img-el').src = '/api/admin/proof-image/' + filename + '?adminKey=' + TOKEN;
+  document.getElementById('proof-modal-actions').innerHTML = status === 'pending' ? `
+    <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center;color:var(--green);border-color:rgba(34,197,94,.3)" onclick="reviewProof('${proofId}','approved');closeProofModal()">✅ Approve</button>
+    <button class="btn btn-danger btn-sm" style="flex:1;justify-content:center" onclick="reviewProof('${proofId}','rejected');closeProofModal()">❌ Reject</button>` : '';
+  document.getElementById('proof-img-modal').classList.add('open');
+}
+
+function closeProofModal() { document.getElementById('proof-img-modal').classList.remove('open'); }
+
+async function reviewProof(proofId, status) {
+  try {
+    const r = await api('/api/admin/proof/' + proofId + '/review', { method:'POST', body: JSON.stringify({ status }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Status ' + r.status);
+    loadProofs();
+  } catch(e) { alert('Failed: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  PROMO LINKS
+// ══════════════════════════════════════════════════════
+async function loadPromoLinks() {
+  const box = document.getElementById('promolinks-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/promo-links');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const links = Object.values((await r.json()).links || {}).sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt));
+    if (!links.length) { box.innerHTML = empty('No promo links yet'); return; }
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Plan</th><th>Note</th><th>Uses</th><th>Max</th><th>Expires</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>${links.map(l => {
+        const exp = l.expiresAt && new Date(l.expiresAt) < new Date();
+        const exh = l.maxUses > 0 && l.uses >= l.maxUses;
+        const active = l.active && !exp && !exh;
+        const sBadge = active ? '<span class="badge badge-green">Active</span>'
+          : !l.active ? '<span class="badge badge-gray">Deactivated</span>'
+          : exp ? '<span class="badge badge-red">Expired</span>'
+          : '<span class="badge badge-yellow">Exhausted</span>';
+        const url = location.origin + '/redeem/' + l.code;
+        return `<tr>
+          <td><span class="badge badge-blue">${(l.plan||'').toUpperCase()}</span></td>
+          <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem">${l.note||'—'}</td>
+          <td>${l.uses}</td>
+          <td>${l.maxUses===0?'∞':l.maxUses}</td>
+          <td style="font-size:.75rem">${l.expiresAt ? fmtDT(l.expiresAt) : '—'}</td>
+          <td>${sBadge}</td>
+          <td style="font-size:.75rem">${fmt(l.createdAt)}</td>
+          <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${url}').then(()=>alert('Copied!'))">Copy</button>
+            ${l.active ? `<button class="btn btn-warn btn-sm" onclick="deactivateLink('${l.code}')">Off</button>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="deleteLink('${l.code}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+async function createPromoLink() {
+  const plan = document.getElementById('fl-plan').value;
+  const maxUses = parseInt(document.getElementById('fl-maxuses').value)||0;
+  const expiresRaw = document.getElementById('fl-expires').value;
+  const expiresAt = expiresRaw ? new Date(expiresRaw).toISOString() : null;
+  const note = document.getElementById('fl-note').value.trim();
+  try {
+    const r = await api('/api/admin/promo-links', { method:'POST', body: JSON.stringify({ plan, maxUses, expiresAt, note }) });
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error||'Failed');
+    const url = location.origin + '/redeem/' + d.link.code;
+    document.getElementById('fl-url').value = url;
+    document.getElementById('fl-result').style.display = 'block';
+    loadPromoLinks();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function copyPromoUrl() {
+  const inp = document.getElementById('fl-url');
+  navigator.clipboard.writeText(inp.value).then(() => alert('Copied!'));
+}
+
+async function deactivateLink(code) {
+  if (!confirm('Deactivate this link?')) return;
+  try {
+    await api('/api/admin/promo-links/'+code+'/deactivate', { method:'POST' });
+    loadPromoLinks();
+  } catch(e) { alert(e.message); }
+}
+
+async function deleteLink(code) {
+  if (!confirm('Permanently delete this link?')) return;
+  try {
+    await api('/api/admin/promo-links/'+code, { method:'DELETE' });
+    loadPromoLinks();
+  } catch(e) { alert(e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  PAPERS
+// ══════════════════════════════════════════════════════
+async function loadPapers() {
+  const box = document.getElementById('papers-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/papers');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const papers = (await r.json()).papers || [];
+    const si = document.getElementById('papers-storage');
+    if (si) si.textContent = papers.length + ' paper' + (papers.length!==1?'s':'');
+    if (!papers.length) { box.innerHTML = empty('No papers uploaded'); return; }
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Filename</th><th>Uploader</th><th>Size</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody>${papers.map(p => `<tr>
+        <td style="font-weight:500;color:var(--text)">${p.originalName||p.filename||'—'}</td>
+        <td>${p.uploader||'—'}</td>
+        <td>${fmtBytes(p.size)}</td>
+        <td>${fmt(p.uploadedAt)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deletePaper('${p.id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete
+        </button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+async function deletePaper(id) {
+  if (!confirm('Delete this paper? This cannot be undone.')) return;
+  try {
+    const r = await api('/api/admin/papers/' + id, { method:'DELETE' });
+    if (!r.ok) throw new Error('Status ' + r.status);
+    loadPapers();
+  } catch(e) { alert('Failed: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  AMBASSADORS
+// ══════════════════════════════════════════════════════
+async function loadAmbassadors() {
+  const box = document.getElementById('ambassadors-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/ambassadors');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const ambs = (await r.json()).ambassadors || [];
+    if (!ambs.length) { box.innerHTML = empty('No ambassadors yet'); return; }
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Email</th><th>Status</th><th>Note</th><th>Added By</th><th>Added At</th><th>Actions</th></tr></thead>
+      <tbody>${ambs.map(a => `<tr>
+        <td style="font-weight:600;color:var(--text)">${a.email}</td>
+        <td>${a.active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-gray">Inactive</span>'}</td>
+        <td style="font-size:.78rem;color:var(--text2)">${a.note||'—'}</td>
+        <td style="font-size:.75rem">${a.addedBy||'admin'}</td>
+        <td style="font-size:.75rem">${fmt(a.addedAt)}</td>
+        <td><div style="display:flex;gap:5px">
+          <button class="btn btn-ghost btn-sm" onclick="openAmbModal('${a.id}','${a.email}','${(a.note||'').replace(/'/g,'')}')">Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleAmb('${a.id}',${!a.active})">${a.active?'Deactivate':'Activate'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAmb('${a.id}','${a.email}')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+async function addAmbassador() {
+  const email = document.getElementById('amb-email').value.trim();
+  const note = document.getElementById('amb-note').value.trim();
+  const resEl = document.getElementById('amb-result');
+  if (!email) { resEl.style.color='var(--yellow)'; resEl.textContent='Enter an email address'; return; }
+  try {
+    const r = await api('/api/admin/ambassadors', { method:'POST', body: JSON.stringify({ email, note }) });
+    const d = await r.json();
+    resEl.style.color = r.ok ? 'var(--green)' : 'var(--red)';
+    resEl.textContent = r.ok ? ('✅ ' + email + ' added as ambassador!') : ('Error: ' + (d.error||'Failed'));
+    if (r.ok) { document.getElementById('amb-email').value=''; document.getElementById('amb-note').value=''; loadAmbassadors(); }
+  } catch(e) { resEl.style.color='var(--red)'; resEl.textContent='Error: '+e.message; }
+}
+
+function openAmbModal(id, email, note) {
+  _editAmbId = id;
+  document.getElementById('amb-modal-sub').textContent = email;
+  document.getElementById('amb-edit-note').value = note || '';
+  openModal('amb-modal');
+}
+
+async function saveAmbassador() {
+  const note = document.getElementById('amb-edit-note').value.trim();
+  try {
+    const r = await api('/api/admin/ambassadors/'+_editAmbId, { method:'PUT', body: JSON.stringify({ note }) });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error||'Failed'); }
+    closeModal('amb-modal'); loadAmbassadors();
+  } catch(e) { alert('Failed: '+e.message); }
+}
+
+async function toggleAmb(id, active) {
+  try {
+    const r = await api('/api/admin/ambassadors/'+id, { method:'PUT', body: JSON.stringify({ active }) });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error||'Failed'); }
+    loadAmbassadors();
+  } catch(e) { alert('Failed: '+e.message); }
+}
+
+async function deleteAmb(id, email) {
+  if (!confirm('Remove ' + email + ' as ambassador?')) return;
+  try {
+    const r = await api('/api/admin/ambassadors/'+id, { method:'DELETE' });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error||'Failed'); }
+    loadAmbassadors();
+  } catch(e) { alert('Failed: '+e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  PUSH / VAPID
+// ══════════════════════════════════════════════════════
+async function loadVapid() {
+  try {
+    const r = await api('/api/admin/vapid');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('vapid-subs').textContent = d.subscriberCount ?? '—';
+    document.getElementById('vapid-source').textContent = ({ env:'Env Vars', custom:'Custom', default:'Built-in' }[d.source] || d.source || '—');
+    document.getElementById('vapid-public-key').textContent = d.publicKey || '—';
+  } catch(e) { document.getElementById('vapid-status').textContent = 'Error: '+e.message; }
+}
+
+function copyVapidKey() {
+  const txt = document.getElementById('vapid-public-key').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const s = document.getElementById('vapid-status');
+    s.style.color='var(--green)'; s.textContent='✅ Copied to clipboard';
+    setTimeout(()=>{ s.style.color='var(--text2)'; s.textContent=''; }, 2500);
+  });
+}
+
+async function generateVapid() {
+  if (!confirm('Generate NEW VAPID keys?\n\n⚠ This INVALIDATES all existing push subscriptions. Every user must re-enable notifications afterwards.')) return;
+  const s = document.getElementById('vapid-status');
+  s.style.color='var(--text2)'; s.textContent='Generating…';
+  try {
+    const r = await api('/api/admin/vapid/generate', { method:'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Failed');
+    loadVapid();
+    s.style.color='var(--green)'; s.textContent='✅ New keys generated. Users must re-enable notifications.';
+  } catch(e) { s.style.color='var(--red)'; s.textContent='Error: '+e.message; }
+}
+
+async function sendTestPush() {
+  const s = document.getElementById('vapid-status');
+  s.style.color='var(--text2)'; s.textContent='Sending test push…';
+  try {
+    const r = await api('/api/admin/notifications/test', { method:'POST', body: JSON.stringify({ title:'🔔 FundaPlus Test', body:'Push notifications are working!' }) });
+    const d = await r.json();
+    if (d.message) { s.style.color='var(--yellow)'; s.textContent=d.message; return; }
+    if (d.failed === 0) { s.style.color='var(--green)'; s.textContent='✅ Sent to '+d.sent+' subscriber(s).'; }
+    else { s.style.color='var(--red)'; s.textContent='⚠ Sent '+d.sent+', failed '+d.failed; }
+  } catch(e) { s.style.color='var(--red)'; s.textContent='Error: '+e.message; }
+}
+
+// ══════════════════════════════════════════════════════
+//  CHATS
+// ══════════════════════════════════════════════════════
+async function loadChats() {
+  const box = document.getElementById('chats-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/messages');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const data = (await r.json()).messages || {};
+    const keys = Object.keys(data);
+    if (!keys.length) { box.innerHTML = empty('No chat activity yet'); return; }
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Number</th><th>Messages</th><th>Last Active</th></tr></thead>
+      <tbody>${keys.map(jid => {
+        const msgs = data[jid] || [];
+        const last = Array.isArray(msgs) ? msgs[msgs.length-1] : null;
+        return `<tr>
+          <td style="font-family:var(--mono);font-size:.8rem;color:var(--text)">${jid.split('@')[0]}</td>
+          <td>${Array.isArray(msgs) ? msgs.length : (msgs.count || '—')}</td>
+          <td style="font-size:.75rem">${last?.ts ? fmtDT(last.ts) : '—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  FILES
+// ══════════════════════════════════════════════════════
+async function loadFiles() {
+  const box = document.getElementById('files-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/files');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const files = (await r.json()).files || [];
+    if (!files.length) { box.innerHTML = empty('No data files on server'); return; }
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>File</th><th>Size</th><th>Modified</th><th>Action</th></tr></thead>
+      <tbody>${files.map(f => `<tr>
+        <td style="font-family:var(--mono);font-size:.8rem;color:var(--text)">${f.name}</td>
+        <td>${fmtBytes(f.size)}</td>
+        <td style="font-size:.75rem">${fmtDT(f.modified)}</td>
+        <td><a href="/api/admin/files/${f.name}?adminKey=${TOKEN}" download class="btn btn-ghost btn-sm" style="text-decoration:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  DATA SYNC
+// ══════════════════════════════════════════════════════
+async function loadDataFiles() {
+  const box = document.getElementById('datafiles-container');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/data/status');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    _dataFiles = (await r.json()).files || [];
+    renderDataFiles();
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+function renderDataFiles() {
+  const box = document.getElementById('datafiles-container');
+  const status = document.getElementById('data-status');
+  if (!box) return;
+  if (!_dataFiles.length) { box.innerHTML = empty('No data files found'); return; }
+  const lc = _dataFiles.filter(f=>f.localExists).length;
+  const bc = _dataFiles.filter(f=>f.inBucket).length;
+  if (status) status.textContent = _dataFiles.length + ' files — ' + lc + ' on server, ' + bc + ' in Supabase';
+  box.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th style="width:36px"></th><th>File</th><th>Server</th><th>Supabase</th><th>Actions</th></tr></thead>
+    <tbody>${_dataFiles.map(f => `<tr>
+      <td><input type="checkbox" class="datafile-cb" data-name="${f.name}" style="width:15px;height:15px;cursor:pointer"></td>
+      <td style="font-family:var(--mono);font-size:.8rem;font-weight:500;color:var(--text)">${f.name}${f.extra?'<span class="badge badge-blue" style="margin-left:6px;font-size:.6rem">extra</span>':''}</td>
+      <td>${f.localExists ? `<span class="badge badge-green">✓ ${fmtBytes(f.localSize)}</span><div style="font-size:.68rem;color:var(--text3);margin-top:2px">${fmtDT(f.localModified)}</div>` : '<span class="badge badge-red">✗ Missing</span>'}</td>
+      <td>${f.inBucket ? `<span class="badge badge-blue">☁ ${fmtBytes(f.bucketSize)}</span><div style="font-size:.68rem;color:var(--text3);margin-top:2px">${fmtDT(f.bucketUpdated)}</div>` : '<span class="badge badge-gray">Not in bucket</span>'}</td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+        ${f.inBucket ? `<button class="btn btn-ghost btn-sm" onclick="dataPullOne('${f.name}')">⬇ Pull</button>` : ''}
+        ${f.localExists ? `<button class="btn btn-ghost btn-sm" onclick="dataPushOne('${f.name}')">⬆ Push</button>` : ''}
+        ${f.localExists ? `<a href="/api/admin/data/download/${f.name}?adminKey=${TOKEN}" download class="btn btn-ghost btn-sm" style="text-decoration:none">DL</a>` : ''}
+        ${f.localExists ? `<button class="btn btn-danger btn-sm" onclick="dataDelete('${f.name}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+        </button>` : ''}
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function toggleSelectAll(cb) { document.querySelectorAll('.datafile-cb').forEach(el => el.checked = cb.checked); }
+function getSelectedFiles() { return [...document.querySelectorAll('.datafile-cb:checked')].map(el => el.dataset.name); }
+
+async function dataBanner(msg) {
+  const b = document.getElementById('data-banner');
+  b.style.display = 'block'; b.textContent = msg;
+  setTimeout(() => b.style.display='none', 4000);
+}
+
+async function dataPullOne(name) {
+  dataBanner('⏳ Pulling ' + name + '…');
+  const r = await api('/api/admin/data/pull', { method:'POST', body: JSON.stringify({ files:[name] }) });
+  const d = await r.json();
+  dataBanner(d.results?.[0]?.ok ? '✅ Pulled ' + name : '❌ ' + (d.results?.[0]?.error||'Failed'));
+  loadDataFiles();
+}
+
+async function dataPushOne(name) {
+  dataBanner('⏳ Pushing ' + name + '…');
+  const r = await api('/api/admin/data/push', { method:'POST', body: JSON.stringify({ files:[name] }) });
+  const d = await r.json();
+  dataBanner(d.results?.[0]?.ok ? '✅ Pushed ' + name : '❌ ' + (d.results?.[0]?.error||'Failed'));
+  loadDataFiles();
+}
+
+async function dataPullAll() {
+  dataBanner('⏳ Pulling all files from Supabase…');
+  const r = await api('/api/admin/data/pull-all', { method:'POST' });
+  const d = await r.json();
+  dataBanner(r.ok ? '✅ ' + (d.message||'Done') : '❌ ' + (d.error||'Failed'));
+  loadDataFiles();
+}
+
+async function dataPushSelected() {
+  const files = getSelectedFiles();
+  if (!files.length) return alert('Select files to push first.');
+  dataBanner('⏳ Pushing ' + files.length + ' file(s)…');
+  const r = await api('/api/admin/data/push', { method:'POST', body: JSON.stringify({ files }) });
+  const d = await r.json();
+  const ok = (d.results||[]).filter(x=>x.ok).length;
+  dataBanner('✅ ' + ok + '/' + files.length + ' pushed.');
+  loadDataFiles();
+}
+
+async function dataDelete(name) {
+  if (!confirm('Delete ' + name + ' from server? (Supabase copy stays.)')) return;
+  const r = await api('/api/admin/data/' + name, { method:'DELETE' });
+  const d = await r.json();
+  if (r.ok) loadDataFiles(); else alert('Delete failed: ' + (d.error||'Unknown'));
+}
+
+function updateUploadLabel() {
+  const inp = document.getElementById('data-upload-input');
+  const lbl = document.getElementById('upload-label');
+  const n = inp.files?.length||0;
+  lbl.textContent = n===0 ? 'Select JSON file(s)…' : n===1 ? inp.files[0].name : n+' files selected';
+}
+
+async function uploadDataFiles() {
+  const inp = document.getElementById('data-upload-input');
+  if (!inp.files?.length) return alert('Select at least one JSON file.');
+  const push = document.getElementById('push-after-upload').checked;
+  const resEl = document.getElementById('upload-result');
+  resEl.innerHTML = '<span style="color:var(--text2)">Uploading…</span>';
+  const fd = new FormData();
+  for (const f of inp.files) fd.append('files', f);
+  if (push) fd.append('push', 'true');
+  try {
+    const r = await fetch('/api/admin/data/upload', { method:'POST', headers:{'x-admin-token':TOKEN}, body:fd });
+    const d = await r.json();
+    const ok = (d.results||[]).filter(x=>x.ok);
+    const fail = (d.results||[]).filter(x=>!x.ok);
+    let html = '';
+    if (ok.length) html += `<span style="color:var(--green)">✅ ${ok.map(x=>x.name+(x.pushed?' (pushed)':' (server only)')).join(', ')}</span>`;
+    if (fail.length) html += ` <span style="color:var(--red)">❌ ${fail.map(x=>x.name+': '+x.error).join(', ')}</span>`;
+    resEl.innerHTML = html;
+    inp.value=''; updateUploadLabel(); loadDataFiles();
+  } catch(e) { resEl.innerHTML = '<span style="color:var(--red)">Error: '+e.message+'</span>'; }
+}
+
+// ══════════════════════════════════════════════════════
+//  WISHLIST
+// ══════════════════════════════════════════════════════
+async function loadWishlist() {
+  try {
+    const r = await api('/api/admin/wishlist');
+    if (!r.ok) return;
+    const d = await r.json();
+    const el = document.getElementById('wishlist-count');
+    if (el) el.textContent = d.count ?? d.upgrade ?? 0;
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════
+//  GLOBAL SYNC / BOT
+// ══════════════════════════════════════════════════════
+async function doSync() {
+  try {
+    const r = await api('/api/admin/sync', { method:'POST' });
+    const d = await r.json();
+    alert(d.ok ? '✅ ' + (d.message||'Synced!') : '❌ ' + (d.error||'Sync failed'));
+  } catch(e) { alert('Sync error: ' + e.message); }
+}
+
+function onBotStatus(data) {
+  // Bot status handled via socket.io if available
+}
+</script>
 </body>
 </html>
