@@ -1249,7 +1249,7 @@
       }
     }
 
-    let _pdfDoc = null, _pdfPage = 1, _pdfScale = 1.4, _pdfRendering = false;
+    let _pdfDoc = null, _pdfPage = 1, _pdfZoom = 1, _pdfRenderTask = null, _pdfGen = 0;
 
     async function previewPdf(filename, title) {
       const previewUrl = `/api/papers/file/${encodeURIComponent(filename)}?token=${encodeURIComponent(token)}`;
@@ -1258,68 +1258,103 @@
       document.getElementById('modal-dl').removeAttribute('href');
       document.getElementById('pdfModal').classList.add('open');
 
-      _pdfDoc = null; _pdfPage = 1; _pdfScale = 1.4; _pdfRendering = false;
+      if (_pdfRenderTask) { try { _pdfRenderTask.cancel(); } catch {} _pdfRenderTask = null; }
+      _pdfDoc = null; _pdfPage = 1; _pdfZoom = 1; _pdfGen++;
       const scroll = document.getElementById('pdf-scroll');
+      scroll.onscroll = null;
       scroll.innerHTML = '<div class="pdf-loading">Loading PDF…</div>';
       document.getElementById('pdf-cur').textContent = '—';
       document.getElementById('pdf-total').textContent = '—';
-      document.getElementById('pdf-zoom-label').textContent = Math.round(_pdfScale * 100) + '%';
-
-      if (!window.pdfjsLib) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-          s.onload = resolve; s.onerror = reject;
-          document.head.appendChild(s);
-        });
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      }
+      document.getElementById('pdf-zoom-label').textContent = 'Fit';
 
       try {
+        if (!window.pdfjsLib) {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            s.onload = resolve; s.onerror = () => reject(new Error('Could not load PDF viewer'));
+            document.head.appendChild(s);
+          });
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
         const resp = await fetch(previewUrl);
         if (!resp.ok) throw new Error('Could not load PDF (' + resp.status + ')');
         const arrayBuf = await resp.arrayBuffer();
-        _pdfDoc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+        _pdfDoc = await pdfjsLib.getDocument({
+          data: arrayBuf,
+          disableStream: true,
+          disableAutoFetch: true,
+          disableRange: true,
+        }).promise;
         document.getElementById('pdf-total').textContent = _pdfDoc.numPages;
-        scroll.innerHTML = '';
-        for (let i = 1; i <= _pdfDoc.numPages; i++) {
-          await _renderPage(i, scroll);
-        }
-        _updatePageInfo();
-        scroll.onscroll = _onPdfScroll;
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        await _renderCurrentPage();
       } catch (e) {
+        if (e?.name === 'RenderingCancelledException') return;
         scroll.innerHTML = `<div class="pdf-error">⚠ ${e.message}</div>`;
       }
     }
 
-    async function _renderPage(pageNum, container) {
-      const page = await _pdfDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: _pdfScale });
-      const wrap = document.createElement('div');
-      wrap.className = 'pdf-page-wrap';
-      wrap.dataset.page = pageNum;
-      const canvas = document.createElement('canvas');
-      canvas.width  = viewport.width;
-      canvas.height = viewport.height;
-      wrap.appendChild(canvas);
-      container.appendChild(wrap);
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    function _pdfAvailWidth() {
+      const scroll = document.getElementById('pdf-scroll');
+      const w = scroll ? scroll.clientWidth : 0;
+      return Math.max(200, (w || window.innerWidth) - 24);
     }
 
-    function _onPdfScroll() {
+    async function _renderCurrentPage() {
       if (!_pdfDoc) return;
-      const scroll = document.getElementById('pdf-scroll');
-      const wraps  = scroll.querySelectorAll('.pdf-page-wrap');
-      for (const wrap of wraps) {
-        const rect = wrap.getBoundingClientRect();
-        const scrollRect = scroll.getBoundingClientRect();
-        if (rect.top >= scrollRect.top - rect.height / 2) {
-          _pdfPage = parseInt(wrap.dataset.page);
-          _updatePageInfo();
-          break;
-        }
+      const gen = ++_pdfGen;
+      if (_pdfRenderTask) {
+        try { _pdfRenderTask.cancel(); } catch {}
+        _pdfRenderTask = null;
       }
+
+      const scroll = document.getElementById('pdf-scroll');
+      scroll.innerHTML = '<div class="pdf-loading">Rendering page…</div>';
+
+      const page = await _pdfDoc.getPage(_pdfPage);
+      if (gen !== _pdfGen) return;
+
+      const base = page.getViewport({ scale: 1 });
+      const fit = _pdfAvailWidth() / base.width;
+      const scale = Math.max(0.35, Math.min(3.5, fit * _pdfZoom));
+      const viewport = page.getViewport({ scale });
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'pdf-page-wrap';
+      wrap.dataset.page = _pdfPage;
+      const canvas = document.createElement('canvas');
+      const cssW = Math.floor(viewport.width);
+      const cssH = Math.floor(viewport.height);
+      canvas.width  = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      canvas.style.width  = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+      wrap.appendChild(canvas);
+      scroll.innerHTML = '';
+      scroll.appendChild(wrap);
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      _pdfRenderTask = page.render({
+        canvasContext: ctx,
+        viewport,
+        transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null,
+      });
+      try {
+        await _pdfRenderTask.promise;
+      } catch (e) {
+        if (e?.name === 'RenderingCancelledException') return;
+        throw e;
+      } finally {
+        _pdfRenderTask = null;
+      }
+      if (gen !== _pdfGen) return;
+      document.getElementById('pdf-zoom-label').textContent =
+        _pdfZoom === 1 ? 'Fit' : Math.round(_pdfZoom * 100) + '%';
+      _updatePageInfo();
     }
 
     function _updatePageInfo() {
@@ -1332,30 +1367,22 @@
       if (!_pdfDoc) return;
       const target = _pdfPage + delta;
       if (target < 1 || target > _pdfDoc.numPages) return;
-      const scroll = document.getElementById('pdf-scroll');
-      const wrap = scroll.querySelector(`[data-page="${target}"]`);
-      if (wrap) wrap.scrollIntoView({ behavior: 'smooth' });
       _pdfPage = target;
       _updatePageInfo();
+      _renderCurrentPage();
     }
 
-    async function pdfZoom(delta) {
+    function pdfZoom(delta) {
       if (!_pdfDoc) return;
-      _pdfScale = Math.min(3, Math.max(0.5, _pdfScale + delta));
-      document.getElementById('pdf-zoom-label').textContent = Math.round(_pdfScale * 100) + '%';
-      const scroll = document.getElementById('pdf-scroll');
-      const currentPage = _pdfPage;
-      scroll.innerHTML = '<div class="pdf-loading">Re-rendering…</div>';
-      scroll.innerHTML = '';
-      for (let i = 1; i <= _pdfDoc.numPages; i++) {
-        await _renderPage(i, scroll);
-      }
-      const wrap = scroll.querySelector(`[data-page="${currentPage}"]`);
-      if (wrap) wrap.scrollIntoView();
-      _updatePageInfo();
+      _pdfZoom = Math.round(Math.min(3, Math.max(0.5, _pdfZoom + delta)) * 100) / 100;
+      document.getElementById('pdf-zoom-label').textContent =
+        _pdfZoom === 1 ? 'Fit' : Math.round(_pdfZoom * 100) + '%';
+      _renderCurrentPage();
     }
 
     function closeModal() {
+      _pdfGen++;
+      if (_pdfRenderTask) { try { _pdfRenderTask.cancel(); } catch {} _pdfRenderTask = null; }
       document.getElementById('pdfModal').classList.remove('open');
       document.getElementById('pdf-scroll').innerHTML = '';
       document.getElementById('pdf-scroll').onscroll = null;

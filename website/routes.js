@@ -2633,18 +2633,22 @@ router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
   const notif = createNotification({ type, title, description, bgImage, target, targetEmails });
 
   // Send real Web Push to subscribed browsers
+  let push = { sent: 0, failed: 0, subscribers: 0 };
   try {
     let subscriptions;
     if (target === 'all') {
       subscriptions = getAllPushSubscriptions();
     } else {
-      const users = getAllWebUsers().filter(u =>
-        (targetEmails || []).map(e => e.toLowerCase()).includes((u.email || '').toLowerCase())
+      const wanted = new Set((targetEmails || []).map(e => String(e).toLowerCase().trim()).filter(Boolean));
+      const raw = getAllWebUsers();
+      const users = (Array.isArray(raw) ? raw : Object.values(raw || {})).filter(u =>
+        wanted.has(String(u.email || '').toLowerCase().trim())
       );
       subscriptions = getPushSubscriptionsForUsers(users.map(u => u.id));
     }
+    push.subscribers = subscriptions.length;
     if (subscriptions.length > 0) {
-      await sendPushToSubscriptions(subscriptions, {
+      const result = await sendPushToSubscriptions(subscriptions, {
         title,
         body:  description || '',
         icon:  '/images/logo.png',
@@ -2652,12 +2656,15 @@ router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
         image: bgImage || undefined,   // big banner image in the push notification
         url:   '/~/notifications',
       });
+      push.sent = result.sent;
+      push.failed = result.failed;
     }
   } catch (e) {
     console.warn('[Push] Failed to send push notifications:', e.message);
+    push.error = e.message;
   }
 
-  res.json({ ok: true, notification: notif });
+  res.json({ ok: true, notification: notif, push });
   import('../utils/supabase-data.js').then(m => m.uploadDataFile('notifications.json')).catch(() => {});
 });
 

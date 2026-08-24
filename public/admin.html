@@ -228,6 +228,37 @@ tbody tr:hover td{background:var(--surface2)}
 
 /* ── PUSH PAGE ── */
 .vapid-key{font-family:var(--mono);font-size:.72rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;word-break:break-all;color:var(--text2)}
+.toggle-row{display:flex;gap:8px}
+.toggle-btn{flex:1;padding:9px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text3);font-weight:700;font-size:.82rem;cursor:pointer;transition:.15s;text-align:center;font-family:var(--font)}
+.toggle-btn.active{border-color:var(--green);background:var(--green-bg2);color:var(--green)}
+.email-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.email-tag{background:var(--blue-bg);color:var(--blue);border-radius:99px;padding:3px 10px;font-size:.76rem;font-weight:700;display:flex;align-items:center;gap:5px}
+.email-tag button{background:none;border:none;cursor:pointer;color:var(--blue);font-size:.95rem;line-height:1;padding:0}
+.bg-select{display:flex;gap:10px;align-items:flex-start}
+.bg-preview{width:56px;height:56px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:.62rem;color:var(--text3);font-weight:700;text-align:center;flex-shrink:0}
+.bg-preview img{width:100%;height:100%;object-fit:cover}
+.preview-wrap{display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:10px;padding:18px;margin-bottom:16px;border:1px dashed var(--border2)}
+.notif-card-preview{width:260px;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35);background:var(--surface);border:1px solid var(--border)}
+.notif-card-preview .nc-bg{height:90px;background:var(--surface3);position:relative;overflow:hidden}
+.notif-card-preview .nc-bg img{width:100%;height:100%;object-fit:cover}
+.notif-card-preview .nc-body{padding:12px 14px 14px}
+.notif-card-preview .nc-title{font-weight:700;font-size:.88rem;margin-bottom:5px;color:var(--text)}
+.notif-card-preview .nc-desc{font-size:.77rem;color:var(--text2);line-height:1.5;white-space:pre-wrap}
+.notif-card-preview .nc-footer{padding:8px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
+.nc-ok-btn{padding:5px 14px;background:var(--green);color:#fff;border-radius:7px;font-size:.75rem;font-weight:700;border:none}
+.notif-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.notif-item:last-child{border-bottom:none}
+.notif-bg-thumb{width:44px;height:44px;border-radius:8px;flex-shrink:0;border:1.5px solid var(--border);overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center}
+.notif-bg-thumb img{width:100%;height:100%;object-fit:cover}
+.pix-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:22px;width:min(700px,100%);max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.pix-search-row{display:flex;gap:8px;margin-bottom:14px}
+.pix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;overflow-y:auto;flex:1;min-height:180px}
+.pix-img{border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:.15s;aspect-ratio:4/3;background:var(--surface2)}
+.pix-img:hover{border-color:var(--blue)}
+.pix-img.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+.pix-img img{width:100%;height:100%;object-fit:cover;display:block}
+.compose-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.compose-grid{grid-template-columns:1fr}}
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
@@ -333,7 +364,7 @@ tbody tr:hover td{background:var(--surface2)}
         </button>
         <button class="nav-item" data-page="push" onclick="showPage('push')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          Push / VAPID
+          Notifications
         </button>
       </div>
 
@@ -470,7 +501,7 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
           <div id="support-container"><div class="loading-row">Loading…</div></div>
-        </div>
+        </dv>
 
         <!-- ══ SUBSCRIPTIONS ══ -->
         <div class="page" id="page-subs">
@@ -589,12 +620,99 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ PUSH / VAPID ══ -->
+        <!-- ══ NOTIFICATIONS / PUSH ══ -->
         <div class="page" id="page-push">
+          <div class="compose-grid">
+            <div>
+              <div class="card" style="margin-bottom:14px">
+                <div class="card-header"><div><div class="card-title">Send Notification</div><div class="card-sub">In-app + browser push to users who enabled notifications</div></div></div>
+
+                <div class="preview-wrap">
+                  <div class="notif-card-preview">
+                    <div class="nc-bg" id="preview-bg">
+                      <img id="preview-bg-img" src="" alt="" style="display:none">
+                    </div>
+                    <div class="nc-body">
+                      <div class="nc-title" id="preview-title">Notification Title</div>
+                      <div class="nc-desc" id="preview-desc">Your notification description will appear here.</div>
+                    </div>
+                    <div class="nc-footer"><button class="nc-ok-btn" type="button">Got it</button></div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label>Type</label>
+                  <div class="toggle-row">
+                    <div class="toggle-btn active" id="type-silent" onclick="setNotifType('silent')">Silent</div>
+                    <div class="toggle-btn" id="type-popup" onclick="setNotifType('popup')">Pop up</div>
+                  </div>
+                  <div style="font-size:.74rem;color:var(--text3);margin-top:6px" id="type-hint">Silent: red badge on the nav. Pop up: card when they open the dashboard.</div>
+                </div>
+
+                <div class="field">
+                  <label>Title</label>
+                  <input type="text" id="notif-title" placeholder="e.g. New feature available" oninput="updateNotifPreview()">
+                </div>
+                <div class="field">
+                  <label>Message</label>
+                  <textarea id="notif-desc" placeholder="What should users see?" oninput="updateNotifPreview()"></textarea>
+                </div>
+
+                <div class="field">
+                  <label>Image (optional)</label>
+                  <div class="bg-select">
+                    <div class="bg-preview" id="bg-preview-thumb"><span>No image</span></div>
+                    <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+                      <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button class="btn btn-ghost btn-sm" type="button" onclick="openPixabay()">Search Pixabay</button>
+                        <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('bg-upload-input').click()">Upload</button>
+                        <button class="btn btn-ghost btn-sm" type="button" id="clear-bg-btn" style="display:none;color:var(--red)" onclick="clearNotifBg()">Remove</button>
+                      </div>
+                      <input type="file" id="bg-upload-input" accept="image/*" style="display:none" onchange="uploadNotifImage(this)">
+                      <div id="bg-upload-status" style="font-size:.72rem;color:var(--text3);display:none"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label>Send to</label>
+                  <select id="notif-target" onchange="updateTargetUI()">
+                    <option value="all">All users</option>
+                    <option value="single">One user (email)</option>
+                    <option value="multiple">Several users (emails)</option>
+                  </select>
+                </div>
+                <div id="email-target-section" style="display:none;margin-bottom:14px">
+                  <div class="field" style="margin-bottom:6px">
+                    <label id="email-label">User email</label>
+                    <div style="display:flex;gap:6px">
+                      <input type="email" id="email-input" placeholder="user@example.com" onkeydown="if(event.key==='Enter'){event.preventDefault();addNotifEmail()}">
+                      <button class="btn btn-ghost btn-sm" type="button" onclick="addNotifEmail()">Add</button>
+                    </div>
+                  </div>
+                  <div class="email-tags" id="email-tags"></div>
+                </div>
+
+                <button class="btn btn-primary btn-full" type="button" onclick="publishNotification()">Send to users</button>
+                <div id="publish-status" style="font-size:.78rem;margin-top:10px;color:var(--text2)"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="card" style="margin-bottom:14px">
+                <div class="card-header">
+                  <div><div class="card-title">Sent Notifications</div><div class="card-sub">In-app inbox history</div></div>
+                  <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadAdminNotifs()">Refresh</button></div>
+                </div>
+                <div id="admin-notif-list"><div class="loading-row">Loading…</div></div>
+              </div>
+            </div>
+          </div>
+
           <div class="card" style="margin-bottom:14px">
-            <div class="card-header"><div><div class="card-title">VAPID Keys</div><div class="card-sub">Web push encryption keys</div></div></div>
+            <div class="card-header"><div><div class="card-title">VAPID Keys</div><div class="card-sub">Web push encryption keys — users must enable notifications in their dashboard</div></div></div>
             <div class="stat-grid" style="margin-bottom:16px">
-              <div class="stat-card cyan"><div class="stat-val" id="vapid-subs">—</div><div class="stat-label">Subscribers</div></div>
+              <div class="stat-card cyan"><div class="stat-val" id="vapid-subs">—</div><div class="stat-label">Push Subscribers</div></div>
               <div class="stat-card blue"><div class="stat-val" id="vapid-source" style="font-size:.9rem">—</div><div class="stat-label">Key Source</div></div>
             </div>
             <div style="margin-bottom:12px">
@@ -712,6 +830,27 @@ tbody tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
+<!-- PIXABAY MODAL -->
+<div class="modal-overlay" id="pixabay-modal">
+  <div class="pix-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="modal-title">Search Pixabay</div>
+      <button class="btn btn-ghost btn-sm" onclick="closePixabay()">Close</button>
+    </div>
+    <div class="pix-search-row">
+      <input type="text" id="pix-query" placeholder="Search images… e.g. education, exam, announcement" onkeydown="if(event.key==='Enter')searchPixabay()">
+      <button class="btn btn-primary btn-sm" onclick="searchPixabay()">Search</button>
+    </div>
+    <div class="pix-grid" id="pix-grid">
+      <div class="loading-row" style="grid-column:1/-1">Search for images above</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button class="btn btn-ghost" onclick="closePixabay()">Cancel</button>
+      <button class="btn btn-primary" onclick="selectPixabayImage()">Use selected</button>
+    </div>
+  </div>
+</div>
+
 <!-- PROOF IMAGE MODAL -->
 <div class="proof-img-modal" id="proof-img-modal">
   <div class="proof-img-inner">
@@ -732,6 +871,7 @@ tbody tr:hover td{background:var(--surface2)}
 let TOKEN = localStorage.getItem('adminToken') || '';
 let _allUsers = [], _userFilter = 'all', _banTargetId = '', _editAmbId = '';
 let _logins = [], _dataFiles = [];
+let _notifType = 'silent', _bgImageUrl = null, _selectedPixUrl = null, _emailList = [];
 const AVATAR_COLORS = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2','#4f46e5','#ca8a04'];
 
 // Socket.io (optional — bot status)
@@ -810,13 +950,13 @@ if (TOKEN) {
 const PAGE_TITLES = {
   overview:'Overview', users:'Users', logins:'Recent Logins', bans:'Bans & Appeals',
   support:'Support', subs:'Subscriptions', proofs:'Payment Proofs', freelinks:'Promo Links',
-  papers:'Papers', ambassadors:'Ambassadors', push:'Push / VAPID', chats:'Chats',
+  papers:'Papers', ambassadors:'Ambassadors', push:'Notifications', chats:'Chats',
   files:'Data Files', datafiles:'Data Sync', wishlist:'Wishlist'
 };
 const PAGE_LOADERS = {
   users: loadUsers, logins: loadLogins, bans: loadBans, support: loadSupport,
   subs: loadSubs, proofs: loadProofs, freelinks: loadPromoLinks,
-  papers: loadPapers, ambassadors: loadAmbassadors, push: loadVapid,
+  papers: loadPapers, ambassadors: loadAmbassadors, push: loadPushPage,
   chats: loadChats, files: loadFiles, datafiles: loadDataFiles, wishlist: loadWishlist
 };
 
@@ -979,6 +1119,9 @@ function renderUserCard(u) {
   const banBtn = u.banned
     ? `<button class="btn btn-ghost btn-sm" onclick="doUnban('${uid}')">✓ Unban</button>`
     : `<button class="btn btn-danger btn-sm" onclick="openBanModal('${uid}','${uemail}','${uname}')">🚫 Ban</button>`;
+  const notifyBtn = (u.email && String(u.email).includes('@'))
+    ? `<button class="btn btn-ghost btn-sm" onclick="notifyUser('${String(u.email).replace(/'/g,'')}')">Notify</button>`
+    : '';
   return `<div class="user-card">
     <div class="uc-head">
       <div class="uc-avatar" style="background:${av.color}">${av.initial}</div>
@@ -993,7 +1136,7 @@ function renderUserCard(u) {
       <div class="uc-row"><span class="k">Wallet</span><span class="v">$${u.balanceDollars||'0.00'}</span></div>
       <div class="uc-row"><span class="k">ID</span><span class="v" style="font-family:var(--mono);font-size:.68rem">${uid.slice(0,16)}…</span></div>
     </div>
-    <div class="uc-actions">${banBtn}</div>
+    <div class="uc-actions">${banBtn}${notifyBtn}</div>
   </div>`;
 }
 
@@ -1511,8 +1654,252 @@ async function deleteAmb(id, email) {
 }
 
 // ══════════════════════════════════════════════════════
-//  PUSH / VAPID
+//  PUSH / NOTIFICATIONS
 // ══════════════════════════════════════════════════════
+function loadPushPage() {
+  loadVapid();
+  loadAdminNotifs();
+}
+
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setNotifType(t) {
+  _notifType = t;
+  const silent = document.getElementById('type-silent');
+  const popup = document.getElementById('type-popup');
+  if (silent) silent.classList.toggle('active', t === 'silent');
+  if (popup) popup.classList.toggle('active', t === 'popup');
+  const hint = document.getElementById('type-hint');
+  if (hint) hint.textContent = t === 'silent'
+    ? 'Silent: red badge on the nav with unread count.'
+    : 'Pop up: card when the user opens the dashboard.';
+}
+
+function updateNotifPreview() {
+  const title = (document.getElementById('notif-title') || {}).value || 'Notification Title';
+  const desc = (document.getElementById('notif-desc') || {}).value || 'Your notification description will appear here.';
+  const t = document.getElementById('preview-title');
+  const d = document.getElementById('preview-desc');
+  if (t) t.textContent = title;
+  if (d) d.textContent = desc;
+}
+
+function updateTargetUI() {
+  const t = (document.getElementById('notif-target') || {}).value || 'all';
+  const section = document.getElementById('email-target-section');
+  if (section) section.style.display = t === 'all' ? 'none' : 'block';
+  const label = document.getElementById('email-label');
+  if (label) label.textContent = t === 'single' ? 'User email' : 'Add emails';
+  _emailList = [];
+  renderEmailTags();
+}
+
+function addNotifEmail() {
+  const inp = document.getElementById('email-input');
+  if (!inp) return;
+  const v = inp.value.trim().toLowerCase();
+  if (!v || !v.includes('@')) return;
+  const target = (document.getElementById('notif-target') || {}).value;
+  if (target === 'single') _emailList = [v];
+  else if (!_emailList.includes(v)) _emailList.push(v);
+  inp.value = '';
+  renderEmailTags();
+}
+
+function renderEmailTags() {
+  const el = document.getElementById('email-tags');
+  if (!el) return;
+  el.innerHTML = _emailList.map((e, i) =>
+    `<div class="email-tag">${escHtml(e)}<button type="button" onclick="removeNotifEmail(${i})">×</button></div>`
+  ).join('');
+}
+
+function removeNotifEmail(i) { _emailList.splice(i, 1); renderEmailTags(); }
+
+function notifyUser(email) {
+  showPage('push');
+  const sel = document.getElementById('notif-target');
+  if (sel) sel.value = 'single';
+  updateTargetUI();
+  _emailList = [String(email || '').trim().toLowerCase()].filter(e => e.includes('@'));
+  renderEmailTags();
+  const inp = document.getElementById('notif-title');
+  if (inp) inp.focus();
+}
+
+function applyNotifImage(url) {
+  _bgImageUrl = url;
+  const thumb = document.getElementById('bg-preview-thumb');
+  if (thumb) thumb.innerHTML = url ? `<img src="${escHtml(url)}" alt="">` : '<span>No image</span>';
+  const bgImg = document.getElementById('preview-bg-img');
+  const bg = document.getElementById('preview-bg');
+  if (bgImg) {
+    if (url) { bgImg.src = url; bgImg.style.display = 'block'; }
+    else { bgImg.src = ''; bgImg.style.display = 'none'; }
+  }
+  if (bg) bg.style.background = url ? 'transparent' : '';
+  const clearBtn = document.getElementById('clear-bg-btn');
+  if (clearBtn) clearBtn.style.display = url ? 'inline-flex' : 'none';
+}
+
+function clearNotifBg() { applyNotifImage(null); }
+
+function openPixabay() {
+  _selectedPixUrl = null;
+  openModal('pixabay-modal');
+}
+function closePixabay() {
+  closeModal('pixabay-modal');
+  document.querySelectorAll('.pix-img').forEach(el => el.classList.remove('selected'));
+  _selectedPixUrl = null;
+}
+
+async function searchPixabay() {
+  const q = (document.getElementById('pix-query') || {}).value || '';
+  const grid = document.getElementById('pix-grid');
+  if (!q.trim() || !grid) return;
+  grid.innerHTML = '<div class="loading-row" style="grid-column:1/-1">Searching…</div>';
+  try {
+    const r = await api('/api/admin/pixabay-search?q=' + encodeURIComponent(q.trim()));
+    if (!r.ok) {
+      grid.innerHTML = '<div class="loading-row" style="grid-column:1/-1;color:var(--red)">Search failed. Check PIXABAY_KEY.</div>';
+      return;
+    }
+    const { hits } = await r.json();
+    if (!hits || !hits.length) {
+      grid.innerHTML = '<div class="loading-row" style="grid-column:1/-1">No results found.</div>';
+      return;
+    }
+    grid.innerHTML = hits.map((h, i) =>
+      `<div class="pix-img" onclick="selectPix(this,${i})" data-full="${escHtml(h.full || h.preview || '')}">
+        <img src="${escHtml(h.thumb || h.preview)}" loading="lazy" alt="">
+      </div>`
+    ).join('');
+  } catch (e) {
+    grid.innerHTML = '<div class="loading-row" style="grid-column:1/-1;color:var(--red)">Error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+function selectPix(el) {
+  document.querySelectorAll('.pix-img').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  _selectedPixUrl = el.dataset.full || '';
+}
+
+function selectPixabayImage() {
+  if (!_selectedPixUrl) { alert('Select an image first.'); return; }
+  applyNotifImage(_selectedPixUrl);
+  closePixabay();
+}
+
+async function uploadNotifImage(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Please choose an image file.'); input.value = ''; return; }
+  if (file.size > 5 * 1024 * 1024) { alert('Image too large (max 5 MB).'); input.value = ''; return; }
+  const status = document.getElementById('bg-upload-status');
+  if (status) { status.style.display = 'block'; status.style.color = 'var(--text2)'; status.textContent = 'Uploading…'; }
+  const fd = new FormData();
+  fd.append('image', file);
+  try {
+    const r = await fetch('/api/admin/notifications/upload-image', {
+      method: 'POST', headers: { 'x-admin-token': TOKEN }, body: fd
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Upload failed');
+    applyNotifImage(data.url);
+    if (status) { status.textContent = 'Uploaded'; status.style.color = 'var(--green)'; }
+  } catch (e) {
+    if (status) { status.textContent = e.message; status.style.color = 'var(--red)'; }
+  } finally {
+    input.value = '';
+    setTimeout(() => { if (status) status.style.display = 'none'; }, 3000);
+  }
+}
+
+async function publishNotification() {
+  const title = ((document.getElementById('notif-title') || {}).value || '').trim();
+  const desc = ((document.getElementById('notif-desc') || {}).value || '').trim();
+  const target = (document.getElementById('notif-target') || {}).value || 'all';
+  const statusEl = document.getElementById('publish-status');
+  const setStatus = (color, text) => { if (statusEl) { statusEl.style.color = color; statusEl.textContent = text; } };
+  if (!title) { setStatus('var(--red)', 'Title is required'); return; }
+  if (target !== 'all' && !_emailList.length) { setStatus('var(--red)', 'Add at least one email'); return; }
+  setStatus('var(--text2)', 'Sending…');
+  try {
+    const r = await api('/api/admin/notifications', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: _notifType,
+        title,
+        description: desc,
+        bgImage: _bgImageUrl,
+        target,
+        targetEmails: _emailList
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Failed');
+    const p = data.push || {};
+    let msg = 'Saved in-app.';
+    if (p.subscribers) msg += ' Browser push: ' + (p.sent || 0) + ' sent' + (p.failed ? ', ' + p.failed + ' failed' : '') + '.';
+    else msg += ' No browsers subscribed yet — users still see it in Notifications.';
+    setStatus('var(--green)', msg);
+    document.getElementById('notif-title').value = '';
+    document.getElementById('notif-desc').value = '';
+    clearNotifBg();
+    _emailList = [];
+    updateTargetUI();
+    updateNotifPreview();
+    loadAdminNotifs();
+    loadVapid();
+  } catch (e) {
+    setStatus('var(--red)', e.message);
+  }
+}
+
+async function loadAdminNotifs() {
+  const box = document.getElementById('admin-notif-list');
+  if (!box) return;
+  box.innerHTML = '<div class="loading-row">Loading…</div>';
+  try {
+    const r = await api('/api/admin/notifications');
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const { notifications } = await r.json();
+    if (!notifications || !notifications.length) { box.innerHTML = empty('No notifications sent yet'); return; }
+    box.innerHTML = notifications.map(n => {
+      const thumb = n.bgImage
+        ? `<img src="${escHtml(n.bgImage)}" alt="">`
+        : `<span style="font-size:.55rem;color:var(--text3);font-weight:700;text-align:center">—</span>`;
+      const target = n.target === 'all' ? 'All users' : ((n.targetEmails || []).join(', ') || n.target);
+      return `<div class="notif-item">
+        <div class="notif-bg-thumb">${thumb}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;color:var(--text);margin-bottom:3px">${escHtml(n.title)}</div>
+          <div style="font-size:.78rem;color:var(--text2);margin-bottom:7px;white-space:pre-wrap">${escHtml(n.description || '—')}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <span class="badge ${n.type === 'popup' ? 'badge-blue' : 'badge-gray'}">${n.type === 'popup' ? 'Pop up' : 'Silent'}</span>
+            <span class="badge badge-green">${escHtml(target)}</span>
+            <span style="font-size:.72rem;color:var(--text3)">${fmtDT(n.createdAt)}</span>
+          </div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteAdminNotif('${String(n.id||'').replace(/'/g,'')}')">Delete</button>
+      </div>`;
+    }).join('');
+  } catch (e) { box.innerHTML = errBox(e.message); }
+}
+
+async function deleteAdminNotif(id) {
+  if (!confirm('Delete this notification? Users will no longer see it.')) return;
+  try {
+    const r = await api('/api/admin/notifications/' + id, { method: 'DELETE' });
+    if (!r.ok) throw new Error('Status ' + r.status);
+    loadAdminNotifs();
+  } catch (e) { alert('Delete failed: ' + e.message); }
+}
+
 async function loadVapid() {
   try {
     const r = await api('/api/admin/vapid');
