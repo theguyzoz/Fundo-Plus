@@ -527,14 +527,14 @@ app.get('/api/admin/appeals', requireAdmin, (req, res) => {
 app.get('/',             (req,res) => res.sendFile(path.join(PUBLIC_DIR,'index.html')));
 app.get('/resources',    (req,res) => res.sendFile(path.join(PUBLIC_DIR,'resources.html')));
 app.get('/banned',       (req,res) => serveObfuscated(path.join(PUBLIC_DIR,'banned.html'))(req,res));
-app.get('/fundopageadmin', (req,res) => {
-  // Serve admin.html with no-store so browsers can NEVER show a stale copy
-  // (a cached page was causing "loadBans is not defined" after deploys).
+function sendAdminPage(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  res.sendFile(path.join(PUBLIC_DIR,'admin.html'));
-});
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
+}
+app.get(['/fundopageadmin', '/fundopageadmin/', '/admin', '/admin/'], sendAdminPage);
 app.get('/redeem/:code', (req,res) => res.sendFile(path.join(PUBLIC_DIR,'redeem.html')));
 // Legacy redirect
 app.get('/dashboard',    (req,res) => res.redirect('/~'));

@@ -93,7 +93,8 @@ function minifyHTML(html) {
       (_, css) => `<style>${minifyCSS(css)}</style>`)
     .replace(/<script>([\s\S]*?)<\/script>/gi,
       (_, js)  => `<script>${minifyJS(js)}</script>`)
-    .replace(/[ \t]*\n[ \t]*/g, '')
+    // Never collapse newlines inside <script> — that breaks ASI and template literals.
+    .replace(/(<script>[\s\S]*?<\/script>)|([ \t]*\n[ \t]*)/gi, (m, script, nl) => script || '')
     .replace(/>\s{2,}</g, '> ')
     .replace(/\s{2,}</g, ' <')
     .trim();
@@ -124,11 +125,14 @@ export function serveMinified(filePath) {
 
 export function obfuscateMiddleware(staticDir) {
   return (req, res, next) => {
+    const skip = /admin|fundopageadmin|notifications\.html/i;
+    if (skip.test(req.path || '')) return next();
     let reqPath = req.path;
     if (!reqPath.endsWith('.html')) {
       if (reqPath.endsWith('/')) reqPath += 'index.html';
       else reqPath += '.html';
     }
+    if (skip.test(reqPath)) return next();
     const filePath = path.join(staticDir, reqPath);
     if (!fs.existsSync(filePath)) return next();
     return serveMinified(filePath)(req, res);

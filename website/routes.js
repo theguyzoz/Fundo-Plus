@@ -1526,14 +1526,12 @@ router.get('/sitemap.xml', (req, res) => {
 const ADMIN_PASS = 'smarttech@#2';
 
 function requireAdmin(req, res, next) {
-  // Accept classic admin key
   const key = req.headers['x-admin-token'] || req.headers['x-admin-key'] || req.body?.adminKey || req.query?.adminKey;
   if (key && key === ADMIN_PASS) return next();
 
-  // Also accept session token from a user with isAdmin: true
-  const sessionToken = req.headers['x-session-token'];
+  const sessionToken = req.headers['x-session-token'] || key;
   if (sessionToken) {
-    const user = findWebUserByToken(sessionToken);
+    const user = getSessionUser(sessionToken);
     if (user?.isAdmin) return next();
   }
 
@@ -1778,7 +1776,18 @@ router.get('/api/admin/files/:name', requireAdmin, (req, res) => {
 
 // Chat message counts per JID
 router.get('/api/admin/messages', requireAdmin, (req, res) => {
-  res.json({ messages: getAllMessageCounts() });
+  const rows = getAllMessageCounts();
+  // Always return a map { [jid]: { count } } so the admin table can render.
+  const messages = {};
+  if (Array.isArray(rows)) {
+    for (const r of rows) {
+      if (!r) continue;
+      if (r.jid) messages[r.jid] = { count: r.count || 0, ts: r.ts || null };
+    }
+  } else if (rows && typeof rows === 'object') {
+    Object.assign(messages, rows);
+  }
+  res.json({ messages });
 });
 
 // Wishlist count

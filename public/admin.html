@@ -911,7 +911,21 @@ function fmtBytes(b) {
 }
 
 // ── AUTH ──────────────────────────────────────────────
-async function doLogin() {
+function doLogout() {
+  localStorage.removeItem('adminToken');
+  TOKEN = '';
+  location.href = location.pathname;
+}
+
+var PAGE_TITLES = {
+  overview:'Overview', users:'Users', logins:'Recent Logins', bans:'Bans & Appeals',
+  support:'Support', subs:'Subscriptions', proofs:'Payment Proofs', freelinks:'Promo Links',
+  papers:'Papers', ambassadors:'Ambassadors', push:'Notifications', chats:'Chats',
+  files:'Data Files', datafiles:'Data Sync', wishlist:'Wishlist'
+};
+
+function doLogin() { return doLoginAsync(); }
+async function doLoginAsync() {
   const pass = document.getElementById('pass-input').value.trim();
   if (!pass) return;
   const errEl = document.getElementById('auth-err');
@@ -933,21 +947,17 @@ async function doLogin() {
   }
 }
 
-function doLogout() {
-  localStorage.removeItem('adminToken');
-  TOKEN = '';
-  location.reload();
-}
-
 function showApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  const auth = document.getElementById('auth-screen');
+  const appEl = document.getElementById('app');
+  if (auth) auth.style.display = 'none';
+  if (appEl) appEl.style.display = 'block';
   const hash = (location.hash || '').replace('#','').trim();
   const start = PAGE_TITLES[hash] ? hash : 'overview';
   showPage(start);
-  loadBans();
-  loadProofs();
-  loadSupport();
+  try { loadBans(); } catch(e) {}
+  try { loadProofs(); } catch(e) {}
+  try { loadSupport(); } catch(e) {}
 }
 
 function toggleSb() {
@@ -964,45 +974,22 @@ function closeSb() {
   if (ov) ov.classList.remove('show');
 }
 
-function bootAdmin() {
-  if (_booted) return;
-  _booted = true;
-  if (!TOKEN) return;
-  showApp();
-}
-
-// On load — restore session without blocking the UI on a hung /api/admin/server
-if (TOKEN) {
-  const t = setTimeout(() => bootAdmin(), 400);
-  api('/api/admin/server').then(r => {
-    clearTimeout(t);
-    if (r.ok) bootAdmin();
-    else { localStorage.removeItem('adminToken'); TOKEN = ''; }
-  }).catch(() => { clearTimeout(t); bootAdmin(); });
-}
-
-// ── NAV ───────────────────────────────────────────────
-const PAGE_TITLES = {
-  overview:'Overview', users:'Users', logins:'Recent Logins', bans:'Bans & Appeals',
-  support:'Support', subs:'Subscriptions', proofs:'Payment Proofs', freelinks:'Promo Links',
-  papers:'Papers', ambassadors:'Ambassadors', push:'Notifications', chats:'Chats',
-  files:'Data Files', datafiles:'Data Sync', wishlist:'Wishlist'
-};
 function getLoader(p) {
-  return ({
+  const map = {
     overview: loadOverview, users: loadUsers, logins: loadLogins, bans: loadBans,
     support: loadSupport, subs: loadSubs, proofs: loadProofs, freelinks: loadPromoLinks,
     papers: loadPapers, ambassadors: loadAmbassadors, push: loadPushPage,
     chats: loadChats, files: loadFiles, datafiles: loadDataFiles, wishlist: loadWishlist
-  })[p];
+  };
+  return map[p];
 }
 
 function showPage(p) {
   if (!PAGE_TITLES[p]) p = 'overview';
   _currentPage = p;
-  try { history.replaceState(null, '', '#' + p); } catch(e) {}
+  try { history.replaceState(null, '', location.pathname + '#' + p); } catch(e) {}
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => el.classList.remove('active'));
   const pageEl = document.getElementById('page-' + p);
   if (pageEl) pageEl.classList.add('active');
   const navEl = document.querySelector('.nav-item[data-page="' + p + '"]');
@@ -1010,18 +997,21 @@ function showPage(p) {
   const titleEl = document.getElementById('topbar-title');
   if (titleEl) titleEl.textContent = PAGE_TITLES[p] || p;
   closeSb();
-  reloadCurrentPage();
+  setTimeout(reloadCurrentPage, 0);
 }
 
 function reloadCurrentPage() {
   const loader = getLoader(_currentPage);
-  if (typeof loader === 'function') {
-    try { const r = loader(); if (r && r.catch) r.catch(e => console.error(_currentPage, e)); }
-    catch (e) { console.error(_currentPage, e); }
+  if (typeof loader !== 'function') {
+    console.error('No loader for', _currentPage);
+    return;
   }
+  Promise.resolve().then(loader).catch(function(e) {
+    console.error(_currentPage, e);
+  });
 }
 
-window.addEventListener('hashchange', () => {
+window.addEventListener('hashchange', function() {
   const p = (location.hash || '').replace('#','').trim();
   if (p && p !== _currentPage && PAGE_TITLES[p]) showPage(p);
 });
@@ -1032,6 +1022,15 @@ function loadAll() {
   loadProofs();
   loadSupport();
 }
+
+function initAdmin() {
+  if (_booted) return;
+  _booted = true;
+  TOKEN = localStorage.getItem('adminToken') || TOKEN || '';
+  if (TOKEN) showApp();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAdmin);
+else initAdmin();
 
 // ── MODAL HELPERS ─────────────────────────────────────
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
