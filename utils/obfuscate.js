@@ -125,7 +125,7 @@ export function serveMinified(filePath) {
 
 export function obfuscateMiddleware(staticDir) {
   return (req, res, next) => {
-    const skip = /admin|fundopageadmin|notifications\.html/i;
+    const skip = /admin|fundopageadmin|notifications\.html|messenger/i;
     if (skip.test(req.path || '')) return next();
     let reqPath = req.path;
     if (!reqPath.endsWith('.html')) {
