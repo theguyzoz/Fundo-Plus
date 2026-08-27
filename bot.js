@@ -23,11 +23,12 @@ import {
   getBan, getAllBans, isBanned, resolveAppeal,
   reloadCommunityFromDisk, reloadWebUsersFromDisk, reloadMessengerFromDisk,
   reloadPapersFromDisk, reloadMoneyFromDisk, reloadRemainingFromDisk,
+  setUserLastSeen,
 } from './store.js';
 import websiteRouter from './website/routes.js';
 import { mountAppRoutes, requireAuthOrApp } from './app/index.js';
 import { obfuscateMiddleware, serveObfuscated } from './utils/obfuscate.js';
-import { requireAuth, reloadSessionsFromDisk } from './website/auth.js';
+import { requireAuth, reloadSessionsFromDisk, getSessionUser } from './website/auth.js';
 
 const __dirname  = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR   = path.join(__dirname, 'data');
@@ -549,36 +550,90 @@ app.get('*', (req,res,next) => {
 //  SOCKET.IO + MESSENGER REAL-TIME
 // ═══════════════════════════════════════════════════════════════════════════
 const messengerSockets = new Map(); // userId → Set of sockets
+const presenceCounts = new Map();   // userId → connection count
+
+function presenceGoOnline(userId) {
+  if (!userId) return;
+  const n = (presenceCounts.get(userId) || 0) + 1;
+  presenceCounts.set(userId, n);
+  if (n === 1) {
+    io.emit('messenger:presence', { userId, online: true, lastSeen: null });
+  }
+}
+
+function presenceGoOffline(userId) {
+  if (!userId) return;
+  const n = Math.max(0, (presenceCounts.get(userId) || 1) - 1);
+  if (n === 0) {
+    presenceCounts.delete(userId);
+    const lastSeen = new Date().toISOString();
+    try { setUserLastSeen(userId, lastSeen); } catch {}
+    io.emit('messenger:presence', { userId, online: false, lastSeen });
+  } else {
+    presenceCounts.set(userId, n);
+  }
+}
+
+export function getOnlineUserIds() {
+  return [...presenceCounts.keys()];
+}
+
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+    if (token) {
+      const user = getSessionUser(token);
+      if (user) socket.authedUserId = user.id;
+    }
+  } catch {}
+  next();
+});
 
 io.on('connection', (socket) => {
   socket.emit('status', buildStatusPayload());
 
   // ── Messenger real-time ────────────────────────────────────────────────
   socket.on('messenger:join', (userId) => {
-    if (!userId) return;
-    socket.userId = userId;
-    if (!messengerSockets.has(userId)) messengerSockets.set(userId, new Set());
-    messengerSockets.get(userId).add(socket);
-    socket.join(`messenger:${userId}`);
+    const uid = socket.authedUserId || userId;
+    if (!uid) return;
+    socket.userId = uid;
+    if (!messengerSockets.has(uid)) messengerSockets.set(uid, new Set());
+    messengerSockets.get(uid).add(socket);
+    socket.join(`messenger:${uid}`);
+    socket.join('messenger:channel');
+    presenceGoOnline(uid);
+    socket.emit('messenger:presence-snapshot', { online: getOnlineUserIds() });
   });
 
   socket.on('messenger:leave', (userId) => {
-    if (!userId) return;
-    const set = messengerSockets.get(userId);
+    const uid = socket.userId || userId;
+    if (!uid) return;
+    const set = messengerSockets.get(uid);
     if (set) {
       set.delete(socket);
-      if (set.size === 0) messengerSockets.delete(userId);
+      if (set.size === 0) messengerSockets.delete(uid);
     }
-    socket.leave(`messenger:${userId}`);
+    socket.leave(`messenger:${uid}`);
+    socket.leave('messenger:channel');
+    if (socket.userId === uid) {
+      presenceGoOffline(uid);
+      socket.userId = null;
+    }
+  });
+
+  socket.on('messenger:ping', () => {
+    if (socket.userId) socket.emit('messenger:pong', { t: Date.now() });
   });
 
   socket.on('disconnect', () => {
     if (socket.userId) {
-      const set = messengerSockets.get(socket.userId);
+      const uid = socket.userId;
+      const set = messengerSockets.get(uid);
       if (set) {
         set.delete(socket);
-        if (set.size === 0) messengerSockets.delete(socket.userId);
+        if (set.size === 0) messengerSockets.delete(uid);
       }
+      presenceGoOffline(uid);
     }
   });
 });
@@ -589,7 +644,20 @@ function emitMessengerMessage(toUserId, message) {
   io.to(room).emit('messenger:new-message', message);
 }
 
+function emitMessengerAck(toUserId, ack) {
+  io.to(`messenger:${toUserId}`).emit(
+    ack.type === 'read' ? 'messenger:read' : 'messenger:delivered',
+    ack
+  );
+}
+
+function emitChannelMessage(message) {
+  io.to('messenger:channel').emit('messenger:channel-message', message);
+}
+
 global.emitMessengerMessage = emitMessengerMessage;
+global.emitMessengerAck = emitMessengerAck;
+global.emitChannelMessage = emitChannelMessage;
 
 function emitStatus()         { io.emit('status', buildStatusPayload()); }
 function buildStatusPayload() {

@@ -806,7 +806,17 @@ const COMMUNITY_FILE  = path.join(DATA_DIR, 'community.json');
 const COMMUNITY_LIMIT = 5000;
 
 let communityData = readJson(COMMUNITY_FILE, { messages: [] });
-function saveCommunity() { writeJson(COMMUNITY_FILE, communityData); }
+let _communityUploadTimer = null;
+function saveCommunity() {
+  writeJson(COMMUNITY_FILE, communityData);
+  if (_communityUploadTimer) clearTimeout(_communityUploadTimer);
+  _communityUploadTimer = setTimeout(() => {
+    _communityUploadTimer = null;
+    getSupabaseData()
+      .then(sb => { if (sb && sb.uploadDataFile) return sb.uploadDataFile('community.json'); })
+      .catch(e => console.warn('[store] community.json supabase upload:', e.message));
+  }, 800);
+}
 
 /** Re-read community.json from disk — call this after Supabase sync on startup
  *  so that communityData reflects the restored file, not the empty default. */
@@ -833,6 +843,7 @@ export function reloadMessengerFromDisk() {
   if (fresh && fresh.settings) {
     messengerData = fresh;
     if (!Array.isArray(messengerData.pending)) messengerData.pending = [];
+    if (!Array.isArray(messengerData.acks)) messengerData.acks = [];
     console.log(`[store] ✅ Messenger reloaded from disk: ${Object.keys(messengerData.settings).length} settings, ${messengerData.pending.length} pending`);
   }
 }
@@ -1499,8 +1510,15 @@ export function getAmbassadorByEmailWithCode(email) {
 const MESSENGER_FILE = path.join(DATA_DIR, 'messenger.json');
 // { settings: { [userId]: { username, bio, profilePublic, profilePicUrl, bgType, bgUrl, blocked: [userId] } },
 //   pending: [ { id, from, to, text, sentAt, expiresAt, readAt } ] }
-let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [] });
+let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [], acks: [] });
+if (!Array.isArray(messengerData.acks)) messengerData.acks = [];
+if (!Array.isArray(messengerData.pending)) messengerData.pending = [];
 function saveMessenger() { writeJson(MESSENGER_FILE, messengerData); }
+let _msgrSaveTimer = null;
+function saveMessengerDebounced() {
+  if (_msgrSaveTimer) clearTimeout(_msgrSaveTimer);
+  _msgrSaveTimer = setTimeout(() => { _msgrSaveTimer = null; saveMessenger(); }, 400);
+}
 
 // Prune expired pending messages (older than 2 months)
 export function pruneExpiredMessages() {
@@ -1638,15 +1656,61 @@ export function markMessageDelivered(msgId) {
 // Mark all messages from a sender as read (when recipient opens chat)
 export function markMessagesRead(fromUserId, toUserId) {
   let changed = false;
+  const at = new Date().toISOString();
   messengerData.pending.forEach(msg => {
     if (msg.from === fromUserId && msg.to === toUserId && msg.status !== 'read') {
       msg.status = 'read';
-      msg.readAt = new Date().toISOString();
+      msg.readAt = at;
       changed = true;
     }
   });
+  addMessengerAck({ type: 'read', senderId: fromUserId, readerId: toUserId, at });
   if (changed) saveMessenger();
-  return changed;
+  return true;
+}
+
+export function setUserLastSeen(userId, iso) {
+  if (!userId) return;
+  const s = getMessengerSettings(userId);
+  s.lastSeen = iso || new Date().toISOString();
+  messengerData.settings[userId] = s;
+  saveMessengerDebounced();
+}
+
+export function getUserLastSeen(userId) {
+  return (messengerData.settings[userId] || {}).lastSeen || null;
+}
+
+export function getLastSeenBulk(userIds) {
+  const out = {};
+  (userIds || []).forEach(id => {
+    const ls = getUserLastSeen(id);
+    if (ls) out[id] = ls;
+  });
+  return out;
+}
+
+export function addMessengerAck({ type, senderId, readerId, at }) {
+  if (!senderId || !readerId) return;
+  if (!messengerData.acks) messengerData.acks = [];
+  messengerData.acks.push({
+    id: `ack-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type: type || 'read',
+    senderId,
+    readerId,
+    at: at || new Date().toISOString(),
+  });
+  if (messengerData.acks.length > 3000) messengerData.acks = messengerData.acks.slice(-2000);
+  saveMessenger();
+}
+
+export function drainMessengerAcks(senderId) {
+  if (!messengerData.acks) messengerData.acks = [];
+  const mine = messengerData.acks.filter(a => a.senderId === senderId);
+  if (!mine.length) return [];
+  messengerData.acks = messengerData.acks.filter(a => a.senderId !== senderId);
+  saveMessenger();
+  return mine;
 }
 
 // Peek pending (for badge count) without draining

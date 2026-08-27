@@ -21,6 +21,7 @@ import {
   searchPublicUsers, findUserByEmail, getUserInfoBulk,
   storePendingMessage, drainPendingMessages, countPendingMessages,
   countPendingBySender, pruneExpiredMessages, markMessagesRead,
+  drainMessengerAcks, getLastSeenBulk, getUserLastSeen,
   // subscription & usage
   getUserPlan, getPlanLimits, setUserSubscription, getAllSubscriptions,
   getUserSubscription, savePaymentProof, getAllProofs, getPendingProofs,
@@ -1190,7 +1191,7 @@ router.get('/api/community', (req, res) => {
 });
 
 // Post a new message
-router.post('/api/community', requireAuth, (req, res) => {
+router.post('/api/community', requireAuth, async (req, res) => {
   const { text, replyTo = null } = req.body || {};
   if (!text || !text.trim()) return res.status(400).json({ error: 'Message text required' });
   if (text.trim().length > 1000) return res.status(400).json({ error: 'Message too long (max 1000 chars)' });
@@ -1201,6 +1202,10 @@ router.post('/api/community', requireAuth, (req, res) => {
     userId: user.id, name: displayName, text: text.trim(), replyTo,
     isAmbassador: ambassadorStatus, isAdmin: !!user.isAdmin,
   });
+  try {
+    const { emitChannelMessage } = await import('../bot.js').catch(() => ({}));
+    if (emitChannelMessage) emitChannelMessage(msg);
+  } catch (_) {}
   // Detect @mentions and store mentionedUserIds
   try {
     const mentionNames = [...text.matchAll(/@([\w]+)/g)].map(m => m[1].toLowerCase());
@@ -1356,6 +1361,17 @@ router.post('/api/messenger/send', requireAuth, async (req, res) => {
 router.get('/api/messenger/drain', requireAuth, async (req, res) => {
   try {
     const msgs = await withTimeout(() => drainPendingMessages(req.user.id));
+    try {
+      const { emitMessengerAck } = await import('../bot.js').catch(() => ({}));
+      if (emitMessengerAck && msgs.length) {
+        const seen = new Set();
+        msgs.forEach(m => {
+          if (seen.has(m.from)) return;
+          seen.add(m.from);
+          emitMessengerAck(m.from, { type: 'delivered', senderId: m.from, readerId: req.user.id, at: new Date().toISOString() });
+        });
+      }
+    } catch (_) {}
     res.json({ ok: true, messages: msgs });
   } catch (err) { messengerErr(res, err); }
 });
@@ -1364,7 +1380,39 @@ router.get('/api/messenger/drain', requireAuth, async (req, res) => {
 router.post('/api/messenger/mark-read/:fromId', requireAuth, async (req, res) => {
   try {
     await withTimeout(() => markMessagesRead(req.params.fromId, req.user.id));
+    try {
+      const { emitMessengerAck } = await import('../bot.js').catch(() => ({}));
+      if (emitMessengerAck) {
+        emitMessengerAck(req.params.fromId, {
+          type: 'read', senderId: req.params.fromId, readerId: req.user.id, at: new Date().toISOString(),
+        });
+      }
+    } catch (_) {}
     res.json({ ok: true });
+  } catch (err) { messengerErr(res, err); }
+});
+
+// GET /api/messenger/acks — delivery/read receipts for my outbound DMs
+router.get('/api/messenger/acks', requireAuth, async (req, res) => {
+  try {
+    const acks = await withTimeout(() => drainMessengerAcks(req.user.id));
+    res.json({ ok: true, acks });
+  } catch (err) { messengerErr(res, err); }
+});
+
+// GET /api/messenger/presence?ids=a,b,c
+router.get('/api/messenger/presence', requireAuth, async (req, res) => {
+  try {
+    const ids = String(req.query.ids || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 80);
+    let online = [];
+    try {
+      const bot = await import('../bot.js').catch(() => ({}));
+      if (bot.getOnlineUserIds) online = bot.getOnlineUserIds();
+    } catch (_) {}
+    const lastSeen = getLastSeenBulk(ids.length ? ids : online);
+    const onlineSet = new Set(online);
+    const filteredOnline = ids.length ? ids.filter(id => onlineSet.has(id)) : online;
+    res.json({ ok: true, online: filteredOnline, lastSeen });
   } catch (err) { messengerErr(res, err); }
 });
 
