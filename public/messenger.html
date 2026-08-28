@@ -79,16 +79,17 @@
     .unread-pill{min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--acc);color:#fff;
       font-size:.68rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;
-      flex-shrink:0;position:relative;letter-spacing:-.3px}
+      flex-shrink:0;position:relative;letter-spacing:-.3px;overflow:visible}
     .av.sm{width:38px;height:38px;font-size:.85rem}
     .av.lg{width:72px;height:72px;font-size:1.4rem}
-    .av{overflow:hidden}
-    .av.has-img{background:#0b1220;padding:0}
+    .av-inner{width:100%;height:100%;border-radius:50%;overflow:hidden;display:grid;place-items:center}
+    .av.has-img{background:#fff;padding:0}
+    .av.has-img .av-inner{background:#fff}
     .av.has-img img{width:100%;height:100%;object-fit:contain;display:block}
     .vbadge{width:14px;height:14px;flex-shrink:0;margin-left:3px}
     .nm-row{display:flex;align-items:center;min-width:0;gap:4px}
     .nm-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .dot{position:absolute;width:11px;height:11px;border-radius:50%;background:#d0d5dd;border:2px solid #fff;right:0;bottom:0}
+    .dot{position:absolute;width:11px;height:11px;border-radius:50%;background:#d0d5dd;border:2px solid #fff;right:-1px;bottom:-1px;z-index:2}
     .dot.on{background:var(--online)}
     .thread{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper);position:relative}
     .thread.empty .thread-body,.thread.empty .composer{display:none}
@@ -432,22 +433,31 @@ function ensureSupport(card) {
     if (card.email) inbox[card.id].email = card.email;
   }
 }
-function avMarkup(c, sizeClass) {
+function avMarkup(c, sizeClass, elId) {
   var cls = 'av' + (sizeClass ? ' ' + sizeClass : '');
+  var idAttr = elId ? ' id="' + esc(elId) + '"' : '';
+  var online = c && !c.isChannel && !!presenceOnline[c.id];
+  var dot = (c && !c.isChannel) ? '<span class="dot' + (online ? ' on' : '') + '"></span>' : '';
   if (c && (c.isChannel || c.isSupport || c.profilePicUrl)) {
     var src = c.isChannel ? LOUNGE_AVATAR : (c.profilePicUrl || (c.isSupport ? SUPPORT_AVATAR : ''));
-    if (src) return '<div class="' + cls + ' has-img"><img src="' + esc(src) + '" alt=""></div>';
+    if (src) return '<div class="' + cls + ' has-img"' + idAttr + '><div class="av-inner"><img src="' + esc(src) + '" alt=""></div>' + dot + '</div>';
   }
   var name = (c && c.displayName) || 'U';
-  return '<div class="' + cls + '" style="background:' + avColor(name) + '">' + esc(initial(name)) + '</div>';
+  return '<div class="' + cls + '"' + idAttr + ' style="background:' + avColor(name) + '"><div class="av-inner">' + esc(initial(name)) + '</div>' + dot + '</div>';
+}
+function setAvatarEl(elId, c, sizeClass) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  el.outerHTML = avMarkup(c, sizeClass, elId);
 }
 function nameMarkup(c) {
   var tick = (c && (c.verified || c.isSupport)) ? '<img class="vbadge" src="' + VERIFIED_BADGE + '" alt="">' : '';
   return '<span class="nm-row"><span class="nm">' + esc((c && c.displayName) || 'Student') + '</span>' + tick + '</span>';
 }
 function openSupportChat() {
-  if (supportContact && supportContact.id) openChat(supportContact.id);
-  else toast('Support account is not set up yet');
+  var sid = supportContact && supportContact.id;
+  if (!sid || sid === CHANNEL_ID) { toast('Support account is not set up yet'); return; }
+  openChat(sid);
 }
 
 async function init() {
@@ -476,8 +486,8 @@ async function init() {
   setInterval(drainPendingMessages, 800);
   setInterval(drainAcks, 4000);
   setInterval(refreshPresence, 20000);
-  await hydrateProfiles();
   await drainPendingMessages();
+  await hydrateProfiles();
   await drainAcks();
   await refreshPresence();
 }
@@ -490,18 +500,7 @@ async function hydrateProfiles() {
     var users = (r && r.users) || [];
     users.forEach(function (u) {
       if (!u || !u.id || !inbox[u.id]) return;
-      var c = inbox[u.id];
-      c.verified = !!u.verified || !!u.isSupport;
-      c.isSupport = !!u.isSupport;
-      if (u.isSupport) {
-        c.displayName = 'Support';
-        c.profilePicUrl = SUPPORT_AVATAR;
-        supportContact = u;
-      } else {
-        if (u.displayName) c.displayName = u.displayName;
-        if (u.profilePicUrl) c.profilePicUrl = u.profilePicUrl;
-        if (u.email) c.email = u.email;
-      }
+      applyUserCard(inbox[u.id], u);
     });
     saveInbox();
     renderChatList();
@@ -516,12 +515,12 @@ function renderMyProfile() {
   var av = document.getElementById('myAv');
   if (me && (me.isSupport || me.profilePicUrl)) {
     av.classList.add('has-img');
-    av.style.background = '#0b1220';
-    av.innerHTML = '<img src="' + esc(me.profilePicUrl || SUPPORT_AVATAR) + '" alt="">';
+    av.style.background = '#fff';
+    av.innerHTML = '<div class="av-inner"><img src="' + esc(me.profilePicUrl || SUPPORT_AVATAR) + '" alt=""></div>';
   } else {
     av.classList.remove('has-img');
-    av.textContent = initial(name);
     av.style.background = avColor(name);
+    av.innerHTML = '<div class="av-inner">' + esc(initial(name)) + '</div>';
   }
 }
 
@@ -612,6 +611,34 @@ function ingestIncoming(msg) {
   saveInbox();
   renderChatList();
   if (activeId === msg.from) { renderMessages(); markMessagesAsRead(msg.from); }
+  if (!c.email || c.displayName === msg.from) hydrateOne(msg.from);
+}
+async function hydrateOne(id) {
+  if (!id || id === CHANNEL_ID) return;
+  try {
+    var r = await api('POST', '/api/messenger/user-info', { ids: [id] });
+    var u = ((r && r.users) || [])[0];
+    if (!u || !inbox[id]) return;
+    applyUserCard(inbox[id], u);
+    saveInbox();
+    renderChatList();
+    if (activeId === id) { fillProfile(); updateStatus(); renderMessages(); }
+  } catch (e) {}
+}
+function applyUserCard(c, u) {
+  if (!c || !u) return;
+  c.verified = !!u.verified || !!u.isSupport;
+  c.isSupport = !!u.isSupport;
+  if (u.email) c.email = u.email;
+  if (u.fullName) c.fullName = u.fullName;
+  if (u.isSupport) {
+    c.displayName = 'Support';
+    c.profilePicUrl = SUPPORT_AVATAR;
+    supportContact = u;
+  } else {
+    if (u.displayName) c.displayName = u.displayName;
+    if (u.profilePicUrl) c.profilePicUrl = u.profilePicUrl;
+  }
 }
 function ingestChannel(msg) {
   if (!msg || !msg.id) return;
@@ -726,10 +753,8 @@ function renderChatList(filter) {
     var prev = last ? ((last.dir === 'out' ? 'You: ' : '') + last.text) : (c.isChannel ? 'Public study channel' : 'Tap to chat');
     var unread = c.unread || 0;
     var isOn = !c.isChannel && !!presenceOnline[c.id];
-    var avh = avMarkup(c);
-    if (!c.isChannel && !c.isSupport) avh = avh.replace('</div>', '<span class="dot' + (isOn ? ' on' : '') + '"></span></div>');
     return '<div class="chat-item' + ((c.isChannel || c.isSupport) ? ' channel' : '') + (activeId === c.id ? ' active' : '') + (unread ? ' unread' : '') + '" data-id="' + esc(c.id) + '">' +
-      avh +
+      avMarkup(c) +
       '<div class="chat-meta"><div class="row1"><div class="chat-name">' + nameMarkup(c) + '</div>' +
       '<div class="chat-time">' + esc(fmtListTime(last && last.sentAt)) + '</div></div>' +
       '<div class="chat-preview">' + esc(prev) + '</div></div>' +
@@ -755,8 +780,7 @@ function openChat(id) {
   document.getElementById('emptyHero').style.display = 'none';
   document.getElementById('inputArea').style.display = 'block';
   document.getElementById('chName').innerHTML = nameMarkup(c);
-  var avEl = document.getElementById('chatAvatar');
-  avEl.outerHTML = avMarkup(c, 'sm').replace('class="av sm"', 'class="av sm" id="chatAvatar"');
+  setAvatarEl('chatAvatar', c, 'sm');
   var chRail = document.getElementById('rail-channel');
   if (chRail) chRail.classList.toggle('on', id === CHANNEL_ID);
   var sRail = document.getElementById('rail-support');
@@ -765,12 +789,13 @@ function openChat(id) {
   fillProfile();
   renderMessages();
   renderChatList();
-  if (id === CHANNEL_ID) {
+  if (c.isChannel || id === CHANNEL_ID) {
     loadChannel();
     document.getElementById('msgInput').placeholder = 'Message the Lounge…';
   } else {
     markMessagesAsRead(id);
-    document.getElementById('msgInput').placeholder = 'Message…';
+    document.getElementById('msgInput').placeholder = c.isSupport ? 'Message Support…' : 'Message…';
+    if (!c.email) hydrateOne(id);
   }
   document.getElementById('msgInput').focus();
 }
@@ -778,11 +803,18 @@ function openChat(id) {
 function fillProfile() {
   var c = inbox[activeId];
   if (!c) return;
-  var av = document.getElementById('pAv');
-  av.outerHTML = avMarkup(c, 'lg').replace('class="av lg"', 'class="av lg" id="pAv"');
+  setAvatarEl('pAv', c, 'lg');
   document.getElementById('profileTitle').textContent = c.isChannel ? 'Channel info' : (c.isSupport ? 'Official Support' : 'Contact info');
   document.getElementById('pName').innerHTML = nameMarkup(c);
-  document.getElementById('pEmail').textContent = c.isChannel ? 'Global channel · stored in community.json + Supabase' : (c.isSupport ? 'support@gmail.com' : (c.email || 'No email on file'));
+  var emailLine = '';
+  if (c.isChannel) emailLine = 'Public channel';
+  else {
+    var bits = [];
+    if (c.fullName && c.fullName !== c.displayName) bits.push(c.fullName);
+    bits.push(c.email || 'No email on file');
+    emailLine = bits.join(' · ');
+  }
+  document.getElementById('pEmail').textContent = emailLine;
   var online = !c.isChannel && !!presenceOnline[c.id];
   document.getElementById('pOnline').textContent = c.isChannel ? 'Everyone' : (online ? 'Online' : 'Offline');
   document.getElementById('pLastSeen').textContent = c.isChannel ? 'Always on' : (online ? 'Active now' : fmtLastSeen(presenceLastSeen[c.id] || c.lastSeen));

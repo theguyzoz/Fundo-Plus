@@ -1599,11 +1599,13 @@ export function publicMessengerCard(u) {
   if (!u) return null;
   const support = isSupportEmail(u.email);
   const s = messengerData.settings[u.id] || {};
+  const fullName = `${u.name || ''} ${u.surname || ''}`.trim();
   return {
     id: u.id,
-    displayName: support ? 'Support' : (s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email),
+    displayName: support ? 'Support' : (s.username || fullName || u.email),
+    fullName: support ? 'Support' : fullName,
     profilePicUrl: support ? SUPPORT_AVATAR : (s.profilePicUrl || ''),
-    email: u.email,
+    email: u.email || '',
     verified: support || isVerified(u.id),
     isSupport: support,
   };
