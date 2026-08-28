@@ -82,6 +82,12 @@
       flex-shrink:0;position:relative;letter-spacing:-.3px}
     .av.sm{width:38px;height:38px;font-size:.85rem}
     .av.lg{width:72px;height:72px;font-size:1.4rem}
+    .av{overflow:hidden}
+    .av.has-img{background:#0b1220;padding:0}
+    .av.has-img img{width:100%;height:100%;object-fit:contain;display:block}
+    .vbadge{width:14px;height:14px;flex-shrink:0;margin-left:3px}
+    .nm-row{display:flex;align-items:center;min-width:0;gap:4px}
+    .nm-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .dot{position:absolute;width:11px;height:11px;border-radius:50%;background:#d0d5dd;border:2px solid #fff;right:0;bottom:0}
     .dot.on{background:var(--online)}
     .thread{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper);position:relative}
@@ -228,6 +234,10 @@
           Unread
           <span class="count" id="railUnreadCount"></span>
         </button>
+        <button class="rail-btn" id="rail-support" onclick="openSupportChat()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+          Help
+        </button>
         <button class="rail-btn" id="rail-channel" onclick="openChat(CHANNEL_ID)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
           Lounge
@@ -362,6 +372,10 @@ var AV_COLORS = ['#4338ca','#2563eb','#0ea5e9','#059669','#d97706','#db2777','#7
 var QUICK = ['Got the notes?','Can you explain this?','Thanks 🙌','On it.','Later today?'];
 var EMOJIS = ['😀','😁','😂','🤣','😊','😍','🤩','😎','🥳','😭','😤','👍','👎','🙌','🔥','💯','✅','❌','📚','✏️','🧠','💡','🎯'];
 var CHANNEL_ID = '__lounge__';
+var LOUNGE_AVATAR = '/images/logo.png';
+var SUPPORT_AVATAR = '/images/support.png';
+var VERIFIED_BADGE = '/images/verified.svg';
+var supportContact = null;
 var presenceOnline = {};
 var presenceLastSeen = {};
 
@@ -397,11 +411,43 @@ async function api(method, url, body) {
 
 function ensureLounge() {
   if (!inbox[CHANNEL_ID]) {
-    inbox[CHANNEL_ID] = { id: CHANNEL_ID, displayName: 'Fundo Lounge', email: 'Everyone on Fundo Plus', messages: [], unread: 0, isChannel: true };
+    inbox[CHANNEL_ID] = { id: CHANNEL_ID, displayName: 'Fundo Lounge', email: 'Everyone on Fundo Plus', messages: [], unread: 0, isChannel: true, profilePicUrl: LOUNGE_AVATAR };
   } else {
     inbox[CHANNEL_ID].isChannel = true;
     inbox[CHANNEL_ID].displayName = 'Fundo Lounge';
+    inbox[CHANNEL_ID].profilePicUrl = LOUNGE_AVATAR;
   }
+}
+function ensureSupport(card) {
+  if (!card || !card.id) return;
+  if (me && card.id === me.id) return;
+  supportContact = card;
+  if (!inbox[card.id]) {
+    inbox[card.id] = { id: card.id, displayName: 'Support', email: card.email, messages: [], unread: 0, isSupport: true, verified: true, profilePicUrl: SUPPORT_AVATAR };
+  } else {
+    inbox[card.id].isSupport = true;
+    inbox[card.id].verified = true;
+    inbox[card.id].displayName = 'Support';
+    inbox[card.id].profilePicUrl = SUPPORT_AVATAR;
+    if (card.email) inbox[card.id].email = card.email;
+  }
+}
+function avMarkup(c, sizeClass) {
+  var cls = 'av' + (sizeClass ? ' ' + sizeClass : '');
+  if (c && (c.isChannel || c.isSupport || c.profilePicUrl)) {
+    var src = c.isChannel ? LOUNGE_AVATAR : (c.profilePicUrl || (c.isSupport ? SUPPORT_AVATAR : ''));
+    if (src) return '<div class="' + cls + ' has-img"><img src="' + esc(src) + '" alt=""></div>';
+  }
+  var name = (c && c.displayName) || 'U';
+  return '<div class="' + cls + '" style="background:' + avColor(name) + '">' + esc(initial(name)) + '</div>';
+}
+function nameMarkup(c) {
+  var tick = (c && (c.verified || c.isSupport)) ? '<img class="vbadge" src="' + VERIFIED_BADGE + '" alt="">' : '';
+  return '<span class="nm-row"><span class="nm">' + esc((c && c.displayName) || 'Student') + '</span>' + tick + '</span>';
+}
+function openSupportChat() {
+  if (supportContact && supportContact.id) openChat(supportContact.id);
+  else toast('Support account is not set up yet');
 }
 
 async function init() {
@@ -423,23 +469,60 @@ async function init() {
   if (!r || !r.ok) { document.getElementById('myName').textContent = 'Sign in'; return; }
   me = r;
   ensureLounge();
+  if (r.support) ensureSupport(r.support);
   renderMyProfile();
   renderChatList();
   initSocket();
   setInterval(drainPendingMessages, 800);
   setInterval(drainAcks, 4000);
   setInterval(refreshPresence, 20000);
+  await hydrateProfiles();
   await drainPendingMessages();
   await drainAcks();
   await refreshPresence();
 }
 
+async function hydrateProfiles() {
+  var ids = Object.keys(inbox).filter(function (id) { return id !== CHANNEL_ID; }).slice(0, 50);
+  if (!ids.length) return;
+  try {
+    var r = await api('POST', '/api/messenger/user-info', { ids: ids });
+    var users = (r && r.users) || [];
+    users.forEach(function (u) {
+      if (!u || !u.id || !inbox[u.id]) return;
+      var c = inbox[u.id];
+      c.verified = !!u.verified || !!u.isSupport;
+      c.isSupport = !!u.isSupport;
+      if (u.isSupport) {
+        c.displayName = 'Support';
+        c.profilePicUrl = SUPPORT_AVATAR;
+        supportContact = u;
+      } else {
+        if (u.displayName) c.displayName = u.displayName;
+        if (u.profilePicUrl) c.profilePicUrl = u.profilePicUrl;
+        if (u.email) c.email = u.email;
+      }
+    });
+    saveInbox();
+    renderChatList();
+    if (activeId) { updateStatus(); fillProfile(); renderMessages(); }
+  } catch (e) {}
+}
+
 function renderMyProfile() {
   var name = (me && (me.displayName || me.email)) || 'You';
-  document.getElementById('myName').textContent = name;
+  var wrap = document.getElementById('myName');
+  wrap.innerHTML = esc(name) + ((me && (me.verified || me.isSupport)) ? ' <img class="vbadge" src="' + VERIFIED_BADGE + '" alt="">' : '');
   var av = document.getElementById('myAv');
-  av.textContent = initial(name);
-  av.style.background = avColor(name);
+  if (me && (me.isSupport || me.profilePicUrl)) {
+    av.classList.add('has-img');
+    av.style.background = '#0b1220';
+    av.innerHTML = '<img src="' + esc(me.profilePicUrl || SUPPORT_AVATAR) + '" alt="">';
+  } else {
+    av.classList.remove('has-img');
+    av.textContent = initial(name);
+    av.style.background = avColor(name);
+  }
 }
 
 function initSocket() {
@@ -517,6 +600,9 @@ function ingestIncoming(msg) {
   if (!msg || !msg.from) return;
   ensureContact(msg.from, msg.from, '');
   var c = inbox[msg.from];
+  if (supportContact && msg.from === supportContact.id) {
+    c.isSupport = true; c.verified = true; c.displayName = 'Support'; c.profilePicUrl = SUPPORT_AVATAR;
+  }
   if (!c.messages) c.messages = [];
   if (c.messages.find(function (m) { return m.id === msg.id; })) return;
   c.messages.push({ id: msg.id, text: msg.text, sentAt: msg.sentAt, dir: 'in', status: 'delivered' });
@@ -604,6 +690,8 @@ function setFilter(f) {
   });
   var ch = document.getElementById('rail-channel');
   if (ch) ch.classList.remove('on');
+  var sr = document.getElementById('rail-support');
+  if (sr) sr.classList.remove('on');
   document.getElementById('inboxTitle').textContent = f === 'unread' ? 'Unread' : f === 'blocked' ? 'Blocked' : 'Messages';
   renderChatList();
 }
@@ -619,6 +707,8 @@ function renderChatList(filter) {
   if (listFilter === 'unread') contacts = contacts.filter(function (c) { return (c.unread || 0) > 0; });
   if (listFilter === 'blocked') contacts = contacts.filter(function (c) { return c.blocked && !c.isChannel; });
   contacts.sort(function (a, b) {
+    if (a.isSupport && !b.isSupport) return -1;
+    if (b.isSupport && !a.isSupport) return 1;
     if (a.isChannel && !b.isChannel) return -1;
     if (b.isChannel && !a.isChannel) return 1;
     return lastTs(b) - lastTs(a);
@@ -636,10 +726,11 @@ function renderChatList(filter) {
     var prev = last ? ((last.dir === 'out' ? 'You: ' : '') + last.text) : (c.isChannel ? 'Public study channel' : 'Tap to chat');
     var unread = c.unread || 0;
     var isOn = !c.isChannel && !!presenceOnline[c.id];
-    return '<div class="chat-item' + (c.isChannel ? ' channel' : '') + (activeId === c.id ? ' active' : '') + (unread ? ' unread' : '') + '" data-id="' + esc(c.id) + '">' +
-      '<div class="av" style="background:' + (c.isChannel ? '#4338ca' : avColor(c.displayName)) + '">' + (c.isChannel ? '#' : esc(initial(c.displayName))) +
-        (c.isChannel ? '' : '<span class="dot' + (isOn ? ' on' : '') + '"></span>') + '</div>' +
-      '<div class="chat-meta"><div class="row1"><div class="chat-name">' + esc(c.displayName || 'Student') + '</div>' +
+    var avh = avMarkup(c);
+    if (!c.isChannel && !c.isSupport) avh = avh.replace('</div>', '<span class="dot' + (isOn ? ' on' : '') + '"></span></div>');
+    return '<div class="chat-item' + ((c.isChannel || c.isSupport) ? ' channel' : '') + (activeId === c.id ? ' active' : '') + (unread ? ' unread' : '') + '" data-id="' + esc(c.id) + '">' +
+      avh +
+      '<div class="chat-meta"><div class="row1"><div class="chat-name">' + nameMarkup(c) + '</div>' +
       '<div class="chat-time">' + esc(fmtListTime(last && last.sentAt)) + '</div></div>' +
       '<div class="chat-preview">' + esc(prev) + '</div></div>' +
       (unread ? '<span class="unread-pill">' + (unread > 99 ? '99+' : unread) + '</span>' : '') +
@@ -663,12 +754,13 @@ function openChat(id) {
   document.getElementById('chHead').style.display = 'flex';
   document.getElementById('emptyHero').style.display = 'none';
   document.getElementById('inputArea').style.display = 'block';
-  document.getElementById('chName').textContent = c.displayName || 'Student';
-  var av = document.getElementById('chatAvatar');
-  av.textContent = c.isChannel ? '#' : initial(c.displayName);
-  av.style.background = c.isChannel ? '#4338ca' : avColor(c.displayName);
+  document.getElementById('chName').innerHTML = nameMarkup(c);
+  var avEl = document.getElementById('chatAvatar');
+  avEl.outerHTML = avMarkup(c, 'sm').replace('class="av sm"', 'class="av sm" id="chatAvatar"');
   var chRail = document.getElementById('rail-channel');
   if (chRail) chRail.classList.toggle('on', id === CHANNEL_ID);
+  var sRail = document.getElementById('rail-support');
+  if (sRail) sRail.classList.toggle('on', !!c.isSupport);
   updateStatus();
   fillProfile();
   renderMessages();
@@ -687,18 +779,17 @@ function fillProfile() {
   var c = inbox[activeId];
   if (!c) return;
   var av = document.getElementById('pAv');
-  av.textContent = c.isChannel ? '#' : initial(c.displayName);
-  av.style.background = c.isChannel ? '#4338ca' : avColor(c.displayName);
-  document.getElementById('profileTitle').textContent = c.isChannel ? 'Channel info' : 'Contact info';
-  document.getElementById('pName').textContent = c.displayName || 'Student';
-  document.getElementById('pEmail').textContent = c.isChannel ? 'Global channel · stored in community.json + Supabase' : (c.email || 'No email on file');
+  av.outerHTML = avMarkup(c, 'lg').replace('class="av lg"', 'class="av lg" id="pAv"');
+  document.getElementById('profileTitle').textContent = c.isChannel ? 'Channel info' : (c.isSupport ? 'Official Support' : 'Contact info');
+  document.getElementById('pName').innerHTML = nameMarkup(c);
+  document.getElementById('pEmail').textContent = c.isChannel ? 'Global channel · stored in community.json + Supabase' : (c.isSupport ? 'support@gmail.com' : (c.email || 'No email on file'));
   var online = !c.isChannel && !!presenceOnline[c.id];
   document.getElementById('pOnline').textContent = c.isChannel ? 'Everyone' : (online ? 'Online' : 'Offline');
   document.getElementById('pLastSeen').textContent = c.isChannel ? 'Always on' : (online ? 'Active now' : fmtLastSeen(presenceLastSeen[c.id] || c.lastSeen));
   document.getElementById('pCount').textContent = String((c.messages || []).length);
-  document.getElementById('pBlockedRow').style.display = c.isChannel ? 'none' : '';
-  document.getElementById('pActions').style.display = c.isChannel ? 'none' : '';
-  if (!c.isChannel) {
+  document.getElementById('pBlockedRow').style.display = (c.isChannel || c.isSupport) ? 'none' : '';
+  document.getElementById('pActions').style.display = (c.isChannel || c.isSupport) ? 'none' : '';
+  if (!c.isChannel && !c.isSupport) {
     document.getElementById('pBlocked').textContent = c.blocked ? 'Yes' : 'No';
     document.getElementById('pBlockBtn').textContent = c.blocked ? 'Unblock' : 'Block';
   }
@@ -727,6 +818,7 @@ function updateStatus() {
   var c = inbox[activeId];
   if (!c || !statusEl) return;
   if (c.isChannel) { statusEl.className = 'ch-status'; statusEl.textContent = 'Public channel'; return; }
+  if (c.isSupport) { statusEl.className = 'ch-status'; statusEl.textContent = presenceOnline[c.id] ? 'Online · Official' : 'Official Support'; return; }
   if (presenceOnline[c.id]) { statusEl.className = 'ch-status'; statusEl.textContent = 'Online'; }
   else if (presenceLastSeen[c.id] || c.lastSeen) {
     statusEl.className = 'ch-status off';
@@ -776,9 +868,12 @@ function renderMessages() {
     var ticks = (isOut && !c.isChannel) ? tickHtml(m.status) : '';
     var who = c.isChannel ? (m.fromName || c.displayName) : c.displayName;
     var quote = m.replyText ? ('<div class="quote"><b>' + esc(m.replyName || 'Reply') + '</b>' + esc(m.replyText) + '</div>') : '';
+    var inAv = c.isChannel
+      ? '<div class="av sm" style="background:' + avColor(who) + '">' + esc(initial(who)) + '</div>'
+      : avMarkup(c, 'sm');
     html += '<div class="msg ' + (isOut ? 'out' : 'in') + '" data-index="' + index + '">' +
-      (isOut ? '' : '<div class="av sm" style="background:' + avColor(who) + '">' + esc(initial(who)) + '</div>') +
-      '<div>' + (isOut ? '' : '<div class="who">' + esc(who) + '</div>') +
+      (isOut ? '' : inAv) +
+      '<div>' + (isOut ? '' : '<div class="who">' + (c.isChannel ? esc(who) : nameMarkup(c)) + '</div>') +
       '<div class="bubble">' + quote + esc(m.text) +
       '<div class="meta"><span>' + esc(new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) + '</span>' + ticks + '</div></div></div>' +
       '<div class="msg-actions"><button type="button" data-act="reply">↩</button></div></div>';
@@ -889,11 +984,12 @@ function deleteMessage() {
 function showContactMenu(e, id) {
   e.preventDefault();
   if (id === CHANNEL_ID) return;
+  if (inbox[id] && inbox[id].isSupport) return;
   menuTarget.id = id;
   placeMenu(document.getElementById('chatMenu'), e);
   document.onclick = function () { hideMenus(); document.onclick = null; };
 }
-function openChatMenu(e) { if (activeId && activeId !== CHANNEL_ID) showContactMenu(e, activeId); }
+function openChatMenu(e) { if (activeId && activeId !== CHANNEL_ID && !(inbox[activeId] && inbox[activeId].isSupport)) showContactMenu(e, activeId); }
 function editContact() {
   var id = menuTarget.id || activeId;
   var c = inbox[id]; hideMenus();
@@ -907,6 +1003,7 @@ function editContact() {
 function deleteContact() {
   var id = menuTarget.id || activeId; hideMenus();
   if (id === CHANNEL_ID) { toast('Lounge cannot be removed'); return; }
+  if (inbox[id] && inbox[id].isSupport) { toast('Support cannot be removed'); return; }
   if (!id || !confirm('Remove this conversation from your list?')) return;
   delete inbox[id]; saveInbox();
   if (activeId === id) {
@@ -949,17 +1046,27 @@ async function searchUsers() {
   } catch (e) {}
   if (!results.length) { container.innerHTML = '<div class="empty-list">No students found</div>'; return; }
   container.innerHTML = results.map(function (u) {
-    return '<div class="chat-item" data-id="' + esc(u.id) + '" data-name="' + esc(u.displayName) + '" data-email="' + esc(u.email || '') + '">' +
-      '<div class="av" style="background:' + avColor(u.displayName) + '">' + esc(initial(u.displayName)) + '</div>' +
-      '<div class="chat-meta"><div class="chat-name">' + esc(u.displayName) + '</div><div class="chat-preview">' + esc(u.email || '') + '</div></div></div>';
+    return '<div class="chat-item" data-id="' + esc(u.id) + '" data-name="' + esc(u.displayName) + '" data-email="' + esc(u.email || '') + '" data-verified="' + (u.verified ? '1' : '') + '" data-support="' + (u.isSupport ? '1' : '') + '" data-pic="' + esc(u.profilePicUrl || '') + '">' +
+      avMarkup({ displayName: u.displayName, profilePicUrl: u.profilePicUrl, isSupport: u.isSupport, verified: u.verified }) +
+      '<div class="chat-meta"><div class="chat-name">' + nameMarkup(u) + '</div><div class="chat-preview">' + esc(u.isSupport ? 'Official Support' : (u.email || '')) + '</div></div></div>';
   }).join('');
   container.querySelectorAll('.chat-item').forEach(function (node) {
-    node.onclick = function () { startChat(node.getAttribute('data-id'), node.getAttribute('data-name'), node.getAttribute('data-email')); };
+    node.onclick = function () {
+      startChat(node.getAttribute('data-id'), node.getAttribute('data-name'), node.getAttribute('data-email'), {
+        verified: node.getAttribute('data-verified') === '1',
+        isSupport: node.getAttribute('data-support') === '1',
+        profilePicUrl: node.getAttribute('data-pic') || ''
+      });
+    };
   });
 }
-function startChat(id, name, email) {
+function startChat(id, name, email, extra) {
   closeModal('modalNewChat');
-  ensureContact(id, name, email || '');
+  var c = ensureContact(id, name, email || '');
+  extra = extra || {};
+  if (extra.isSupport) { c.isSupport = true; c.verified = true; c.displayName = 'Support'; c.profilePicUrl = SUPPORT_AVATAR; }
+  if (extra.verified) c.verified = true;
+  if (extra.profilePicUrl) c.profilePicUrl = extra.profilePicUrl;
   saveInbox(); renderChatList(); openChat(id);
 }
 async function openSettings() {

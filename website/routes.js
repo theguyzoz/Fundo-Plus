@@ -19,6 +19,7 @@ import {
   // messenger
   getMessengerSettings, saveMessengerSettings, blockUser, unblockUser, isBlocked,
   searchPublicUsers, findUserByEmail, getUserInfoBulk,
+  isVerified, setVerified, getSupportCard, publicMessengerCard, isSupportEmail,
   storePendingMessage, drainPendingMessages, countPendingMessages,
   countPendingBySender, pruneExpiredMessages, markMessagesRead,
   drainMessengerAcks, getLastSeenBulk, getUserLastSeen,
@@ -1434,14 +1435,19 @@ router.get('/api/messenger/me', requireAuth, async (req, res) => {
     const result = await withTimeout(() => {
       const u = req.user;
       const s = getMessengerSettings(u.id);
+      const card = publicMessengerCard(u);
       return {
         ok: true,
         id: u.id,
         email: u.email,
         name: u.name || '',
         surname: u.surname || '',
-        displayName: s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email,
+        displayName: card.displayName,
+        verified: card.verified,
+        isSupport: card.isSupport,
+        profilePicUrl: card.profilePicUrl,
         settings: s,
+        support: getSupportCard(),
       };
     });
     res.json(result);
@@ -1686,6 +1692,15 @@ router.post('/api/admin/unban', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/api/admin/verify', requireAdmin, (req, res) => {
+  const { userId, verified } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'userId required' });
+  const ok = setVerified(userId, verified !== false);
+  if (!ok) return res.status(404).json({ error: 'User not found' });
+  import('../utils/supabase-data.js').then(m => m.uploadDataFile('messenger.json')).catch(() => {});
+  res.json({ ok: true, verified: isVerified(userId) });
+});
+
 router.post('/api/admin/appeal/:userId/:decision', requireAdmin, (req, res) => {
   resolveAppeal(req.params.userId, req.params.decision);
   res.json({ ok: true });
@@ -1725,6 +1740,8 @@ router.get('/api/admin/users/search', requireAdmin, (req, res) => {
         grantedBy: sub.grantedBy,
       } : null,
       banned: isBanned(u.id),
+      verified: isVerified(u.id),
+      isSupport: isSupportEmail(u.email),
     };
   });
   res.json({ users: enriched });

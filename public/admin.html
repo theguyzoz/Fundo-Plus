@@ -457,6 +457,7 @@ tbody tr:hover td{background:var(--surface2)}
               <button class="ftab" data-f="linked" onclick="setFilter('linked',this)">WA Linked <span class="cnt" id="fc-linked"></span></button>
               <button class="ftab" data-f="banned" onclick="setFilter('banned',this)">Banned <span class="cnt" id="fc-banned"></span></button>
               <button class="ftab" data-f="admin" onclick="setFilter('admin',this)">Admins <span class="cnt" id="fc-admin"></span></button>
+              <button class="ftab" data-f="verified" onclick="setFilter('verified',this)">Verified <span class="cnt" id="fc-verified"></span></button>
               <button class="ftab" data-f="incomplete" onclick="setFilter('incomplete',this)">Incomplete <span class="cnt" id="fc-incomplete"></span></button>
             </div>
           </div>
@@ -1107,6 +1108,7 @@ function matchFilter(u) {
     case 'linked': return !!u.jid;
     case 'banned': return !!u.banned;
     case 'admin': return !!u.isAdmin;
+    case 'verified': return !!u.verified || !!u.isSupport;
     case 'incomplete': return !u.onboarded;
     default: return true;
   }
@@ -1115,12 +1117,7 @@ function matchFilter(u) {
 function renderUsers() {
   const box = document.getElementById('users-container');
   if (!box) return;
-  ['all','paid','linked','banned','admin','incomplete'].forEach(f => {
-    const el = document.getElementById('fc-'+f);
-    if (el) el.textContent = _allUsers.filter(f === 'all' ? ()=>true : matchFilter.bind(null)).length;
-  });
-  // count per filter properly
-  const counts = { all:0, paid:0, linked:0, banned:0, admin:0, incomplete:0 };
+  const counts = { all:0, paid:0, linked:0, banned:0, admin:0, verified:0, incomplete:0 };
   _allUsers.forEach(u => {
     const p = u.plan||'free';
     counts.all++;
@@ -1128,9 +1125,10 @@ function renderUsers() {
     if(u.jid) counts.linked++;
     if(u.banned) counts.banned++;
     if(u.isAdmin) counts.admin++;
+    if(u.verified || u.isSupport) counts.verified++;
     if(!u.onboarded) counts.incomplete++;
   });
-  ['all','paid','linked','banned','admin','incomplete'].forEach(f => {
+  ['all','paid','linked','banned','admin','verified','incomplete'].forEach(f => {
     const el = document.getElementById('fc-'+f); if(el) el.textContent = counts[f];
   });
 
@@ -1141,6 +1139,7 @@ function renderUsers() {
       case 'linked': return !!u.jid;
       case 'banned': return !!u.banned;
       case 'admin': return !!u.isAdmin;
+      case 'verified': return !!u.verified || !!u.isSupport;
       case 'incomplete': return !u.onboarded;
       default: return true;
     }
@@ -1163,6 +1162,8 @@ function renderUserCard(u) {
   const tags = [
     u.banned ? '<span class="badge badge-red">Banned</span>' : '',
     u.isAdmin ? '<span class="badge badge-yellow">Admin</span>' : '',
+    u.isSupport ? '<span class="badge badge-blue">Support</span>' : '',
+    (u.verified || u.isSupport) ? '<span class="badge badge-blue">Verified</span>' : '',
     u.jid ? '<span class="badge badge-green">WA Linked</span>' : '',
     !u.onboarded ? '<span class="badge badge-gray">Incomplete</span>' : '',
     planBadge
@@ -1174,10 +1175,14 @@ function renderUserCard(u) {
   const notifyBtn = (u.email && String(u.email).includes('@'))
     ? `<button class="btn btn-ghost btn-sm" onclick="notifyUser('${String(u.email).replace(/'/g,'')}')">Notify</button>`
     : '';
+  const verifyBtn = u.isSupport ? '' : (u.verified
+    ? `<button class="btn btn-ghost btn-sm" onclick="doVerify('${uid}', false)">Remove tick</button>`
+    : `<button class="btn btn-ghost btn-sm" onclick="doVerify('${uid}', true)">✓ Verify</button>`);
+  const tickImg = (u.verified || u.isSupport) ? ' <img src="/images/verified.svg" alt="" style="width:14px;height:14px;vertical-align:-2px">' : '';
   return `<div class="user-card">
     <div class="uc-head">
       <div class="uc-avatar" style="background:${av.color}">${av.initial}</div>
-      <div><div class="uc-name">${uname}</div><div class="uc-email">${uemail}</div></div>
+      <div><div class="uc-name">${uname}${tickImg}</div><div class="uc-email">${uemail}</div></div>
     </div>
     <div class="uc-tags">${tags}</div>
     <div class="uc-meta">
@@ -1188,7 +1193,7 @@ function renderUserCard(u) {
       <div class="uc-row"><span class="k">Wallet</span><span class="v">$${u.balanceDollars||'0.00'}</span></div>
       <div class="uc-row"><span class="k">ID</span><span class="v" style="font-family:var(--mono);font-size:.68rem">${uid.slice(0,16)}…</span></div>
     </div>
-    <div class="uc-actions">${banBtn}${notifyBtn}</div>
+    <div class="uc-actions">${banBtn}${verifyBtn}${notifyBtn}</div>
   </div>`;
 }
 
@@ -1220,6 +1225,15 @@ async function doUnban(userId) {
     if (!r.ok) throw new Error(d.error || 'Status ' + r.status);
     loadUsers(); loadBans();
   } catch(e) { alert('Unban failed: ' + e.message); }
+}
+
+async function doVerify(userId, on) {
+  try {
+    const r = await api('/api/admin/verify', { method:'POST', body: JSON.stringify({ userId, verified: !!on }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Status ' + r.status);
+    loadUsers();
+  } catch(e) { alert('Verify failed: ' + e.message); }
 }
 
 // ══════════════════════════════════════════════════════

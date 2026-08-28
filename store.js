@@ -1510,9 +1510,10 @@ export function getAmbassadorByEmailWithCode(email) {
 const MESSENGER_FILE = path.join(DATA_DIR, 'messenger.json');
 // { settings: { [userId]: { username, bio, profilePublic, profilePicUrl, bgType, bgUrl, blocked: [userId] } },
 //   pending: [ { id, from, to, text, sentAt, expiresAt, readAt } ] }
-let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [], acks: [] });
+let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [], acks: [], verified: {} });
 if (!Array.isArray(messengerData.acks)) messengerData.acks = [];
 if (!Array.isArray(messengerData.pending)) messengerData.pending = [];
+if (!messengerData.verified || typeof messengerData.verified !== 'object') messengerData.verified = {};
 function saveMessenger() { writeJson(MESSENGER_FILE, messengerData); }
 let _msgrSaveTimer = null;
 function saveMessengerDebounced() {
@@ -1564,13 +1565,65 @@ export function isBlocked(userId, targetId) {
   return (s.blocked || []).includes(targetId);
 }
 
+export const SUPPORT_EMAIL = 'support@gmail.com';
+export const SUPPORT_AVATAR = '/images/support.png';
+export const LOUNGE_AVATAR = '/images/logo.png';
+export const VERIFIED_BADGE = '/images/verified.svg';
+
+export function isSupportEmail(email) {
+  return String(email || '').toLowerCase().trim() === SUPPORT_EMAIL;
+}
+
+export function getSupportUser() {
+  return Object.values(webUsersData.users).find(u => isSupportEmail(u.email)) || null;
+}
+
+export function isVerified(userId) {
+  if (!userId) return false;
+  const u = webUsersData.users[userId];
+  if (u && isSupportEmail(u.email)) return true;
+  return !!(messengerData.verified && messengerData.verified[userId]);
+}
+
+export function setVerified(userId, on, by = 'admin') {
+  if (!userId || !webUsersData.users[userId]) return false;
+  if (isSupportEmail(webUsersData.users[userId].email)) return true;
+  if (!messengerData.verified) messengerData.verified = {};
+  if (on) messengerData.verified[userId] = { at: new Date().toISOString(), by };
+  else delete messengerData.verified[userId];
+  saveMessenger();
+  return true;
+}
+
+export function publicMessengerCard(u) {
+  if (!u) return null;
+  const support = isSupportEmail(u.email);
+  const s = messengerData.settings[u.id] || {};
+  return {
+    id: u.id,
+    displayName: support ? 'Support' : (s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email),
+    profilePicUrl: support ? SUPPORT_AVATAR : (s.profilePicUrl || ''),
+    email: u.email,
+    verified: support || isVerified(u.id),
+    isSupport: support,
+  };
+}
+
+export function getSupportCard() {
+  const u = getSupportUser();
+  return u ? publicMessengerCard(u) : null;
+}
+
 // ── Search users by name or email (all users are searchable) ─────────────
 export function searchPublicUsers(query) {
   query = (query || '').toLowerCase().trim();
-  if (!query || query.length < 2) return [];
+  if (!query) return [];
   const users = Object.values(webUsersData.users);
-  return users
+  const supportHit = query === 'sup' || query.includes('support') || SUPPORT_EMAIL.includes(query);
+  if (!supportHit && query.length < 2) return [];
+  const results = users
     .filter(u => {
+      if (isSupportEmail(u.email) && supportHit) return true;
       const s = messengerData.settings[u.id] || {};
       const displayName = s.username || `${u.name || ''} ${u.surname || ''}`.trim();
       return (
@@ -1578,43 +1631,28 @@ export function searchPublicUsers(query) {
         (u.email || '').toLowerCase().includes(query)
       );
     })
-    .map(u => {
-      const s = messengerData.settings[u.id] || {};
-      return {
-        id: u.id,
-        displayName: s.username || `${u.name || ''} ${u.surname || ''}`.trim() || u.email,
-        profilePicUrl: s.profilePicUrl || '',
-        email: u.email,
-      };
-    })
-    .slice(0, 10);
+    .map(publicMessengerCard)
+    .filter(Boolean);
+  results.sort((a, b) => {
+    if (a.isSupport && !b.isSupport) return -1;
+    if (b.isSupport && !a.isSupport) return 1;
+    return 0;
+  });
+  return results.slice(0, 10);
 }
 
 // Find user by email (for starting a chat by email)
 export function findUserByEmail(email) {
-  const u = Object.values(webUsersData.users).find(u => u.email?.toLowerCase() === email.toLowerCase());
-  if (!u) return null;
-  const s = messengerData.settings[u.id] || {};
-  return {
-    id: u.id,
-    displayName: s.username || `${u.name} ${u.surname || ''}`.trim() || u.email,
-    profilePicUrl: s.profilePicUrl || '',
-    email: u.email,
-  };
+  const u = Object.values(webUsersData.users).find(x => x.email?.toLowerCase() === String(email || '').toLowerCase());
+  return u ? publicMessengerCard(u) : null;
 }
 
 // Get minimal user info for a list of user IDs (for building inbox contact list)
 export function getUserInfoBulk(userIds) {
   return userIds.map(id => {
     const u = webUsersData.users[id];
-    if (!u) return { id, displayName: 'Unknown', profilePicUrl: '', email: '' };
-    const s = messengerData.settings[id] || {};
-    return {
-      id,
-      displayName: s.username || `${u.name} ${u.surname || ''}`.trim() || u.email,
-      profilePicUrl: s.profilePicUrl || '',
-      email: u.email,
-    };
+    if (!u) return { id, displayName: 'Unknown', profilePicUrl: '', email: '', verified: false, isSupport: false };
+    return publicMessengerCard(u);
   });
 }
 
