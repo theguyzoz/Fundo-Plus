@@ -645,7 +645,8 @@ router.get('/api/skills/files', (req, res) => {
   } catch { res.json({ ok: true, files: [] }); }
 });
 
-// Track study sessiols/session', requireAuth, (req, res) => {
+// Track study session open
+router.post('/api/skills/session', requireAuth, (req, res) => {
   const uid = req.user.id;
   const isLinked = !!req.user.jid;
   const limits = getPlanLimits(uid, isLinked);
