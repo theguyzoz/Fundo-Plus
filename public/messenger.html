@@ -120,8 +120,10 @@
     .media-card img,.media-card video{display:block;width:100%;max-height:220px;object-fit:cover;background:#0b1220}
     .media-file{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:.8rem;font-weight:700}
     .media-file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .preview-btn{display:inline-flex;margin:4px 0 2px;border:0;border-radius:999px;padding:4px 10px;font-size:.68rem;font-weight:800;cursor:pointer;background:#eef2ff;color:#3730a3}
+    .preview-btn{display:inline-flex;margin:4px 6px 2px 0;border:0;border-radius:999px;padding:4px 10px;font-size:.68rem;font-weight:800;cursor:pointer;background:#eef2ff;color:#3730a3}
     .msg.out .preview-btn{background:rgba(255,255,255,.2);color:#fff}
+    .preview-btn.dl{background:#ecfdf3;color:#166534}
+    .msg.out .preview-btn.dl{background:rgba(255,255,255,.28);color:#fff}
     .file-chip{display:none;align-items:center;gap:8px;margin:0 8px 8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:.8rem}
     .file-chip.open{display:flex}
     .file-chip b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -308,7 +310,7 @@
             <b id="fileChipName">file</b>
             <button class="ghost" type="button" onclick="clearPendingMedia()">✕</button>
           </div>
-          <input type="file" id="mediaInput" accept="image/*,video/*,application/pdf" hidden onchange="onMediaPicked(this)">
+          <input type="file" id="mediaInput" accept="image/*,video/*,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onchange="onMediaPicked(this)">
           <div class="comp-row">
             <button class="ghost" title="Attach" type="button" onclick="document.getElementById('mediaInput').click()">📎</button>
             <button class="ghost" title="Emoji" onclick="toggleEmoji()">☺</button>
@@ -926,9 +928,16 @@ function tickHtml(status) {
   if (status === 'failed') return '<span class="ticks failed">!</span>';
   return '<span class="ticks sent">…</span>';
 }
+function mediaKindLabel(type, name) {
+  if (type === 'image') return 'Photo';
+  if (type === 'video') return 'Video';
+  if (type === 'pdf') return 'PDF';
+  if (type === 'docx') return 'Word document';
+  return name || 'File';
+}
 function mediaLabel(m) {
   if (!m || !m.media) return (m && m.text) || '';
-  var kind = m.media.type === 'image' ? 'Photo' : m.media.type === 'video' ? 'Video' : (m.media.name || 'File');
+  var kind = mediaKindLabel(m.media.type, m.media.name);
   return m.text ? (kind + ' · ' + m.text) : kind;
 }
 function mediaHtml(m) {
@@ -937,8 +946,13 @@ function mediaHtml(m) {
   var inner = '';
   if (md.type === 'image' && md.url) inner = '<img src="' + esc(md.url) + '" alt="">';
   else if (md.type === 'video' && md.url) inner = '<video src="' + esc(md.url) + '" muted playsinline></video>';
-  else inner = '<div class="media-file">📄<span>' + esc(md.name || 'File') + '</span></div>';
-  return '<div class="media-card">' + inner + '</div><button type="button" class="preview-btn" data-act="preview">Preview</button>';
+  else {
+    var icon = md.type === 'docx' ? '📝' : '📄';
+    inner = '<div class="media-file">' + icon + '<span>' + esc(md.name || 'File') + '</span></div>';
+  }
+  return '<div class="media-card">' + inner + '</div>' +
+    '<button type="button" class="preview-btn" data-act="preview">Preview</button>' +
+    '<button type="button" class="preview-btn dl" data-act="download">Download</button>';
 }
 function renderMessages() {
   var el = document.getElementById('msgs');
@@ -974,6 +988,8 @@ function renderMessages() {
     if (rb) rb.onclick = function (e) { e.stopPropagation(); setReply(idx); };
     var pb = node.querySelector('[data-act="preview"]');
     if (pb) pb.onclick = function (e) { e.stopPropagation(); previewMedia(idx); };
+    var db = node.querySelector('[data-act="download"]');
+    if (db) db.onclick = function (e) { e.stopPropagation(); downloadMedia(idx); };
     var q = node.querySelector('[data-act="jump"]');
     if (q) q.onclick = function (e) { e.stopPropagation(); jumpToReply(q.getAttribute('data-rid')); };
   });
@@ -1002,15 +1018,24 @@ function setReply(index) {
   document.getElementById('replyBar').classList.add('open');
   document.getElementById('msgInput').focus();
 }
+function classifyPickedFile(f) {
+  var mime = (f.type || '').toLowerCase();
+  var name = (f.name || '').toLowerCase();
+  if (mime.indexOf('image/') === 0) return { type: 'image', mime: mime };
+  if (mime.indexOf('video/') === 0) return { type: 'video', mime: mime };
+  if (mime === 'application/pdf' || name.endsWith('.pdf')) return { type: 'pdf', mime: 'application/pdf' };
+  if (name.endsWith('.docx') || mime.indexOf('wordprocessingml') !== -1)
+    return { type: 'docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
+  return null;
+}
 function onMediaPicked(input) {
   var f = input.files && input.files[0];
   input.value = '';
   if (!f) return;
   if (f.size > 50 * 1024 * 1024) { toast('Max 50 MB'); return; }
-  var mime = f.type || '';
-  var ok = mime.indexOf('image/') === 0 || mime.indexOf('video/') === 0 || mime === 'application/pdf';
-  if (!ok) { toast('Images, video or PDF only'); return; }
-  pendingMedia = { file: f, name: f.name, mime: mime, size: f.size, type: mime.indexOf('image/') === 0 ? 'image' : mime.indexOf('video/') === 0 ? 'video' : 'pdf' };
+  var kind = classifyPickedFile(f);
+  if (!kind) { toast('Images, video, PDF or DOCX only'); return; }
+  pendingMedia = { file: f, name: f.name, mime: kind.mime, size: f.size, type: kind.type };
   document.getElementById('fileChipName').textContent = f.name;
   document.getElementById('fileChip').classList.add('open');
 }
@@ -1022,7 +1047,7 @@ async function uploadPendingMedia() {
   if (!pendingMedia || !pendingMedia.file) return null;
   var fd = new FormData();
   fd.append('file', pendingMedia.file, pendingMedia.name);
-  toast('Uploading…');
+  toast('Uploading… slow network can take a minute');
   var r = await fetch('/api/messenger/media', { method: 'POST', headers: { 'x-session-token': TOKEN }, body: fd });
   var d = await r.json().catch(function () { return {}; });
   if (!r.ok || !d.media) throw new Error(d.error || 'Upload failed');
@@ -1042,12 +1067,37 @@ async function previewMedia(index) {
     openLightbox(m.media, r.previewUrl);
   } catch (e) { toast('Preview failed'); }
 }
+async function downloadMedia(index) {
+  var c = inbox[activeId];
+  var m = c && c.messages[index];
+  if (!m || !m.media || !m.media.url) return;
+  try {
+    var r = await api('POST', '/api/messenger/preview', {
+      url: m.media.url, name: m.media.name, type: m.media.type, mime: m.media.mime, size: m.media.size
+    });
+    if (!r || !r.ok || !r.previewUrl) { toast(r && r.error || 'Download failed'); return; }
+    m.media.previewUrl = r.previewUrl;
+    saveInbox();
+    var a = document.createElement('a');
+    a.href = r.previewUrl + (r.previewUrl.indexOf('?') >= 0 ? '&' : '?') + 'dl=1';
+    a.download = m.media.name || 'file';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) { toast('Download failed'); }
+}
 function openLightbox(media, url) {
   var body = document.getElementById('lbBody');
   var src = url || media.previewUrl || media.url;
   if (media.type === 'image') body.innerHTML = '<img src="' + esc(src) + '" alt="">';
   else if (media.type === 'video') body.innerHTML = '<video src="' + esc(src) + '" controls autoplay></video>';
-  else body.innerHTML = '<p style="padding:24px 8px 8px"><a href="' + esc(src) + '" target="_blank" rel="noopener">Open ' + esc(media.name || 'file') + '</a></p>';
+  else {
+    var dl = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'dl=1';
+    body.innerHTML = '<p style="padding:28px 12px 12px;font-weight:700">' + esc(media.name || 'File') + '</p>' +
+      '<p style="padding:0 12px 16px"><a class="preview-btn" href="' + esc(src) + '" target="_blank" rel="noopener">Preview</a> ' +
+      '<a class="preview-btn dl" href="' + esc(dl) + '" download="' + esc(media.name || 'file') + '">Download</a></p>';
+  }
   document.getElementById('mediaLb').classList.add('open');
 }
 function closeLightbox() {

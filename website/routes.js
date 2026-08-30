@@ -1391,12 +1391,27 @@ router.post('/api/messenger/preview', requireAuth, (req, res) => {
   });
 });
 
-router.get('/api/messenger/file/:token', (req, res) => {
+router.get('/api/messenger/file/:token', async (req, res) => {
   const p = touchMediaPreview(req.params.token);
   if (!p) return res.status(410).json({ error: 'Preview expired' });
-  res.setHeader('Cache-Control', 'private, max-age=60');
-  if (p.name) res.setHeader('Content-Disposition', `inline; filename="${safeFilename(p.name)}"`);
-  return res.redirect(302, p.catboxUrl);
+  const filename = safeFilename(p.name || 'file');
+  const asDownload = String(req.query.dl || '') === '1';
+  if (!asDownload) {
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    return res.redirect(302, p.catboxUrl);
+  }
+  try {
+    const r = await fetch(p.catboxUrl);
+    if (!r.ok) return res.status(502).json({ error: 'Could not fetch file' });
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.setHeader('Content-Type', p.mime || r.headers.get('content-type') || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', String(buf.length));
+    res.send(buf);
+  } catch (e) {
+    res.status(502).json({ error: 'Download failed' });
+  }
 });
 
 router.post('/api/messenger/unsend', requireAuth, async (req, res) => {

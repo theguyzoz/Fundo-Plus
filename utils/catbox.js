@@ -13,6 +13,7 @@ export function classifyMedia(mime, filename) {
   if (m.startsWith('image/')) return 'image';
   if (m.startsWith('video/')) return 'video';
   if (m === 'application/pdf' || ext === 'pdf') return 'pdf';
+  if (ext === 'docx' || m.includes('wordprocessingml.document')) return 'docx';
   if (m.startsWith('audio/')) return 'audio';
   return 'file';
 }
@@ -24,8 +25,8 @@ export function assertAllowedMedia(mime, filename, size) {
   const ext = String(filename || '').split('.').pop().toLowerCase();
   if (BLOCKED_EXT.has(ext)) return 'This file type is not allowed';
   const kind = classifyMedia(mime, filename);
-  if (!['image', 'video', 'pdf'].includes(kind)) {
-    return 'Only images, video, and PDF are allowed';
+  if (!['image', 'video', 'pdf', 'docx'].includes(kind)) {
+    return 'Only images, video, PDF, and DOCX are allowed';
   }
   return null;
 }
@@ -44,7 +45,7 @@ export async function uploadToCatbox(buffer, filename, mime) {
   const blob = new Blob([buffer], { type: mime || 'application/octet-stream' });
   form.append('fileToUpload', blob, safeFilename(filename));
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 90_000);
+  const t = setTimeout(() => ctrl.abort(), 180_000);
   try {
     const r = await fetch(CATBOX_API, { method: 'POST', body: form, signal: ctrl.signal });
     const text = (await r.text()).trim();
