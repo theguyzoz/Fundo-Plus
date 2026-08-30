@@ -22,6 +22,7 @@ import {
   isVerified, setVerified, getSupportCard, publicMessengerCard, isSupportEmail,
   storePendingMessage, drainPendingMessages, countPendingMessages,
   countPendingBySender, pruneExpiredMessages, markMessagesRead,
+  unsendPendingMessage, getOrCreateMediaPreview, touchMediaPreview, pruneExpiredMediaPreviews,
   drainMessengerAcks, getLastSeenBulk, getUserLastSeen,
   // subscription & usage
   getUserPlan, getPlanLimits, setUserSubscription, getAllSubscriptions,
@@ -77,6 +78,7 @@ import {
 } from './auth.js';
 import { askWebAI, clearWebHistory } from './ai.js';
 import { createVerifyToken, consumeToken } from '../utils/verify.js';
+import { uploadToCatbox, classifyMedia, assertAllowedMedia, safeFilename, CATBOX_MAX_BYTES } from '../utils/catbox.js';
 import { createPayment, verifyUpdate, pollTransaction, isConfigured as isPaynowConfigured } from '../utils/paynow.js';
 import rateLimit from 'express-rate-limit';
 import {
@@ -221,6 +223,16 @@ const apkUpload = multer({
     const ok = file.originalname.endsWith('.apk') ||
                file.mimetype === 'application/vnd.android.package-archive';
     if (!ok) return cb(new Error('APK files only'));
+    cb(null, true);
+  }
+});
+
+const messengerMediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: CATBOX_MAX_BYTES },
+  fileFilter(req, file, cb) {
+    const err = assertAllowedMedia(file.mimetype, file.originalname, null);
+    if (err) return cb(new Error(err));
     cb(null, true);
   }
 });
@@ -1193,14 +1205,24 @@ router.get('/api/community', (req, res) => {
 
 // Post a new message
 router.post('/api/community', requireAuth, async (req, res) => {
-  const { text, replyTo = null } = req.body || {};
-  if (!text || !text.trim()) return res.status(400).json({ error: 'Message text required' });
-  if (text.trim().length > 1000) return res.status(400).json({ error: 'Message too long (max 1000 chars)' });
+  const { text, replyTo = null, media = null } = req.body || {};
+  const trimmed = String(text || '').trim();
+  const hasMedia = !!(media && media.url);
+  if (!trimmed && !hasMedia) return res.status(400).json({ error: 'Message text required' });
+  if (trimmed.length > 1000) return res.status(400).json({ error: 'Message too long (max 1000 chars)' });
   const user = req.user;
   const displayName = user.name ? `${user.name} ${user.surname || ''}`.trim() : (user.email || 'Anonymous');
   const ambassadorStatus = !!(getAmbassadorByEmail(user.email));
+  const mediaSafe = hasMedia ? {
+    url: String(media.url).slice(0, 500),
+    name: String(media.name || 'file').slice(0, 120),
+    type: media.type || classifyMedia(media.mime, media.name),
+    mime: String(media.mime || '').slice(0, 80),
+    size: Number(media.size) || 0,
+  } : null;
   const msg = addCommunityMessage({
-    userId: user.id, name: displayName, text: text.trim(), replyTo,
+    userId: user.id, name: displayName, text: trimmed, replyTo,
+    media: mediaSafe,
     isAmbassador: ambassadorStatus, isAdmin: !!user.isAdmin,
   });
   try {
@@ -1209,7 +1231,7 @@ router.post('/api/community', requireAuth, async (req, res) => {
   } catch (_) {}
   // Detect @mentions and store mentionedUserIds
   try {
-    const mentionNames = [...text.matchAll(/@([\w]+)/g)].map(m => m[1].toLowerCase());
+    const mentionNames = [...trimmed.matchAll(/@([\w]+)/g)].map(m => m[1].toLowerCase());
     if (mentionNames.length) {
       const allUsers = getAllWebUsers ? getAllWebUsers() : [];
       const mentionedIds = allUsers
@@ -1230,9 +1252,14 @@ router.post('/api/community/:id/like', requireAuth, (req, res) => {
 });
 
 // Delete a message
-router.delete('/api/community/:id', requireAuth, (req, res) => {
-  const ok = deleteCommunityMessage(req.params.id, req.user.id, false);
+router.delete('/api/community/:id', requireAuth, async (req, res) => {
+  const privileged = !!(req.user.isAdmin || isSupportEmail(req.user.email));
+  const ok = deleteCommunityMessage(req.params.id, req.user.id, privileged);
   if (!ok) return res.status(403).json({ error: 'Not allowed or not found' });
+  try {
+    const { emitChannelUnsend } = await import('../bot.js').catch(() => ({}));
+    if (emitChannelUnsend) emitChannelUnsend({ id: req.params.id, by: req.user.id });
+  } catch (_) {}
   res.json({ ok: true });
 });
 
@@ -1242,7 +1269,8 @@ router.delete('/api/community/:id', requireAuth, (req, res) => {
 
 // Prune expired pending messages on startup + every hour
 pruneExpiredMessages();
-setInterval(pruneExpiredMessages, 60 * 60 * 1000);
+pruneExpiredMediaPreviews();
+setInterval(() => { pruneExpiredMessages(); pruneExpiredMediaPreviews(); }, 60 * 60 * 1000);
 
 // Race a promise against a hard timeout so a hung DB/store call
 // can never leave a messenger request pending forever.
@@ -1328,28 +1356,108 @@ router.post('/api/messenger/user-info', requireAuth, async (req, res) => {
 });
 
 // POST /api/messenger/send  — store a pending DM + real-time emit
+router.post('/api/messenger/media', requireAuth, (req, res) => {
+  messengerMediaUpload.single('file')(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
+    if (!req.file) return res.status(400).json({ error: 'file required' });
+    const name = safeFilename(req.file.originalname);
+    const blocked = assertAllowedMedia(req.file.mimetype, name, req.file.size);
+    if (blocked) return res.status(400).json({ error: blocked });
+    const type = classifyMedia(req.file.mimetype, name);
+    try {
+      const url = await uploadToCatbox(req.file.buffer, name, req.file.mimetype);
+      res.json({ ok: true, media: { url, name, type, mime: req.file.mimetype, size: req.file.size } });
+    } catch (e) {
+      console.warn('[messenger] catbox upload failed:', e.message);
+      res.status(502).json({ error: 'Catbox could not store this file. Try a smaller image, video, or PDF.' });
+    }
+  });
+});
+
+router.post('/api/messenger/preview', requireAuth, (req, res) => {
+  const { url, name, type, mime, size } = req.body || {};
+  if (!url || !String(url).startsWith('https://files.catbox.moe/')) {
+    return res.status(400).json({ error: 'catbox url required' });
+  }
+  const made = getOrCreateMediaPreview({ catboxUrl: url, name, type, mime, size });
+  if (!made) return res.status(400).json({ error: 'Could not create preview' });
+  const previewUrl = `${req.protocol}://${req.get('host')}/api/messenger/file/${made.token}`;
+  res.json({
+    ok: true,
+    previewUrl,
+    token: made.token,
+    expiresInHours: 12,
+    reused: !!made.reused,
+  });
+});
+
+router.get('/api/messenger/file/:token', (req, res) => {
+  const p = touchMediaPreview(req.params.token);
+  if (!p) return res.status(410).json({ error: 'Preview expired' });
+  res.setHeader('Cache-Control', 'private, max-age=60');
+  if (p.name) res.setHeader('Content-Disposition', `inline; filename="${safeFilename(p.name)}"`);
+  return res.redirect(302, p.catboxUrl);
+});
+
+router.post('/api/messenger/unsend', requireAuth, async (req, res) => {
+  try {
+    const { id, to, channel } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'id required' });
+    const privileged = !!(req.user.isAdmin || isSupportEmail(req.user.email));
+    if (channel) {
+      const ok = deleteCommunityMessage(id, req.user.id, privileged);
+      if (!ok) return res.status(403).json({ error: 'Not allowed or not found' });
+      try {
+        const { emitChannelUnsend } = await import('../bot.js').catch(() => ({}));
+        if (emitChannelUnsend) emitChannelUnsend({ id, by: req.user.id });
+      } catch (_) {}
+      return res.json({ ok: true });
+    }
+    const result = await withTimeout(() => unsendPendingMessage(id, req.user.id, privileged));
+    if (!result.ok) return res.status(403).json({ error: 'You can only delete your own messages' });
+    try {
+      const { emitMessengerUnsend } = await import('../bot.js').catch(() => ({}));
+      if (emitMessengerUnsend) {
+        emitMessengerUnsend({ id, from: req.user.id, to, by: req.user.id });
+      }
+    } catch (_) {}
+    res.json({ ok: true });
+  } catch (err) { messengerErr(res, err); }
+});
+
 router.post('/api/messenger/send', requireAuth, async (req, res) => {
   try {
-    const { to, text, clientId } = req.body || {};
-    if (!to || !text?.trim()) return res.status(400).json({ error: 'to and text required' });
+    const { to, text, clientId, replyText, replyName, replyId, media } = req.body || {};
+    const trimmed = String(text || '').trim();
+    const hasMedia = !!(media && media.url);
+    if (!to || (!trimmed && !hasMedia)) return res.status(400).json({ error: 'to and text required' });
+    if (hasMedia && !String(media.url).startsWith('https://files.catbox.moe/')) {
+      return res.status(400).json({ error: 'invalid media url' });
+    }
     const result = await withTimeout(() => {
-      // Check if recipient has blocked the sender
       if (isBlocked(to, req.user.id)) return { blocked: true };
-      const msg = storePendingMessage({ from: req.user.id, to, text: text.trim(), clientId });
+      const msg = storePendingMessage({
+        from: req.user.id, to, text: trimmed, clientId,
+        replyText, replyName, replyId,
+        media: hasMedia ? media : null,
+      });
       return { blocked: false, msg };
     });
     if (result.blocked) return res.status(403).json({ error: 'blocked' });
 
-    // Real-time push via Socket.IO
     try {
       const { emitMessengerMessage } = await import('../bot.js').catch(() => ({}));
       if (emitMessengerMessage) {
         emitMessengerMessage(to, {
           id: result.msg?.id,
           from: req.user.id,
-          text: text.trim(),
-          sentAt: new Date().toISOString(),
-          clientId
+          text: trimmed,
+          sentAt: result.msg?.sentAt || new Date().toISOString(),
+          clientId,
+          replyText: result.msg?.replyText || '',
+          replyName: result.msg?.replyName || '',
+          replyId: result.msg?.replyId || null,
+          media: result.msg?.media || null,
         });
       }
     } catch (_) {}

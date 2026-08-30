@@ -655,9 +655,21 @@ function emitChannelMessage(message) {
   io.to('messenger:channel').emit('messenger:channel-message', message);
 }
 
+function emitMessengerUnsend(payload) {
+  const { from, to } = payload || {};
+  if (to) io.to(`messenger:${to}`).emit('messenger:unsend', payload);
+  if (from) io.to(`messenger:${from}`).emit('messenger:unsend', payload);
+}
+
+function emitChannelUnsend(payload) {
+  io.to('messenger:channel').emit('messenger:channel-unsend', payload);
+}
+
 global.emitMessengerMessage = emitMessengerMessage;
 global.emitMessengerAck = emitMessengerAck;
 global.emitChannelMessage = emitChannelMessage;
+global.emitMessengerUnsend = emitMessengerUnsend;
+global.emitChannelUnsend = emitChannelUnsend;
 
 function emitStatus()         { io.emit('status', buildStatusPayload()); }
 function buildStatusPayload() {
@@ -700,4 +712,4 @@ export async function startWebServer(port) {
   });
   server.on('error', e => { console.error('❌ Server error:', e.message); process.exit(1); });
 }
-export { emitStatus };
+export { emitStatus, emitMessengerMessage, emitMessengerAck, emitChannelMessage, emitMessengerUnsend, emitChannelUnsend };

@@ -844,15 +844,18 @@ export function reloadMessengerFromDisk() {
     messengerData = fresh;
     if (!Array.isArray(messengerData.pending)) messengerData.pending = [];
     if (!Array.isArray(messengerData.acks)) messengerData.acks = [];
+    if (!messengerData.verified || typeof messengerData.verified !== 'object') messengerData.verified = {};
+    if (!messengerData.previews || typeof messengerData.previews !== 'object') messengerData.previews = {};
     console.log(`[store] ✅ Messenger reloaded from disk: ${Object.keys(messengerData.settings).length} settings, ${messengerData.pending.length} pending`);
   }
 }
 
-export function addCommunityMessage({ userId, name, text, replyTo = null, isAmbassador = false, isAdmin = false }) {
+export function addCommunityMessage({ userId, name, text, replyTo = null, isAmbassador = false, isAdmin = false, media = null }) {
   const msg = {
     id: `cm-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
-    userId, name, text: text.slice(0, 1000),
+    userId, name, text: String(text || '').slice(0, 1000),
     replyTo,
+    media: media || null,
     isAmbassador: !!isAmbassador,
     isAdmin: !!isAdmin,
     createdAt: new Date().toISOString(),
@@ -869,10 +872,10 @@ export function getCommunityMessages(limit = 200) {
   return communityData.messages.slice(-limit);
 }
 
-export function deleteCommunityMessage(msgId, userId, isAdmin = false) {
+export function deleteCommunityMessage(msgId, userId, privileged = false) {
   const idx = communityData.messages.findIndex(m => m.id === msgId);
   if (idx === -1) return false;
-  if (!isAdmin && communityData.messages[idx].userId !== userId) return false;
+  if (!privileged && communityData.messages[idx].userId !== userId) return false;
   communityData.messages.splice(idx, 1);
   saveCommunity();
   return true;
@@ -1554,10 +1557,11 @@ export function getAmbassadorsAdminOverview() {
 const MESSENGER_FILE = path.join(DATA_DIR, 'messenger.json');
 // { settings: { [userId]: { username, bio, profilePublic, profilePicUrl, bgType, bgUrl, blocked: [userId] } },
 //   pending: [ { id, from, to, text, sentAt, expiresAt, readAt } ] }
-let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [], acks: [], verified: {} });
+let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [], acks: [], verified: {}, previews: {} });
 if (!Array.isArray(messengerData.acks)) messengerData.acks = [];
 if (!Array.isArray(messengerData.pending)) messengerData.pending = [];
 if (!messengerData.verified || typeof messengerData.verified !== 'object') messengerData.verified = {};
+if (!messengerData.previews || typeof messengerData.previews !== 'object') messengerData.previews = {};
 function saveMessenger() { writeJson(MESSENGER_FILE, messengerData); }
 let _msgrSaveTimer = null;
 function saveMessengerDebounced() {
@@ -1703,11 +1707,21 @@ export function getUserInfoBulk(userIds) {
 }
 
 // ── Pending messages (server stores until recipient fetches) ─────────────
-export function storePendingMessage({ from, to, text, clientId }) {
+export function storePendingMessage({ from, to, text, clientId, replyText, replyName, replyId, media }) {
   const msg = {
     id: `msg-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
     clientId: clientId || null,
-    from, to, text: text.slice(0, 5000),
+    from, to, text: String(text || '').slice(0, 5000),
+    replyText: replyText ? String(replyText).slice(0, 400) : '',
+    replyName: replyName ? String(replyName).slice(0, 80) : '',
+    replyId: replyId || null,
+    media: media && media.url ? {
+      url: String(media.url).slice(0, 500),
+      name: String(media.name || 'file').slice(0, 120),
+      type: media.type || 'file',
+      mime: String(media.mime || '').slice(0, 80),
+      size: Number(media.size) || 0,
+    } : null,
     sentAt: new Date().toISOString(),
     status: 'sent',           // sent → delivered → read
     expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
@@ -1715,6 +1729,71 @@ export function storePendingMessage({ from, to, text, clientId }) {
   messengerData.pending.push(msg);
   saveMessenger();
   return msg;
+}
+
+export function unsendPendingMessage(msgId, requesterId, privileged = false) {
+  const idx = messengerData.pending.findIndex(m => m.id === msgId);
+  if (idx === -1) return { ok: true, found: false };
+  const m = messengerData.pending[idx];
+  if (!privileged && m.from !== requesterId) return { ok: false, found: true };
+  messengerData.pending.splice(idx, 1);
+  saveMessenger();
+  return { ok: true, found: true, msg: m };
+}
+
+export const MEDIA_PREVIEW_TTL_MS = 12 * 60 * 60 * 1000;
+
+export function getOrCreateMediaPreview({ catboxUrl, name, type, mime, size }) {
+  const mediaKey = String(catboxUrl || '').trim();
+  if (!mediaKey) return null;
+  const now = Date.now();
+  for (const [token, p] of Object.entries(messengerData.previews || {})) {
+    if (p && p.mediaKey === mediaKey && now - (p.lastAccess || 0) < MEDIA_PREVIEW_TTL_MS) {
+      p.lastAccess = now;
+      saveMessenger();
+      return { token, preview: p, reused: true };
+    }
+  }
+  const token = `pv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const preview = {
+    mediaKey,
+    catboxUrl: mediaKey,
+    name: name || 'file',
+    type: type || 'file',
+    mime: mime || '',
+    size: Number(size) || 0,
+    lastAccess: now,
+    createdAt: now,
+  };
+  messengerData.previews[token] = preview;
+  saveMessenger();
+  return { token, preview, reused: false };
+}
+
+export function touchMediaPreview(token) {
+  const p = messengerData.previews && messengerData.previews[token];
+  if (!p) return null;
+  if (Date.now() - (p.lastAccess || 0) > MEDIA_PREVIEW_TTL_MS) {
+    delete messengerData.previews[token];
+    saveMessenger();
+    return null;
+  }
+  p.lastAccess = Date.now();
+  saveMessenger();
+  return p;
+}
+
+export function pruneExpiredMediaPreviews() {
+  const now = Date.now();
+  let n = 0;
+  for (const [token, p] of Object.entries(messengerData.previews || {})) {
+    if (!p || now - (p.lastAccess || 0) > MEDIA_PREVIEW_TTL_MS) {
+      delete messengerData.previews[token];
+      n++;
+    }
+  }
+  if (n) saveMessenger();
+  return n;
 }
 
 // Fetch and drain pending messages for a recipient (delete after fetch)

@@ -114,6 +114,22 @@
     .quote{border-left:3px solid #818cf8;background:rgba(67,56,202,.08);border-radius:8px;padding:6px 8px;margin-bottom:6px;font-size:.78rem}
     .msg.out .quote{background:rgba(255,255,255,.16);border-left-color:#c7d2fe}
     .quote b{display:block;font-size:.68rem;margin-bottom:2px;opacity:.85}
+    .quote{cursor:pointer}
+    .media-card{margin:6px 0 4px;border-radius:12px;overflow:hidden;background:rgba(15,23,42,.06);max-width:260px}
+    .msg.out .media-card{background:rgba(255,255,255,.14)}
+    .media-card img,.media-card video{display:block;width:100%;max-height:220px;object-fit:cover;background:#0b1220}
+    .media-file{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:.8rem;font-weight:700}
+    .media-file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .preview-btn{display:inline-flex;margin:4px 0 2px;border:0;border-radius:999px;padding:4px 10px;font-size:.68rem;font-weight:800;cursor:pointer;background:#eef2ff;color:#3730a3}
+    .msg.out .preview-btn{background:rgba(255,255,255,.2);color:#fff}
+    .file-chip{display:none;align-items:center;gap:8px;margin:0 8px 8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:.8rem}
+    .file-chip.open{display:flex}
+    .file-chip b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .lb{display:none;position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:80;align-items:center;justify-content:center;padding:24px}
+    .lb.open{display:flex}
+    .lb-inner{background:#fff;border-radius:16px;max-width:min(920px,94vw);max-height:90vh;overflow:auto;padding:14px;position:relative}
+    .lb-inner img,.lb-inner video{max-width:100%;max-height:78vh;display:block}
+    .lb-close{position:absolute;top:8px;right:8px}
     .who{font-size:.7rem;font-weight:800;color:var(--acc);margin:0 4px 4px}
     .meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:.66rem;opacity:.7}
     .msg.out .meta{justify-content:flex-end}
@@ -288,7 +304,13 @@
             <div style="flex:1;min-width:0"><b>Replying</b><div class="txt" id="replyTxt"></div></div>
             <button class="ghost" onclick="clearReply()">✕</button>
           </div>
+          <div class="file-chip" id="fileChip">
+            <b id="fileChipName">file</b>
+            <button class="ghost" type="button" onclick="clearPendingMedia()">✕</button>
+          </div>
+          <input type="file" id="mediaInput" accept="image/*,video/*,application/pdf" hidden onchange="onMediaPicked(this)">
           <div class="comp-row">
+            <button class="ghost" title="Attach" type="button" onclick="document.getElementById('mediaInput').click()">📎</button>
             <button class="ghost" title="Emoji" onclick="toggleEmoji()">☺</button>
             <textarea id="msgInput" rows="1" placeholder="Message…" onkeydown="onComposeKey(event)" oninput="autoGrow(this)"></textarea>
             <button class="send" onclick="sendMessage()">
@@ -348,8 +370,14 @@
 <div class="ctx" id="msgMenu">
   <div class="ctx-item" onclick="replyFromMenu()">Reply</div>
   <div class="ctx-item" onclick="copyMessage()">Copy</div>
-  <div class="ctx-item danger" onclick="deleteMessage()">Delete</div>
+  <div class="ctx-item danger" id="msgMenuDel" onclick="deleteMessage()">Delete</div>
   <div class="ctx-meta" id="msgMenuMeta"></div>
+</div>
+<div class="lb" id="mediaLb" onclick="if(event.target===this)closeLightbox()">
+  <div class="lb-inner">
+    <button class="ghost lb-close" type="button" onclick="closeLightbox()">✕</button>
+    <div id="lbBody"></div>
+  </div>
 </div>
 <div class="ctx" id="chatMenu">
   <div class="ctx-item" onclick="editContact()">Edit nickname</div>
@@ -368,6 +396,7 @@ var activeId = null;
 var socket = null;
 var listFilter = 'all';
 var replyTo = null;
+var pendingMedia = null;
 var menuTarget = { id: null, index: -1 };
 var AV_COLORS = ['#4338ca','#2563eb','#0ea5e9','#059669','#d97706','#db2777','#7c3aed','#0f766e'];
 var QUICK = ['Got the notes?','Can you explain this?','Thanks 🙌','On it.','Later today?'];
@@ -545,6 +574,8 @@ function connectSocket() {
     renderChatList(); updateStatus(); fillProfile();
   });
   socket.on('messenger:channel-message', ingestChannel);
+  socket.on('messenger:unsend', function (d) { if (d && d.id) removeMsgById(d.id); });
+  socket.on('messenger:channel-unsend', function (d) { if (d && d.id) removeMsgById(d.id); });
 }
 
 function applyAck(readerId, status) {
@@ -604,7 +635,11 @@ function ingestIncoming(msg) {
   }
   if (!c.messages) c.messages = [];
   if (c.messages.find(function (m) { return m.id === msg.id; })) return;
-  c.messages.push({ id: msg.id, text: msg.text, sentAt: msg.sentAt, dir: 'in', status: 'delivered' });
+  c.messages.push({
+    id: msg.id, text: msg.text || '', sentAt: msg.sentAt, dir: 'in', status: 'delivered',
+    replyText: msg.replyText || '', replyName: msg.replyName || '', replyId: msg.replyId || null,
+    media: msg.media || null
+  });
   if (activeId !== msg.from) c.unread = (c.unread || 0) + 1;
   presenceOnline[msg.from] = true;
   c.online = true;
@@ -646,10 +681,16 @@ function ingestChannel(msg) {
   var c = inbox[CHANNEL_ID];
   if (!c.messages) c.messages = [];
   if (c.messages.find(function (m) { return m.id === msg.id; })) return;
+  var rt = msg.replyTo;
+  var replyText = '', replyName = '', replyId = null;
+  if (rt && typeof rt === 'object') { replyText = rt.text || ''; replyName = rt.name || ''; replyId = rt.id || null; }
+  else if (typeof rt === 'string') replyText = rt;
   c.messages.push({
-    id: msg.id, text: msg.text, sentAt: msg.createdAt || msg.sentAt || new Date().toISOString(),
+    id: msg.id, text: msg.text || '', sentAt: msg.createdAt || msg.sentAt || new Date().toISOString(),
     dir: (me && msg.userId === me.id) ? 'out' : 'in', status: 'sent',
-    fromName: msg.name || 'Student', fromId: msg.userId
+    fromName: msg.name || 'Student', fromId: msg.userId,
+    replyText: replyText, replyName: replyName, replyId: replyId,
+    media: msg.media || null
   });
   if (c.messages.length > 400) c.messages = c.messages.slice(-400);
   if (activeId !== CHANNEL_ID) c.unread = (c.unread || 0) + 1;
@@ -885,6 +926,20 @@ function tickHtml(status) {
   if (status === 'failed') return '<span class="ticks failed">!</span>';
   return '<span class="ticks sent">…</span>';
 }
+function mediaLabel(m) {
+  if (!m || !m.media) return (m && m.text) || '';
+  var kind = m.media.type === 'image' ? 'Photo' : m.media.type === 'video' ? 'Video' : (m.media.name || 'File');
+  return m.text ? (kind + ' · ' + m.text) : kind;
+}
+function mediaHtml(m) {
+  if (!m || !m.media) return '';
+  var md = m.media;
+  var inner = '';
+  if (md.type === 'image' && md.url) inner = '<img src="' + esc(md.url) + '" alt="">';
+  else if (md.type === 'video' && md.url) inner = '<video src="' + esc(md.url) + '" muted playsinline></video>';
+  else inner = '<div class="media-file">📄<span>' + esc(md.name || 'File') + '</span></div>';
+  return '<div class="media-card">' + inner + '</div><button type="button" class="preview-btn" data-act="preview">Preview</button>';
+}
 function renderMessages() {
   var el = document.getElementById('msgs');
   var c = inbox[activeId];
@@ -899,14 +954,15 @@ function renderMessages() {
     var isOut = m.dir === 'out';
     var ticks = (isOut && !c.isChannel) ? tickHtml(m.status) : '';
     var who = c.isChannel ? (m.fromName || c.displayName) : c.displayName;
-    var quote = m.replyText ? ('<div class="quote"><b>' + esc(m.replyName || 'Reply') + '</b>' + esc(m.replyText) + '</div>') : '';
+    var quote = (m.replyText || m.replyName) ? ('<div class="quote" data-act="jump"' + (m.replyId ? ' data-rid="' + esc(m.replyId) + '"' : '') + '><b>' + esc(m.replyName || 'Reply') + '</b>' + esc(m.replyText || '') + '</div>') : '';
     var inAv = c.isChannel
       ? '<div class="av sm" style="background:' + avColor(who) + '">' + esc(initial(who)) + '</div>'
       : avMarkup(c, 'sm');
-    html += '<div class="msg ' + (isOut ? 'out' : 'in') + '" data-index="' + index + '">' +
+    var bodyTxt = m.text ? esc(m.text) : '';
+    html += '<div class="msg ' + (isOut ? 'out' : 'in') + '" data-index="' + index + '" data-mid="' + esc(m.id || '') + '">' +
       (isOut ? '' : inAv) +
       '<div>' + (isOut ? '' : '<div class="who">' + (c.isChannel ? esc(who) : nameMarkup(c)) + '</div>') +
-      '<div class="bubble">' + quote + esc(m.text) +
+      '<div class="bubble">' + quote + mediaHtml(m) + bodyTxt +
       '<div class="meta"><span>' + esc(new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) + '</span>' + ticks + '</div></div></div>' +
       '<div class="msg-actions"><button type="button" data-act="reply">↩</button></div></div>';
   });
@@ -916,18 +972,106 @@ function renderMessages() {
     node.oncontextmenu = function (e) { showMsgMenu(e, idx); };
     var rb = node.querySelector('[data-act="reply"]');
     if (rb) rb.onclick = function (e) { e.stopPropagation(); setReply(idx); };
+    var pb = node.querySelector('[data-act="preview"]');
+    if (pb) pb.onclick = function (e) { e.stopPropagation(); previewMedia(idx); };
+    var q = node.querySelector('[data-act="jump"]');
+    if (q) q.onclick = function (e) { e.stopPropagation(); jumpToReply(q.getAttribute('data-rid')); };
   });
   el.scrollTop = el.scrollHeight;
+}
+function jumpToReply(rid) {
+  if (!rid) return;
+  var safe = (window.CSS && CSS.escape) ? CSS.escape(rid) : String(rid).replace(/"/g, '');
+  var node = document.querySelector('.msg[data-mid="' + safe + '"]');
+  if (!node) return;
+  node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  node.style.outline = '2px solid #818cf8';
+  setTimeout(function () { node.style.outline = ''; }, 1400);
 }
 
 function setReply(index) {
   var c = inbox[activeId];
   if (!c || !c.messages[index]) return;
   var m = c.messages[index];
-  replyTo = { text: m.text, name: m.dir === 'out' ? 'You' : (m.fromName || c.displayName || 'Them') };
+  replyTo = {
+    id: m.id || null,
+    text: mediaLabel(m) || m.text || 'Message',
+    name: m.dir === 'out' ? 'You' : (m.fromName || c.displayName || 'Them')
+  };
   document.getElementById('replyTxt').textContent = replyTo.text;
   document.getElementById('replyBar').classList.add('open');
   document.getElementById('msgInput').focus();
+}
+function onMediaPicked(input) {
+  var f = input.files && input.files[0];
+  input.value = '';
+  if (!f) return;
+  if (f.size > 50 * 1024 * 1024) { toast('Max 50 MB'); return; }
+  var mime = f.type || '';
+  var ok = mime.indexOf('image/') === 0 || mime.indexOf('video/') === 0 || mime === 'application/pdf';
+  if (!ok) { toast('Images, video or PDF only'); return; }
+  pendingMedia = { file: f, name: f.name, mime: mime, size: f.size, type: mime.indexOf('image/') === 0 ? 'image' : mime.indexOf('video/') === 0 ? 'video' : 'pdf' };
+  document.getElementById('fileChipName').textContent = f.name;
+  document.getElementById('fileChip').classList.add('open');
+}
+function clearPendingMedia() {
+  pendingMedia = null;
+  document.getElementById('fileChip').classList.remove('open');
+}
+async function uploadPendingMedia() {
+  if (!pendingMedia || !pendingMedia.file) return null;
+  var fd = new FormData();
+  fd.append('file', pendingMedia.file, pendingMedia.name);
+  toast('Uploading…');
+  var r = await fetch('/api/messenger/media', { method: 'POST', headers: { 'x-session-token': TOKEN }, body: fd });
+  var d = await r.json().catch(function () { return {}; });
+  if (!r.ok || !d.media) throw new Error(d.error || 'Upload failed');
+  return d.media;
+}
+async function previewMedia(index) {
+  var c = inbox[activeId];
+  var m = c && c.messages[index];
+  if (!m || !m.media || !m.media.url) return;
+  try {
+    var r = await api('POST', '/api/messenger/preview', {
+      url: m.media.url, name: m.media.name, type: m.media.type, mime: m.media.mime, size: m.media.size
+    });
+    if (!r || !r.ok || !r.previewUrl) { toast(r && r.error || 'Preview failed'); return; }
+    m.media.previewUrl = r.previewUrl;
+    saveInbox();
+    openLightbox(m.media, r.previewUrl);
+  } catch (e) { toast('Preview failed'); }
+}
+function openLightbox(media, url) {
+  var body = document.getElementById('lbBody');
+  var src = url || media.previewUrl || media.url;
+  if (media.type === 'image') body.innerHTML = '<img src="' + esc(src) + '" alt="">';
+  else if (media.type === 'video') body.innerHTML = '<video src="' + esc(src) + '" controls autoplay></video>';
+  else body.innerHTML = '<p style="padding:24px 8px 8px"><a href="' + esc(src) + '" target="_blank" rel="noopener">Open ' + esc(media.name || 'file') + '</a></p>';
+  document.getElementById('mediaLb').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('mediaLb').classList.remove('open');
+  document.getElementById('lbBody').innerHTML = '';
+}
+function canDeleteMsg(m, c) {
+  if (!m) return false;
+  if (me && me.isSupport) return true;
+  if (m.dir === 'out') return true;
+  if (c && c.isChannel && me && m.fromId === me.id) return true;
+  return false;
+}
+function removeMsgById(id) {
+  if (!id) return;
+  Object.keys(inbox).forEach(function (cid) {
+    var c = inbox[cid];
+    if (!c || !c.messages) return;
+    var n = c.messages.length;
+    c.messages = c.messages.filter(function (m) { return m.id !== id; });
+    if (c.messages.length !== n && activeId === cid) renderMessages();
+  });
+  saveInbox();
+  renderChatList();
 }
 function clearReply() { replyTo = null; document.getElementById('replyBar').classList.remove('open'); }
 function insertQuick(t) {
@@ -943,37 +1087,55 @@ async function sendMessage() {
   if (!activeId) return;
   var input = document.getElementById('msgInput');
   var text = input.value.trim();
-  if (!text) return;
-  if (activeId === CHANNEL_ID) { await sendChannel(text); return; }
+  if (!text && !pendingMedia) return;
+  var media = null;
+  if (pendingMedia) {
+    try { media = await uploadPendingMedia(); }
+    catch (e) { toast(e.message || 'Upload failed'); return; }
+    clearPendingMedia();
+  }
+  if (activeId === CHANNEL_ID) { await sendChannel(text, media); return; }
   var c = inbox[activeId];
   if (!c.messages) c.messages = [];
   var destId = activeId;
-  var tempMsg = { id: 'local-' + Date.now(), text: text, sentAt: new Date().toISOString(), dir: 'out', status: 'sending', replyText: replyTo ? replyTo.text : '', replyName: replyTo ? replyTo.name : '' };
+  var tempMsg = {
+    id: 'local-' + Date.now(), text: text, sentAt: new Date().toISOString(), dir: 'out', status: 'sending',
+    replyText: replyTo ? replyTo.text : '', replyName: replyTo ? replyTo.name : '', replyId: replyTo ? replyTo.id : null,
+    media: media
+  };
   c.messages.push(tempMsg);
   saveInbox(); renderMessages(); renderChatList();
   input.value = ''; autoGrow(input); clearReply();
   document.getElementById('emojiPop').classList.remove('open');
-  var r = await api('POST', '/api/messenger/send', { to: destId, text: text });
+  var r = await api('POST', '/api/messenger/send', {
+    to: destId, text: text, replyText: tempMsg.replyText, replyName: tempMsg.replyName, replyId: tempMsg.replyId, media: media
+  });
   var idx = c.messages.findIndex(function (m) { return m.id === tempMsg.id; });
   if (r.ok) {
-    if (idx !== -1) { c.messages[idx].id = (r.message && r.message.id) || tempMsg.id; c.messages[idx].status = 'sent'; }
+    if (idx !== -1) { c.messages[idx].id = (r.message && r.message.id) || tempMsg.id; c.messages[idx].status = 'sent'; if (r.message && r.message.media) c.messages[idx].media = r.message.media; }
   } else {
     if (idx !== -1) c.messages[idx].status = 'failed';
     toast('Failed to send: ' + (r.error || 'Unknown error'));
   }
   saveInbox(); renderMessages();
 }
-async function sendChannel(text) {
+async function sendChannel(text, media) {
   var input = document.getElementById('msgInput');
   ensureLounge();
   var c = inbox[CHANNEL_ID];
   if (!c.messages) c.messages = [];
   var tempId = 'local-ch-' + Date.now();
-  c.messages.push({ id: tempId, text: text, sentAt: new Date().toISOString(), dir: 'out', status: 'sending', fromName: (me && me.displayName) || 'You', fromId: me && me.id });
+  var replyPayload = replyTo ? { id: replyTo.id, text: replyTo.text, name: replyTo.name } : null;
+  c.messages.push({
+    id: tempId, text: text, sentAt: new Date().toISOString(), dir: 'out', status: 'sending',
+    fromName: (me && me.displayName) || 'You', fromId: me && me.id,
+    replyText: replyTo ? replyTo.text : '', replyName: replyTo ? replyTo.name : '', replyId: replyTo ? replyTo.id : null,
+    media: media || null
+  });
   saveInbox(); renderMessages();
   input.value = ''; autoGrow(input); clearReply();
   document.getElementById('emojiPop').classList.remove('open');
-  var r = await api('POST', '/api/community', { text: text });
+  var r = await api('POST', '/api/community', { text: text, replyTo: replyPayload, media: media || null });
   var idx = c.messages.findIndex(function (m) { return m.id === tempId; });
   if (r.ok && r.message) {
     if (idx !== -1) { c.messages[idx].id = r.message.id; c.messages[idx].status = 'sent'; }
@@ -996,22 +1158,32 @@ function placeMenu(el, e) {
 function showMsgMenu(e, index) {
   e.preventDefault();
   menuTarget.index = index;
-  var m = inbox[activeId] && inbox[activeId].messages[index];
+  var c = inbox[activeId];
+  var m = c && c.messages[index];
   document.getElementById('msgMenuMeta').textContent = m ? new Date(m.sentAt).toLocaleString() : '';
+  var del = document.getElementById('msgMenuDel');
+  if (del) del.style.display = canDeleteMsg(m, c) ? '' : 'none';
   placeMenu(document.getElementById('msgMenu'), e);
   document.onclick = function () { hideMenus(); document.onclick = null; };
 }
 function replyFromMenu() { setReply(menuTarget.index); hideMenus(); }
 function copyMessage() {
   var c = inbox[activeId]; var m = c && c.messages[menuTarget.index];
-  if (m) navigator.clipboard.writeText(m.text).then(function () { toast('Copied'); });
+  if (m) navigator.clipboard.writeText(mediaLabel(m) || m.text || '').then(function () { toast('Copied'); });
   hideMenus();
 }
-function deleteMessage() {
+async function deleteMessage() {
   var c = inbox[activeId];
   if (!c || !c.messages) return;
-  c.messages.splice(menuTarget.index, 1);
-  saveInbox(); renderMessages(); renderChatList(); hideMenus();
+  var m = c.messages[menuTarget.index];
+  hideMenus();
+  if (!canDeleteMsg(m, c)) { toast('You can only delete your own messages'); return; }
+  var id = m && m.id;
+  if (id && String(id).indexOf('local-') !== 0) {
+    var r = await api('POST', '/api/messenger/unsend', { id: id, to: activeId, channel: c.isChannel || activeId === CHANNEL_ID });
+    if (!r.ok) { toast(r.error || 'Could not delete'); return; }
+  }
+  removeMsgById(id);
 }
 function showContactMenu(e, id) {
   e.preventDefault();
