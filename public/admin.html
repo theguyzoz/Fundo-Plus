@@ -1650,6 +1650,12 @@ async function deletePaper(id) {
 // ══════════════════════════════════════════════════════
 //  AMBASSADORS
 // ══════════════════════════════════════════════════════
+function ambEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function ambAttr(s) {
+  return ambEsc(s).replace(/'/g,'&#39;');
+}
 async function loadAmbassadors() {
   const box = document.getElementById('ambassadors-container');
   if (!box) return;
@@ -1657,53 +1663,57 @@ async function loadAmbassadors() {
   try {
     const r = await api('/api/admin/ambassadors');
     if (!r.ok) throw new Error('Status ' + r.status);
-    const ambs = (await r.json()).ambassadors || [];
+    const data = await r.json();
+    const ambs = data.ambassadors || [];
+    const tot = data.totals || {};
+    const setSt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setSt('amb-st-total', ambs.length);
+    setSt('amb-st-active', tot.active != null ? tot.active : ambs.filter(a => a.active).length);
+    setSt('amb-st-brought', tot.referred != null ? tot.referred : 0);
+    setSt('amb-st-exams', tot.exams != null ? tot.exams : 0);
+    setSt('amb-st-subs', tot.submissions != null ? tot.submissions : 0);
     if (!ambs.length) { box.innerHTML = empty('No ambassadors yet'); return; }
+    const sorted = ambs.slice().sort((a, b) => (b.referredCount || 0) - (a.referredCount || 0) || String(a.email).localeCompare(String(b.email)));
     box.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Email</th><th>Status</th><th>Note</th><th>Added By</th><th>Added At</th><th>Actions</th></tr></thead>
-      <tbody>${ambs.map(a => `<tr>
-        <td style="font-weight:600;color:var(--text)">${a.email}</td>
+      <thead><tr>
+        <th>Ambassador</th><th>School</th><th>Status</th>
+        <th>Brought</th><th>Tests</th><th>Submissions</th><th>Students reached</th>
+        <th>Last signup</th><th>Note</th><th>Actions</th>
+      </tr></thead>
+      <tbody>${sorted.map(a => {
+        const refs = a.referrals || [];
+        const refRows = refs.length
+          ? refs.map((rf, i) => `<tr>
+              <td style="font-size:.75rem;color:var(--text3)">${i + 1}</td>
+              <td style="font-size:.8rem;font-weight:600">${ambEsc(rf.email || rf.userId || '—')}</td>
+              <td style="font-size:.75rem;color:var(--text2)">${fmt(rf.joinedAt)}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="3" style="font-size:.78rem;color:var(--text3)">No referral sign-ups yet</td></tr>`;
+        return `<tr>
+        <td>
+          <div style="font-weight:700;color:var(--text)">${ambEsc(a.name || '—')}</div>
+          <div style="font-size:.75rem;color:var(--text2)">${ambEsc(a.email)}</div>
+          ${a.referralCode ? `<div style="font-size:.68rem;color:var(--text3);margin-top:2px">code ${ambEsc(a.referralCode)}</div>` : ''}
+        </td>
+        <td style="font-size:.78rem">${ambEsc(a.school || '—')}</td>
         <td>${a.active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-gray">Inactive</span>'}</td>
-        <td style="font-size:.78rem;color:var(--text2)">${a.note||'—'}</td>
-        <td style="font-size:.75rem">${a.addedBy||'admin'}</td>
-        <td style="font-size:.75rem">${fmt(a.addedAt)}</td>
-        <td><div style="display:flex;gap:5px">
-          <button class="btn btn-ghost btn-sm" onclick="openAmbModal('${a.id}','${a.email}','${(a.note||'').replace(/'/g,'')}')">Edit</button>
-          <button class="btn btn-ghost btn-sm" onclick="toggleAmb('${a.id}',${!a.active})">${a.active?'Deactivate':'Activate'}</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteAmb('${a.id}','${a.email}')">
+        <td style="font-weight:800;color:var(--purple);font-size:1.05rem">${a.referredCount || 0}</td>
+        <td>${a.examsCreated || 0}</td>
+        <td>${a.totalSubmissions || 0}</td>
+        <td>${a.studentsReached || 0}</td>
+        <td style="font-size:.75rem">${fmt(a.lastReferralAt)}</td>
+        <td style="font-size:.78rem;color:var(--text2)">${ambEsc(a.note || '—')}</td>
+        <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleAmbRefs('${ambAttr(a.id)}')">Who they brought</button>
+          <button class="btn btn-ghost btn-sm" onclick="openAmbModal('${ambAttr(a.id)}','${ambAttr(a.email)}','${ambAttr(a.note || '')}')">Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleAmb('${ambAttr(a.id)}',${!a.active})">${a.active ? 'Deactivate' : 'Activate'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAmb('${ambAttr(a.id)}','${ambAttr(a.email)}')">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
           </button>
         </div></td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
-  } catch(e) { box.innerHTML = errBox(e.message); }
-}
-
-async function addAmbassador() {
-  const email = document.getElementById('amb-email').value.trim();
-  const note = document.getElementById('amb-note').value.trim();
-  const resEl = document.getElementById('amb-result');
-  if (!email) { resEl.style.color='var(--yellow)'; resEl.textContent='Enter an email address'; return; }
-  try {
-    const r = await api('/api/admin/ambassadors', { method:'POST', body: JSON.stringify({ email, note }) });
-    const d = await r.json();
-    resEl.style.color = r.ok ? 'var(--green)' : 'var(--red)';
-    resEl.textContent = r.ok ? ('✅ ' + email + ' added as ambassador!') : ('Error: ' + (d.error||'Failed'));
-    if (r.ok) { document.getElementById('amb-email').value=''; document.getElementById('amb-note').value=''; loadAmbassadors(); }
-  } catch(e) { resEl.style.color='var(--red)'; resEl.textContent='Error: '+e.message; }
-}
-
-function openAmbModal(id, email, note) {
-  _editAmbId = id;
-  document.getElementById('amb-modal-sub').textContent = email;
-  document.getElementById('amb-edit-note').value = note || '';
-  openModal('amb-modal');
-}
-
-async function saveAmbassador() {
-  const note = document.getElementById('amb-edit-note').value.trim();
-  try {
-    const r = await api('/api/admin/ambassadors/'+_editAmbId, { method:'PUT', bodyding:10px 14px">
+      </tr>
+      <tr id="amb-refs-${ambAttr(a.id)}" style="display:none">
+        <td colspan="10" style="background:var(--surface);padding:10px 14px">
           <div style="font-size:.75rem;font-weight:800;color:var(--text2);margin-bottom:8px">Students brought by ${ambEsc(a.name || a.email)} — ${refs.length}</div>
           <table style="width:100%"><thead><tr><th>#</th><th>Email</th><th>Joined</th></tr></thead><tbody>${refRows}</tbody></table>
         </td>
