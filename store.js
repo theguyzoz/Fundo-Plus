@@ -1502,6 +1502,50 @@ export function getAmbassadorByEmailWithCode(email) {
   return d.ambassadors[idx];
 }
 
+/** Admin table: referrals brought + exam analytics per ambassador */
+export function getAmbassadorsAdminOverview() {
+  const ambs = getAllAmbassadorsWithCodes();
+  const exams = getAllZimsecExams();
+  const results = getAllZimsecResults();
+  const users = Object.values(webUsersData.users || {});
+  return ambs.map(a => {
+    const user = users.find(u => (u.email || '').toLowerCase() === (a.email || '').toLowerCase());
+    const uid = user?.id || null;
+    const myExams = uid ? exams.filter(e => e.createdBy === `ambassador:${uid}`) : [];
+    const examIds = new Set(myExams.map(e => e.id));
+    const myResults = results.filter(r => examIds.has(r.examId));
+    const referrals = Array.isArray(a.referrals) ? a.referrals : [];
+    const name = user ? `${user.name || ''} ${user.surname || ''}`.trim() : '';
+    const lastReferralAt = referrals.reduce((acc, r) => {
+      const t = r && r.joinedAt;
+      if (!t) return acc;
+      return !acc || t > acc ? t : acc;
+    }, null);
+    return {
+      id: a.id,
+      email: a.email,
+      note: a.note || '',
+      addedBy: a.addedBy || 'admin',
+      addedAt: a.addedAt,
+      active: !!a.active,
+      referralCode: a.referralCode || '',
+      userId: uid,
+      name,
+      school: (user && user.school) || '',
+      referredCount: referrals.length,
+      lastReferralAt,
+      referrals: referrals.map(r => ({
+        userId: r.userId,
+        email: r.email || '',
+        joinedAt: r.joinedAt || null,
+      })),
+      examsCreated: myExams.length,
+      totalSubmissions: myResults.length,
+      studentsReached: new Set(myResults.map(r => r.userId)).size,
+    };
+  });
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 //  Messenger — DMs stored server-side until delivered, then deleted
 //  Community messages stored in community.json (already exists above)

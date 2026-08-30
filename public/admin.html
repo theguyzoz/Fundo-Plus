@@ -605,11 +605,18 @@ tbody tr:hover td{background:var(--surface2)}
 
         <!-- ══ AMBASSADORS ══ -->
         <div class="page" id="page-ambassadors">
+          <div class="stat-grid" id="amb-stat-grid" style="margin-bottom:14px">
+            <div class="stat-card blue"><div class="stat-val" id="amb-st-total">—</div><div class="stat-label">Ambassadors</div></div>
+            <div class="stat-card green"><div class="stat-val" id="amb-st-active">—</div><div class="stat-label">Active</div></div>
+            <div class="stat-card purple"><div class="stat-val" id="amb-st-brought">—</div><div class="stat-label">Students brought</div></div>
+            <div class="stat-card cyan"><div class="stat-val" id="amb-st-exams">—</div><div class="stat-label">Tests created</div></div>
+            <div class="stat-card yellow"><div class="stat-val" id="amb-st-subs">—</div><div class="stat-label">Test submissions</div></div>
+          </div>
           <div class="card" style="margin-bottom:14px">
-            <div class="card-header"><div><div class="card-title">Add Ambassador</div></div></div>
+            <div class="card-header"><div><div class="card-title">Add Ambassador</div><div class="card-sub">They get the Hub: tests, referrals, analytics, verified badge</div></div></div>
             <div class="input-row">
               <div class="field"><label>Email</label><input type="email" id="amb-email" placeholder="user@email.com"></div>
-              <div class="field"><label>Note (optional)</label><input type="text" id="amb-note" placeholder="e.g. Top referrer"></div>
+              <div class="field"><label>Note (optional)</label><input type="text" id="amb-note" placeholder="e.g. Grandchase Secondary"></div>
               <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addAmbassador()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add
@@ -619,7 +626,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
           <div class="card">
             <div class="card-header">
-              <div><div class="card-title">All Ambassadors</div></div>
+              <div><div class="card-title">All Ambassadors</div><div class="card-sub">Brought = sign-ups through their referral link</div></div>
               <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadAmbassadors()">Refresh</button></div>
             </div>
             <div id="ambassadors-container"><div class="loading-row">Loading…</div></div>
@@ -1670,6 +1677,45 @@ async function loadAmbassadors() {
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch(e) { box.innerHTML = errBox(e.message); }
+}
+
+async function addAmbassador() {
+  const email = document.getElementById('amb-email').value.trim();
+  const note = document.getElementById('amb-note').value.trim();
+  const resEl = document.getElementById('amb-result');
+  if (!email) { resEl.style.color='var(--yellow)'; resEl.textContent='Enter an email address'; return; }
+  try {
+    const r = await api('/api/admin/ambassadors', { method:'POST', body: JSON.stringify({ email, note }) });
+    const d = await r.json();
+    resEl.style.color = r.ok ? 'var(--green)' : 'var(--red)';
+    resEl.textContent = r.ok ? ('✅ ' + email + ' added as ambassador!') : ('Error: ' + (d.error||'Failed'));
+    if (r.ok) { document.getElementById('amb-email').value=''; document.getElementById('amb-note').value=''; loadAmbassadors(); }
+  } catch(e) { resEl.style.color='var(--red)'; resEl.textContent='Error: '+e.message; }
+}
+
+function openAmbModal(id, email, note) {
+  _editAmbId = id;
+  document.getElementById('amb-modal-sub').textContent = email;
+  document.getElementById('amb-edit-note').value = note || '';
+  openModal('amb-modal');
+}
+
+async function saveAmbassador() {
+  const note = document.getElementById('amb-edit-note').value.trim();
+  try {
+    const r = await api('/api/admin/ambassadors/'+_editAmbId, { method:'PUT', bodyding:10px 14px">
+          <div style="font-size:.75rem;font-weight:800;color:var(--text2);margin-bottom:8px">Students brought by ${ambEsc(a.name || a.email)} — ${refs.length}</div>
+          <table style="width:100%"><thead><tr><th>#</th><th>Email</th><th>Joined</th></tr></thead><tbody>${refRows}</tbody></table>
+        </td>
+      </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { box.innerHTML = errBox(e.message); }
+}
+function toggleAmbRefs(id) {
+  const el = document.getElementById('amb-refs-' + id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
 async function addAmbassador() {

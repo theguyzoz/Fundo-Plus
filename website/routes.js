@@ -64,7 +64,7 @@ import {
   getPushSubscriptionsForUsers, getAllPushSubscriptions,
   // ambassadors
   addAmbassador, removeAmbassador, updateAmbassador,
-  getAllAmbassadors, getAllAmbassadorsWithCodes,
+  getAllAmbassadors, getAllAmbassadorsWithCodes, getAmbassadorsAdminOverview,
   getAmbassadorByEmail, getAmbassadorByEmailWithCode,
   getAmbassadorByCode, recordReferral,
   isAmbassador, isAmbassadorExam,
@@ -645,8 +645,7 @@ router.get('/api/skills/files', (req, res) => {
   } catch { res.json({ ok: true, files: [] }); }
 });
 
-// Track study session open
-router.post('/api/skills/session', requireAuth, (req, res) => {
+// Track study sessiols/session', requireAuth, (req, res) => {
   const uid = req.user.id;
   const isLinked = !!req.user.jid;
   const limits = getPlanLimits(uid, isLinked);
@@ -2830,7 +2829,16 @@ router.get('/~/ambassador', requireAuth, (req, res) => {
 
 // Admin: list all ambassadors
 router.get('/api/admin/ambassadors', requireAdmin, (req, res) => {
-  res.json({ ok: true, ambassadors: getAllAmbassadorsWithCodes() });
+  const ambassadors = getAmbassadorsAdminOverview();
+  const totals = ambassadors.reduce((acc, a) => {
+    acc.referred += a.referredCount || 0;
+    acc.exams += a.examsCreated || 0;
+    acc.submissions += a.totalSubmissions || 0;
+    acc.students += a.studentsReached || 0;
+    if (a.active) acc.active += 1;
+    return acc;
+  }, { referred: 0, exams: 0, submissions: 0, students: 0, active: 0 });
+  res.json({ ok: true, ambassadors, totals });
 });
 
 // Admin: add ambassador by email
