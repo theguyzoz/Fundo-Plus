@@ -117,12 +117,24 @@ export async function expandPdfContent(title, seed, userMessage) {
   return { title: title || 'Study notes', content: reply.replace(/__FRIENO_MAKE_PDF__/i, '').replace(/^TITLE:.*$/im, '').replace(/^CONTENT:\s*/im, '').trim(), preface: '' };
 }
 
-export async function askWebAI(uid, userMessage) {
+export function buildSystemPrompt(prefs = {}) {
+  let extra = '';
+  const call = String(prefs.callName || '').trim().slice(0, 40);
+  if (call) extra += `\nADDRESS the user as "${call}". Use that name naturally in replies.\n`;
+  if (prefs.agentMode !== false) {
+    extra += `\nAGENT MODE: You are Fundo Agent — a study operator, not a timid chatbot. Talk to the user as "you". Short beats: "On it." "Done." "You asked — here it is." Execute PDFs without hedging. Never say you are only a language model.\n`;
+  }
+  const pages = Math.min(20, Math.max(6, parseInt(prefs.pdfPages, 10) || 8));
+  extra += `\nWhen writing a PDF, target at least ${pages} pages (~${pages * 350} words).\n`;
+  return SYSTEM_PROMPT + extra;
+}
+
+export async function askWebAI(uid, userMessage, prefs = {}) {
   const history = getHistory(uid).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
   const messages = [...history, { role: 'user', content: userMessage }];
   const tokens = wantsPdf(userMessage) ? 4096 : 2000;
   try {
-    const reply = await callGPT(SYSTEM_PROMPT, messages, tokens);
+    const reply = await callGPT(buildSystemPrompt(prefs), messages, tokens);
     pushHistory(uid, 'user', userMessage);
     pushHistory(uid, 'assistant', stripPdfMarker(reply) || reply);
     return reply;

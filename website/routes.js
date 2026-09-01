@@ -402,8 +402,16 @@ router.get('/api/me', requireAuth, (req, res) => {
       studySessions: 'unlimited', pdfExports: 'unlimited', quizzes: 'unlimited', paperDl: 'unlimited' };
   }
 
-  res.json({ ok: true, user: sanitizeUser(user), pairingStatus, daysLeft, plan, limits, usage, sub,
-    isAmbassador: ambassadorActive });
+  const balanceCents = getUserBalance(user.id);
+  res.json({
+    ok: true, user: sanitizeUser(user), pairingStatus, daysLeft, plan, limits, usage, sub,
+    isAmbassador: ambassadorActive,
+    verified: !!(isVerified(user.id) || isSupportEmail(user.email)),
+    isSupport: isSupportEmail(user.email),
+    paperDlUsed: getPaperDlCount(user.id),
+    balanceCents,
+    balanceDollars: (balanceCents / 100).toFixed(2),
+  });
 });
 
 router.delete('/api/account', requireAuth, (req, res) => {
@@ -456,8 +464,13 @@ router.post('/api/samazed/chat', async (req, res) => {
 //  AI CHAT
 // ═══════════════════════════════════════════════════════════════════
 router.post('/api/chat', requireOnboarded, async (req, res) => {
-  const { message } = req.body || {};
+  const { message, stream: wantStream = false, prefs: rawPrefs = {} } = req.body || {};
   if (!message) return res.status(400).json({ error: 'No message' });
+  const prefs = {
+    callName: String(rawPrefs.callName || req.user.name || 'you').slice(0, 40),
+    agentMode: rawPrefs.agentMode !== false,
+    pdfPages: Math.min(20, Math.max(6, parseInt(rawPrefs.pdfPages, 10) || 8)),
+  };
 
   const uid    = req.user.id;
   const isLinked = !!req.user.jid;
@@ -470,19 +483,39 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
     return res.status(429).json({ error: `Daily AI message limit reached (${aiLimit}). Upgrade your plan for more.` });
   }
 
+  const stream = !!wantStream;
+  if (stream) {
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+  }
+  const finish = (payload) => {
+    if (!stream) return res.json(payload);
+    const text = String(payload.reply || '');
+    const chunks = text.split(/(?<=\s)/);
+    for (const c of chunks) {
+      if (c) res.write(`data: ${JSON.stringify({ type: 'delta', text: c })}\n\n`);
+    }
+    if (payload.pdf) res.write(`data: ${JSON.stringify({ type: 'pdf', pdf: payload.pdf })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    return res.end();
+  };
+
   try {
-    let reply = await askWebAI(`web:${uid}`, message);
+    let reply = await askWebAI(`web:${uid}`, message, prefs);
     incrementChatUsage(uid);
 
     let parsed = parsePdfMarker(reply);
     const needPdf = !!(parsed || wantsPdf(message) || looksLikePdfRefusal(reply));
-    if (!needPdf) return res.json({ reply: stripPdfMarker(reply) || reply });
+    if (!needPdf) return finish({ reply: stripPdfMarker(reply) || reply });
 
     const pdfLimit = limits.pdfExports;
     if (pdfLimit !== 'unlimited' && !ambassadorActive && (usage.pdf || 0) >= pdfLimit) {
       const text = (stripPdfMarker(reply) || reply) +
         `\n\nI drafted the notes, but your **daily PDF export limit** (${pdfLimit}) is used up. Upgrade on Subscription to download.`;
-      return res.json({ reply: text });
+      return finish({ reply: text });
     }
 
     if (!parsed || String(parsed.content || '').trim().split(/\s+/).length < 500) {
@@ -493,7 +526,7 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
       }
     }
     if (!parsed || String(parsed.content || '').trim().length < 200) {
-      return res.json({ reply: (stripPdfMarker(reply) || reply) + '\n\nI could not finish the PDF body. Try again with a specific topic, e.g. “O-Level photosynthesis PDF notes”.' });
+      return finish({ reply: (stripPdfMarker(reply) || reply) + '\n\nI could not finish the PDF body. Try again with a specific topic.' });
     }
 
     const { generatePdf } = await import('../utils/pdfgen.js');
@@ -511,7 +544,7 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
       level: '',
       year: String(new Date().getFullYear()),
     };
-    const fp = await generatePdf(title, parsed.content, jobId, outDir, meta, { pixabayKey: process.env.PIXABAY_KEY || '' });
+    const fp = await generatePdf(title, parsed.content, jobId, outDir, meta, { pixabayKey: process.env.PIXABAY_KEY || '', minPages: prefs.pdfPages });
     incrementPdfUsage(uid);
 
     const dlToken = randomBytes(24).toString('hex');
@@ -525,16 +558,19 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
       `**${title}** is hosted on Fundo Plus.\n\n` +
       `⏱️ This file is **deleted after 24 hours**.\n\n` +
       `[Download PDF](${downloadUrl}) · [Preview](${previewUrl})`;
-    res.json({
+    return finish({
       reply: notice,
       pdf: { title, downloadUrl, previewUrl, expiresAt, notice: 'Deleted after 24 hours' },
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    if (stream) {
+      try { res.write(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`); res.end(); } catch {}
+      return;
+    }
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  QUIZ
-// ═══════════════════════════════════════════════════════════════════
 router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
   const uid = req.user.id;
   const isLinked = !!req.user.jid;

@@ -3,415 +3,320 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="icon" type="image/png" href="/images/logo.png">
-    <link rel="apple-touch-icon" href="/images/logo.png">
-  <title>My Account — FundaPlus</title>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <title>Settings — Fundo Plus</title>
   <style>
-    :root {
-      --blue: #2563eb;
-      --blue2: #1d4ed8;
-      --green: #16a34a;
-      --red: #dc2626;
-      --text: #1e293b;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --bg: #f8fafc;
-      --card: #fff;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
-    nav { background: var(--card); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem; position: sticky; top: 0; z-index: 50; }
-    .back { display: flex; align-items: center; gap: .5rem; font-weight: 800; font-size: .88rem; color: var(--blue); text-decoration: none; }
-    .nav-logo { font-size: 1rem; font-weight: 900; color: var(--blue); margin-left: .5rem; }
-    .nav-right { margin-left: auto; display: flex; gap: .5rem; }
-    main { max-width: 600px; margin: 2rem auto; padding: 0 1rem 4rem; }
-    h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: -.4px; margin-bottom: .25rem; }
-    .sub { font-size: .85rem; color: var(--muted); margin-bottom: 2rem; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
-    .card-title { font-size: .78rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1.1rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
-    .info-row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 0; font-size: .85rem; border-bottom: 1px solid var(--bg); }
-    .info-row:last-child { border: none; }
-    .lbl { color: var(--muted); font-size: .78rem; font-weight: 700; }
-    .val { font-weight: 700; max-width: 60%; word-break: break-all; text-align: right; }
-    .badge { border-radius: 99px; padding: .2rem .75rem; font-size: .72rem; font-weight: 800; }
-    .badge-ok { background: #dcfce7; color: #166534; }
-    .badge-no { background: #fee2e2; color: var(--red); }
-    .badge-warn { background: #fef9c3; color: #854d0e; }
-    .field { margin-bottom: .85rem; }
-    label { display: block; font-size: .75rem; font-weight: 700; color: var(--text); margin-bottom: .3rem; }
-    input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: .65rem .9rem; font-size: .88rem; color: var(--text); outline: 0; background: #fff; transition: .15s; }
-    input:focus { border-color: var(--blue); }
-    .btn { padding: .65rem 1.4rem; border: none; border-radius: 8px; font-weight: 800; font-size: .85rem; cursor: pointer; transition: .15s; }
-    .btn-blue { background: var(--blue); color: #fff; }
-    .btn-blue:hover { background: var(--blue2); }
-    .btn-red { background: #fef2f2; color: var(--red); border: 1.5px solid #fecaca; }
-    .btn-red:hover { background: #fee2e2; }
-    .btn-full { width: 100%; margin-top: .25rem; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .alert { border-radius: 8px; padding: .65rem .9rem; font-size: .82rem; margin-bottom: .75rem; display: none; }
-    .alert.show { display: block; }
-    .alert-ok { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
-    .alert-err { background: #fef2f2; border: 1px solid #fecaca; color: var(--red); }
-    .confirm-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; font-size: .83rem; margin-top: .75rem; display: none; }
-    .confirm-box.show { display: block; }
-    .confirm-box p { color: var(--red); margin-bottom: .75rem; line-height: 1.5; }
-    .confirm-box .row { display: flex; gap: .5rem; }
-    .avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 900; margin-bottom: 1rem; }
+    :root{--acc:#2563eb;--acc2:#1d4ed8;--bg:#f4f7ff;--surf:#fff;--brd:#e2e8f5;--txt:#0f172a;--mut:#64748b;--ok:#16a34a;--red:#dc2626;--sh:0 1px 3px rgba(37,99,235,.07),0 8px 28px rgba(37,99,235,.08)}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+    nav{position:sticky;top:0;z-index:40;height:58px;display:flex;align-items:center;gap:12px;padding:0 18px;background:#ffffffee;backdrop-filter:blur(12px);border-bottom:1px solid var(--brd)}
+    .back{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.85rem;color:var(--acc);text-decoration:none}
+    .nav-logo{font-weight:900;color:var(--acc);font-size:.95rem}
+    .nav-right{margin-left:auto;display:flex;gap:8px}
+    main{max-width:720px;margin:0 auto;padding:28px 16px 72px}
+    .hero{background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#3b82f6);color:#fff;border-radius:22px;padding:26px 24px;display:flex;align-items:center;gap:16px;margin-bottom:18px;box-shadow:0 16px 40px rgba(37,99,235,.28)}
+    .av{width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:1.6rem;font-weight:900;flex-shrink:0;border:2px solid rgba(255,255,255,.35)}
+    .hero h1{font-size:1.35rem;font-weight:900;letter-spacing:-.4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .hero h1 img{width:18px;height:18px}
+    .hero p{font-size:.82rem;opacity:.88;margin-top:4px}
+    .pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .pill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:99px;padding:3px 10px;font-size:.68rem;font-weight:800}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    @media(max-width:620px){.grid2{grid-template-columns:1fr}}
+    .stat{background:var(--surf);border:1.5px solid var(--brd);border-radius:16px;padding:14px 16px;box-shadow:var(--sh);text-decoration:none;color:inherit}
+    .stat .k{font-size:.68rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+    .stat .v{font-size:1.15rem;font-weight:900;margin-top:4px}
+    .card{background:var(--surf);border:1.5px solid var(--brd);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
+    .card-title{font-size:.72rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+    .row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:.88rem}
+    .row:last-child{border:0}
+    .lbl{color:var(--mut);font-size:.78rem;font-weight:700}
+    .val{font-weight:700;text-align:right}
+    .field{margin-bottom:12px}
+    label{display:block;font-size:.75rem;font-weight:800;margin-bottom:5px}
+    input,select,textarea{width:100%;border:1.5px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:.88rem;outline:0;background:#fff;font-family:inherit}
+    input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px #dbeafe}
+    .tog{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+    .sw{width:42px;height:24px;border-radius:99px;background:#e2e8f0;position:relative;cursor:pointer;flex-shrink:0;border:0}
+    .sw.on{background:var(--acc)}
+    .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s}
+    .sw.on i{left:21px}
+    .btn{padding:10px 16px;border:0;border-radius:10px;font-weight:800;font-size:.84rem;cursor:pointer}
+    .btn-acc{background:var(--acc);color:#fff}
+    .btn-ghost{background:#f1f5f9;color:var(--txt)}
+    .btn-red{background:#fef2f2;color:var(--red);border:1.5px solid #fecaca}
+    .btn-full{width:100%}
+    .hint{font-size:.75rem;color:var(--mut);margin-top:4px;line-height:1.4}
+    .alert{display:none;border-radius:10px;padding:8px 12px;font-size:.8rem;margin-bottom:10px}
+    .alert.show{display:block}
+    .ok{background:#f0fdf4;color:#166534}
+    .err{background:#fef2f2;color:var(--red)}
+    .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .links a{font-size:.78rem;font-weight:800;color:var(--acc);text-decoration:none;background:#eff6ff;padding:6px 10px;border-radius:99px}
+    .confirm{display:none;margin-top:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;font-size:.82rem}
+    .confirm.show{display:block}
   </style>
 </head>
-
 <body>
   <nav>
-    <a class="back" href="/~">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-        <polyline points="15 18 9 12 15 6"/>
-      </svg>
-      Dashboard
-    </a>
-    <span class="nav-logo">FundaPlus</span>
+    <a class="back" href="/~">← Dashboard</a>
+    <span class="nav-logo">Fundo Plus</span>
     <div class="nav-right">
-      <button class="btn btn-red" onclick="doLogout()">Sign Out</button>
+      <a class="btn btn-ghost" href="/ai" style="text-decoration:none">Fundo AI</a>
+      <button class="btn btn-red" onclick="doLogout()">Sign out</button>
     </div>
   </nav>
-
   <main>
-    <h1>My Account</h1>
-    <p class="sub">Manage your profile, security, and linked services.</p>
-
-    
-    <div class="card">
-      <div class="card-title">Profile</div>
-      <div class="avatar" id="av-letter">?</div>
-      <div class="info-row"><span class="lbl">Full Name</span><span class="val" id="info-name">—</span></div>
-      <div class="info-row"><span class="lbl">Email</span><span class="val" id="info-email">—</span></div>
-      <div class="info-row"><span class="lbl">Phone</span><span class="val" id="info-phone">—</span></div>
-      <div class="info-row"><span class="lbl">Age</span><span class="val" id="info-age">—</span></div>
-      <div class="info-row"><span class="lbl">School</span><span class="val" id="info-school">—</span></div>
-      <div class="info-row"><span class="lbl">Member Since</span><span class="val" id="info-since">—</span></div>
-    </div>
-
-    <!-- WhatsApp -->
-    <div class="card">
-      <div class="card-title">WhatsApp</div>
-      <div class="info-row"><span class="lbl">Status</span><span class="val" id="wa-status">—</span></div>
-      <div class="info-row"><span class="lbl">Pairing grace</span><span class="val" id="wa-grace">—</span></div>
-      <div id="wa-link-section" style="margin-top:1rem;display:none">
-        <button class="btn btn-blue" onclick="genPairLink()">Generate WhatsApp Link</button>
-        <div id="pair-result" style="margin-top:.75rem;font-size:.82rem;display:none">
-          <div style="font-weight:700;margin-bottom:.35rem">Send this link in WhatsApp:</div>
-          <input readonly id="pair-val" style="font-family:monospace;font-size:.78rem">
-          <div style="margin-top:.4rem">
-            <a id="pair-wa-link" href="#" target="_blank" style="color:var(--blue);font-weight:700;font-size:.82rem">Open in WhatsApp →</a>
-          </div>
+    <div class="hero">
+      <div class="av" id="av-letter">?</div>
+      <div>
+        <h1><span id="hero-name">—</span> <img id="vbadge" src="/images/verified.svg" alt="" style="display:none"></h1>
+        <p id="hero-sub">Account &amp; agent settings</p>
+        <div class="pills">
+          <span class="pill" id="pill-plan">Free</span>
+          <span class="pill" id="pill-ver">Unverified</span>
+          <span class="pill" id="pill-amb" style="display:none">Ambassador</span>
         </div>
       </div>
     </div>
 
-    
-    <div class="card">
-      <div class="card-title">Update Profile</div>
-      <div class="alert alert-ok" id="prof-ok"></div>
-      <div class="alert alert-err" id="prof-err"></div>
-      <div style="display:flex;gap:.75rem">
-        <div class="field" style="flex:1">
-          <label>First Name</label>
-          <input id="upd-name" placeholder="Tapiwa">
-        </div>
-        <div class="field" style="flex:1">
-          <label>Surname</label>
-          <input id="upd-surname" placeholder="Moyo">
-        </div>
-      </div>
-      <div class="field">
-        <label>Age</label>
-        <input type="number" id="upd-age" min="5" max="80">
-      </div>
-      <div class="field">
-        <label>School</label>
-        <input id="upd-school">
-      </div>
-      <button class="btn btn-blue btn-full" id="prof-btn" onclick="updateProfile()">Save Changes</button>
+    <div class="grid2">
+      <a class="stat" href="/~/subscription"><div class="k">Wallet</div><div class="v" id="st-bal">$0.00</div></a>
+      <a class="stat" href="/ai"><div class="k">AI today</div><div class="v" id="st-ai">—</div></a>
     </div>
 
-    
     <div class="card">
-      <div class="card-title">Change Password</div>
-      <div class="alert alert-ok" id="pw-ok"></div>
-      <div class="alert alert-err" id="pw-err"></div>
-      <div class="field">
-        <label>Current Password</label>
-        <input type="password" id="cur-pw" placeholder="••••••••">
+      <div class="card-title">Account</div>
+      <div class="row"><span class="lbl">Email</span><span class="val" id="info-email">—</span></div>
+      <div class="row"><span class="lbl">Phone</span><span class="val" id="info-phone">—</span></div>
+      <div class="row"><span class="lbl">School</span><span class="val" id="info-school">—</span></div>
+      <div class="row"><span class="lbl">Member since</span><span class="val" id="info-since">—</span></div>
+      <div class="row"><span class="lbl">WhatsApp</span><span class="val" id="wa-status">—</span></div>
+      <div class="links">
+        <a href="/messenger">Messenger</a>
+        <a href="/~/subscription">Plans &amp; deposit</a>
+        <a href="/ai">Open Fundo AI</a>
       </div>
-      <div class="field">
-        <label>New Password</label>
-        <input type="password" id="new-pw" placeholder="At least 6 characters">
-      </div>
-      <div class="field">
-        <label>Confirm New Password</label>
-        <input type="password" id="new-pw2" placeholder="Repeat new password">
-      </div>
-      <button class="btn btn-blue btn-full" id="pw-btn" onclick="changePassword()">Update Password</button>
     </div>
 
-    
+    <div class="card">
+      <div class="card-title">Fundo AI agent</div>
+      <p class="hint" style="margin-bottom:12px">Saved in this browser. Fundo AI reads them on every message — call name, streaming, PDF length, agent voice.</p>
+      <div class="field"><label>Call you</label><input id="ai-call" placeholder="e.g. you  ·  Tadiwa  ·  boss"></div>
+      <div class="tog"><div><label style="margin:0">Agent mode</label><div class="hint">Talks like an operator: “On it.” “You asked — here’s the pack.”</div></div><button class="sw on" id="ai-agent" type="button" onclick="flipSw(this)"><i></i></button></div>
+      <div class="tog"><div><label style="margin:0">Stream replies</label><div class="hint">Tokens appear live, like an agent typing.</div></div><button class="sw on" id="ai-stream" type="button" onclick="flipSw(this)"><i></i></button></div>
+      <div class="field"><label>PDF pages (min)</label>
+        <select id="ai-pages">
+          <option value="6">6 pages</option>
+          <option value="8" selected>8 pages</option>
+          <option value="10">10 pages</option>
+          <option value="12">12 pages</option>
+          <option value="16">16 pages</option>
+          <option value="20">20 pages</option>
+        </select>
+        <div class="hint">Hosted on Fundo Plus, deleted after 24 hours.</div>
+      </div>
+      <button class="btn btn-acc btn-full" onclick="saveAiPrefs()">Save AI settings</button>
+      <div class="alert ok" id="ai-ok">Saved on this device.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Messenger</div>
+      <div class="field"><label>Display name</label><input id="ms-user" maxlength="32" placeholder="Shown in Lounge &amp; DMs"></div>
+      <div class="field"><label>Bio</label><input id="ms-bio" maxlength="120" placeholder="Short line on your profile"></div>
+      <div class="tog"><div><label style="margin:0">Public profile</label><div class="hint">Others can find you in search.</div></div><button class="sw" id="ms-pub" type="button" onclick="flipSw(this)"><i></i></button></div>
+      <button class="btn btn-acc btn-full" onclick="saveMessenger()">Save messenger</button>
+      <div class="alert ok" id="ms-ok">Messenger updated.</div>
+      <div class="alert err" id="ms-err"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Edit profile</div>
+      <div class="alert ok" id="prof-ok"></div>
+      <div class="alert err" id="prof-err"></div>
+      <div style="display:flex;gap:10px">
+        <div class="field" style="flex:1"><label>First name</label><input id="upd-name"></div>
+        <div class="field" style="flex:1"><label>Surname</label><input id="upd-surname"></div>
+      </div>
+      <div class="field"><label>Age</label><input type="number" id="upd-age" min="5" max="80"></div>
+      <div class="field"><label>School</label><input id="upd-school"></div>
+      <button class="btn btn-acc btn-full" id="prof-btn" onclick="updateProfile()">Save profile</button>
+    </div>
+
+    <div class="card" id="wa-link-section" style="display:none">
+      <div class="card-title">Link WhatsApp</div>
+      <button class="btn btn-acc" onclick="genPairLink()">Generate link</button>
+      <div id="pair-result" style="display:none;margin-top:10px">
+        <input readonly id="pair-val">
+        <a id="pair-wa-link" href="#" target="_blank" style="display:inline-block;margin-top:8px;font-weight:800;color:var(--acc);font-size:.82rem">Open WhatsApp →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Password</div>
+      <div class="alert ok" id="pw-ok"></div>
+      <div class="alert err" id="pw-err"></div>
+      <div class="field"><label>Current</label><input type="password" id="cur-pw"></div>
+      <div class="field"><label>New</label><input type="password" id="new-pw"></div>
+      <div class="field"><label>Confirm</label><input type="password" id="new-pw2"></div>
+      <button class="btn btn-acc btn-full" id="pw-btn" onclick="changePassword()">Update password</button>
+    </div>
+
     <div class="card" style="border-color:#fecaca">
-      <div class="card-title" style="color:var(--red)">Danger Zone</div>
-      <p style="font-size:.83rem;color:var(--muted);margin-bottom:.85rem;line-height:1.5">
-        Deleting your account is permanent and cannot be undone. All your data, quiz history, and linked services will be removed.
-      </p>
-      <button class="btn btn-red" onclick="showConfirm()">Delete My Account</button>
-      <div class="confirm-box" id="confirm-box">
-        <p>⚠️ Are you absolutely sure? This action <strong>cannot be reversed</strong>. Your account and all associated data will be permanently deleted.</p>
-        <div class="row">
-          <button class="btn btn-red" onclick="deleteAccount()">Yes, delete permanently</button>
-          <button class="btn" style="background:var(--bg);border:1px solid var(--border)" onclick="hideConfirm()">Cancel</button>
+      <div class="card-title" style="color:var(--red)">Danger</div>
+      <button class="btn btn-red" onclick="showConfirm()">Delete account</button>
+      <div class="confirm" id="confirm-box">
+        <p>Permanent. Quizzes, chats, wallet history on this account go with it.</p>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-red" onclick="deleteAccount()">Delete forever</button>
+          <button class="btn btn-ghost" onclick="hideConfirm()">Cancel</button>
         </div>
       </div>
     </div>
   </main>
-
-  <script>
-    (function () {
-      const _fetch = window.fetch;
-      window.fetch = async function (...args) {
-        const res = await _fetch(...args);
-        if (res.status === 403) {
-          const clone = res.clone();
-          try {
-            const d = await clone.json();
-            if (d && d.code === 'BANNED') {
-              location.reload();
-              return new Response('{}', { status: 403 });
-            }
-          } catch {}
-        }
-        return res;
-      };
-    })();
-
-    async function validateSession(opts = {}) {
-      const { requireAuth = true, onUser = null } = opts;
-      const token = localStorage.getItem('fp_session');
-
-      if (!token) {
-        if (requireAuth) { window.location.replace('/login'); }
-        return null;
-      }
-
-      try {
-        const r = await fetch('/api/auth/me', { headers: { 'x-session-token': token } });
-
-        if (r.status === 401 || r.status === 403) {
-          const d = await r.json().catch(() => ({}));
-          localStorage.clear();
-          if (d.code === 'BANNED') { location.reload(); return null; }
-          if (requireAuth) { window.location.replace('/login'); }
-          return null;
-        }
-
-        if (!r.ok) {
-          if (requireAuth) { window.location.replace('/login'); }
-          return null;
-        }
-
-        const d = await r.json();
-        if (d.ok) {
-          if (onUser) onUser(d.user);
-          return d.user;
-        }
-
-        localStorage.clear();
-        if (requireAuth) { window.location.replace('/login'); }
-        return null;
-      } catch {
-        if (requireAuth) { window.location.replace('/login'); }
-        return null;
-      }
+<script>
+(function () {
+  const _fetch = window.fetch;
+  window.fetch = async function (...args) {
+    const res = await _fetch(...args);
+    if (res.status === 403) {
+      try { const d = await res.clone().json(); if (d && d.code === 'BANNED') { location.reload(); return new Response('{}', { status: 403 }); } } catch {}
     }
-
-    const token = localStorage.getItem('fp_session');
-
-    async function api(method, url, body) {
-      const opts = {
-        method,
-        headers: { 'x-session-token': token }
-      };
-      if (body) {
-        opts.headers['Content-Type'] = 'application/json';
-        opts.body = JSON.stringify(body);
-      }
-      const r = await fetch(url, opts);
-      const d = await r.json();
-      if (!r.ok) {
-        const e = new Error(d.error || 'Error');
-        e.status = r.status;
-        throw e;
-      }
-      return d;
-    }
-
-    async function init() {
-      const user = await validateSession({ requireAuth: true });
-      if (!user) return;
-
-      try {
-        const d = await api('GET', '/api/me');
-        const u = d.user;
-
-        document.getElementById('av-letter').textContent = (u.name || 'S')[0].toUpperCase();
-        document.getElementById('info-name').textContent = (u.name && u.surname) ? `${u.name} ${u.surname}` : '—';
-        document.getElementById('info-email').textContent = u.email || '—';
-        document.getElementById('info-phone').textContent = u.phone || '—';
-        document.getElementById('info-age').textContent = u.age || '—';
-        document.getElementById('info-school').textContent = u.school || '—';
-        document.getElementById('info-since').textContent = u.registeredAt
-          ? new Date(u.registeredAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-          : '—';
-
-        document.getElementById('upd-name').value = u.name || '';
-        document.getElementById('upd-surname').value = u.surname || '';
-        document.getElementById('upd-age').value = u.age || '';
-        document.getElementById('upd-school').value = u.school || '';
-
-        const waEl = document.getElementById('wa-status');
-        const graceEl = document.getElementById('wa-grace');
-        const linkSec = document.getElementById('wa-link-section');
-
-        if (d.pairingStatus === 'paired') {
-          waEl.innerHTML = '<span class="badge badge-ok">✅ Linked</span>';
-          graceEl.textContent = 'Active';
-        } else if (d.pairingStatus === 'grace') {
-          waEl.innerHTML = '<span class="badge badge-warn">⚠️ Not Linked</span>';
-          graceEl.textContent = `${d.daysLeft} day(s) remaining`;
-          linkSec.style.display = 'block';
-        } else {
-          waEl.innerHTML = '<span class="badge badge-no">❌ Required</span>';
-          graceEl.textContent = 'Trial ended';
-          linkSec.style.display = 'block';
-        }
-      } catch (e) {
-        if (e?.status === 401 || e?.status === 403) {
-          localStorage.clear();
-          window.location.replace('/login');
-        }
-      }
-    }
-
-    async function updateProfile() {
-      const name    = document.getElementById('upd-name').value.trim();
-      const surname = document.getElementById('upd-surname').value.trim();
-      const age     = document.getElementById('upd-age').value;
-      const school  = document.getElementById('upd-school').value.trim();
-      const ok      = document.getElementById('prof-ok');
-      const err     = document.getElementById('prof-err');
-
-      ok.style.display = err.style.display = 'none';
-      ok.classList.remove('show');
-      err.classList.remove('show');
-
-      if (!name || !surname || !age || !school) {
-        err.textContent = 'All fields required.';
-        err.classList.add('show');
-        return;
-      }
-
-      const btn = document.getElementById('prof-btn');
-      btn.disabled = true;
-      btn.textContent = 'Saving…';
-
-      try {
-        await api('POST', '/api/profile/update', { name, surname, age: parseInt(age), school });
-        ok.textContent = 'Profile updated successfully!';
-        ok.classList.add('show');
-        document.getElementById('info-name').textContent = `${name} ${surname}`;
-        document.getElementById('av-letter').textContent = name[0].toUpperCase();
-      } catch (e) {
-        err.textContent = e.message;
-        err.classList.add('show');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Save Changes';
-      }
-    }
-
-    async function changePassword() {
-      const cur  = document.getElementById('cur-pw').value;
-      const nw   = document.getElementById('new-pw').value;
-      const nw2  = document.getElementById('new-pw2').value;
-      const ok   = document.getElementById('pw-ok');
-      const err  = document.getElementById('pw-err');
-
-      ok.style.display = err.style.display = 'none';
-      ok.classList.remove('show');
-      err.classList.remove('show');
-
-      if (!cur || !nw || !nw2) {
-        err.textContent = 'All fields required.';
-        err.classList.add('show');
-        return;
-      }
-      if (nw.length < 6) {
-        err.textContent = 'New password must be at least 6 characters.';
-        err.classList.add('show');
-        return;
-      }
-      if (nw !== nw2) {
-        err.textContent = 'Passwords do not match.';
-        err.classList.add('show');
-        return;
-      }
-
-      const btn = document.getElementById('pw-btn');
-      btn.disabled = true;
-      btn.textContent = 'Updating…';
-
-      try {
-        await api('POST', '/api/profile/change-password', { currentPassword: cur, newPassword: nw });
-        ok.textContent = 'Password updated successfully!';
-        ok.classList.add('show');
-        document.getElementById('cur-pw').value = '';
-        document.getElementById('new-pw').value = '';
-        document.getElementById('new-pw2').value = '';
-      } catch (e) {
-        err.textContent = e.message;
-        err.classList.add('show');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Update Password';
-      }
-    }
-
-    async function genPairLink() {
-      try {
-        const d = await api('POST', '/api/generate-link');
-        document.getElementById('pair-val').value = d.botLink;
-        document.getElementById('pair-wa-link').href = d.botLink;
-        document.getElementById('pair-result').style.display = 'block';
-      } catch (e) {
-        alert('Failed: ' + e.message);
-      }
-    }
-
-    function showConfirm()  { document.getElementById('confirm-box').classList.add('show'); }
-    function hideConfirm()  { document.getElementById('confirm-box').classList.remove('show'); }
-
-    async function deleteAccount() {
-      try {
-        await api('DELETE', '/api/account');
-        localStorage.clear();
-        window.location.href = '/login';
-      } catch (e) {
-        alert('Failed: ' + e.message);
-      }
-    }
-
-    function doLogout() {
-      fetch('/api/auth/logout', { method: 'POST', headers: { 'x-session-token': token } }).catch(() => {});
-      localStorage.clear();
-      window.location.href = '/login';
-    }
-
-    init();
-  </script>
+    return res;
+  };
+})();
+const AI_KEY = 'fp_ai_prefs';
+function defaultAiPrefs() { return { callName: '', agentMode: true, stream: true, pdfPages: 8 }; }
+function loadAiPrefs() {
+  try { return Object.assign(defaultAiPrefs(), JSON.parse(localStorage.getItem(AI_KEY) || '{}')); }
+  catch { return defaultAiPrefs(); }
+}
+function flipSw(el) { el.classList.toggle('on'); }
+const token = localStorage.getItem('fp_session');
+async function api(method, url, body) {
+  const opts = { method, headers: { 'x-session-token': token } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const r = await fetch(url, opts);
+  const d = await r.json();
+  if (!r.ok) { const e = new Error(d.error || 'Error'); e.status = r.status; throw e; }
+  return d;
+}
+async function init() {
+  if (!token) { location.replace('/login'); return; }
+  try {
+    const d = await api('GET', '/api/me');
+    const u = d.user || {};
+    const name = [u.name, u.surname].filter(Boolean).join(' ') || 'Student';
+    document.getElementById('av-letter').textContent = (u.name || 'S')[0].toUpperCase();
+    document.getElementById('hero-name').textContent = name;
+    const tick = document.getElementById('vbadge');
+    const verified = !!(d.verified || u.verified);
+    tick.style.display = verified ? 'inline' : 'none';
+    document.getElementById('pill-ver').textContent = verified ? 'Verified' : 'Unverified';
+    document.getElementById('hero-sub').textContent = u.email || '';
+    const plan = (d.plan || 'free');
+    document.getElementById('pill-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1) + ' plan';
+    if (d.isAmbassador) document.getElementById('pill-amb').style.display = '';
+    document.getElementById('info-email').textContent = u.email || '—';
+    document.getElementById('info-phone').textContent = u.phone || '—';
+    document.getElementById('info-school').textContent = u.school || '—';
+    document.getElementById('info-since').textContent = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—';
+    document.getElementById('upd-name').value = u.name || '';
+    document.getElementById('upd-surname').value = u.surname || '';
+    document.getElementById('upd-age').value = u.age || '';
+    document.getElementById('upd-school').value = u.school || '';
+    document.getElementById('st-bal').textContent = '$' + (d.balanceDollars != null ? d.balanceDollars : '0.00');
+    const used = d.usage && d.usage.chat != null ? d.usage.chat : 0;
+    const lim = d.limits && d.limits.aiMsg;
+    document.getElementById('st-ai').textContent = (lim === 'unlimited' || lim == null) ? used + ' msgs' : used + ' of ' + lim;
+    const wa = document.getElementById('wa-status');
+    if (d.pairingStatus === 'paired') wa.textContent = 'Linked';
+    else { wa.textContent = 'Not linked'; document.getElementById('wa-link-section').style.display = ''; }
+  } catch (e) {
+    if (e.status === 401 || e.status === 403) { localStorage.clear(); location.replace('/login'); }
+  }
+  const p = loadAiPrefs();
+  document.getElementById('ai-call').value = p.callName || '';
+  document.getElementById('ai-agent').classList.toggle('on', p.agentMode !== false);
+  document.getElementById('ai-stream').classList.toggle('on', p.stream !== false);
+  document.getElementById('ai-pages').value = String(p.pdfPages || 8);
+  try {
+    const m = await api('GET', '/api/messenger/settings');
+    const s = m.settings || {};
+    document.getElementById('ms-user').value = s.username || '';
+    document.getElementById('ms-bio').value = s.bio || '';
+    document.getElementById('ms-pub').classList.toggle('on', s.profilePublic !== false);
+  } catch {}
+}
+function saveAiPrefs() {
+  const p = {
+    callName: document.getElementById('ai-call').value.trim().slice(0, 40),
+    agentMode: document.getElementById('ai-agent').classList.contains('on'),
+    stream: document.getElementById('ai-stream').classList.contains('on'),
+    pdfPages: parseInt(document.getElementById('ai-pages').value, 10) || 8,
+  };
+  localStorage.setItem(AI_KEY, JSON.stringify(p));
+  const el = document.getElementById('ai-ok'); el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+async function saveMessenger() {
+  const ok = document.getElementById('ms-ok'); const err = document.getElementById('ms-err');
+  ok.classList.remove('show'); err.classList.remove('show');
+  try {
+    await api('PATCH', '/api/messenger/settings', {
+      username: document.getElementById('ms-user').value.trim(),
+      bio: document.getElementById('ms-bio').value.trim(),
+      profilePublic: document.getElementById('ms-pub').classList.contains('on'),
+    });
+    ok.classList.add('show');
+  } catch (e) { err.textContent = e.message; err.classList.add('show'); }
+}
+async function updateProfile() {
+  const name = document.getElementById('upd-name').value.trim();
+  const surname = document.getElementById('upd-surname').value.trim();
+  const age = document.getElementById('upd-age').value;
+  const school = document.getElementById('upd-school').value.trim();
+  const ok = document.getElementById('prof-ok'); const err = document.getElementById('prof-err');
+  ok.classList.remove('show'); err.classList.remove('show');
+  if (!name || !surname || !age || !school) { err.textContent = 'All fields required.'; err.classList.add('show'); return; }
+  try {
+    await api('POST', '/api/profile/update', { name, surname, age: parseInt(age, 10), school });
+    ok.textContent = 'Saved.'; ok.classList.add('show');
+    document.getElementById('hero-name').textContent = name + ' ' + surname;
+  } catch (e) { err.textContent = e.message; err.classList.add('show'); }
+}
+async function changePassword() {
+  const cur = document.getElementById('cur-pw').value, nw = document.getElementById('new-pw').value, nw2 = document.getElementById('new-pw2').value;
+  const ok = document.getElementById('pw-ok'); const err = document.getElementById('pw-err');
+  ok.classList.remove('show'); err.classList.remove('show');
+  if (!cur || !nw || !nw2) { err.textContent = 'All fields required.'; err.classList.add('show'); return; }
+  if (nw.length < 6) { err.textContent = 'At least 6 characters.'; err.classList.add('show'); return; }
+  if (nw !== nw2) { err.textContent = 'Passwords do not match.'; err.classList.add('show'); return; }
+  try {
+    await api('POST', '/api/profile/change-password', { currentPassword: cur, newPassword: nw });
+    ok.textContent = 'Password updated.'; ok.classList.add('show');
+    document.getElementById('cur-pw').value = document.getElementById('new-pw').value = document.getElementById('new-pw2').value = '';
+  } catch (e) { err.textContent = e.message; err.classList.add('show'); }
+}
+async function genPairLink() {
+  try {
+    const d = await api('POST', '/api/generate-link');
+    document.getElementById('pair-val').value = d.botLink;
+    document.getElementById('pair-wa-link').href = d.botLink;
+    document.getElementById('pair-result').style.display = 'block';
+  } catch (e) { alert(e.message); }
+}
+function showConfirm() { document.getElementById('confirm-box').classList.add('show'); }
+function hideConfirm() { document.getElementById('confirm-box').classList.remove('show'); }
+async function deleteAccount() {
+  try { await api('DELETE', '/api/account'); localStorage.clear(); location.href = '/login'; }
+  catch (e) { alert(e.message); }
+}
+function doLogout() {
+  fetch('/api/auth/logout', { method: 'POST', headers: { 'x-session-token': token } }).catch(() => {});
+  localStorage.clear(); location.href = '/login';
+}
+init();
+</script>
 </body>
 </html>

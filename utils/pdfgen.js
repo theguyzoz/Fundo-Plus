@@ -684,7 +684,7 @@ export async function generatePdf(title, content, jobId, outDir, meta = {}, opts
       const CONTENT_W = doc.page.width - MARGIN * 2;
       const TOP_Y     = 50;
       const BOT_Y     = doc.page.height - 52;
-      const MIN_PAGES = 12;
+      const MIN_PAGES = Math.min(20, Math.max(6, parseInt(opts.minPages, 10) || 12));
 
       // ── Page 1: Cover ─────────────────────────────────────────────────────
       drawCoverPage(doc, coverMeta);
