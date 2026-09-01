@@ -248,6 +248,20 @@
       .main { margin-left: 0; }
       .ham { display: flex; }
     }
+    .home-wallet{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      background:linear-gradient(120deg,#1d4ed8,#2563eb);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:14px;
+      text-decoration:none;box-shadow:0 10px 28px rgba(37,99,235,.22)}
+    .home-wallet .hw-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+    .home-wallet .hw-bal{font-size:1.7rem;font-weight:900;line-height:1.1;margin-top:2px}
+    .home-wallet .hw-sub{font-size:.75rem;opacity:.9;margin-top:2px}
+    .home-wallet .hw-cta{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);color:#fff;
+      padding:8px 14px;border-radius:99px;font-size:.78rem;font-weight:800;white-space:nowrap}
+    .notice-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+    .notice{display:block;background:var(--surf);border:1.5px solid var(--brd);border-radius:14px;padding:12px 14px;
+      text-decoration:none;color:inherit;box-shadow:var(--sh)}
+    .notice b{display:block;font-size:.82rem;font-weight:800;margin-bottom:3px}
+    .notice span{font-size:.72rem;color:var(--mut);line-height:1.35}
+    .dash-head{font-size:.72rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 8px}
   </style>
 </head>
 
@@ -947,7 +961,12 @@
       event?.preventDefault();
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      document.getElementById('panel-' + name).classList.add('active');
+      const pane = document.getElementById('panel-' + name);
+      if (!pane) {
+        if (name === 'chat') { window.location.href = '/ai'; return; }
+        return;
+      }
+      pane.classList.add('active');
       if (el) {
         el.classList.add('active');
       } else {
@@ -1826,22 +1845,6 @@ Format with clear ## headings. Be thorough and educational.`;
     async function loadMsgBadge() {
       try {
         const r = await apiFetch('/api/messenger/pending-count');
-        const badge = document.getElementById('sb-msg-badge');
-        if (!badge) return;
-        if (r && r.total > 0) {
-          badge.textContent = r.total > 99 ? '99+' : r.total;
-          badge.style.display = 'inline-block';
-        } else {
-          badge.style.display = 'none';
-        }
-      } catch(e) {}
-    }
-    setTimeout(loadMsgBadge, 2000);
-    setInterval(loadMsgBadge, 30000);
-  </script>
-</body>
-</html>
-ch('/api/messenger/pending-count');
         const badge = document.getElementById('sb-msg-badge');
         if (!badge) return;
         if (r && r.total > 0) {

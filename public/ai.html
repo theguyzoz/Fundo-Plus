@@ -665,7 +665,10 @@
 
     let bubbleContent;
     if (role === 'ai') {
-      const parsed = marked.parse(rawContent || '');
+      let parsed = rawContent || '';
+      try {
+        if (typeof marked !== 'undefined' && marked.parse) parsed = marked.parse(parsed);
+      } catch (e) {}
       bubbleContent = parsed;
     } else {
       bubbleContent = escapeHtml(rawContent || '').replace(/\n/g, '<br>');
@@ -794,7 +797,7 @@
   });
 
   function escapeHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   applyDesktopSidebar();
