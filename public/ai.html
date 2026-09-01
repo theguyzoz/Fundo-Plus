@@ -240,8 +240,19 @@
     .messages::-webkit-scrollbar { width: 5px; }
     .messages::-webkit-scrollbar-thumb { background: var(--brd); border-radius: 4px; }
 
-    .msg-row { display: flex; gap: 12px; max-width: 860px; margin: 0 auto; width: 100%; }
-    .msg-row.user { flex-direction: row-reverse; }
+    .msg-row { display: flex; gap: 14px; max-width: 768px; margin: 0 auto; width: 100%; }
+    .msg-row.user { justify-content: flex-end; }
+    .msg-row.user .msg-avatar { display: none; }
+    .agent-trace{width:100%;max-width:768px;margin:0 auto 4px;border:1px solid var(--brd);border-radius:14px;background:#fafafa;overflow:hidden}
+    .agent-step{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:.8rem;font-weight:650;color:#334155;border-bottom:1px solid #f1f5f9}
+    .agent-step:last-child{border:0}
+    .agent-step svg{flex-shrink:0;opacity:.85}
+    .agent-step.run{color:#1d4ed8;background:#eff6ff}
+    .agent-step.done{color:#166534}
+    .agent-step .spin{width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:sp .7s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .thought-box{padding:8px 12px 12px;font-size:.78rem;color:#475569;line-height:1.5;background:#f8fafc}
+    .thought-box summary{cursor:pointer;font-weight:800;color:#0f172a;margin-bottom:6px}
 
     .msg-avatar {
       width: 32px; height: 32px; border-radius: 50%;
@@ -262,11 +273,10 @@
       font-size: .88rem; line-height: 1.7; word-break: break-word;
     }
     .msg-row.user .msg-bubble {
-      background: var(--acc); color: #fff; border-bottom-right-radius: 4px;
+      background: #f4f4f5; color: var(--txt); border-bottom-right-radius: 6px; max-width: 70%;
     }
     .msg-row.ai .msg-bubble {
-      background: var(--surf); border: 1px solid var(--brd); color: var(--txt);
-      border-bottom-left-radius: 4px;
+      background: transparent; border: 0; color: var(--txt); padding: 4px 2px; max-width: 100%;
     }
 
     /* Markdown in AI messages */
@@ -530,6 +540,8 @@
         if (el) el.style.display = '';
       }
       await refreshUsage();
+      const live = document.getElementById('agent-live');
+      if (live) live.style.display = loadAiPrefs().agentMode === false ? 'none' : '';
     } catch { location.href = '/login'; }
   }
 
@@ -729,6 +741,45 @@
     if (el) el.remove();
   }
 
+  function svgBrain(){return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2a2.5 2.5 0 0 1 2.45 2.05A3 3 0 0 1 15 7v1a3 3 0 0 1 3 3c0 .7-.24 1.35-.64 1.86A3 3 0 0 1 16 18h-1.5M9.5 2A2.5 2.5 0 0 0 7 4.5V6a3 3 0 0 0-3 3c0 .7.24 1.35.64 1.86A3 3 0 0 0 6 18h1.5"/><path d="M12 8v13"/></svg>';}
+  function svgBash(){return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>';}
+  function svgSearch(){return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';}
+  function svgUp(){return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5"/><polyline points="5 12 12 5 19 12"/></svg>';}
+  function ensureTrace(agent) {
+    let el = document.getElementById('agent-trace');
+    if (el) return el;
+    if (!agent) return null;
+    const wrap = document.createElement('div');
+    wrap.className = 'agent-trace';
+    wrap.id = 'agent-trace';
+    wrap.innerHTML = '<div id="agent-steps"></div><details class="thought-box" id="agent-thought" style="display:none"><summary>Thought</summary><div id="agent-thought-body"></div></details>';
+    document.getElementById('messages').appendChild(wrap);
+    return wrap;
+  }
+  function setStep(id, label, icon, status) {
+    const host = document.getElementById('agent-steps');
+    if (!host) return;
+    let row = document.getElementById('step-' + id);
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'step-' + id;
+      row.className = 'agent-step';
+      host.appendChild(row);
+    }
+    row.className = 'agent-step ' + (status || '');
+    const ic = icon === 'brain' ? svgBrain() : icon === 'bash' ? svgBash() : icon === 'search' ? svgSearch() : svgUp();
+    const spin = status === 'run' ? '<span class="spin"></span>' : (status === 'done' ? '✓' : '');
+    row.innerHTML = ic + '<span>' + escapeHtml(label) + '</span><span style="margin-left:auto;font-size:.72rem">' + spin + '</span>';
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+  }
+  function setThought(text) {
+    const box = document.getElementById('agent-thought');
+    const body = document.getElementById('agent-thought-body');
+    if (!box || !body || !text) return;
+    box.style.display = '';
+    body.textContent = text;
+  }
+
   async function sendMessage() {
     if (isLoading) return;
     const input = document.getElementById('msg-input');
@@ -748,27 +799,75 @@
     session.messages.push({ role: 'user', content: text });
     saveSessions();
 
-    showTyping();
+    const prefs = loadAiPrefs();
+    const useStream = prefs.stream !== false;
+    const agent = prefs.agentMode !== false;
+    const oldTrace = document.getElementById('agent-trace');
+    if (oldTrace) oldTrace.id = '';
+    if (agent) {
+      ensureTrace(true);
+      setStep('think', 'Thinking', 'brain', 'run');
+    } else {
+      showTyping();
+    }
 
     try {
       const r = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-session-token': TOKEN },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: text, stream: useStream, prefs: prefs })
       });
 
-      hideTyping();
-
       if (r.status === 429) {
+        hideTyping();
         const d = await r.json().catch(() => ({}));
         showLimit(d.error || 'Daily AI message limit reached.');
         await refreshUsage();
       } else if (r.status === 403) {
-        location.reload(); // banned — server will serve banned.html
+        location.reload();
       } else if (!r.ok) {
+        hideTyping();
         const d = await r.json().catch(() => ({}));
         appendMsg('ai', '⚠️ ' + (d.error || 'Something went wrong. Please try again.'));
+      } else if (useStream && r.body) {
+        hideTyping();
+        const row = appendMsg('ai', '', true, null);
+        const bubble = row.querySelector('.msg-bubble');
+        let full = '';
+        let pdf = null;
+        const reader = r.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            let ev = {};
+            try { ev = JSON.parse(line.slice(6)); } catch { continue; }
+            if (ev.type === 'step') setStep(ev.id, ev.label, ev.icon, ev.status);
+            if (ev.type === 'thought') setThought(ev.text);
+            if (ev.type === 'delta' && ev.text) {
+              full += ev.text;
+              bubble.innerHTML = renderMd(full) + '<span class="stream-cur"></span>';
+              document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            }
+            if (ev.type === 'pdf') pdf = ev.pdf;
+            if (ev.type === 'error') full += '\n\n⚠️ ' + (ev.error || 'Error');
+          }
+        }
+        bubble.innerHTML = renderMd(full) + pdfCardHtml(pdf);
+        if (typeof renderMathInElement !== 'undefined') {
+          try { renderMathInElement(bubble, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }); } catch (e) {}
+        }
+        session.messages.push({ role: 'ai', content: full, pdf: pdf || null });
+        saveSessions();
+        await refreshUsage();
       } else {
+        hideTyping();
         const d = await r.json();
         const reply = d.reply || d.message || '';
         appendMsg('ai', reply, true, d.pdf);

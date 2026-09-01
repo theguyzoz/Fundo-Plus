@@ -484,6 +484,7 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
   }
 
   const stream = !!wantStream;
+  const agent = prefs.agentMode !== false;
   if (stream) {
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -491,21 +492,38 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
     res.setHeader('X-Accel-Buffering', 'no');
     if (typeof res.flushHeaders === 'function') res.flushHeaders();
   }
-  const finish = (payload) => {
+  const sse = (obj) => {
+    if (!stream) return;
+    res.write(`data: ${JSON.stringify(obj)}\n\n`);
+    if (typeof res.flush === 'function') res.flush();
+  };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const finish = async (payload) => {
     if (!stream) return res.json(payload);
     const text = String(payload.reply || '');
     const chunks = text.split(/(?<=\s)/);
     for (const c of chunks) {
-      if (c) res.write(`data: ${JSON.stringify({ type: 'delta', text: c })}\n\n`);
+      if (!c) continue;
+      sse({ type: 'delta', text: c });
+      await sleep(18);
     }
-    if (payload.pdf) res.write(`data: ${JSON.stringify({ type: 'pdf', pdf: payload.pdf })}\n\n`);
-    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    if (payload.pdf) sse({ type: 'pdf', pdf: payload.pdf });
+    sse({ type: 'done' });
     return res.end();
   };
 
   try {
+    if (stream && agent) {
+      sse({ type: 'step', id: 'think', label: 'Thinking', icon: 'brain', status: 'run' });
+      await sleep(900);
+    }
     let reply = await askWebAI(`web:${uid}`, message, prefs);
     incrementChatUsage(uid);
+    if (stream && agent) {
+      sse({ type: 'step', id: 'think', label: 'Thinking', icon: 'brain', status: 'done' });
+      const thought = stripPdfMarker(reply).split('\n').filter(Boolean).slice(0, 2).join(' ');
+      if (thought) sse({ type: 'thought', text: thought.slice(0, 280) });
+    }
 
     let parsed = parsePdfMarker(reply);
     const needPdf = !!(parsed || wantsPdf(message) || looksLikePdfRefusal(reply));
@@ -529,6 +547,9 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
       return finish({ reply: (stripPdfMarker(reply) || reply) + '\n\nI could not finish the PDF body. Try again with a specific topic.' });
     }
 
+    if (stream && agent) {
+      sse({ type: 'step', id: 'pdf', label: 'Generating PDF', icon: 'bash', status: 'run' });
+    }
     const { generatePdf } = await import('../utils/pdfgen.js');
     const { v4: uuidv4 } = await import('uuid');
     const { randomBytes } = await import('crypto');
