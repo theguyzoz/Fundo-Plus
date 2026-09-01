@@ -28,7 +28,7 @@ import {
   getUserPlan, getPlanLimits, setUserSubscription, getAllSubscriptions,
   getUserSubscription, savePaymentProof, getAllProofs, getPendingProofs,
   getProofFilePath, reviewProof, getUserProofs, getUserPendingProof, PLANS,
-  getFullUsage, incrementStudySession, incrementQuizUsage,
+  getFullUsage, getPaperDlCount, incrementStudySession, incrementQuizUsage,
   incrementProjectUsage, incrementPaperDl, canDownloadPaper,
   incrementChatUsage, incrementPdfUsage as _incPdf,
   // paynow / virtual balance
@@ -76,7 +76,7 @@ import {
   createSession, destroySession, getSessionUser,
   requireAuth, requireOnboarded, requireAuthAllowBanned,
 } from './auth.js';
-import { askWebAI, clearWebHistory } from './ai.js';
+import { askWebAI, clearWebHistory, wantsPdf, looksLikePdfRefusal, parsePdfMarker, stripPdfMarker, expandPdfContent } from './ai.js';
 import { createVerifyToken, consumeToken } from '../utils/verify.js';
 import { uploadToCatbox, classifyMedia, assertAllowedMedia, safeFilename, CATBOX_MAX_BYTES } from '../utils/catbox.js';
 import { createPayment, verifyUpdate, pollTransaction, isConfigured as isPaynowConfigured } from '../utils/paynow.js';
@@ -434,7 +434,7 @@ router.post('/api/samazed/chat', async (req, res) => {
   if (!messages || !Array.isArray(messages) || messages.length === 0)
     return res.status(400).json({ error: 'No messages provided' });
 
-  const DEFAULT_SYS = 'You are Prok AI, made by Fundo Plus. You are a helpful, intelligent AI assistant. Assist the user clearly and concisely.';
+  const DEFAULT_SYS = 'You are Fundo AI, made by Fundo Plus. You are a helpful, intelligent AI assistant. Assist the user clearly and concisely.';
   const systemPrompt = (typeof system === 'string' && system.trim()) ? system.trim() : DEFAULT_SYS;
 
   try {
@@ -471,9 +471,64 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
   }
 
   try {
-    const reply = await askWebAI(`web:${uid}`, message);
+    let reply = await askWebAI(`web:${uid}`, message);
     incrementChatUsage(uid);
-    res.json({ reply });
+
+    let parsed = parsePdfMarker(reply);
+    const needPdf = !!(parsed || wantsPdf(message) || looksLikePdfRefusal(reply));
+    if (!needPdf) return res.json({ reply: stripPdfMarker(reply) || reply });
+
+    const pdfLimit = limits.pdfExports;
+    if (pdfLimit !== 'unlimited' && !ambassadorActive && (usage.pdf || 0) >= pdfLimit) {
+      const text = (stripPdfMarker(reply) || reply) +
+        `\n\nI drafted the notes, but your **daily PDF export limit** (${pdfLimit}) is used up. Upgrade on Subscription to download.`;
+      return res.json({ reply: text });
+    }
+
+    if (!parsed || String(parsed.content || '').trim().split(/\s+/).length < 500) {
+      try {
+        parsed = await expandPdfContent(parsed?.title, parsed?.content, message);
+      } catch (e) {
+        console.warn('[AI PDF] expand failed:', e.message);
+      }
+    }
+    if (!parsed || String(parsed.content || '').trim().length < 200) {
+      return res.json({ reply: (stripPdfMarker(reply) || reply) + '\n\nI could not finish the PDF body. Try again with a specific topic, e.g. “O-Level photosynthesis PDF notes”.' });
+    }
+
+    const { generatePdf } = await import('../utils/pdfgen.js');
+    const { v4: uuidv4 } = await import('uuid');
+    const { randomBytes } = await import('crypto');
+    const outDir = path.join(__dirname, '..', 'temp', 'ai-pdfs');
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+    const jobId = uuidv4();
+    const title = parsed.title || 'Fundo AI notes';
+    const meta = {
+      title,
+      student: `${req.user.name || ''} ${req.user.surname || ''}`.trim() || 'Student',
+      school: req.user.school || 'Fundo Plus',
+      subject: 'Study notes',
+      level: '',
+      year: String(new Date().getFullYear()),
+    };
+    const fp = await generatePdf(title, parsed.content, jobId, outDir, meta, { pixabayKey: process.env.PIXABAY_KEY || '' });
+    incrementPdfUsage(uid);
+
+    const dlToken = randomBytes(24).toString('hex');
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    pendingDownloads.set(dlToken, { filePath: fp, expiresAt, title, kind: 'ai-pdf' });
+    const downloadUrl = `/api/ai/pdf/${dlToken}?dl=1`;
+    const previewUrl = `/api/ai/pdf/${dlToken}`;
+    const preface = parsed.preface || stripPdfMarker(reply) || `I've written **${title}**.`;
+    const notice =
+      `${preface}\n\n` +
+      `**${title}** is hosted on Fundo Plus.\n\n` +
+      `⏱️ This file is **deleted after 24 hours**.\n\n` +
+      `[Download PDF](${downloadUrl}) · [Preview](${previewUrl})`;
+    res.json({
+      reply: notice,
+      pdf: { title, downloadUrl, previewUrl, expiresAt, notice: 'Deleted after 24 hours' },
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -960,6 +1015,39 @@ router.get('/api/skills/project-preview/:token', (req, res) => {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'inline');
   res.setHeader('Content-Length', buf.length);
+  res.send(buf);
+});
+
+router.get('/api/ai/pdf/:token', (req, res) => {
+  const entry = pendingDownloads.get(req.params.token);
+  if (!entry) {
+    return res.status(404).send(`<!doctype html><html><head><title>Expired — Fundo Plus</title>
+      <style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f0f4ff}
+      .box{text-align:center;padding:36px;background:#fff;border-radius:16px;max-width:420px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+      h2{margin:0 0 10px}p{color:#64748b}</style></head><body><div class="box">
+      <h2>PDF expired</h2><p>Fundo AI files are deleted after <strong>24 hours</strong>. Ask Fundo AI to generate it again.</p>
+      <p><a href="/ai">← Back to Fundo AI</a></p></div></body></html>`);
+  }
+  if (Date.now() > entry.expiresAt) {
+    pendingDownloads.delete(req.params.token);
+    try { fs.unlinkSync(entry.filePath); } catch {}
+    return res.status(410).send(`<!doctype html><html><head><title>Expired — Fundo Plus</title>
+      <style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f0f4ff}
+      .box{text-align:center;padding:36px;background:#fff;border-radius:16px;max-width:420px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+      h2{margin:0 0 10px}p{color:#64748b}</style></head><body><div class="box">
+      <h2>PDF expired</h2><p>This file was deleted after 24 hours. Ask Fundo AI to generate it again.</p>
+      <p><a href="/ai">← Back to Fundo AI</a></p></div></body></html>`);
+  }
+  if (!fs.existsSync(entry.filePath)) {
+    pendingDownloads.delete(req.params.token);
+    return res.status(404).send('File not found. Ask Fundo AI to generate it again.');
+  }
+  const filename = (entry.title || 'fundo-ai-notes').replace(/[^a-z0-9]/gi, '_') + '.pdf';
+  const asDownload = String(req.query.dl || '') === '1';
+  const buf = fs.readFileSync(entry.filePath);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Length', buf.length);
+  res.setHeader('Content-Disposition', asDownload ? `attachment; filename="${filename}"` : 'inline');
   res.send(buf);
 });
 

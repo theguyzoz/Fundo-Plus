@@ -50,7 +50,7 @@ export async function generateDocxBuffer(title, content) {
     }
 
     const doc = new Document({
-      creator: 'Prok AI AI by XTech',
+      creator: 'Fundo AI by XTech',
       title,
       sections: [{ children }],
     });

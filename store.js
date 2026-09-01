@@ -629,7 +629,7 @@ function getEntry(uid) {
 }
 
 // Paper download windows: array of { windowStart, count }
-function getPaperDlCount(uid) {
+export function getPaperDlCount(uid) {
   const e = getEntry(uid);
   const now = Date.now();
   const SIX_HOURS = 6 * 60 * 60 * 1000;

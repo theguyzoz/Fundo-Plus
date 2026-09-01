@@ -200,7 +200,13 @@
       font-weight: 900; color: var(--txt); line-height: 1.15;
       margin-bottom: 8px; letter-spacing: -.02em;
     }
-    .welcome-sub { font-size: .95rem; color: var(--txt2); margin-bottom: 36px; max-width: 420px; }
+    .welcome-sub { font-size: .95rem; color: var(--txt2); margin-bottom: 12px; max-width: 420px; }
+    .pdf-notice { font-size: .78rem; color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 8px 12px; margin-bottom: 22px; max-width: 460px; font-weight: 650; }
+    .pdf-card { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: #eff6ff; border: 1.5px solid #bfdbfe; }
+    .pdf-card b { display: block; margin-bottom: 4px; }
+    .pdf-card .pdf-meta { font-size: .75rem; color: #64748b; margin-bottom: 8px; }
+    .pdf-card a { display: inline-flex; margin-right: 8px; padding: 6px 12px; border-radius: 99px; font-size: .75rem; font-weight: 800; text-decoration: none; background: #2563eb; color: #fff; }
+    .pdf-card a.sec { background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
 
     .suggestion-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -452,12 +458,13 @@
         <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V10a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M9.5 16.5c.8.7 4.2.7 5 0"/></svg>
       </div>
       <div class="welcome-greeting" id="welcome-greeting">Good evening</div>
-      <div class="welcome-sub">Your AI study assistant. Ask me anything about your subjects, get explanations, solve equations, or quiz yourself.</div>
+      <div class="welcome-sub">Your AI study assistant. Ask for explanations, quizzes — or a PDF. Files are hosted on Fundo Plus and deleted after 24 hours.</div>
+      <div class="pdf-notice">📄 Ask “make me a PDF on …” — 6+ page notes, download link lasts 24 hours.</div>
       <div class="suggestion-grid">
-        <button class="suggestion-chip" onclick="sendSuggestion('Explain the quadratic formula with examples')">
-          <span class="chip-icon">📐</span>
-          <span class="chip-text">Quadratic Formula</span>
-          <span class="chip-sub">Explain it with examples</span>
+        <button class="suggestion-chip" onclick="sendSuggestion('Make me a high-grade O-Level photosynthesis PDF with worked examples')">
+          <span class="chip-icon">📄</span>
+          <span class="chip-text">PDF notes</span>
+          <span class="chip-sub">6+ pages, hosted 24h</span>
         </button>
         <button class="suggestion-chip" onclick="sendSuggestion('Summarise the causes of World War 1')">
           <span class="chip-icon">🌍</span>
@@ -616,7 +623,7 @@
 
     const msgs = document.getElementById('messages');
     msgs.innerHTML = '';
-    session.messages.forEach(m => appendMsg(m.role, m.content, false));
+    session.messages.forEach(m => appendMsg(m.role, m.content, false, m.pdf));
     showChatArea(session.title || 'Chat');
     msgs.scrollTop = msgs.scrollHeight;
   }
@@ -744,8 +751,8 @@
       } else {
         const d = await r.json();
         const reply = d.reply || d.message || '';
-        appendMsg('ai', reply);
-        session.messages.push({ role: 'ai', content: reply });
+        appendMsg('ai', reply, true, d.pdf);
+        session.messages.push({ role: 'ai', content: reply, pdf: d.pdf || null });
         saveSessions();
         await refreshUsage();
       }

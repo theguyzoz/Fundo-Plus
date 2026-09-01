@@ -14,7 +14,7 @@ const TEMP_DIR  = path.join(__dirname, '..', 'temp');
 
 const PDF_TRIGGER_MARKER = '__PROK_MAKE_PDF__';
 
-const SYSTEM_PROMPT = `You are Prok, the friendly AI assistant for Fundo Plus — an educational platform for Zimbabwean students (ZIMSEC O-Level and A-Level).
+const SYSTEM_PROMPT = `You are Fundo AI, the friendly AI assistant for Fundo Plus — an educational platform for Zimbabwean students (ZIMSEC O-Level and A-Level).
 
 PERSONALITY: Warm, encouraging, knowledgeable. Speak clearly and simply.
 
@@ -30,7 +30,7 @@ CONTENT:
 
 SCOPE: You can discuss academics, study tips, ZIMSEC subjects.
 You CANNOT search the web — tell users if something is outside your knowledge.
-Never mention your underlying model. You are Prok by Fundo Plus.`;
+Never mention your underlying model. You are Fundo AI by Fundo Plus.`;
 
 const histories = new Map();
 const MAX_HISTORY = 12;
@@ -103,7 +103,7 @@ export async function handleChat(phone, text) {
     await sendText(phone, reply + RETURN_PROMPT);
   } catch (err) {
     console.error('[Chat] Error:', err.message);
-    await sendText(phone, '⚠️ Prok is having trouble responding right now. Please try again.' + RETURN_PROMPT);
+    await sendText(phone, '⚠️ Fundo AI is having trouble responding right now. Please try again.' + RETURN_PROMPT);
   }
 }
 

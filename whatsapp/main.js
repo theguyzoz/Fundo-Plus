@@ -98,7 +98,7 @@ export async function handleMessage(body) {
     if (t.includes('chat') || t.includes('ai') || t.includes('fundo') || t === '2') {
       setSession(phone, { ...session, mode: 'chat', data: {} });
       await sendText(phone,
-        `💬 *Chat with Fundo AI*\n\nHi! I'm Prok, your study assistant 🎓\nAsk me anything — subjects, homework, concepts, or request a PDF document.\n\nType *0* anytime to return to the menu.`
+        `💬 *Chat with Fundo AI*\n\nHi! I'm Fundo AI, your study assistant 🎓\nAsk me anything — subjects, homework, concepts, or request a PDF document.\n\nType *0* anytime to return to the menu.`
       );
       return;
     }

@@ -14,7 +14,7 @@ Built by **XTech** · No Firebase · No Google Auth
 | **Login** | White split-panel design with SVG illustration |
 | **Onboarding** | White split-panel with green gradient + SVG avatar |
 | **Dashboard** | White theme, modern SVG hamburger, KaTeX LaTeX rendering |
-| **Prok AI** | All AI renamed from Frieno to Prok AI |
+| **Fundo AI** | All AI renamed from Frieno to Fundo AI |
 | **Web AI** | LaTeX enabled (KaTeX rendered) |
 | **Sitemap** | `/sitemap.xml` in full Google Search Console format |
 | **Login page** | New `/login` route — email/password or phone/password. Gmail, Outlook, Yahoo, iCloud and other popular providers only |
@@ -210,7 +210,7 @@ The WA AI can now trigger the calculator for numeric expressions:
 
 ```
 User: what is sqrt(144) + 5^2
-Prok AI: 🧮 Calculator
+Fundo AI: 🧮 Calculator
         sqrt(144) + 5^2 = 37
 ```
 

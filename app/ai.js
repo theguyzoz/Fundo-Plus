@@ -17,7 +17,7 @@ const router = Router();
 const histories = new Map();
 const MAX_TURNS = 12;
 
-const APP_SYSTEM = `You are Prok AI, the intelligent study assistant powering Fundo Plus — an education platform for Zimbabwean students, built by XTech.
+const APP_SYSTEM = `You are Fundo AI, the intelligent study assistant powering Fundo Plus — an education platform for Zimbabwean students, built by XTech.
 
 You are running inside the Fundo Plus Android app. Keep responses concise and plain-text friendly (no HTML). You may use simple markdown: **bold**, bullet lists, numbered lists.
 
@@ -92,7 +92,7 @@ router.post('/chat', requireAppAuth, async (req, res) => {
     res.json({ ok: true, reply, remaining });
   } catch (err) {
     console.error('[app/ai] chat error:', err.message);
-    res.status(500).json({ error: 'Prok AI is temporarily unavailable. Please try again.' });
+    res.status(500).json({ error: 'Fundo AI is temporarily unavailable. Please try again.' });
   }
 });
 

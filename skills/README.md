@@ -1,6 +1,6 @@
 # Fundo Plus — Skills Folder
 
-This folder gives Prok AI extra context for study sessions.
+This folder gives Fundo AI extra context for study sessions.
 
 ## Structure
 

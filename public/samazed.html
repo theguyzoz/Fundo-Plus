@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
-  <title>Samaz × Prok AI — Powered by Fundo Plus</title>
+  <title>Samaz × Fundo AI — Powered by Fundo Plus</title>
   <style>
     :root{
       --blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;
@@ -213,7 +213,7 @@
     <button class="lock-btn" id="unlock-btn" onclick="tryUnlock()">Access Portal</button>
 
     <div class="lock-footer">
-      Powered by <a href="/">Fundo Plus</a> — Prok AI Partner Programme
+      Powered by <a href="/">Fundo Plus</a> — Fundo AI Partner Programme
     </div>
   </div>
 </div>
@@ -225,7 +225,7 @@
     <div class="topbar-left">
       <div class="topbar-logo">
         <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
-        <span>Prok AI</span>
+        <span>Fundo AI</span>
       </div>
       <span class="topbar-badge">Samaz Partner</span>
     </div>
@@ -249,7 +249,7 @@
       <span class="sys-toggle-arrow" id="sys-arrow">▼</span>
     </div>
     <div class="sys-body" id="sys-body">
-      <textarea id="sys-input" placeholder="Enter a custom system prompt. Leave blank to use the default Prok AI prompt."></textarea>
+      <textarea id="sys-input" placeholder="Enter a custom system prompt. Leave blank to use the default Fundo AI prompt."></textarea>
       <div class="sys-actions">
         <button class="sys-save" onclick="saveSystemPrompt()">Save prompt</button>
         <button class="sys-reset" onclick="resetSystemPrompt()">Reset to default</button>
@@ -261,7 +261,7 @@
   
   <div class="chat-area" id="chat-area">
     <div class="welcome-card">
-      <h3>Prok AI — Samaz Portal</h3>
+      <h3>Fundo AI — Samaz Portal</h3>
       <p>Unlimited AI access via the Fundo Plus partner programme. Send any message to get started. You can customise the system prompt above.</p>
     </div>
   </div>
@@ -269,7 +269,7 @@
   <!-- Input bar -->
   <div class="input-bar">
     <div class="input-row">
-      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask Prok AI anything…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask Fundo AI anything…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <button class="send-btn" id="send-btn" onclick="sendMessage()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
@@ -289,7 +289,7 @@
   const RATE_MAX  = 50;
   const RATE_WIN  = 30000;
   const SYS_KEY   = "samaz_system_prompt";
-  const DEFAULT_SYSTEM = "You are Prok AI, made by Fundo Plus. You are a helpful, intelligent AI assistant. Assist the user clearly and concisely.";
+  const DEFAULT_SYSTEM = "You are Fundo AI, made by Fundo Plus. You are a helpful, intelligent AI assistant. Assist the user clearly and concisely.";
 
   /* ── STATE ── */
   let callCount    = 0;
@@ -388,7 +388,7 @@
   window.clearChat = function(){
     messages = [];
     const area = document.getElementById('chat-area');
-    area.innerHTML = `<div class="welcome-card"><h3>Prok AI — Samaz Portal</h3><p>Chat cleared. Start a new conversation.</p></div>`;
+    area.innerHTML = `<div class="welcome-card"><h3>Fundo AI — Samaz Portal</h3><p>Chat cleared. Start a new conversation.</p></div>`;
   };
 
   window.sendMessage = async function(){

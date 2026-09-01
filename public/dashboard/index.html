@@ -273,7 +273,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
       </svg>
-      Prok AI Chat
+      Fundo AI Chat
     </a>
     <div class="sb-section">Resources</div>
     <a class="nav-item" href="#" onclick="return show('resources',this),false">
@@ -455,6 +455,23 @@
         </div>
       </div>
 
+      <a class="home-wallet" href="/~/subscription" id="home-wallet">
+        <div>
+          <div class="hw-label">Current balance</div>
+          <div class="hw-bal" id="home-balance">$0.00</div>
+          <div class="hw-sub" id="home-wallet-plan">Tap to deposit or buy a plan</div>
+        </div>
+        <span class="hw-cta">Deposit →</span>
+      </a>
+
+      <div class="notice-row">
+        <a class="notice" href="/ai"><b>Fundo AI</b><span>Ask anything — ZIMSEC help, worked examples, quizzes.</span></a>
+        <a class="notice" href="/messenger"><b>Messenger</b><span>Lounge, Support, and DMs. Share notes as PDF or DOCX.</span></a>
+        <a class="notice" href="/~/exam"><b>Exams</b><span>Sit timed tests and track your leaderboard.</span></a>
+        <a class="notice" href="/~/subscription"><b>Top up</b><span>Wallet max $10. Deposit, then buy Lite / Plus / Pro.</span></a>
+      </div>
+
+      <div class="dash-head">Today's usage — used / limit</div>
       <!-- Dashboard gauge cards -->
       <div class="dash-grid">
 
@@ -572,7 +589,7 @@
       <!-- end dash-grid -->
 
       <div class="cta-card" style="margin-top:20px">
-        <h3>🤖 Ask Prok AI anything</h3>
+        <h3>🤖 Ask Fundo AI anything</h3>
         <p>Get instant help with ZIMSEC subjects — worked examples, essay feedback, exam tips and more.</p>
         <button class="btn-acc" onclick="window.location.href='/ai'">Open AI Chat →</button>
       </div>
@@ -583,7 +600,7 @@
     <div class="panel" id="panel-quiz">
       <div id="quiz-setup" class="card-box">
         <h3>📝 Quiz Generator</h3>
-        <p>Paste notes, type a topic, or upload a PDF — Prok AI generates a quiz with full answer explanations.</p>
+        <p>Paste notes, type a topic, or upload a PDF — Fundo AI generates a quiz with full answer explanations.</p>
         <textarea id="quiz-text" placeholder="Paste your study material here, or describe a topic e.g. 'Photosynthesis O-Level Biology'…"></textarea>
         <div class="quiz-top">
           <div class="fg">
@@ -891,7 +908,7 @@
 
     const panelTitles = {
       home: 'Home',
-      chat: 'Prok AI Chat',
+      chat: 'Fundo AI Chat',
       quiz: 'Quiz Generator',
       resources: 'Past Papers',
       pairing: 'WhatsApp Linking',
@@ -976,15 +993,22 @@
 
         const lim = d.limits || {};
         const usg = d.usage  || {};
+        const hwBal = document.getElementById('home-balance');
+        if (hwBal) hwBal.textContent = '$' + (d.balanceDollars != null ? d.balanceDollars : '0.00');
+        const hwPlan = document.getElementById('home-wallet-plan');
+        if (hwPlan) hwPlan.textContent = ((d.plan || 'free').charAt(0).toUpperCase() + (d.plan || 'free').slice(1)) + ' plan · tap to deposit';
+
         function fmtLim(v) { return (v === Infinity || v === 'unlimited' || v === 'Infinity') ? '∞' : (v ?? '?'); }
         function setBar(valId, maxId, barId, pctId, used, limit) {
-          const isUnlimited = (limit === Infinity || limit === 'unlimited' || limit === 'Infinity' || limit == null);
-          const pct = isUnlimited ? 0 : Math.min(100, Math.round((used / limit) * 100));
-          if (document.getElementById(valId))  document.getElementById(valId).textContent  = used;
-          if (document.getElementById(maxId))  document.getElementById(maxId).textContent  = `/ ${fmtLim(limit)}`;
+          const nUsed = Number(used) || 0;
+          const isUnlimited = (limit === Infinity || limit === 'unlimited' || limit === 'Infinity');
+          const nLim = (!isUnlimited && limit != null && limit !== '') ? Number(limit) : null;
+          const pct = isUnlimited || !nLim ? 0 : Math.min(100, Math.round((nUsed / nLim) * 100));
+          if (document.getElementById(valId))  document.getElementById(valId).textContent  = nUsed;
+          if (document.getElementById(maxId))  document.getElementById(maxId).textContent  = isUnlimited ? ' of ∞' : (' of ' + fmtLim(nLim));
           if (document.getElementById(barId)) {
             const bar = document.getElementById(barId);
-            setTimeout(() => { bar.style.width = isUnlimited ? '30%' : pct + '%'; }, 100);
+            setTimeout(() => { bar.style.width = isUnlimited ? '30%' : pct + '%'; }, 80);
             if (!isUnlimited && pct >= 90) bar.className = bar.className.replace(/fill-\w+/, 'fill-warn');
           }
           if (document.getElementById(pctId))  document.getElementById(pctId).textContent  = isUnlimited ? '∞' : pct + '%';
@@ -994,7 +1018,7 @@
         setBar('s-pdfs',     's-pdfs-max',     'bar-pdfs',     'pct-pdfs',     usg.pdf            ?? 0, lim.pdfExports);
         setBar('s-sessions', 's-sessions-max', 'bar-sessions', 'pct-sessions', usg.studySessions  ?? 0, lim.studySessions);
         setBar('s-projects', 's-projects-max', 'bar-projects', 'pct-projects', usg.projectsTotal  ?? 0, lim.projects);
-        const dlCount = (usg.paperDlWindows && usg.paperDlWindows.length) ? (usg.paperDlWindows[usg.paperDlWindows.length-1]?.count ?? 0) : 0;
+        const dlCount = d.paperDlUsed != null ? d.paperDlUsed : ((usg.paperDlWindows && usg.paperDlWindows.length) ? (usg.paperDlWindows[usg.paperDlWindows.length-1]?.count ?? 0) : 0);
         setBar('s-dl',       's-dl-max',       'bar-dl',       'pct-dl',       dlCount,                 lim.paperDl);
 
         if (d.pairingStatus !== 'paired' && (d.plan || 'free') === 'free') {
@@ -1550,7 +1574,7 @@
       btn.disabled = true;
       btn.textContent = '✨ Generating…';
       status.style.display = 'block';
-      status.textContent = 'Prok AI is creating your study project…';
+      status.textContent = 'Fundo AI is creating your study project…';
 
       const prompt = `You are a study project generator for Zimbabwean students (ZIMSEC curriculum).
 Syllabus: ${activeSyllabus.name} (${activeSyllabus.level})
@@ -1802,6 +1826,22 @@ Format with clear ## headings. Be thorough and educational.`;
     async function loadMsgBadge() {
       try {
         const r = await apiFetch('/api/messenger/pending-count');
+        const badge = document.getElementById('sb-msg-badge');
+        if (!badge) return;
+        if (r && r.total > 0) {
+          badge.textContent = r.total > 99 ? '99+' : r.total;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch(e) {}
+    }
+    setTimeout(loadMsgBadge, 2000);
+    setInterval(loadMsgBadge, 30000);
+  </script>
+</body>
+</html>
+ch('/api/messenger/pending-count');
         const badge = document.getElementById('sb-msg-badge');
         if (!badge) return;
         if (r && r.total > 0) {
