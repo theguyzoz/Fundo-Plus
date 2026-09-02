@@ -387,6 +387,10 @@ tbody tr:hover td{background:var(--surface2)}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           Data Sync
         </button>
+        <button class="nav-item" data-page="email" onclick="showPage('email')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
+          Email
+        </button>
         <button class="nav-item" data-page="wishlist" onclick="showPage('wishlist')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           Wishlist
@@ -800,6 +804,23 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
+        <div class="page" id="page-email">
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Outgoing email (SMTP)</div>
+              <div class="card-sub">Gmail: use the account email + an App Password. System email is the From address for verification and forgot-password.</div></div></div>
+            <div class="field"><label>SMTP email (login)</label><input id="smtp-user" placeholder="you@gmail.com"></div>
+            <div class="field"><label>App password</label><input id="smtp-pass" type="password" placeholder="16-character app password"></div>
+            <div class="field"><label>System email (From / forgot password)</label><input id="smtp-from" placeholder="noreply@gmail.com"></div>
+            <div class="field"><label>Host</label><input id="smtp-host" placeholder="smtp.gmail.com"></div>
+            <div class="field"><label>Port</label><input id="smtp-port" placeholder="465"></div>
+            <div id="smtp-status" style="font-size:.8rem;margin:8px 0;color:var(--text2)"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveSmtp()">Save</button>
+              <button class="btn btn-ghost" onclick="testSmtp()">Test connection</button>
+            </div>
+          </div>
+        </div>
+
         <!-- ══ WISHLIST ══ -->
         <div class="page" id="page-wishlist">
           <div class="card">
@@ -987,7 +1008,7 @@ function getLoader(p) {
     overview: loadOverview, users: loadUsers, logins: loadLogins, bans: loadBans,
     support: loadSupport, subs: loadSubs, proofs: loadProofs, freelinks: loadPromoLinks,
     papers: loadPapers, ambassadors: loadAmbassadors, push: loadPushPage,
-    chats: loadChats, files: loadFiles, datafiles: loadDataFiles, wishlist: loadWishlist
+    chats: loadChats, files: loadFiles, datafiles: loadDataFiles, email: loadSmtp, wishlist: loadWishlist
   };
   return map[p];
 }
@@ -2247,6 +2268,40 @@ async function uploadDataFiles() {
 // ══════════════════════════════════════════════════════
 //  WISHLIST
 // ══════════════════════════════════════════════════════
+async function loadSmtp() {
+  try {
+    const r = await api('/api/admin/smtp');
+    const d = await r.json();
+    const s = d.smtp || {};
+    document.getElementById('smtp-user').value = s.user || '';
+    document.getElementById('smtp-from').value = s.fromEmail || '';
+    document.getElementById('smtp-host').value = s.host || 'smtp.gmail.com';
+    document.getElementById('smtp-port').value = s.port || 465;
+    document.getElementById('smtp-pass').placeholder = s.hasPassword ? '••••••••  (saved)' : '16-character app password';
+    document.getElementById('smtp-status').textContent = s.configured ? 'Configured — new signups will get a verification code.' : 'Not configured — signup verification is skipped.';
+  } catch (e) { document.getElementById('smtp-status').textContent = 'Could not load: ' + e.message; }
+}
+async function saveSmtp() {
+  const body = {
+    user: document.getElementById('smtp-user').value.trim(),
+    fromEmail: document.getElementById('smtp-from').value.trim(),
+    host: document.getElementById('smtp-host').value.trim() || 'smtp.gmail.com',
+    port: parseInt(document.getElementById('smtp-port').value, 10) || 465,
+    appPassword: document.getElementById('smtp-pass').value.trim(),
+  };
+  const r = await api('/api/admin/smtp', { method: 'POST', body: JSON.stringify(body) });
+  const d = await r.json();
+  document.getElementById('smtp-status').textContent = r.ok
+    ? ('Saved. ' + (d.canSend ? 'SMTP works.' : 'Saved but connection failed — check app password.'))
+    : (d.error || 'Save failed');
+  document.getElementById('smtp-pass').value = '';
+  loadSmtp();
+}
+async function testSmtp() {
+  const r = await api('/api/admin/smtp/test', { method: 'POST' });
+  const d = await r.json();
+  document.getElementById('smtp-status').textContent = r.ok ? (d.message || 'OK') : (d.error || 'Failed');
+}
 async function loadWishlist() {
   try {
     const r = await api('/api/admin/wishlist');

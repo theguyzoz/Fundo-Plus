@@ -94,6 +94,28 @@
                                                 <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
 
                                                 <button class="btn btn-blue" id="login-btn" onclick="doLogin()">Sign In</button>
+                                                <a href="#" onclick="showForgot();return false" style="display:block;margin-top:12px;font-size:.82rem;font-weight:700;color:var(--blue);text-align:center">Forgot password?</a>
+                                              </div>
+
+                                              <div id="panel-forgot" style="display:none">
+                                                <h2>Reset password</h2>
+                                                <p class="sub-text">We’ll email a 6-digit code if mail is set up.</p>
+                                                <div class="field"><label>Email</label><input type="email" id="f-reset-email" placeholder="you@gmail.com"></div>
+                                                <button class="btn btn-blue" id="forgot-btn" onclick="doForgot()">Send code</button>
+                                                <div id="reset-step2" style="display:none;margin-top:14px">
+                                                  <div class="field"><label>Code</label><input id="f-reset-code" placeholder="123456"></div>
+                                                  <div class="field"><label>New password</label><input type="password" id="f-reset-pass" placeholder="At least 6 characters"></div>
+                                                  <button class="btn btn-blue" onclick="doReset()">Set new password</button>
+                                                </div>
+                                                <a href="#" onclick="switchTab('login');return false" style="display:block;margin-top:12px;font-size:.82rem;font-weight:700;color:var(--blue);text-align:center">Back to sign in</a>
+                                              </div>
+
+                                              <div id="panel-verify" style="display:none">
+                                                <h2>Verify email</h2>
+                                                <p class="sub-text">Enter the code we sent to <span id="verify-email-label"></span></p>
+                                                <div class="field"><label>Code</label><input id="v-code" placeholder="123456"></div>
+                                                <button class="btn btn-blue" onclick="doVerify()">Verify</button>
+                                                <button class="btn" style="margin-top:8px;width:100%;background:#f1f5f9;border:none;padding:.65rem;border-radius:8px;font-weight:700;cursor:pointer" onclick="doResend()">Resend code</button>
                                               </div>
 
                                               <div id="panel-reg" style="display:none">
@@ -148,8 +170,63 @@
                                                 function switchTab(t) {
                                                 document.getElementById('panel-login').style.display = t==='login'?'':'none';
                                                 document.getElementById('panel-reg').style.display   = t==='register'?'':'none';
+                                                var fg=document.getElementById('panel-forgot'); if(fg) fg.style.display = t==='forgot'?'':'none';
+                                                var pv=document.getElementById('panel-verify'); if(pv) pv.style.display = t==='verify'?'':'none';
                                                 document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(t==='login'&&i===0)||(t==='register'&&i===1)));
                                                 hideErr();
+                                                }
+                                                function showForgot(){ switchTab('forgot'); }
+                                                var pendingVerifyEmail='';
+                                                function showVerify(email){
+                                                  pendingVerifyEmail=email||'';
+                                                  var lab=document.getElementById('verify-email-label');
+                                                  if(lab) lab.textContent=pendingVerifyEmail;
+                                                  switchTab('verify');
+                                                }
+                                                async function doForgot(){
+                                                  hideErr();
+                                                  var email=document.getElementById('f-reset-email').value.trim();
+                                                  if(!email) return showErr('Email required.');
+                                                  try{
+                                                    var r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+                                                    var d=await r.json();
+                                                    if(!r.ok) return showErr(d.error||'Could not send');
+                                                    document.getElementById('reset-step2').style.display='';
+                                                    showErr(d.message||'Check your email for a code.');
+                                                  }catch(e){ showErr('Network error.'); }
+                                                }
+                                                async function doReset(){
+                                                  hideErr();
+                                                  var email=document.getElementById('f-reset-email').value.trim();
+                                                  var code=document.getElementById('f-reset-code').value.trim();
+                                                  var password=document.getElementById('f-reset-pass').value;
+                                                  try{
+                                                    var r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code,password})});
+                                                    var d=await r.json();
+                                                    if(!r.ok) return showErr(d.error||'Reset failed');
+                                                    switchTab('login');
+                                                    showErr('Password updated. Sign in.');
+                                                  }catch(e){ showErr('Network error.'); }
+                                                }
+                                                async function doVerify(){
+                                                  hideErr();
+                                                  var code=document.getElementById('v-code').value.trim();
+                                                  try{
+                                                    var r=await fetch('/api/auth/verify-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:pendingVerifyEmail,code})});
+                                                    var d=await r.json();
+                                                    if(!r.ok) return showErr(d.error||'Invalid code');
+                                                    localStorage.setItem('fp_session',d.token);localStorage.setItem('fp_user',JSON.stringify(d.user));
+                                                    window.location.href=d.onboarded?'/~':'/onboarding';
+                                                  }catch(e){ showErr('Network error.'); }
+                                                }
+                                                async function doResend(){
+                                                  hideErr();
+                                                  try{
+                                                    var r=await fetch('/api/auth/resend-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:pendingVerifyEmail,purpose:'verify'})});
+                                                    var d=await r.json();
+                                                    if(!r.ok) return showErr(d.error||'Could not resend');
+                                                    showErr('Code sent.');
+                                                  }catch(e){ showErr('Network error.'); }
                                                 }
                                                 function setMode(m) {
                                                 loginMode=m;
@@ -170,7 +247,10 @@
                                                 try{
                                                 const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,phone,password:pass})});
                                                 const d=await r.json();
-                                                if(!r.ok)return showErr(d.error||'Login failed');
+                                                if(!r.ok){
+                                                  if(d.needsVerification){ showVerify(d.email||email); return showErr(d.error||'Verify your email'); }
+                                                  return showErr(d.error||'Login failed');
+                                                }
                                                 localStorage.setItem('fp_session',d.token);localStorage.setItem('fp_user',JSON.stringify(d.user));
                                                 const redir=new URLSearchParams(window.location.search).get('redirect');
                                                 window.location.href=d.onboarded?(redir||'/~'):('/onboarding'+(redir?'?redirect='+encodeURIComponent(redir):''));
@@ -190,6 +270,7 @@
                                                 const r=await fetch('/api/auth/register',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,refCode:refCode||undefined})});
                                                 const d=await r.json();
                                                 if(!r.ok)return showErr(d.error||'Registration failed');
+                                                if(d.needsVerification){ showVerify(d.email||email); return showErr('We sent a verification code to your email.'); }
                                                 localStorage.setItem('fp_session',d.token);localStorage.setItem('fp_user',JSON.stringify(d.user));
                                                 const redir2=new URLSearchParams(window.location.search).get('redirect');
                                                 window.location.href='/onboarding'+(redir2?'?redirect='+encodeURIComponent(redir2):'');

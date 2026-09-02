@@ -43,6 +43,7 @@ const DASH_DIR   = path.join(PUBLIC_DIR, 'dashboard');
 });
 
 const app    = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
 
@@ -117,6 +118,12 @@ function requireAdmin(req, res, next) {
 // ── Cron jobs ──────────────────────────────────────────────────────────────
 let _syncReady = false;
 cron.schedule('*/2 * * * *', async () => { if (_syncReady) await syncToSupabase(); });
+cron.schedule('0 16 * * *', async () => {
+  try {
+    const { papersKeepAlivePing } = await import('./utils/supabase-resources.js');
+    await papersKeepAlivePing();
+  } catch (e) { console.warn('[KeepAlive] 16:00 ping failed:', e.message); }
+}, { timezone: 'Africa/Harare' });
 cron.schedule('0 * * * *',   cleanTokens);
 cron.schedule('0 * * * *',   cleanTokens);
 cron.schedule('*/30 * * * *', () => {

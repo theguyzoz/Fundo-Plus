@@ -124,3 +124,36 @@ export async function getResourceUrl(filename) {
 export async function getResourcesStats() {
   return checkResourcesCapacity(0);
 }
+
+/** Push a tiny file to the papers/resources bucket then delete it after 24h — keeps the cloud warm. */
+export async function papersKeepAlivePing() {
+  const sb = getClient();
+  if (!sb) {
+    console.warn('[Supabase:Resources] keepalive skipped — not configured');
+    return false;
+  }
+  const stamp = new Date().toISOString();
+  const filename = `_keepalive/ping-${Date.now()}.txt`;
+  const buf = Buffer.from(`Fundo Plus papers keepalive\n${stamp}\n`, 'utf8');
+  try {
+    await uploadResource(filename, buf, 'text/plain');
+    console.log(`[Supabase:Resources] ☁ keepalive uploaded ${filename}`);
+    setTimeout(() => {
+      deleteResource(filename).catch(() => {});
+    }, 24 * 60 * 60 * 1000);
+    // also drop any keepalive older than 24h now
+    try {
+      const { data } = await sb.storage.from(BUCKET).list('_keepalive', { limit: 100 });
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      const old = (data || []).filter(f => {
+        const t = new Date(f.created_at || 0).getTime();
+        return t && t < cutoff;
+      }).map(f => `_keepalive/${f.name}`);
+      if (old.length) await sb.storage.from(BUCKET).remove(old);
+    } catch {}
+    return true;
+  } catch (e) {
+    console.warn('[Supabase:Resources] keepalive failed:', e.message);
+    return false;
+  }
+}

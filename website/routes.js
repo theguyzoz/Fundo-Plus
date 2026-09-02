@@ -5,7 +5,7 @@ import path     from 'path';
 import multer   from 'multer';
 import { fileURLToPath } from 'url';
 import {
-  createUser, verifyLogin, getWebUser, saveWebUser,
+  createUser, verifyLogin, getWebUser, saveWebUser, findWebUserByEmail, isEmailVerified, normalizeEmail,
   deleteWebUser, findWebUserByToken, listPapersLocal,
   getPapersTotalBytes, MAX_PAPERS_BYTES, addWishlistVote,
   getWishlistCount, incrementPaperUpload, PAPER_UPLOAD_LIMIT,
@@ -78,6 +78,10 @@ import {
 } from './auth.js';
 import { askWebAI, clearWebHistory, wantsPdf, looksLikePdfRefusal, parsePdfMarker, stripPdfMarker, expandPdfContent } from './ai.js';
 import { createVerifyToken, consumeToken } from '../utils/verify.js';
+import {
+  smtpReady, canSendMail, sendCodeEmail, issueEmailCode, consumeEmailCode,
+  saveSmtpConfig, publicSmtpConfig,
+} from '../utils/mail.js';
 import { uploadToCatbox, classifyMedia, assertAllowedMedia, safeFilename, CATBOX_MAX_BYTES } from '../utils/catbox.js';
 import { createPayment, verifyUpdate, pollTransaction, isConfigured as isPaynowConfigured } from '../utils/paynow.js';
 import rateLimit from 'express-rate-limit';
@@ -253,6 +257,56 @@ function parseCookies(req) {
   );
 }
 
+function clientIp(req) {
+  const fwd = req.headers['x-forwarded-for'];
+  if (typeof fwd === 'string' && fwd.trim()) return fwd.split(',')[0].trim();
+  const real = req.headers['x-real-ip'];
+  if (typeof real === 'string' && real.trim()) return real.trim();
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+function createHitLimiter({ windowMs, max }) {
+  const hits = new Map();
+  const sweep = setInterval(() => {
+    const now = Date.now();
+    for (const [k, v] of hits) {
+      if (now - v.start >= windowMs) hits.delete(k);
+    }
+  }, Math.min(windowMs, 60_000));
+  if (typeof sweep.unref === 'function') sweep.unref();
+  return (key) => {
+    const k = String(key || 'unknown');
+    const now = Date.now();
+    let rec = hits.get(k);
+    if (!rec || now - rec.start >= windowMs) {
+      rec = { start: now, n: 0 };
+      hits.set(k, rec);
+    }
+    rec.n += 1;
+    if (rec.n > max) {
+      return { ok: false, retryAfter: Math.max(1, Math.ceil((rec.start + windowMs - now) / 1000)) };
+    }
+    return { ok: true };
+  };
+}
+
+function rateMw(check, keyFn, message) {
+  return (req, res, next) => {
+    const r = check(keyFn(req));
+    if (!r.ok) {
+      res.setHeader('Retry-After', String(r.retryAfter || 60));
+      return res.status(429).json({ error: message });
+    }
+    next();
+  };
+}
+
+const registerIpLimit = createHitLimiter({ windowMs: 60 * 60 * 1000, max: 8 });
+const loginIpLimit = createHitLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
+const mailIpLimit = createHitLimiter({ windowMs: 60 * 60 * 1000, max: 8 });
+const mailEmailLimit = createHitLimiter({ windowMs: 60 * 60 * 1000, max: 3 });
+const codeTryIpLimit = createHitLimiter({ windowMs: 15 * 60 * 1000, max: 15 });
+
 function pageGuardBan(req, res, next) {
   const cookies = parseCookies(req);
   const token = cookies.session || req.headers['x-session-token'] || req.query.token;
@@ -303,15 +357,22 @@ router.get('/samazed',     (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'sam
 // ═══════════════════════════════════════════════════════════════════
 //  AUTH API
 // ═══════════════════════════════════════════════════════════════════
-router.post('/api/auth/register', (req, res) => {
+router.post('/api/auth/register', rateMw(registerIpLimit, clientIp, 'Too many sign-ups from this network. Try again later.'), async (req, res) => {
   const { email, phone, password, refCode: bodyRefCode } = req.body || {};
   if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
   if (!email && !phone) return res.status(400).json({ error: 'Email or phone number required' });
-  const result = createUser({ email: email?.trim().toLowerCase(), phone: phone?.trim(), password });
+  const emailClean = email ? String(email).trim().toLowerCase() : '';
+  if (emailClean && findWebUserByEmail(emailClean)) {
+    return res.status(400).json({ error: 'Email already registered' });
+  }
+  const mailOn = emailClean ? await canSendMail() : false;
+  const result = createUser({
+    email: emailClean || undefined, phone: phone?.trim(), password,
+    emailVerified: emailClean ? !mailOn : true,
+  });
   if (!result.ok) return res.status(400).json({ error: result.error });
 
   // Record referral if they came through an ambassador link
-  // Use parseCookies() since cookie-parser is not mounted, fall back to body refCode
   const cookies = parseCookies(req);
   const refCode = cookies.amb_ref || bodyRefCode;
   if (refCode) {
@@ -323,17 +384,32 @@ router.post('/api/auth/register', (req, res) => {
     res.clearCookie('amb_ref');
   }
 
+  if (mailOn && result.user.email) {
+    try {
+      const issued = issueEmailCode(result.user.email, 'verify');
+      if (!issued.ok) return res.status(429).json({ error: issued.error, needsVerification: true, email: result.user.email });
+      await sendCodeEmail(result.user.email, issued.code, 'verify');
+      return res.json({ ok: true, needsVerification: true, email: result.user.email });
+    } catch (e) {
+      console.warn('[Register] mail failed, skipping verification:', e.message);
+      saveWebUser(result.user.id, { emailVerified: true });
+    }
+  }
+
   const token = createSession(result.user.id);
   res.cookie('session', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
   res.json({ ok: true, token, user: sanitizeUser(result.user), onboarded: false });
 });
 
-router.post('/api/auth/login', (req, res) => {
+router.post('/api/auth/login', rateMw(loginIpLimit, clientIp, 'Too many login attempts. Try again in a few minutes.'), (req, res) => {
   const { email, phone, password } = req.body || {};
   if (!password) return res.status(400).json({ error: 'Password required' });
   if (!email && !phone) return res.status(400).json({ error: 'Email or phone required' });
   const user = verifyLogin({ email: email?.trim().toLowerCase(), phone: phone?.trim(), password });
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  if (user.email && user.emailVerified === false) {
+    return res.status(403).json({ error: 'Verify your email first. We sent a code if mail is on.', needsVerification: true, email: user.email });
+  }
   const token = createSession(user.id);
   // Record login (in-memory only)
   const fwd = req.headers['x-forwarded-for'];
@@ -354,6 +430,103 @@ router.post('/api/auth/logout', requireAuthAllowBanned, (req, res) => {
 router.get('/api/auth/me', requireAuthAllowBanned, (req, res) => {
   const isAmb = !!(getAmbassadorByEmail(req.user.email));
   res.json({ ok: true, user: sanitizeUser(req.user), banned: req.banned || false, isAmbassador: isAmb });
+});
+
+router.post('/api/auth/verify-email', rateMw(codeTryIpLimit, clientIp, 'Too many verification attempts. Try again later.'), async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const code = String(req.body?.code || '').trim();
+  if (!email || !code) return res.status(400).json({ error: 'Email and code required' });
+  if (!consumeEmailCode(email, 'verify', code)) return res.status(400).json({ error: 'Invalid or expired code' });
+  const user = findWebUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Account not found' });
+  saveWebUser(user.id, { emailVerified: true });
+  const token = createSession(user.id);
+  res.cookie('session', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
+  res.json({ ok: true, token, user: sanitizeUser({ ...user, emailVerified: true }), onboarded: !!user.onboarded });
+});
+
+router.post('/api/auth/resend-code', rateMw(mailIpLimit, clientIp, 'Too many email requests from this network. Try again later.'), async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const purpose = req.body?.purpose === 'reset' ? 'reset' : 'verify';
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const emailHits = mailEmailLimit(normalizeEmail(email) || email);
+  if (!emailHits.ok) {
+    res.setHeader('Retry-After', String(emailHits.retryAfter || 60));
+    return res.status(429).json({ error: 'Too many codes for this email. Try again later.' });
+  }
+  if (!(await canSendMail())) return res.status(503).json({ error: 'Email is not configured' });
+  const user = findWebUserByEmail(email);
+  if (!user) return res.json({ ok: true });
+  try {
+    const issued = issueEmailCode(email, purpose);
+    if (!issued.ok) return res.status(429).json({ error: issued.error });
+    await sendCodeEmail(email, issued.code, purpose);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Could not send email' });
+  }
+});
+
+router.post('/api/auth/forgot-password', rateMw(mailIpLimit, clientIp, 'Too many reset requests from this network. Try again later.'), async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const emailHits = mailEmailLimit(normalizeEmail(email) || email);
+  if (!emailHits.ok) {
+    res.setHeader('Retry-After', String(emailHits.retryAfter || 60));
+    return res.status(429).json({ error: 'Too many reset emails. Try again later.' });
+  }
+  if (!(await canSendMail())) return res.status(503).json({ error: 'Email is not set up. Contact support or an admin.' });
+  const user = findWebUserByEmail(email);
+  if (user) {
+    try {
+      const issued = issueEmailCode(user.email || email, 'reset');
+      if (!issued.ok) return res.status(429).json({ error: issued.error });
+      await sendCodeEmail(user.email || email, issued.code, 'reset');
+    } catch (e) {
+      return res.status(500).json({ error: 'Could not send email' });
+    }
+  }
+  res.json({ ok: true, message: 'If that email exists, we sent a reset code.' });
+});
+
+router.post('/api/auth/reset-password', rateMw(codeTryIpLimit, clientIp, 'Too many reset attempts. Try again later.'), (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const code = String(req.body?.code || '').trim();
+  const password = String(req.body?.password || '');
+  if (!email || !code || password.length < 6) return res.status(400).json({ error: 'Email, code, and a 6+ character password required' });
+  if (!consumeEmailCode(email, 'reset', code)) return res.status(400).json({ error: 'Invalid or expired code' });
+  const user = findWebUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Account not found' });
+  saveWebUser(user.id, { passwordHash: hashPassword(password), emailVerified: true });
+  res.json({ ok: true });
+});
+
+router.get('/api/admin/smtp', requireAdmin, (req, res) => {
+  res.json({ ok: true, smtp: publicSmtpConfig() });
+});
+
+router.post('/api/admin/smtp', requireAdmin, async (req, res) => {
+  const { user, appPassword, fromEmail, host, port } = req.body || {};
+  const smtp = saveSmtpConfig({
+    user: user != null ? String(user).trim() : undefined,
+    appPassword: appPassword != null ? String(appPassword) : undefined,
+    fromEmail: fromEmail != null ? String(fromEmail).trim() : undefined,
+    host: host != null ? String(host).trim() : undefined,
+    port: port != null ? parseInt(port, 10) : undefined,
+  });
+  let canSend = false;
+  try { canSend = await canSendMail(); } catch {}
+  res.json({ ok: true, smtp, canSend });
+});
+
+router.post('/api/admin/smtp/test', requireAdmin, async (req, res) => {
+  try {
+    const ok = await canSendMail();
+    if (!ok) return res.status(400).json({ error: 'SMTP verify failed. Check email and app password.' });
+    res.json({ ok: true, message: 'SMTP connection works.' });
+  } catch (e) {
+    res.status(400).json({ error: e.message || 'Send failed' });
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════

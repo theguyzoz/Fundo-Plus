@@ -533,17 +533,33 @@ export function hashPassword(plain) {
 }
 
 const ALLOWED_EMAIL_DOMAINS = ['gmail.com','googlemail.com','outlook.com','hotmail.com','live.com','yahoo.com','yahoo.co.uk','icloud.com','me.com','protonmail.com','proton.me','zoho.com','aol.com','mail.com','yandex.com','msn.com'];
+const PLUS_ALIAS_DOMAINS = new Set(['gmail.com','googlemail.com','outlook.com','hotmail.com','live.com','yahoo.com','yahoo.co.uk','icloud.com','me.com','protonmail.com','proton.me']);
+
+/** Canonical mailbox key so john.doe+tag@gmail.com == johndoe@gmail.com */
+export function normalizeEmail(email) {
+  let e = String(email || '').toLowerCase().trim();
+  if (!e || !e.includes('@')) return e;
+  const at = e.lastIndexOf('@');
+  let local = e.slice(0, at);
+  let domain = e.slice(at + 1);
+  if (domain === 'googlemail.com') domain = 'gmail.com';
+  if (PLUS_ALIAS_DOMAINS.has(domain) && local.includes('+')) local = local.split('+')[0];
+  if (domain === 'gmail.com') local = local.replace(/\./g, '');
+  return `${local}@${domain}`;
+}
 
 export function isEmailAllowed(email) {
-  const domain = email.split('@')[1]?.toLowerCase();
+  const domain = String(email || '').split('@')[1]?.toLowerCase();
   return domain && ALLOWED_EMAIL_DOMAINS.includes(domain);
 }
 
-export function createUser({ email, phone, password }) {
+export function createUser({ email, phone, password, emailVerified }) {
   const id = `u-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-  if (email && !isEmailAllowed(email)) return { ok:false, error:'Only popular email providers allowed (Gmail, Outlook, Yahoo, iCloud, etc.)' };
-  if (email) {
-    const ex = Object.values(webUsersData.users).find(u => u.email?.toLowerCase() === email.toLowerCase());
+  const emailClean = email ? String(email).toLowerCase().trim() : '';
+  const emailNorm = emailClean ? normalizeEmail(emailClean) : '';
+  if (emailClean && !isEmailAllowed(emailClean)) return { ok:false, error:'Only popular email providers allowed (Gmail, Outlook, Yahoo, iCloud, etc.)' };
+  if (emailNorm) {
+    const ex = findWebUserByEmail(emailNorm);
     if (ex) return { ok:false, error:'Email already registered' };
   }
   if (phone) {
@@ -551,13 +567,15 @@ export function createUser({ email, phone, password }) {
     if (ex) return { ok:false, error:'Phone already registered' };
   }
   const user = {
-    id, email:email||'', phone:phone||'',
+    id, email: emailClean, emailNorm: emailNorm || '',
+    phone:phone||'',
     passwordHash: hashPassword(password),
     onboarded: false,
     name:'', surname:'', age:null, school:'',
     jid:null, pairLinkedAt:null,
     dashboardFirstAt:null,
     isAdmin: false,
+    emailVerified: emailVerified !== undefined ? !!emailVerified : true,
     registeredAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -566,11 +584,30 @@ export function createUser({ email, phone, password }) {
   return { ok:true, user };
 }
 
+export function isEmailVerified(user) {
+  if (!user) return false;
+  if (!user.email) return true;
+  return user.emailVerified !== false;
+}
+
+export function findWebUserByEmail(email) {
+  const key = normalizeEmail(email);
+  if (!key) return null;
+  return Object.values(webUsersData.users).find(u => {
+    if (!u?.email) return false;
+    if (u.emailNorm && u.emailNorm === key) return true;
+    return normalizeEmail(u.email) === key;
+  }) || null;
+}
+
 export function verifyLogin({ email, phone, password }) {
   const hash = hashPassword(password);
   const users = Object.values(webUsersData.users);
   let user = null;
-  if (email) user = users.find(u => u.email?.toLowerCase() === email.toLowerCase() && u.passwordHash === hash);
+  if (email) {
+    const u = findWebUserByEmail(email);
+    if (u && u.passwordHash === hash) user = u;
+  }
   if (!user && phone) user = users.find(u => u.phone === phone && u.passwordHash === hash);
   return user || null;
 }
