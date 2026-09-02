@@ -950,7 +950,7 @@ var PAGE_TITLES = {
   overview:'Overview', users:'Users', logins:'Recent Logins', bans:'Bans & Appeals',
   support:'Support', subs:'Subscriptions', proofs:'Payment Proofs', freelinks:'Promo Links',
   papers:'Papers', ambassadors:'Ambassadors', push:'Notifications', chats:'Chats',
-  files:'Data Files', datafiles:'Data Sync', wishlist:'Wishlist'
+  files:'Data Files', datafiles:'Data Sync', email:'Email', wishlist:'Wishlist'
 };
 
 function doLogin() { return doLoginAsync(); }
@@ -2324,6 +2324,12 @@ async function doSync() {
 }
 
 function onBotStatus(data) {
+  // Bot status handled via socket.io if available
+}
+</script>
+</body>
+</html>
+nction onBotStatus(data) {
   // Bot status handled via socket.io if available
 }
 </script>
