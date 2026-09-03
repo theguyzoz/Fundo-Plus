@@ -7,6 +7,7 @@
     <link rel="apple-touch-icon" href="/images/logo.png">
     <title>Sign In — Fundo Plus</title>
     <style>:root{--blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--err:#dc2626}*{margin:0;padding:0;box-sizing:border-box}body{background:#f8fafc;color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex}.split-left{flex:1;background:linear-gradient(145deg,#1e3a8a,#2563eb);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;position:relative;overflow:hidden}.split-left::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}.left-content{position:relative;z-index:1;text-align:center;color:#fff;max-width:360px}.left-logo{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:2.5rem}.left-logo span{font-size:1.4rem;font-weight:900;letter-spacing:-.5px}.left-title{font-size:1.8rem;font-weight:900;line-height:1.2;margin-bottom:1rem}.left-title em{font-style:normal;color:#93c5fd}.left-sub{font-size:.9rem;color:#bfdbfe;line-height:1.6;margin-bottom:2rem}.feature-list{display:flex;flex-direction:column;gap:.75rem;text-align:left}.feat-item{display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:#dbeafe}.feat-item svg{flex-shrink:0;opacity:.9}.split-right{width:480px;display:flex;align-items:center;justify-content:center;padding:2rem;background:#fff}@media(max-width:768px){.split-left{display:none}.split-right{width:100%}}.form-box{width:100%;max-width:380px}.form-logo{display:flex;align-items:center;gap:.6rem;margin-bottom:2rem}.form-logo span{font-size:1.1rem;font-weight:900;color:var(--blue)}h2{font-size:1.5rem;font-weight:900;letter-spacing:-.5px;margin-bottom:.25rem}.sub-text{font-size:.88rem;color:var(--muted);margin-bottom:1.75rem}.tabs{display:flex;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:1.5rem}.tab{flex:1;padding:.55rem;text-align:center;border-radius:7px;cursor:pointer;font-size:.85rem;font-weight:700;color:var(--muted);transition:.15s}.tab.active{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(0,0,0,.08)}.mode-toggle{display:flex;gap:.5rem;margin-bottom:1rem}.mode-btn{flex:1;padding:.5rem;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--muted);cursor:pointer;font-size:.82rem;font-weight:700;transition:.15s;display:flex;align-items:center;justify-content:center;gap:.4rem}.mode-btn.active{border-color:var(--blue);color:var(--blue);background:#eff6ff}.field{margin-bottom:.9rem}label{display:block;font-size:.75rem;font-weight:700;color:var(--text);margin-bottom:.35rem;letter-spacing:.02em}input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:.7rem 1rem;font-size:.92rem;color:var(--text);background:#fff;outline:0;transition:.15s}input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dbeafe}.hint{font-size:.72rem;color:var(--muted);margin-top:.25rem}.btn{width:100%;padding:.8rem;border:none;border-radius:9px;font-size:.95rem;font-weight:800;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.25rem}.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:var(--blue2)}.btn-blue:disabled{opacity:.5;cursor:not-allowed}.err-box{background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:.65rem .9rem;color:var(--err);font-size:.82rem;margin-bottom:.9rem;display:none}.footer-note{font-size:.75rem;color:var(--muted);text-align:center;margin-top:1.25rem}.footer-note a{color:var(--blue)}.divider{display:flex;align-items:center;gap:.75rem;margin:.75rem 0;color:var(--muted);font-size:.75rem}.divider::after,.divider::before{content:'';flex:1;height:1px;background:var(--border)}</style>
+    <style>.err-box.ok{background:#f0fdf4;border-color:#bbf7d0;color:#16a34a}</style>
 
     <script>!function(){const _fetch=window.fetch;window.fetch=async function(...args){const res=await _fetch(...args);if(403===res.status){const clone=res.clone();try{const d=await clone.json();if(d&&"BANNED"===d.code)return localStorage.clear(),window.location.replace("/banned"),new Response("{}",{status:403})}catch{}}return res}}()</script>
   </head>
@@ -106,6 +107,7 @@
                                                   <div class="field"><label>Code</label><input id="f-reset-code" placeholder="123456"></div>
                                                   <div class="field"><label>New password</label><input type="password" id="f-reset-pass" placeholder="At least 6 characters"></div>
                                                   <button class="btn btn-blue" onclick="doReset()">Set new password</button>
+                                                  <button class="btn" style="margin-top:8px;width:100%;background:#f1f5f9;border:none;padding:.65rem;border-radius:8px;font-weight:700;cursor:pointer" onclick="doResend()">Resend code</button>
                                                 </div>
                                                 <a href="#" onclick="switchTab('login');return false" style="display:block;margin-top:12px;font-size:.82rem;font-weight:700;color:var(--blue);text-align:center">Back to sign in</a>
                                               </div>
@@ -187,13 +189,21 @@
                                                   hideErr();
                                                   var email=document.getElementById('f-reset-email').value.trim();
                                                   if(!email) return showErr('Email required.');
+                                                  var btn=document.getElementById('forgot-btn');
+                                                  btn.disabled=true; btn.textContent='Sending…';
                                                   try{
                                                     var r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
-                                                    var d=await r.json();
-                                                    if(!r.ok) return showErr(d.error||'Could not send');
+                                                    var d=await r.json().catch(function(){return{};});
+                                                    if(!r.ok){
+                                                      return showErr(d.error||'Email service is currently unavailable. Please try again in a few minutes.');
+                                                    }
                                                     document.getElementById('reset-step2').style.display='';
-                                                    showErr(d.message||'Check your email for a code.');
-                                                  }catch(e){ showErr('Network error.'); }
+                                                    showOk('Code sent! Check your inbox — if it doesn\'t appear, check your spam folder.');
+                                                  }catch(e){
+                                                    showErr('Email service is currently unavailable. Please try again in a few minutes.');
+                                                  }finally{
+                                                    btn.disabled=false; btn.textContent='Send code';
+                                                  }
                                                 }
                                                 async function doReset(){
                                                   hideErr();
@@ -221,12 +231,19 @@
                                                 }
                                                 async function doResend(){
                                                   hideErr();
+                                                  var isReset=panel_forgot_visible();
+                                                  var email=isReset?document.getElementById('f-reset-email').value.trim():(pendingVerifyEmail||'');
+                                                  if(!email) return showErr('Email required.');
                                                   try{
-                                                    var r=await fetch('/api/auth/resend-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:pendingVerifyEmail,purpose:'verify'})});
-                                                    var d=await r.json();
-                                                    if(!r.ok) return showErr(d.error||'Could not resend');
-                                                    showErr('Code sent.');
-                                                  }catch(e){ showErr('Network error.'); }
+                                                    var r=await fetch('/api/auth/resend-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,purpose:isReset?'reset':'verify'})});
+                                                    var d=await r.json().catch(function(){return{};});
+                                                    if(!r.ok) return showErr(d.error||'Email service is currently unavailable. Please try again in a few minutes.');
+                                                    showOk('Code sent! Check your inbox — if it doesn\'t appear, check your spam folder.');
+                                                  }catch(e){ showErr('Email service is currently unavailable. Please try again in a few minutes.'); }
+                                                }
+                                                function panel_forgot_visible(){
+                                                  var fg=document.getElementById('panel-forgot');
+                                                  return !!(fg&&fg.style.display!=='none');
                                                 }
                                                 function setMode(m) {
                                                 loginMode=m;
@@ -235,8 +252,9 @@
                                                 document.getElementById('mode-email').classList.toggle('active',m==='email');
                                                 document.getElementById('mode-phone').classList.toggle('active',m==='phone');
                                                 }
-                                                function showErr(msg){const el=document.getElementById('err');el.textContent=msg;el.style.display='block';}
-                                                function hideErr(){document.getElementById('err').style.display='none';}
+                                                function showErr(msg){const el=document.getElementById('err');el.classList.remove('ok');el.textContent=msg;el.style.display='block';}
+                                                function showOk(msg){const el=document.getElementById('err');el.classList.add('ok');el.textContent=msg;el.style.display='block';}
+                                                function hideErr(){const el=document.getElementById('err');el.classList.remove('ok');el.style.display='none';}
                                                 async function doLogin(){
                                                 hideErr();
                                                 const pass=document.getElementById('l-pass').value;

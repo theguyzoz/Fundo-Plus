@@ -81,6 +81,8 @@ import { createVerifyToken, consumeToken } from '../utils/verify.js';
 import {
   smtpReady, canSendMail, sendCodeEmail, issueEmailCode, consumeEmailCode,
   saveSmtpConfig, publicSmtpConfig,
+  testSmtpConnection, sendMail, sendAdminMail,
+  getEmailLogs, clearEmailLogs,
 } from '../utils/mail.js';
 import { uploadToCatbox, classifyMedia, assertAllowedMedia, safeFilename, CATBOX_MAX_BYTES } from '../utils/catbox.js';
 import { createPayment, verifyUpdate, pollTransaction, isConfigured as isPaynowConfigured } from '../utils/paynow.js';
@@ -454,16 +456,17 @@ router.post('/api/auth/resend-code', rateMw(mailIpLimit, clientIp, 'Too many ema
     res.setHeader('Retry-After', String(emailHits.retryAfter || 60));
     return res.status(429).json({ error: 'Too many codes for this email. Try again later.' });
   }
-  if (!(await canSendMail())) return res.status(503).json({ error: 'Email is not configured' });
+  if (!(await canSendMail())) return res.status(503).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
   const user = findWebUserByEmail(email);
   if (!user) return res.json({ ok: true });
   try {
     const issued = issueEmailCode(email, purpose);
     if (!issued.ok) return res.status(429).json({ error: issued.error });
     await sendCodeEmail(email, issued.code, purpose);
-    res.json({ ok: true });
+    res.json({ ok: true, message: 'Code sent! Check your inbox — if it doesn\'t appear, check your spam folder.' });
   } catch (e) {
-    res.status(500).json({ error: 'Could not send email' });
+    console.warn('[Resend] send failed:', e.message);
+    res.status(500).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
   }
 });
 
@@ -475,7 +478,7 @@ router.post('/api/auth/forgot-password', rateMw(mailIpLimit, clientIp, 'Too many
     res.setHeader('Retry-After', String(emailHits.retryAfter || 60));
     return res.status(429).json({ error: 'Too many reset emails. Try again later.' });
   }
-  if (!(await canSendMail())) return res.status(503).json({ error: 'Email is not set up. Contact support or an admin.' });
+  if (!(await canSendMail())) return res.status(503).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
   const user = findWebUserByEmail(email);
   if (user) {
     try {
@@ -483,10 +486,11 @@ router.post('/api/auth/forgot-password', rateMw(mailIpLimit, clientIp, 'Too many
       if (!issued.ok) return res.status(429).json({ error: issued.error });
       await sendCodeEmail(user.email || email, issued.code, 'reset');
     } catch (e) {
-      return res.status(500).json({ error: 'Could not send email' });
+      console.warn('[ForgotPassword] send failed:', e.message);
+      return res.status(500).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
     }
   }
-  res.json({ ok: true, message: 'If that email exists, we sent a reset code.' });
+  res.json({ ok: true, message: 'Code sent! Check your inbox — if it doesn\'t appear, check your spam folder.' });
 });
 
 router.post('/api/auth/reset-password', rateMw(codeTryIpLimit, clientIp, 'Too many reset attempts. Try again later.'), (req, res) => {
@@ -501,32 +505,111 @@ router.post('/api/auth/reset-password', rateMw(codeTryIpLimit, clientIp, 'Too ma
   res.json({ ok: true });
 });
 
+// Who performed an admin mail action (for the email activity log)
+function adminActor(req) {
+  try {
+    const t = req.headers['x-session-token'] || req.headers['x-admin-token'] || req.headers['x-admin-key'];
+    if (t && t !== ADMIN_PASS) {
+      const u = getSessionUser(t);
+      if (u) return u.email || u.name || 'admin';
+    }
+  } catch {}
+  return 'admin';
+}
+
 router.get('/api/admin/smtp', requireAdmin, (req, res) => {
-  res.json({ ok: true, smtp: publicSmtpConfig() });
+  res.json({ ok: true, smtp: { system: publicSmtpConfig('system'), mailing: publicSmtpConfig('mailing') } });
 });
 
 router.post('/api/admin/smtp', requireAdmin, async (req, res) => {
-  const { user, appPassword, fromEmail, host, port } = req.body || {};
-  const smtp = saveSmtpConfig({
+  const profile = req.body?.profile === 'mailing' ? 'mailing' : 'system';
+  const { user, appPassword, fromEmail, fromName, host, port } = req.body || {};
+  const portNum = port != null ? parseInt(port, 10) : undefined;
+  const smtp = saveSmtpConfig(profile, {
     user: user != null ? String(user).trim() : undefined,
     appPassword: appPassword != null ? String(appPassword) : undefined,
     fromEmail: fromEmail != null ? String(fromEmail).trim() : undefined,
+    fromName: fromName != null ? String(fromName).trim() : undefined,
     host: host != null ? String(host).trim() : undefined,
-    port: port != null ? parseInt(port, 10) : undefined,
+    port: portNum,
+    // 465 → implicit TLS; other ports (587, 2525…) → plain + STARTTLS.
+    // Follow the port automatically unless secure was set explicitly.
+    secure: req.body?.secure !== undefined && req.body?.secure !== null
+      ? (req.body.secure === true || req.body.secure === 'true')
+      : (portNum != null ? portNum === 465 : undefined),
   });
   let canSend = false;
-  try { canSend = await canSendMail(); } catch {}
+  try { canSend = await canSendMail(profile); } catch {}
   res.json({ ok: true, smtp, canSend });
 });
 
+// "Test connection" only checks the login against the mail server (no email sent).
+// If `to` is provided, a real test email is sent through that account too.
 router.post('/api/admin/smtp/test', requireAdmin, async (req, res) => {
+  const profile = req.body?.profile === 'mailing' ? 'mailing' : 'system';
+  const to = String(req.body?.to || '').trim();
   try {
-    const ok = await canSendMail();
-    if (!ok) return res.status(400).json({ error: 'SMTP verify failed. Check email and app password.' });
-    res.json({ ok: true, message: 'SMTP connection works.' });
+    const v = await testSmtpConnection(profile);
+    if (!v.ok) {
+      return res.status(400).json({ error: `Login failed for ${v.user || 'this account'} on ${v.host || 'the server'} — check the email and app password. (${v.error || 'rejected by server'})` });
+    }
+    let message = `✅ Login works — signed in as ${v.user} on ${v.host}:${v.port}. No email was sent.`;
+    if (to) {
+      try {
+        await sendMail({
+          profile,
+          to,
+          subject: `Fundo Plus test email (${profile === 'mailing' ? 'mailing account' : 'system account'})`,
+          text: `This is a test email from your Fundo Plus ${profile} email account. If you can read this, sending works.`,
+          html: `<div style="font-family:system-ui,sans-serif;padding:20px"><h2 style="color:#2563eb">Fundo Plus</h2><p>✅ This is a <b>test email</b> from your <b>${profile}</b> email account.</p><p style="color:#64748b;font-size:13px">Sent ${new Date().toLocaleString()}</p></div>`,
+          purpose: 'test',
+          sentBy: adminActor(req),
+        });
+        message = `✅ Login works as ${v.user}, and a test email was sent to ${to}. Check it arrived (spam too).`;
+      } catch (e) {
+        return res.status(400).json({ error: `Login works as ${v.user}, but sending a test email to ${to} failed: ${e.message}` });
+      }
+    }
+    res.json({ ok: true, message });
   } catch (e) {
-    res.status(400).json({ error: e.message || 'Send failed' });
+    res.status(400).json({ error: e.message || 'Test failed' });
   }
+});
+
+// Admin → user(s) email, sent through the dedicated mailing account
+router.post('/api/admin/email/send', requireAdmin, async (req, res) => {
+  const { target, emails, subject, message } = req.body || {};
+  const subj = String(subject || '').trim();
+  const body = String(message || '').trim();
+  if (!subj || !body) return res.status(400).json({ error: 'Subject and message are required' });
+  if (!['all', 'single', 'multiple'].includes(target))
+    return res.status(400).json({ error: 'target must be all, single, or multiple' });
+
+  let list = [];
+  if (target === 'all') {
+    const raw = getAllWebUsers();
+    const users = Array.isArray(raw) ? raw : Object.values(raw || {});
+    list = users.map(u => String(u.email || '').toLowerCase().trim()).filter(e => e && e.includes('@'));
+  } else {
+    list = (Array.isArray(emails) ? emails : [emails]).map(e => String(e || '').toLowerCase().trim()).filter(e => e && e.includes('@'));
+  }
+  list = [...new Set(list)];
+  if (!list.length) return res.status(400).json({ error: 'No valid recipient emails found' });
+
+  const actor = adminActor(req);
+  const result = await sendAdminMail({ recipients: list, subject: subj, text: body, sentBy: actor });
+  if (result.error) return res.status(400).json({ error: result.error });
+  res.json({ ok: true, ...result });
+});
+
+// Email activity log — every email sent by the system or by an admin
+router.get('/api/admin/email/logs', requireAdmin, (req, res) => {
+  res.json({ ok: true, logs: getEmailLogs(req.query?.limit) });
+});
+
+router.post('/api/admin/email/logs/clear', requireAdmin, (req, res) => {
+  clearEmailLogs();
+  res.json({ ok: true });
 });
 
 // ═══════════════════════════════════════════════════════════════════

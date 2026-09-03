@@ -805,18 +805,108 @@ tbody tr:hover td{background:var(--surface2)}
         </div>
 
         <div class="page" id="page-email">
+
+          <!-- ══ TWO SEPARATE EMAIL ACCOUNTS ══ -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:14px">
+
+            <div class="card">
+              <div class="card-header"><div><div class="card-title">⚙️ System email (automatic)</div>
+                <div class="card-sub">Sends verification codes &amp; forgot-password codes by itself. Needs its own account and app password.</div></div></div>
+              <div class="field"><label>System email (login / From)</label><input id="sys-smtp-user" placeholder="fundoplus.system@gmail.com"></div>
+              <div class="field"><label>App password (for THIS account)</label><input id="sys-smtp-pass" type="password" placeholder="16-character app password"></div>
+              <div class="field"><label>From name</label><input id="sys-smtp-name" placeholder="Fundo Plus"></div>
+              <div style="display:grid;grid-template-columns:1fr 100px;gap:8px">
+                <div class="field"><label>Host</label><input id="sys-smtp-host" placeholder="smtp.gmail.com"></div>
+                <div class="field"><label>Port</label><input id="sys-smtp-port" placeholder="465"></div>
+              </div>
+              <div id="sys-smtp-status" style="font-size:.8rem;margin:8px 0;color:var(--text2)"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button class="btn btn-primary btn-sm" onclick="saveSmtpProfile('system')">Save</button>
+                <button class="btn btn-ghost btn-sm" onclick="testSmtpProfile('system')">Test connection</button>
+              </div>
+              <div class="field" style="margin-top:10px"><label>Send a real test email to (optional)</label>
+                <div style="display:flex;gap:6px">
+                  <input type="email" id="sys-test-to" placeholder="your@email.com">
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="testSmtpProfile('system', true)">Send test</button>
+                </div>
+              </div>
+              <div style="font-size:.72rem;color:var(--text3)">“Test connection” only checks the login with the mail server — it sends nothing. “Send test” also delivers a real email so you can confirm it arrives.</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div><div class="card-title">📮 Mailing email (admin messages)</div>
+                <div class="card-sub">The dedicated account used when you email a specific user or all users from this page. Separate from the system email.</div></div></div>
+              <div class="field"><label>Mailing email (login / From)</label><input id="mail-smtp-user" placeholder="fundoplus.mail@gmail.com"></div>
+              <div class="field"><label>App password (for THIS account)</label><input id="mail-smtp-pass" type="password" placeholder="16-character app password"></div>
+              <div class="field"><label>From name</label><input id="mail-smtp-name" placeholder="Fundo Plus"></div>
+              <div style="display:grid;grid-template-columns:1fr 100px;gap:8px">
+                <div class="field"><label>Host</label><input id="mail-smtp-host" placeholder="smtp.gmail.com"></div>
+                <div class="field"><label>Port</label><input id="mail-smtp-port" placeholder="465"></div>
+              </div>
+              <div id="mail-smtp-status" style="font-size:.8rem;margin:8px 0;color:var(--text2)"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button class="btn btn-primary btn-sm" onclick="saveSmtpProfile('mailing')">Save</button>
+                <button class="btn btn-ghost btn-sm" onclick="testSmtpProfile('mailing')">Test connection</button>
+              </div>
+              <div class="field" style="margin-top:10px"><label>Send a real test email to (optional)</label>
+                <div style="display:flex;gap:6px">
+                  <input type="email" id="mail-test-to" placeholder="your@email.com">
+                  <button class="btn btn-ghost btn-sm" type="button" onclick="testSmtpProfile('mailing', true)">Send test</button>
+                </div>
+              </div>
+              <div style="font-size:.72rem;color:var(--text3)">“Test connection” only checks the login with the mail server — it sends nothing. “Send test” also delivers a real email so you can confirm it arrives.</div>
+            </div>
+          </div>
+
+          <!-- ══ COMPOSE EMAIL TO USERS ══ -->
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header"><div><div class="card-title">✉️ Send an email to users</div>
+              <div class="card-sub">Delivered through the mailing account above. Every send is recorded in the email activity log below.</div></div></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+              <div>
+                <div class="field"><label>Subject</label><input id="mail-subject" placeholder="e.g. Exam season tips 📚"></div>
+                <div class="field"><label>Message</label><textarea id="mail-message" style="min-height:120px" placeholder="Write your email here…"></textarea></div>
+              </div>
+              <div>
+                <div class="field"><label>Send to</label>
+                  <select id="mail-target" onchange="updateMailTargetUI()">
+                    <option value="all">All users</option>
+                    <option value="single">One user (email)</option>
+                    <option value="multiple">Several users (emails)</option>
+                  </select>
+                </div>
+                <div id="mail-target-section" style="display:none">
+                  <div class="field" style="margin-bottom:6px">
+                    <label id="mail-email-label">User email</label>
+                    <div style="display:flex;gap:6px">
+                      <input type="email" id="mail-email-input" placeholder="user@example.com" onkeydown="if(event.key==='Enter'){event.preventDefault();addMailEmail()}">
+                      <button class="btn btn-ghost btn-sm" type="button" onclick="addMailEmail()">Add</button>
+                    </div>
+                  </div>
+                  <div class="email-tags" id="mail-email-tags"></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+              <button class="btn btn-primary" id="mail-send-btn" onclick="sendAdminEmailNow()">Send email</button>
+              <span id="mail-send-status" style="font-size:.8rem;color:var(--text2)"></span>
+            </div>
+          </div>
+
+          <!-- ══ EMAIL ACTIVITY LOG ══ -->
           <div class="card">
-            <div class="card-header"><div><div class="card-title">Outgoing email (SMTP)</div>
-              <div class="card-sub">Gmail: use the account email + an App Password. System email is the From address for verification and forgot-password.</div></div></div>
-            <div class="field"><label>SMTP email (login)</label><input id="smtp-user" placeholder="you@gmail.com"></div>
-            <div class="field"><label>App password</label><input id="smtp-pass" type="password" placeholder="16-character app password"></div>
-            <div class="field"><label>System email (From / forgot password)</label><input id="smtp-from" placeholder="noreply@gmail.com"></div>
-            <div class="field"><label>Host</label><input id="smtp-host" placeholder="smtp.gmail.com"></div>
-            <div class="field"><label>Port</label><input id="smtp-port" placeholder="465"></div>
-            <div id="smtp-status" style="font-size:.8rem;margin:8px 0;color:var(--text2)"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="saveSmtp()">Save</button>
-              <button class="btn btn-ghost" onclick="testSmtp()">Test connection</button>
+            <div class="card-header"><div><div class="card-title">📋 Email activity log</div>
+              <div class="card-sub">Every email sent — by the system (codes) or by an admin (messages &amp; tests), including failures.</div></div>
+              <div class="card-actions">
+                <button class="btn btn-ghost btn-sm" onclick="loadEmailLogs()">Refresh</button>
+                <button class="btn btn-danger btn-sm" onclick="clearEmailLogsNow()">Clear log</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr><th>When</th><th>Type</th><th>Account</th><th>To</th><th>Subject</th><th>Status</th><th>Sent by</th></tr></thead>
+                <tbody id="email-log-body"><tr><td colspan="7" class="loading-row">Loading…</td></tr></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1008,7 +1098,7 @@ function getLoader(p) {
     overview: loadOverview, users: loadUsers, logins: loadLogins, bans: loadBans,
     support: loadSupport, subs: loadSubs, proofs: loadProofs, freelinks: loadPromoLinks,
     papers: loadPapers, ambassadors: loadAmbassadors, push: loadPushPage,
-    chats: loadChats, files: loadFiles, datafiles: loadDataFiles, email: loadSmtp, wishlist: loadWishlist
+    chats: loadChats, files: loadFiles, datafiles: loadDataFiles, email: loadEmailPage, wishlist: loadWishlist
   };
   return map[p];
 }
@@ -2266,41 +2356,180 @@ async function uploadDataFiles() {
 }
 
 // ══════════════════════════════════════════════════════
-//  WISHLIST
+// EMAIL — system account, mailing account, compose, log
 // ══════════════════════════════════════════════════════
-async function loadSmtp() {
+function smtpStatusLine(s, what) {
+  if (!s.user) return '❌ Not set up — ' + what;
+  if (!s.configured) return '⚠️ Login saved, but the app password is missing — ' + what;
+  return '✅ Configured as ' + s.user;
+}
+async function loadEmailPage() { await Promise.all([loadSmtpProfiles(), loadEmailLogs()]); }
+async function loadSmtpProfiles() {
   try {
     const r = await api('/api/admin/smtp');
     const d = await r.json();
-    const s = d.smtp || {};
-    document.getElementById('smtp-user').value = s.user || '';
-    document.getElementById('smtp-from').value = s.fromEmail || '';
-    document.getElementById('smtp-host').value = s.host || 'smtp.gmail.com';
-    document.getElementById('smtp-port').value = s.port || 465;
-    document.getElementById('smtp-pass').placeholder = s.hasPassword ? '••••••••  (saved)' : '16-character app password';
-    document.getElementById('smtp-status').textContent = s.configured ? 'Configured — new signups will get a verification code.' : 'Not configured — signup verification is skipped.';
-  } catch (e) { document.getElementById('smtp-status').textContent = 'Could not load: ' + e.message; }
+    const sys = (d.smtp || {}).system || {};
+    const mail = (d.smtp || {}).mailing || {};
+    document.getElementById('sys-smtp-user').value = sys.user || '';
+    document.getElementById('sys-smtp-name').value = sys.fromName || 'Fundo Plus';
+    document.getElementById('sys-smtp-host').value = sys.host || 'smtp.gmail.com';
+    document.getElementById('sys-smtp-port').value = sys.port || 465;
+    document.getElementById('sys-smtp-pass').value = '';
+    document.getElementById('sys-smtp-pass').placeholder = sys.hasPassword ? '••••••••  (saved — type to replace)' : '16-character app password';
+    document.getElementById('sys-smtp-status').textContent = smtpStatusLine(sys, 'verification & password-reset codes cannot be emailed.');
+    document.getElementById('mail-smtp-user').value = mail.user || '';
+    document.getElementById('mail-smtp-name').value = mail.fromName || 'Fundo Plus';
+    document.getElementById('mail-smtp-host').value = mail.host || 'smtp.gmail.com';
+    document.getElementById('mail-smtp-port').value = mail.port || 465;
+    document.getElementById('mail-smtp-pass').value = '';
+    document.getElementById('mail-smtp-pass').placeholder = mail.hasPassword ? '••••••••  (saved — type to replace)' : '16-character app password';
+    document.getElementById('mail-smtp-status').textContent = smtpStatusLine(mail, 'admin emails to users cannot be sent.');
+  } catch (e) {
+    const msg = 'Could not load: ' + e.message;
+    document.getElementById('sys-smtp-status').textContent = msg;
+    document.getElementById('mail-smtp-status').textContent = msg;
+  }
 }
-async function saveSmtp() {
+async function saveSmtpProfile(profile) {
+  const pfx = profile === 'mailing' ? 'mail' : 'sys';
+  const statusEl = document.getElementById(pfx + '-smtp-status');
+  statusEl.textContent = 'Saving…';
   const body = {
-    user: document.getElementById('smtp-user').value.trim(),
-    fromEmail: document.getElementById('smtp-from').value.trim(),
-    host: document.getElementById('smtp-host').value.trim() || 'smtp.gmail.com',
-    port: parseInt(document.getElementById('smtp-port').value, 10) || 465,
-    appPassword: document.getElementById('smtp-pass').value.trim(),
+    profile,
+    user: document.getElementById(pfx + '-smtp-user').value.trim(),
+    fromName: document.getElementById(pfx + '-smtp-name').value.trim() || 'Fundo Plus',
+    host: document.getElementById(pfx + '-smtp-host').value.trim() || 'smtp.gmail.com',
+    port: parseInt(document.getElementById(pfx + '-smtp-port').value, 10) || 465,
+    appPassword: document.getElementById(pfx + '-smtp-pass').value.trim(),
   };
-  const r = await api('/api/admin/smtp', { method: 'POST', body: JSON.stringify(body) });
-  const d = await r.json();
-  document.getElementById('smtp-status').textContent = r.ok
-    ? ('Saved. ' + (d.canSend ? 'SMTP works.' : 'Saved but connection failed — check app password.'))
-    : (d.error || 'Save failed');
-  document.getElementById('smtp-pass').value = '';
-  loadSmtp();
+  try {
+    const r = await api('/api/admin/smtp', { method: 'POST', body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    statusEl.textContent = r.ok
+      ? ('Saved. ' + (d.canSend ? '✅ Login works — ' + (profile === 'mailing' ? 'ready to send admin emails.' : 'codes will be emailed.') : '⚠️ Login check FAILED — check this account\'s email + app password.'))
+      : (d.error || 'Save failed');
+  } catch (e) { statusEl.textContent = 'Save failed: ' + e.message; }
+  loadSmtpProfiles();
 }
-async function testSmtp() {
-  const r = await api('/api/admin/smtp/test', { method: 'POST' });
-  const d = await r.json();
-  document.getElementById('smtp-status').textContent = r.ok ? (d.message || 'OK') : (d.error || 'Failed');
+async function testSmtpProfile(profile, realSend) {
+  const pfx = profile === 'mailing' ? 'mail' : 'sys';
+  const statusEl = document.getElementById(pfx + '-smtp-status');
+  const to = realSend ? document.getElementById(pfx + '-test-to').value.trim() : '';
+  if (realSend && !to) { statusEl.textContent = 'Enter an address above to send the test email to.'; return; }
+  statusEl.textContent = realSend ? 'Testing login, then sending a real test email…' : 'Checking login with the mail server (no email sent)…';
+  try {
+    const r = await api('/api/admin/smtp/test', { method: 'POST', body: JSON.stringify({ profile, to }) });
+    const d = await r.json().catch(() => ({}));
+    statusEl.textContent = d.message || d.error || 'Done.';
+    loadEmailLogs();
+  } catch (e) { statusEl.textContent = 'Test failed: ' + e.message; }
+}
+
+let _mailList = [];
+function updateMailTargetUI() {
+  const t = document.getElementById('mail-target').value;
+  document.getElementById('mail-target-section').style.display = t === 'all' ? 'none' : '';
+  document.getElementById('mail-email-label').textContent = t === 'single' ? 'User email' : 'Add emails';
+  _mailList = [];
+  renderMailTags();
+}
+function addMailEmail() {
+  const inp = document.getElementById('mail-email-input');
+  const v = inp.value.trim().toLowerCase();
+  if (!v || !v.includes('@')) return;
+  const t = document.getElementById('mail-target').value;
+  if (t === 'single') _mailList = [v];
+  else if (!_mailList.includes(v)) _mailList.push(v);
+  inp.value = '';
+  renderMailTags();
+}
+function renderMailTags() {
+  const el = document.getElementById('mail-email-tags');
+  el.innerHTML = _mailList.map((e, i) =>
+    `<div class="email-tag">${escHtml(e)}<button type="button" onclick="removeMailEmail(${i})">×</button></div>`
+  ).join('');
+}
+function removeMailEmail(i) { _mailList.splice(i, 1); renderMailTags(); }
+
+async function sendAdminEmailNow() {
+  const target = document.getElementById('mail-target').value;
+  const subject = document.getElementById('mail-subject').value.trim();
+  const message = document.getElementById('mail-message').value.trim();
+  const statusEl = document.getElementById('mail-send-status');
+  const btn = document.getElementById('mail-send-btn');
+  if (!subject || !message) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Subject and message are required.'; return; }
+  if (target !== 'all' && !_mailList.length) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Add at least one recipient email.'; return; }
+  if (target === 'all' && !confirm('Send this email to ALL users?')) return;
+  btn.disabled = true;
+  statusEl.style.color = 'var(--text2)';
+  statusEl.textContent = 'Sending… (can take a while for many users)';
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 180000);
+  try {
+    const r = await fetch('/api/admin/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+      body: JSON.stringify({ target, emails: _mailList, subject, message }),
+      signal: ctrl.signal
+    });
+    clearTimeout(timer);
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = d.error || 'Send failed — is the mailing account set up?';
+    } else {
+      statusEl.style.color = d.failed ? 'var(--yellow)' : 'var(--green)';
+      statusEl.textContent = `✅ Sent to ${d.sent} recipient${d.sent === 1 ? '' : 's'}` + (d.failed ? ` — ⚠️ ${d.failed} failed (see the log)` : '') + '.';
+      document.getElementById('mail-subject').value = '';
+      document.getElementById('mail-message').value = '';
+      _mailList = []; renderMailTags();
+    }
+    loadEmailLogs();
+  } catch (e) {
+    clearTimeout(timer);
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = e.name === 'AbortError'
+      ? 'Taking long — it may still be sending. Refresh the log in a minute.'
+      : 'Send failed: ' + e.message;
+  } finally { btn.disabled = false; }
+}
+
+function emailLogType(p) {
+  return {
+    'password-reset': '🔑 Password reset',
+    'email-verification': '✅ Email verification',
+    'admin-message': '✉️ Admin message',
+    'test': '🧪 Test email'
+  }[p] || p;
+}
+async function loadEmailLogs() {
+  const body = document.getElementById('email-log-body');
+  try {
+    const r = await api('/api/admin/email/logs?limit=150');
+    const d = await r.json();
+    const logs = d.logs || [];
+    if (!logs.length) {
+      body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3)">No emails sent yet — system codes, admin emails and tests will all show up here.</td></tr>';
+      return;
+    }
+    body.innerHTML = logs.map(l => `
+      <tr>
+        <td style="white-space:nowrap">${fmtDT(l.ts)}</td>
+        <td>${emailLogType(l.purpose)}</td>
+        <td>${l.profile === 'mailing' ? '📮 Mailing' : '⚙️ System'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${ambAttr(l.to)}">${ambAttr(l.to)}${l.toCount > 1 ? ` <span class="badge badge-yellow">${l.toCount}</span>` : ''}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${ambAttr(l.subject)}">${ambAttr(l.subject)}</td>
+        <td>${l.status === 'sent' ? '<span class="badge badge-green">Sent</span>' : `<span class="badge badge-red" title="${ambAttr(l.error || '')}">Failed</span>`}</td>
+        <td>${ambAttr(l.sentBy || 'system')}</td>
+      </tr>`).join('');
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="7" style="color:var(--red)">Could not load log: ${escHtml(e.message)}</td></tr>`;
+  }
+}
+async function clearEmailLogsNow() {
+  if (!confirm('Clear the whole email activity log?')) return;
+  try { await api('/api/admin/email/logs/clear', { method: 'POST' }); } catch {}
+  loadEmailLogs();
 }
 async function loadWishlist() {
   try {

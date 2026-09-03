@@ -154,6 +154,29 @@ Register → /login (create account)
 
 ---
 
+## 📧 Email System (two accounts + activity log)
+
+The admin Email page (`/fundopageadmin` → Email) manages **two separate email accounts**, each with its own login, app password and Test connection:
+
+| Account | Used for | Who sends |
+|---|---|---|
+| **System email** (automatic) | Verification codes & forgot-password codes | The system, by itself |
+| **Mailing email** (admin messages) | Emails the admin writes to one user, several users, or all users | Admin, from the Email page |
+
+- **Test connection** only checks the login with the mail server — it sends nothing.
+  **Send test** (enter an address) also delivers a real email so you can confirm it arrives.
+- **Compose** — subject + message, sent through the mailing account (recipients are BCC'd in batches).
+- **Email activity log** — every email sent by the system (codes) or by an admin (messages & tests),
+  including failures with the error. Stored in `data/email-log.json`, capped at 500 entries.
+
+Forgot-password / resend-code feedback:
+- Can't send → **"Email service is currently unavailable. Please try again in a few minutes."**
+- Sent → **"Code sent! Check your inbox — if it doesn't appear, check your spam folder."**
+
+SMTP config lives in `data/smtp.json` under `system` and `mailing` (an old flat config is migrated to `system` automatically). Gmail users: each account needs its own [App Password](https://myaccount.google.com/apppasswords).
+
+---
+
 ## 💳 Subscriptions — Wallet, Paynow Top-up, Withdrawals
 
 The subscription page (`/~\/subscription`) now uses a **virtual wallet (USD)**:
