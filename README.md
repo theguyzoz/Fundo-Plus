@@ -175,6 +175,16 @@ Forgot-password / resend-code feedback:
 
 SMTP config lives in `data/smtp.json` under `system` and `mailing` (an old flat config is migrated to `system` automatically). Gmail users: each account needs its own [App Password](https://myaccount.google.com/apppasswords).
 
+### 🌉 Mail bridge (when the host blocks SMTP — e.g. Railway free tier)
+
+Railway free blocks outbound SMTP. Deploy [Fundo Mail Bridge](https://github.com/theguyzoz/Fundo-Mail-Bridge)
+on a host that allows it (Render, Koyeb, Fly, VPS…), then in
+**Admin → Email → Mail bridge** paste the bridge URL + API key and Save.
+When the bridge is ON, all mail (codes + admin messages) travels over HTTPS to
+the bridge, which does the SMTP part. SMTP credentials still live in Fundo Plus
+and ride with each request — the bridge is stateless. Turn it off anytime to
+send directly again.
+
 ---
 
 ## 💳 Subscriptions — Wallet, Paynow Top-up, Withdrawals

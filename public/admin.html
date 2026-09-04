@@ -806,6 +806,21 @@ tbody tr:hover td{background:var(--surface2)}
 
         <div class="page" id="page-email">
 
+          <!-- ══ MAIL BRIDGE (SMTP-blocked hosts) ══ -->
+          <div class="card" style="margin-bottom:14px;border-left:3px solid var(--blue)">
+            <div class="card-header"><div><div class="card-title">🌉 Mail bridge <span id="bridge-badge" class="badge badge-yellow" style="margin-left:6px">OFF</span></div>
+              <div class="card-sub">Railway free blocks outbound SMTP. Deploy <b>Fundo Mail Bridge</b> on another host (Render, Koyeb, VPS…) and paste its URL + API key here — all email from the accounts below then travels through it over HTTPS.</div></div></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;align-items:end">
+              <div class="field" style="margin:0"><label>Bridge URL</label><input id="bridge-url" placeholder="https://fundo-mail-bridge.onrender.com"></div>
+              <div class="field" style="margin:0"><label>API key</label><input id="bridge-key" type="password" placeholder="bridge API key"></div>
+              <button class="btn btn-primary btn-sm" onclick="saveBridge()">Save</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+              <button class="btn btn-ghost btn-sm" onclick="testBridge()">Test bridge</button>
+              <span id="bridge-status" style="font-size:.8rem;color:var(--text2)"></span>
+            </div>
+          </div>
+
           <!-- ══ TWO SEPARATE EMAIL ACCOUNTS ══ -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:14px">
 
@@ -2363,7 +2378,49 @@ function smtpStatusLine(s, what) {
   if (!s.configured) return '⚠️ Login saved, but the app password is missing — ' + what;
   return '✅ Configured as ' + s.user;
 }
-async function loadEmailPage() { await Promise.all([loadSmtpProfiles(), loadEmailLogs()]); }
+async function loadEmailPage() { await Promise.all([loadSmtpProfiles(), loadEmailLogs(), loadBridge()]); }
+
+async function loadBridge() {
+  try {
+    const r = await api('/api/admin/mail-service');
+    const d = await r.json();
+    const s = d.service || {};
+    document.getElementById('bridge-url').value = s.url || '';
+    document.getElementById('bridge-key').value = '';
+    document.getElementById('bridge-key').placeholder = s.hasKey ? '••••••••  (saved — type to replace)' : 'bridge API key';
+    const badge = document.getElementById('bridge-badge');
+    badge.textContent = s.enabled ? 'ON — mail via bridge' : 'OFF';
+    badge.className = 'badge ' + (s.enabled ? 'badge-green' : 'badge-yellow');
+    document.getElementById('bridge-status').textContent = s.enabled
+      ? 'Bridge is ON — the accounts below send through it (SMTP from this server is bypassed).'
+      : 'Bridge is OFF — this server connects to SMTP directly. Turn it on only if your host blocks SMTP.';
+  } catch (e) {
+    document.getElementById('bridge-status').textContent = 'Could not load bridge settings: ' + e.message;
+  }
+}
+async function saveBridge() {
+  const statusEl = document.getElementById('bridge-status');
+  statusEl.textContent = 'Saving…';
+  const body = {
+    url: document.getElementById('bridge-url').value.trim(),
+    key: document.getElementById('bridge-key').value.trim(),
+  };
+  try {
+    const r = await api('/api/admin/mail-service', { method: 'POST', body: JSON.stringify(body), timeout: 30000 });
+    const d = await r.json().catch(() => ({}));
+    statusEl.textContent = r.ok ? 'Saved.' : (d.error || 'Save failed');
+  } catch (e) { statusEl.textContent = 'Save failed: ' + e.message; }
+  loadBridge();
+}
+async function testBridge() {
+  const statusEl = document.getElementById('bridge-status');
+  statusEl.textContent = 'Pinging the bridge…';
+  try {
+    const r = await api('/api/admin/mail-service/test', { method: 'POST', timeout: 30000 });
+    const d = await r.json().catch(() => ({}));
+    statusEl.textContent = d.message || d.error || 'Done.';
+  } catch (e) { statusEl.textContent = 'Test failed: ' + e.message; }
+}
 async function loadSmtpProfiles() {
   try {
     const r = await api('/api/admin/smtp');

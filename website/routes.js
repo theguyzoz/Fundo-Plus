@@ -83,6 +83,7 @@ import {
   saveSmtpConfig, publicSmtpConfig,
   testSmtpConnection, sendMail, sendAdminMail,
   getEmailLogs, clearEmailLogs,
+  getMailService, saveMailServiceConfig,
 } from '../utils/mail.js';
 import { uploadToCatbox, classifyMedia, assertAllowedMedia, safeFilename, CATBOX_MAX_BYTES } from '../utils/catbox.js';
 import { createPayment, verifyUpdate, pollTransaction, isConfigured as isPaynowConfigured } from '../utils/paynow.js';
@@ -551,9 +552,11 @@ router.post('/api/admin/smtp/test', requireAdmin, async (req, res) => {
   try {
     const v = await testSmtpConnection(profile);
     if (!v.ok) {
-      return res.status(400).json({ error: `Login failed for ${v.user || 'this account'} on ${v.host || 'the server'} — check the email and app password. (${v.error || 'rejected by server'})` });
+      const how = v.viaBridge ? ' (through the mail bridge)' : '';
+      return res.status(400).json({ error: `Login failed for ${v.user || 'this account'} on ${v.host || 'the server'}${how} — check the email and app password. (${v.error || 'rejected by server'})` });
     }
-    let message = `✅ Login works — signed in as ${v.user} on ${v.host}:${v.port}. No email was sent.`;
+    const how = v.viaBridge ? ' (through the mail bridge)' : '';
+    let message = `✅ Login works — signed in as ${v.user} on ${v.host}:${v.port}${how}. No email was sent.`;
     if (to) {
       try {
         await sendMail({
@@ -565,7 +568,7 @@ router.post('/api/admin/smtp/test', requireAdmin, async (req, res) => {
           purpose: 'test',
           sentBy: adminActor(req),
         });
-        message = `✅ Login works as ${v.user}, and a test email was sent to ${to}. Check it arrived (spam too).`;
+        message = `✅ Login works as ${v.user}${how}, and a test email was sent to ${to}. Check it arrived (spam too).`;
       } catch (e) {
         return res.status(400).json({ error: `Login works as ${v.user}, but sending a test email to ${to} failed: ${e.message}` });
       }
@@ -610,6 +613,39 @@ router.get('/api/admin/email/logs', requireAdmin, (req, res) => {
 router.post('/api/admin/email/logs/clear', requireAdmin, (req, res) => {
   clearEmailLogs();
   res.json({ ok: true });
+});
+
+// ── Mail bridge (for SMTP-blocked hosts like Railway free) ──
+router.get('/api/admin/mail-service', requireAdmin, (req, res) => {
+  const s = getMailService();
+  res.json({ ok: true, service: { url: s.url, hasKey: !!s.key, enabled: s.enabled } });
+});
+
+router.post('/api/admin/mail-service', requireAdmin, (req, res) => {
+  const { url, key } = req.body || {};
+  if (url !== undefined && url !== '' && !/^https?:\/\//i.test(String(url))) {
+    return res.status(400).json({ error: 'Bridge URL must start with http:// or https://' });
+  }
+  const service = saveMailServiceConfig({ url, key });
+  res.json({ ok: true, service });
+});
+
+router.post('/api/admin/mail-service/test', requireAdmin, async (req, res) => {
+  const s = getMailService();
+  if (!s.enabled) return res.status(400).json({ error: 'Set the bridge URL and API key first.' });
+  try {
+    const r = await fetch(s.url.replace(/\/+$/, '') + '/health', {
+      headers: { Authorization: `Bearer ${s.key}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) {
+      return res.status(400).json({ error: `Bridge responded ${r.status}${d.error ? ' — ' + d.error : ''}. Check the URL and API key.` });
+    }
+    res.json({ ok: true, message: `✅ Bridge reachable at ${s.url} — email will be sent through it.` });
+  } catch (e) {
+    res.status(400).json({ error: `Could not reach the bridge: ${e.message}` });
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════

@@ -112,10 +112,81 @@ async function getTransport(profile) {
 }
 
 const _okUntil = { system: 0, mailing: 0 };
+let _bridgeOkUntil = 0;
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAIL BRIDGE — for hosts that block outbound SMTP (e.g. Railway free).
+//  When a bridge URL + API key are saved, all mail goes through it over
+//  HTTPS; credentials still live here and ride with each request.
+// ═══════════════════════════════════════════════════════════════════
+export function getMailService() {
+  const s = readJson(SMTP_FILE, {}).service || {};
+  return { url: s.url || '', key: s.key || '', enabled: !!(s.url && s.key) };
+}
+
+export function saveMailServiceConfig(patch) {
+  const raw = readJson(SMTP_FILE, {});
+  raw.service = raw.service || {};
+  for (const k of ['url', 'key']) {
+    if (patch?.[k] === undefined) continue;
+    if (k === 'key' && (!patch[k] || patch[k] === '********')) continue;
+    raw.service[k] = String(patch[k]).trim();
+  }
+  _bridgeOkUntil = 0;
+  writeJson(SMTP_FILE, raw);
+  try {
+    import('./supabase-data.js').then(m => m.uploadDataFile('smtp.json')).catch(() => {});
+  } catch {}
+  const s = getMailService();
+  return { url: s.url, hasKey: !!s.key, enabled: s.enabled };
+}
+
+async function bridgeCall(path, body, timeoutMs = 25000) {
+  const s = getMailService();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(s.url.replace(/\/+$/, '') + path, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.key}` },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: ctrl.signal,
+    });
+    const d = await r.json().catch(() => ({}));
+    return { status: r.status, ok: r.ok, ...d };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function bridgeHealthy() {
+  const s = getMailService();
+  if (!s.enabled) return false;
+  if (Date.now() < _bridgeOkUntil) return true;
+  try {
+    const r = await bridgeCall('/health', null, 10000);
+    if (!r.ok) throw new Error(r.error || `bridge responded ${r.status}`);
+    _bridgeOkUntil = Date.now() + 5 * 60 * 1000;
+    return true;
+  } catch (e) {
+    console.warn('[MailBridge] unreachable:', e.message);
+    _bridgeOkUntil = 0;
+    return false;
+  }
+}
+
+function credsPayload(c) {
+  return {
+    host: c.host, port: c.port, secure: !!c.secure,
+    user: c.user, pass: c.appPassword,
+    fromEmail: c.fromEmail, fromName: c.fromName,
+  };
+}
 
 export async function canSendMail(profile) {
   profile = validProfile(profile);
   if (!smtpReady(profile)) return false;
+  if (getMailService().enabled) return await bridgeHealthy();
   if (Date.now() < _okUntil[profile]) return true;
   try {
     const t = await getTransport(profile);
@@ -132,11 +203,25 @@ export async function canSendMail(profile) {
 
 // Detailed connection test used by the admin "Test connection" button.
 // Only checks the login against the mail server — never sends an email.
+// Goes through the bridge when one is configured.
 export async function testSmtpConnection(profile) {
   profile = validProfile(profile);
   const c = readProfile(profile);
   if (!c.user || !c.appPassword) {
     return { ok: false, error: 'Enter the email and its app password first.' };
+  }
+  // Bridge mode → let the bridge verify against the mail server
+  if (getMailService().enabled) {
+    try {
+      const r = await bridgeCall('/verify', credsPayload(c));
+      if (r.ok) {
+        _okUntil[profile] = Date.now() + 5 * 60 * 1000;
+        return { ok: true, user: c.user, host: c.host, port: c.port, viaBridge: true };
+      }
+      return { ok: false, user: c.user, host: c.host, port: c.port, error: r.error || 'Bridge verify failed', viaBridge: true };
+    } catch (e) {
+      return { ok: false, user: c.user, host: c.host, port: c.port, error: `Bridge unreachable: ${e.message}`, viaBridge: true };
+    }
   }
   try {
     const nodemailer = (await import('nodemailer')).default;
@@ -209,15 +294,20 @@ export async function sendMail({ profile = 'system', to, subject, html, text, pu
   const from = `"${c.fromName}" <${c.fromEmail}>`;
   const list = Array.isArray(to) ? to : String(to || '').split(',').map(s => s.trim()).filter(Boolean);
   try {
-    const t = await getTransport(profile);
-    if (!t) throw new Error('Email is not configured');
-    await t.sendMail({
-      from,
-      to: list.join(', '),
-      subject,
-      text: text || '',
-      html: html || `<p>${text || ''}</p>`,
-    });
+    if (getMailService().enabled) {
+      const r = await bridgeCall('/send', { ...credsPayload(c), to: list, subject, text: text || '', html });
+      if (!r.ok) throw new Error(r.error || `Bridge responded ${r.status}`);
+    } else {
+      const t = await getTransport(profile);
+      if (!t) throw new Error('Email is not configured');
+      await t.sendMail({
+        from,
+        to: list.join(', '),
+        subject,
+        text: text || '',
+        html: html || `<p>${text || ''}</p>`,
+      });
+    }
     logEmail({ profile, purpose, from, to: toDisplay(list), toCount: list.length, subject, status: 'sent', sentBy, extra });
     return { ok: true };
   } catch (e) {
@@ -237,18 +327,27 @@ export async function sendAdminMail({ recipients, subject, html, text, sentBy })
   if (!list.length) return { sent: 0, failed: 0, skipped: true };
   if (!smtpReady('mailing')) return { sent: 0, failed: 0, error: 'Mailing email is not configured' };
 
-  const BATCH = 25;
+  const viaBridge = getMailService().enabled;
+  const BATCH = viaBridge ? 50 : 25;
   let sent = 0, failed = 0;
   for (let i = 0; i < list.length; i += BATCH) {
     const batch = list.slice(i, i + BATCH);
     try {
-      const t = await getTransport('mailing');
       const c = readProfile('mailing');
       const from = `"${c.fromName}" <${c.fromEmail}>`;
-      if (batch.length === 1) {
-        await t.sendMail({ from, to: batch[0], subject, text: text || '', html: html || `<p>${text || ''}</p>` });
+      if (viaBridge) {
+        const payload = batch.length === 1
+          ? { ...credsPayload(c), to: batch, subject, text: text || '', html }
+          : { ...credsPayload(c), to: from, bcc: batch, subject, text: text || '', html };
+        const r = await bridgeCall('/send', payload);
+        if (!r.ok) throw new Error(r.error || `Bridge responded ${r.status}`);
       } else {
-        await t.sendMail({ from, to: from, bcc: batch.join(', '), subject, text: text || '', html: html || `<p>${text || ''}</p>` });
+        const t = await getTransport('mailing');
+        if (batch.length === 1) {
+          await t.sendMail({ from, to: batch[0], subject, text: text || '', html: html || `<p>${text || ''}</p>` });
+        } else {
+          await t.sendMail({ from, to: from, bcc: batch.join(', '), subject, text: text || '', html: html || `<p>${text || ''}</p>` });
+        }
       }
       sent += batch.length;
       logEmail({ profile: 'mailing', purpose: 'admin-message', from, to: toDisplay(batch), toCount: batch.length, subject, status: 'sent', sentBy });
