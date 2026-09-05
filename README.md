@@ -154,36 +154,17 @@ Register → /login (create account)
 
 ---
 
-## 📧 Email System (two accounts + activity log)
+## 📧 Email — no verification (free pass)
 
-The admin Email page (`/fundopageadmin` → Email) manages **two separate email accounts**, each with its own login, app password and Test connection:
+Email verification is **retired**. Accounts are created verified — users sign up
+and go straight in. There is no SMTP config, no verification codes, and no
+email-based password reset. (Email/phone + password remain the login methods.)
 
-| Account | Used for | Who sends |
-|---|---|---|
-| **System email** (automatic) | Verification codes & forgot-password codes | The system, by itself |
-| **Mailing email** (admin messages) | Emails the admin writes to one user, several users, or all users | Admin, from the Email page |
-
-- **Test connection** only checks the login with the mail server — it sends nothing.
-  **Send test** (enter an address) also delivers a real email so you can confirm it arrives.
-- **Compose** — subject + message, sent through the mailing account (recipients are BCC'd in batches).
-- **Email activity log** — every email sent by the system (codes) or by an admin (messages & tests),
-  including failures with the error. Stored in `data/email-log.json`, capped at 500 entries.
-
-Forgot-password / resend-code feedback:
-- Can't send → **"Email service is currently unavailable. Please try again in a few minutes."**
-- Sent → **"Code sent! Check your inbox — if it doesn't appear, check your spam folder."**
-
-SMTP config lives in `data/smtp.json` under `system` and `mailing` (an old flat config is migrated to `system` automatically). Gmail users: each account needs its own [App Password](https://myaccount.google.com/apppasswords).
-
-### 🌉 Mail bridge (when the host blocks SMTP — e.g. Railway free tier)
-
-Railway free blocks outbound SMTP. Deploy [Fundo Mail Bridge](https://github.com/theguyzoz/Fundo-Mail-Bridge)
-on a host that allows it (Render, Koyeb, Fly, VPS…), then in
-**Admin → Email → Mail bridge** paste the bridge URL + API key and Save.
-When the bridge is ON, all mail (codes + admin messages) travels over HTTPS to
-the bridge, which does the SMTP part. SMTP credentials still live in Fundo Plus
-and ride with each request — the bridge is stateless. Turn it off anytime to
-send directly again.
+> History: v9 had a full SMTP system (system + mailing accounts, mail bridge
+> for SMTP-blocked hosts, activity log). It was removed in favor of the free
+> pass. The standalone relay still lives at
+> [Fundo-Mail-Bridge](https://github.com/theguyzoz/Fundo-Mail-Bridge) if ever
+> needed again.
 
 ---
 

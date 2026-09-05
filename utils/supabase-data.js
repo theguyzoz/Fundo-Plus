@@ -96,8 +96,6 @@ export const MANAGED_FILES = [
   'proofmeta.json',
   // Wallet / money system — balances, in-flight top-ups, withdrawals
   'balances.json', 'pending_deposits.json', 'withdrawals.json',
-  // SMTP / mail (admin-configured)
-  'smtp.json',
 ];
 
 // ── Dirty tracking ────────────────────────────────────────────────────────

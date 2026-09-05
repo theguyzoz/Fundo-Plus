@@ -5,7 +5,7 @@ import path     from 'path';
 import multer   from 'multer';
 import { fileURLToPath } from 'url';
 import {
-  createUser, verifyLogin, getWebUser, saveWebUser, findWebUserByEmail, isEmailVerified, normalizeEmail,
+  createUser, verifyLogin, getWebUser, saveWebUser, findWebUserByEmail,
   deleteWebUser, findWebUserByToken, listPapersLocal,
   getPapersTotalBytes, MAX_PAPERS_BYTES, addWishlistVote,
   getWishlistCount, incrementPaperUpload, PAPER_UPLOAD_LIMIT,
@@ -78,13 +78,6 @@ import {
 } from './auth.js';
 import { askWebAI, clearWebHistory, wantsPdf, looksLikePdfRefusal, parsePdfMarker, stripPdfMarker, expandPdfContent } from './ai.js';
 import { createVerifyToken, consumeToken } from '../utils/verify.js';
-import {
-  smtpReady, canSendMail, sendCodeEmail, issueEmailCode, consumeEmailCode,
-  saveSmtpConfig, publicSmtpConfig,
-  testSmtpConnection, sendMail, sendAdminMail,
-  getEmailLogs, clearEmailLogs,
-  getMailService, saveMailServiceConfig,
-} from '../utils/mail.js';
 import { uploadToCatbox, classifyMedia, assertAllowedMedia, safeFilename, CATBOX_MAX_BYTES } from '../utils/catbox.js';
 import { createPayment, verifyUpdate, pollTransaction, isConfigured as isPaynowConfigured } from '../utils/paynow.js';
 import rateLimit from 'express-rate-limit';
@@ -306,9 +299,6 @@ function rateMw(check, keyFn, message) {
 
 const registerIpLimit = createHitLimiter({ windowMs: 60 * 60 * 1000, max: 8 });
 const loginIpLimit = createHitLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
-const mailIpLimit = createHitLimiter({ windowMs: 60 * 60 * 1000, max: 8 });
-const mailEmailLimit = createHitLimiter({ windowMs: 60 * 60 * 1000, max: 3 });
-const codeTryIpLimit = createHitLimiter({ windowMs: 15 * 60 * 1000, max: 15 });
 
 function pageGuardBan(req, res, next) {
   const cookies = parseCookies(req);
@@ -357,6 +347,18 @@ router.get('/redeem',      pageGuardBan, (req, res) => res.sendFile(path.join(PU
 router.get('/banned',      (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'banned.html')));
 router.get('/samazed',     (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'samazed.html')));
 
+// Email verification is retired — everyone gets a free pass.
+// One-time: flip any legacy unverified accounts so old users can sign in.
+try {
+  const _raw = getAllWebUsers();
+  const _users = Array.isArray(_raw) ? _raw : Object.values(_raw || {});
+  let _fixed = 0;
+  for (const u of _users) {
+    if (u && u.emailVerified === false) { saveWebUser(u.id, { emailVerified: true }); _fixed++; }
+  }
+  if (_fixed) console.log(`[Auth] Free pass: verified ${_fixed} legacy account(s)`);
+} catch (e) { console.warn('[Auth] free-pass migration skipped:', e.message); }
+
 // ═══════════════════════════════════════════════════════════════════
 //  AUTH API
 // ═══════════════════════════════════════════════════════════════════
@@ -368,10 +370,9 @@ router.post('/api/auth/register', rateMw(registerIpLimit, clientIp, 'Too many si
   if (emailClean && findWebUserByEmail(emailClean)) {
     return res.status(400).json({ error: 'Email already registered' });
   }
-  const mailOn = emailClean ? await canSendMail() : false;
   const result = createUser({
     email: emailClean || undefined, phone: phone?.trim(), password,
-    emailVerified: emailClean ? !mailOn : true,
+    emailVerified: true, // free pass — no email verification
   });
   if (!result.ok) return res.status(400).json({ error: result.error });
 
@@ -387,18 +388,6 @@ router.post('/api/auth/register', rateMw(registerIpLimit, clientIp, 'Too many si
     res.clearCookie('amb_ref');
   }
 
-  if (mailOn && result.user.email) {
-    try {
-      const issued = issueEmailCode(result.user.email, 'verify');
-      if (!issued.ok) return res.status(429).json({ error: issued.error, needsVerification: true, email: result.user.email });
-      await sendCodeEmail(result.user.email, issued.code, 'verify');
-      return res.json({ ok: true, needsVerification: true, email: result.user.email });
-    } catch (e) {
-      console.warn('[Register] mail failed, skipping verification:', e.message);
-      saveWebUser(result.user.id, { emailVerified: true });
-    }
-  }
-
   const token = createSession(result.user.id);
   res.cookie('session', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
   res.json({ ok: true, token, user: sanitizeUser(result.user), onboarded: false });
@@ -410,9 +399,6 @@ router.post('/api/auth/login', rateMw(loginIpLimit, clientIp, 'Too many login at
   if (!email && !phone) return res.status(400).json({ error: 'Email or phone required' });
   const user = verifyLogin({ email: email?.trim().toLowerCase(), phone: phone?.trim(), password });
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-  if (user.email && user.emailVerified === false) {
-    return res.status(403).json({ error: 'Verify your email first. We sent a code if mail is on.', needsVerification: true, email: user.email });
-  }
   const token = createSession(user.id);
   // Record login (in-memory only)
   const fwd = req.headers['x-forwarded-for'];
@@ -433,219 +419,6 @@ router.post('/api/auth/logout', requireAuthAllowBanned, (req, res) => {
 router.get('/api/auth/me', requireAuthAllowBanned, (req, res) => {
   const isAmb = !!(getAmbassadorByEmail(req.user.email));
   res.json({ ok: true, user: sanitizeUser(req.user), banned: req.banned || false, isAmbassador: isAmb });
-});
-
-router.post('/api/auth/verify-email', rateMw(codeTryIpLimit, clientIp, 'Too many verification attempts. Try again later.'), async (req, res) => {
-  const email = String(req.body?.email || '').trim().toLowerCase();
-  const code = String(req.body?.code || '').trim();
-  if (!email || !code) return res.status(400).json({ error: 'Email and code required' });
-  if (!consumeEmailCode(email, 'verify', code)) return res.status(400).json({ error: 'Invalid or expired code' });
-  const user = findWebUserByEmail(email);
-  if (!user) return res.status(404).json({ error: 'Account not found' });
-  saveWebUser(user.id, { emailVerified: true });
-  const token = createSession(user.id);
-  res.cookie('session', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 3600 * 1000 });
-  res.json({ ok: true, token, user: sanitizeUser({ ...user, emailVerified: true }), onboarded: !!user.onboarded });
-});
-
-router.post('/api/auth/resend-code', rateMw(mailIpLimit, clientIp, 'Too many email requests from this network. Try again later.'), async (req, res) => {
-  const email = String(req.body?.email || '').trim().toLowerCase();
-  const purpose = req.body?.purpose === 'reset' ? 'reset' : 'verify';
-  if (!email) return res.status(400).json({ error: 'Email required' });
-  const emailHits = mailEmailLimit(normalizeEmail(email) || email);
-  if (!emailHits.ok) {
-    res.setHeader('Retry-After', String(emailHits.retryAfter || 60));
-    return res.status(429).json({ error: 'Too many codes for this email. Try again later.' });
-  }
-  if (!(await canSendMail())) return res.status(503).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
-  const user = findWebUserByEmail(email);
-  if (!user) return res.json({ ok: true });
-  try {
-    const issued = issueEmailCode(email, purpose);
-    if (!issued.ok) return res.status(429).json({ error: issued.error });
-    await sendCodeEmail(email, issued.code, purpose);
-    res.json({ ok: true, message: 'Code sent! Check your inbox — if it doesn\'t appear, check your spam folder.' });
-  } catch (e) {
-    console.warn('[Resend] send failed:', e.message);
-    res.status(500).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
-  }
-});
-
-router.post('/api/auth/forgot-password', rateMw(mailIpLimit, clientIp, 'Too many reset requests from this network. Try again later.'), async (req, res) => {
-  const email = String(req.body?.email || '').trim().toLowerCase();
-  if (!email) return res.status(400).json({ error: 'Email required' });
-  const emailHits = mailEmailLimit(normalizeEmail(email) || email);
-  if (!emailHits.ok) {
-    res.setHeader('Retry-After', String(emailHits.retryAfter || 60));
-    return res.status(429).json({ error: 'Too many reset emails. Try again later.' });
-  }
-  if (!(await canSendMail())) return res.status(503).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
-  const user = findWebUserByEmail(email);
-  if (user) {
-    try {
-      const issued = issueEmailCode(user.email || email, 'reset');
-      if (!issued.ok) return res.status(429).json({ error: issued.error });
-      await sendCodeEmail(user.email || email, issued.code, 'reset');
-    } catch (e) {
-      console.warn('[ForgotPassword] send failed:', e.message);
-      return res.status(500).json({ error: 'Email service is currently unavailable. Please try again in a few minutes.' });
-    }
-  }
-  res.json({ ok: true, message: 'Code sent! Check your inbox — if it doesn\'t appear, check your spam folder.' });
-});
-
-router.post('/api/auth/reset-password', rateMw(codeTryIpLimit, clientIp, 'Too many reset attempts. Try again later.'), (req, res) => {
-  const email = String(req.body?.email || '').trim().toLowerCase();
-  const code = String(req.body?.code || '').trim();
-  const password = String(req.body?.password || '');
-  if (!email || !code || password.length < 6) return res.status(400).json({ error: 'Email, code, and a 6+ character password required' });
-  if (!consumeEmailCode(email, 'reset', code)) return res.status(400).json({ error: 'Invalid or expired code' });
-  const user = findWebUserByEmail(email);
-  if (!user) return res.status(404).json({ error: 'Account not found' });
-  saveWebUser(user.id, { passwordHash: hashPassword(password), emailVerified: true });
-  res.json({ ok: true });
-});
-
-// Who performed an admin mail action (for the email activity log)
-function adminActor(req) {
-  try {
-    const t = req.headers['x-session-token'] || req.headers['x-admin-token'] || req.headers['x-admin-key'];
-    if (t && t !== ADMIN_PASS) {
-      const u = getSessionUser(t);
-      if (u) return u.email || u.name || 'admin';
-    }
-  } catch {}
-  return 'admin';
-}
-
-router.get('/api/admin/smtp', requireAdmin, (req, res) => {
-  res.json({ ok: true, smtp: { system: publicSmtpConfig('system'), mailing: publicSmtpConfig('mailing') } });
-});
-
-router.post('/api/admin/smtp', requireAdmin, async (req, res) => {
-  const profile = req.body?.profile === 'mailing' ? 'mailing' : 'system';
-  const { user, appPassword, fromEmail, fromName, host, port } = req.body || {};
-  const portNum = port != null ? parseInt(port, 10) : undefined;
-  const smtp = saveSmtpConfig(profile, {
-    user: user != null ? String(user).trim() : undefined,
-    appPassword: appPassword != null ? String(appPassword) : undefined,
-    fromEmail: fromEmail != null ? String(fromEmail).trim() : undefined,
-    fromName: fromName != null ? String(fromName).trim() : undefined,
-    host: host != null ? String(host).trim() : undefined,
-    port: portNum,
-    // 465 → implicit TLS; other ports (587, 2525…) → plain + STARTTLS.
-    // Follow the port automatically unless secure was set explicitly.
-    secure: req.body?.secure !== undefined && req.body?.secure !== null
-      ? (req.body.secure === true || req.body.secure === 'true')
-      : (portNum != null ? portNum === 465 : undefined),
-  });
-  let canSend = false;
-  try { canSend = await canSendMail(profile); } catch {}
-  res.json({ ok: true, smtp, canSend });
-});
-
-// "Test connection" only checks the login against the mail server (no email sent).
-// If `to` is provided, a real test email is sent through that account too.
-router.post('/api/admin/smtp/test', requireAdmin, async (req, res) => {
-  const profile = req.body?.profile === 'mailing' ? 'mailing' : 'system';
-  const to = String(req.body?.to || '').trim();
-  try {
-    const v = await testSmtpConnection(profile);
-    if (!v.ok) {
-      const how = v.viaBridge ? ' (through the mail bridge)' : '';
-      return res.status(400).json({ error: `Login failed for ${v.user || 'this account'} on ${v.host || 'the server'}${how} — check the email and app password. (${v.error || 'rejected by server'})` });
-    }
-    const how = v.viaBridge ? ' (through the mail bridge)' : '';
-    let message = `✅ Login works — signed in as ${v.user} on ${v.host}:${v.port}${how}. No email was sent.`;
-    if (to) {
-      try {
-        await sendMail({
-          profile,
-          to,
-          subject: `Fundo Plus test email (${profile === 'mailing' ? 'mailing account' : 'system account'})`,
-          text: `This is a test email from your Fundo Plus ${profile} email account. If you can read this, sending works.`,
-          html: `<div style="font-family:system-ui,sans-serif;padding:20px"><h2 style="color:#2563eb">Fundo Plus</h2><p>✅ This is a <b>test email</b> from your <b>${profile}</b> email account.</p><p style="color:#64748b;font-size:13px">Sent ${new Date().toLocaleString()}</p></div>`,
-          purpose: 'test',
-          sentBy: adminActor(req),
-        });
-        message = `✅ Login works as ${v.user}${how}, and a test email was sent to ${to}. Check it arrived (spam too).`;
-      } catch (e) {
-        return res.status(400).json({ error: `Login works as ${v.user}, but sending a test email to ${to} failed: ${e.message}` });
-      }
-    }
-    res.json({ ok: true, message });
-  } catch (e) {
-    res.status(400).json({ error: e.message || 'Test failed' });
-  }
-});
-
-// Admin → user(s) email, sent through the dedicated mailing account
-router.post('/api/admin/email/send', requireAdmin, async (req, res) => {
-  const { target, emails, subject, message } = req.body || {};
-  const subj = String(subject || '').trim();
-  const body = String(message || '').trim();
-  if (!subj || !body) return res.status(400).json({ error: 'Subject and message are required' });
-  if (!['all', 'single', 'multiple'].includes(target))
-    return res.status(400).json({ error: 'target must be all, single, or multiple' });
-
-  let list = [];
-  if (target === 'all') {
-    const raw = getAllWebUsers();
-    const users = Array.isArray(raw) ? raw : Object.values(raw || {});
-    list = users.map(u => String(u.email || '').toLowerCase().trim()).filter(e => e && e.includes('@'));
-  } else {
-    list = (Array.isArray(emails) ? emails : [emails]).map(e => String(e || '').toLowerCase().trim()).filter(e => e && e.includes('@'));
-  }
-  list = [...new Set(list)];
-  if (!list.length) return res.status(400).json({ error: 'No valid recipient emails found' });
-
-  const actor = adminActor(req);
-  const result = await sendAdminMail({ recipients: list, subject: subj, text: body, sentBy: actor });
-  if (result.error) return res.status(400).json({ error: result.error });
-  res.json({ ok: true, ...result });
-});
-
-// Email activity log — every email sent by the system or by an admin
-router.get('/api/admin/email/logs', requireAdmin, (req, res) => {
-  res.json({ ok: true, logs: getEmailLogs(req.query?.limit) });
-});
-
-router.post('/api/admin/email/logs/clear', requireAdmin, (req, res) => {
-  clearEmailLogs();
-  res.json({ ok: true });
-});
-
-// ── Mail bridge (for SMTP-blocked hosts like Railway free) ──
-router.get('/api/admin/mail-service', requireAdmin, (req, res) => {
-  const s = getMailService();
-  res.json({ ok: true, service: { url: s.url, hasKey: !!s.key, enabled: s.enabled } });
-});
-
-router.post('/api/admin/mail-service', requireAdmin, (req, res) => {
-  const { url, key } = req.body || {};
-  if (url !== undefined && url !== '' && !/^https?:\/\//i.test(String(url))) {
-    return res.status(400).json({ error: 'Bridge URL must start with http:// or https://' });
-  }
-  const service = saveMailServiceConfig({ url, key });
-  res.json({ ok: true, service });
-});
-
-router.post('/api/admin/mail-service/test', requireAdmin, async (req, res) => {
-  const s = getMailService();
-  if (!s.enabled) return res.status(400).json({ error: 'Set the bridge URL and API key first.' });
-  try {
-    const r = await fetch(s.url.replace(/\/+$/, '') + '/health', {
-      headers: { Authorization: `Bearer ${s.key}` },
-      signal: AbortSignal.timeout(15000),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.ok) {
-      return res.status(400).json({ error: `Bridge responded ${r.status}${d.error ? ' — ' + d.error : ''}. Check the URL and API key.` });
-    }
-    res.json({ ok: true, message: `✅ Bridge reachable at ${s.url} — email will be sent through it.` });
-  } catch (e) {
-    res.status(400).json({ error: `Could not reach the bridge: ${e.message}` });
-  }
 });
 
 // ═══════════════════════════════════════════════════════════════════
