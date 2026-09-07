@@ -1,4 +1,4 @@
-// utils/verify.js — One-time link verification tokens (web ↔ WhatsApp linking)
+// utils/verify.js - One-time link verification tokens (web WhatsApp linking)
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';

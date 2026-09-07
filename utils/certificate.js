@@ -18,8 +18,8 @@ const LOGO_PATH = path.join(__dirname, '..', 'images', 'logo.png');
 export function generateAmbassadorCertificate({ name, addedAt }) {
   return new Promise((resolve, reject) => {
 
-    // ── Helpers ──────────────────────────────────────────────────────────
-    const W = 841.89; // A4 landscape width  (pt)
+    // helpers
+    const W = 841.89; // A4 landscape width (pt)
     const H = 595.28; // A4 landscape height (pt)
 
     const NAVY   = '#0f172a';
@@ -40,9 +40,9 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
     // Simple unique cert ID
     const certId = 'FP-AMB-' + Date.now().toString(36).toUpperCase();
 
-    // ── Doc setup ────────────────────────────────────────────────────────
+    // doc setup
     const doc = new PDFDocument({
-      size: [W, H],       // landscape A4
+      size: [W, H], // landscape A4
       margin: 0,
       bufferPages: true,
       info: {
@@ -57,22 +57,22 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
     doc.on('end',  () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    // ── 1. Background ────────────────────────────────────────────────────
+    // 1. background
     doc.rect(0, 0, W, H).fill('#f8faff');
 
-    // ── 2. Top blue bar ──────────────────────────────────────────────────
+    // 2. top blue bar
     doc.rect(0, 0, W, 10).fill(BLUE);
 
-    // ── 3. Bottom blue bar ───────────────────────────────────────────────
+    // 3. bottom blue bar
     doc.rect(0, H - 10, W, 10).fill(BLUE);
 
-    // ── 4. Gold accent strip (left) ──────────────────────────────────────
+    // 4. gold accent strip (left)
     doc.rect(0, 10, 5, H - 20).fill(GOLD);
 
-    // ── 5. Gold accent strip (right) ─────────────────────────────────────
+    // 5. gold accent strip (right)
     doc.rect(W - 5, 10, 5, H - 20).fill(GOLD);
 
-    // ── 6. Outer border ──────────────────────────────────────────────────
+    // 6. outer border
     doc.rect(22, 22, W - 44, H - 44)
        .lineWidth(1)
        .stroke(BLUE);
@@ -82,7 +82,7 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
        .lineWidth(0.4)
        .stroke(GOLD);
 
-    // ── 7. Logo ──────────────────────────────────────────────────────────
+    // 7. logo
     const logoSize = 52;
     const logoX    = W / 2 - logoSize / 2;
     const logoY    = 52;
@@ -90,7 +90,7 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
       doc.image(LOGO_PATH, logoX, logoY, { width: logoSize, height: logoSize });
     }
 
-    // ── 8. Platform name ─────────────────────────────────────────────────
+    // 8. platform name
     doc.font('Helvetica-Bold')
        .fontSize(11)
        .fillColor(BLUE)
@@ -101,26 +101,26 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
        .fillColor(MUT)
        .text('fundoplus.up.railway.app', 0, logoY + logoSize + 22, { align: 'center' });
 
-    // ── 9. Divider line ──────────────────────────────────────────────────
+    // 9. divider line
     const divY = logoY + logoSize + 38;
     doc.moveTo(W / 2 - 110, divY)
        .lineTo(W / 2 + 110, divY)
        .lineWidth(0.6)
        .stroke(GOLD);
 
-    // ── 10. "Certificate of Ambassadorship" heading ──────────────────────
+    // 10. "certificate of ambassadorship" heading
     doc.font('Helvetica')
        .fontSize(9)
        .fillColor(GOLD)
        .text('CERTIFICATE OF AMBASSADORSHIP', 0, divY + 12, { align: 'center', characterSpacing: 2 });
 
-    // ── 11. "This certifies that" ────────────────────────────────────────
+    // 11. "this certifies that"
     doc.font('Helvetica')
        .fontSize(11)
        .fillColor(MUT)
        .text('This certifies that', 0, divY + 32, { align: 'center' });
 
-    // ── 12. Name ─────────────────────────────────────────────────────────
+    // 12. name
     const nameY = divY + 52;
     doc.font('Helvetica-Bold')
        .fontSize(28)
@@ -134,7 +134,7 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
        .lineWidth(0.8)
        .stroke(NAVY);
 
-    // ── 13. Body text ────────────────────────────────────────────────────
+    // 13. body text
     const bodyY = nameY + 50;
     const bodyW = 520;
     const bodyX = W / 2 - bodyW / 2;
@@ -150,10 +150,10 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
          { align: 'center', width: bodyW, lineGap: 4 }
        );
 
-    // ── 14. Signature section ────────────────────────────────────────────
+    // 14. signature section
     const sigY = H - 110;
 
-    // Left — issued by
+    // Left - issued by
     const leftX = 90;
     doc.moveTo(leftX, sigY)
        .lineTo(leftX + 130, sigY)
@@ -164,7 +164,7 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
     doc.font('Helvetica').fontSize(7.5).fillColor(MUT)
        .text('Community Project Administrator', leftX, sigY + 17, { width: 130, align: 'center' });
 
-    // Centre — seal ring
+    // Centre - seal ring
     const sealX = W / 2;
     const sealY = sigY + 4;
     doc.circle(sealX, sealY, 28).lineWidth(0.8).stroke(GOLD);
@@ -176,7 +176,7 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
     doc.font('Helvetica').fontSize(4.5).fillColor(GOLD)
        .text('COMMUNITY PROJECT', sealX - 20, sealY + 9, { width: 40, align: 'center' });
 
-    // Right — date
+    // Right - date
     const rightX = W - 220;
     doc.moveTo(rightX, sigY)
        .lineTo(rightX + 130, sigY)
@@ -187,7 +187,7 @@ export function generateAmbassadorCertificate({ name, addedAt }) {
     doc.font('Helvetica').fontSize(7.5).fillColor(MUT)
        .text('Date of Issue', rightX, sigY + 17, { width: 130, align: 'center' });
 
-    // ── 15. Certificate ID footer ────────────────────────────────────────
+    // 15. certificate id footer
     doc.font('Helvetica').fontSize(6.5).fillColor(MUT)
        .text(
          `Certificate ID: ${certId}  ·  Fundo Plus is an independent community project, not a registered legal entity.  ·  Issued in good faith as a record of voluntary service.`,

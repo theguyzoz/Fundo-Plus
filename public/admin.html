@@ -45,7 +45,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 ::-webkit-scrollbar-track{background:var(--surface)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
 
-/* ── AUTH ── */
+/* auth */
 #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,rgba(34,197,94,.06) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(59,130,246,.06) 0%,transparent 60%),var(--bg)}
 .auth-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:44px 40px;width:min(400px,95vw);box-shadow:var(--shadow-lg)}
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px}
@@ -60,7 +60,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .auth-err{font-size:.8rem;color:var(--red);background:var(--red-bg);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:8px 12px;margin-bottom:12px;display:none}
 .auth-err.show{display:block}
 
-/* ── BUTTONS ── */
+/* buttons */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:.82rem;font-weight:600;font-family:var(--font);transition:.15s;text-decoration:none;white-space:nowrap}
 .btn svg{flex-shrink:0}
 .btn-primary{background:var(--green);color:#fff}
@@ -73,11 +73,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .btn-sm{padding:5px 10px;font-size:.76rem}
 .btn-full{width:100%;justify-content:center;padding:12px}
 
-/* ── LAYOUT ── */
+/* layout */
 #app{display:none}
 .shell{display:flex;height:100vh;overflow:hidden}
 
-/* ── SIDEBAR ── */
+/* sidebar */
 .ham{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--text);margin-right:10px}
 .ham:hover{background:var(--surface2)}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40}
@@ -96,7 +96,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center}
 .sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
 
-/* ── MAIN ── */
+/* main */
 .main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:10}
 .topbar-title{font-size:1rem;font-weight:700;color:var(--text)}
@@ -105,14 +105,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .page{display:none}
 .page.active{display:block}
 
-/* ── CARDS ── */
+/* cards */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
 .card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
 .card-title{font-size:.95rem;font-weight:700;color:var(--text)}
 .card-sub{font-size:.78rem;color:var(--text2);margin-top:2px}
 .card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-/* ── STAT GRID ── */
+/* stat grid */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
 .stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;transform:translate(20px,-20px);opacity:.4}
@@ -131,7 +131,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .stat-card.cyan .stat-val{color:var(--cyan)}
 .stat-label{font-size:.72rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 
-/* ── TABLE ── */
+/* table */
 .table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
 thead{background:var(--surface2)}
@@ -140,7 +140,7 @@ td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--surface2)}
 
-/* ── BADGES ── */
+/* badges */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:.7rem;font-weight:700}
 .badge-green{background:var(--green-bg2);color:var(--green)}
 .badge-red{background:var(--red-bg2);color:var(--red)}
@@ -150,7 +150,7 @@ tbody tr:hover td{background:var(--surface2)}
 .badge-cyan{background:var(--cyan-bg);color:var(--cyan)}
 .badge-gray{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
 
-/* ── USER CARD GRID ── */
+/* user card grid */
 .user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:.15s}
 .user-card:hover{border-color:var(--border2);box-shadow:0 0 0 1px var(--blue),var(--shadow)}
@@ -165,21 +165,21 @@ tbody tr:hover td{background:var(--surface2)}
 .uc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
 .uc-actions{display:flex;gap:6px;flex-wrap:wrap}
 
-/* ── SEARCH ── */
+/* search */
 .search-bar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
 .search-input{flex:1;min-width:200px;padding:9px 14px 9px 36px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;font-family:var(--font);outline:0;transition:.15s;position:relative}
 .search-input:focus{border-color:var(--blue)}
 .search-wrap{position:relative;flex:1;min-width:200px}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
 
-/* ── FILTER TABS ── */
+/* filter tabs */
 .filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .ftab{padding:5px 12px;border:1px solid var(--border2);border-radius:99px;background:transparent;color:var(--text3);cursor:pointer;font-size:.76rem;font-weight:600;transition:.12s;font-family:var(--font)}
 .ftab:hover{border-color:var(--green);color:var(--green)}
 .ftab.active{background:var(--green-bg2);border-color:var(--green);color:var(--green)}
 .ftab .cnt{opacity:.75;margin-left:3px}
 
-/* ── MODAL ── */
+/* modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px;width:min(480px,100%);box-shadow:var(--shadow-lg)}
@@ -192,33 +192,33 @@ tbody tr:hover td{background:var(--surface2)}
 .field select{width:100%;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;font-family:var(--font);outline:0;transition:.15s}
 .field select:focus{border-color:var(--green)}
 
-/* ── EMPTY / LOADING ── */
+/* empty / loading */
 .empty{padding:48px 20px;text-align:center;color:var(--text3)}
 .empty svg{margin:0 auto 12px;display:block;opacity:.4}
 .empty p{font-size:.85rem}
 .loading-row{padding:40px 20px;text-align:center;color:var(--text3);font-size:.82rem}
 
-/* ── PROOF IMAGE ── */
+/* proof image */
 .proof-img-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:20px}
 .proof-img-modal.open{display:flex}
 .proof-img-inner{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:20px;max-width:600px;width:100%;box-shadow:var(--shadow-lg)}
 .proof-img-inner img{width:100%;max-height:440px;object-fit:contain;border-radius:var(--radius-sm);background:var(--surface2)}
 
-/* ── DATA FILES ── */
+/* data files */
 .data-banner{background:var(--yellow-bg);border:1px solid rgba(245,158,11,.3);border-radius:var(--radius-sm);padding:8px 14px;font-size:.8rem;color:var(--yellow);font-weight:600;margin-bottom:12px;display:none}
 
-/* ── STATUS DOT ── */
+/* status dot */
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-green{background:var(--green)}
 .dot-red{background:var(--red)}
 .dot-yellow{background:var(--yellow)}
 
-/* ── INPUT ROW ── */
+/* input row */
 .input-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .input-row .field{flex:1;min-width:160px}
 .input-row .field:last-child{flex:0 0 auto}
 
-/* ── LOGIN ITEM ── */
+/* login item */
 .login-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:.12s;background:var(--surface);margin-bottom:6px}
 .login-item:hover{border-color:var(--blue);background:var(--surface2)}
 .login-item.active{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
@@ -228,7 +228,7 @@ tbody tr:hover td{background:var(--surface2)}
 .login-sub{font-size:.72rem;color:var(--text2)}
 .login-time{font-size:.72rem;color:var(--text3);white-space:nowrap}
 
-/* ── PUSH PAGE ── */
+/* push page */
 .vapid-key{font-family:var(--mono);font-size:.72rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;word-break:break-all;color:var(--text2)}
 .toggle-row{display:flex;gap:8px}
 .toggle-btn{flex:1;padding:9px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text3);font-weight:700;font-size:.82rem;cursor:pointer;transition:.15s;text-align:center;font-family:var(--font)}
@@ -262,7 +262,7 @@ tbody tr:hover td{background:var(--surface2)}
 .compose-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:900px){.compose-grid{grid-template-columns:1fr}}
 
-/* ── RESPONSIVE ── */
+/* responsive */
 @media(max-width:768px){
   .ham{display:flex}
   .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s}
@@ -271,7 +271,7 @@ tbody tr:hover td{background:var(--surface2)}
   .content{padding:16px}
 }
 
-/* ── ANIMATIONS ── */
+/* animations */
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .page.active{animation:fadeIn .18s ease}
 </style>
@@ -416,7 +416,7 @@ tbody tr:hover td{background:var(--surface2)}
 
       <div class="content">
 
-        <!-- ══ OVERVIEW ══ -->
+        <!-- overview -->
         <div class="page active" id="page-overview">
           <div class="stat-grid" id="stat-grid">
             <div class="stat-card green"><div class="stat-val" id="st-total">—</div><div class="stat-label">Total Users</div></div>
@@ -438,7 +438,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ USERS ══ -->
+        <!-- users -->
         <div class="page" id="page-users">
           <div class="card" style="margin-bottom:14px">
             <div class="search-bar">
@@ -464,7 +464,7 @@ tbody tr:hover td{background:var(--surface2)}
           <div id="users-container"><div class="loading-row">Loading users…</div></div>
         </div>
 
-        <!-- ══ LOGINS ══ -->
+        <!-- logins -->
         <div class="page" id="page-logins">
           <div class="card" style="margin-bottom:14px">
             <div class="card-header">
@@ -476,7 +476,7 @@ tbody tr:hover td{background:var(--surface2)}
           <div id="login-detail"></div>
         </div>
 
-        <!-- ══ BANS ══ -->
+        <!-- bans -->
         <div class="page" id="page-bans">
           <div class="card" style="margin-bottom:14px">
             <div class="card-header">
@@ -493,7 +493,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ SUPPORT ══ -->
+        <!-- support -->
         <div class="page" id="page-support">
           <div class="card" style="margin-bottom:14px">
             <div class="card-header">
@@ -509,7 +509,7 @@ tbody tr:hover td{background:var(--surface2)}
           <div id="support-container"><div class="loading-row">Loading…</div></div>
         </div>
 
-        <!-- ══ SUBSCRIPTIONS ══ -->
+        <!-- subscriptions -->
         <div class="page" id="page-subs">
           <div class="card" style="margin-bottom:14px">
             <div class="card-header">
@@ -538,7 +538,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ PROOFS ══ -->
+        <!-- proofs -->
         <div class="page" id="page-proofs">
           <div class="card">
             <div class="card-header">
@@ -552,7 +552,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ PROMO LINKS ══ -->
+        <!-- promo links -->
         <div class="page" id="page-freelinks">
           <div class="card" style="margin-bottom:14px">
             <div class="card-header"><div><div class="card-title">Create Promo Link</div></div></div>
@@ -589,7 +589,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ PAPERS ══ -->
+        <!-- papers -->
         <div class="page" id="page-papers">
           <div class="card">
             <div class="card-header">
@@ -603,7 +603,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ AMBASSADORS ══ -->
+        <!-- ambassadors -->
         <div class="page" id="page-ambassadors">
           <div class="stat-grid" id="amb-stat-grid" style="margin-bottom:14px">
             <div class="stat-card blue"><div class="stat-val" id="amb-st-total">—</div><div class="stat-label">Ambassadors</div></div>
@@ -633,7 +633,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ NOTIFICATIONS / PUSH ══ -->
+        <!-- notifications / push -->
         <div class="page" id="page-push">
           <div class="compose-grid">
             <div>
@@ -741,7 +741,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ CHATS ══ -->
+        <!-- chats -->
         <div class="page" id="page-chats">
           <div class="card">
             <div class="card-header">
@@ -752,7 +752,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ FILES ══ -->
+        <!-- files -->
         <div class="page" id="page-files">
           <div class="card">
             <div class="card-header">
@@ -763,7 +763,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ DATA SYNC ══ -->
+        <!-- data sync -->
         <div class="page" id="page-datafiles">
           <div class="card">
             <div class="card-header">
@@ -800,7 +800,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
         </div>
 
-        <!-- ══ WISHLIST ══ -->
+        <!-- wishlist -->
         <div class="page" id="page-wishlist">
           <div class="card">
             <div class="card-header"><div><div class="card-title">Upgrade Wishlist</div></div>
@@ -877,9 +877,7 @@ tbody tr:hover td{background:var(--surface2)}
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  CORE
-// ══════════════════════════════════════════════════════
+// core
 let TOKEN = localStorage.getItem('adminToken') || '';
 let _allUsers = [], _userFilter = 'all', _banTargetId = '', _editAmbId = '';
 let _logins = [], _dataFiles = [];
@@ -918,7 +916,7 @@ function fmtBytes(b) {
   return (b/1048576).toFixed(2) + ' MB';
 }
 
-// ── AUTH ──────────────────────────────────────────────
+// auth
 function doLogout() {
   localStorage.removeItem('adminToken');
   TOKEN = '';
@@ -1040,7 +1038,7 @@ function initAdmin() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAdmin);
 else initAdmin();
 
-// ── MODAL HELPERS ─────────────────────────────────────
+// modal helpers
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function empty(msg) { return `<div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>${msg}</p></div>`; }
@@ -1051,9 +1049,7 @@ function setBadge(id, n) {
   el.textContent = n; el.style.display = n > 0 ? '' : 'none';
 }
 
-// ══════════════════════════════════════════════════════
-//  OVERVIEW
-// ══════════════════════════════════════════════════════
+// overview
 async function loadOverview() {
   try {
     const r = await api('/api/admin/users/search?q=');
@@ -1084,9 +1080,7 @@ async function loadOverview() {
   } catch(e) { document.getElementById('server-stats').innerHTML = errBox(e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  USERS
-// ══════════════════════════════════════════════════════
+// users
 async function loadUsers() {
   const q = (document.getElementById('user-search')||{}).value || '';
   const box = document.getElementById('users-container');
@@ -1204,7 +1198,7 @@ function renderUserCard(u) {
   </div>`;
 }
 
-// ── BAN MODAL ─────────────────────────────────────────
+// ban modal
 function openBanModal(id, email, name) {
   _banTargetId = id;
   document.getElementById('ban-modal-sub').textContent = name + ' <' + email + '>';
@@ -1243,9 +1237,7 @@ async function doVerify(userId, on) {
   } catch(e) { alert('Verify failed: ' + e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  LOGINS
-// ══════════════════════════════════════════════════════
+// logins
 async function loadLogins() {
   const box = document.getElementById('logins-list');
   if (!box) return;
@@ -1297,9 +1289,7 @@ async function showLoginDetail(uid, rowEl) {
   } catch(e) { detail.innerHTML = html + errBox(e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  BANS & APPEALS
-// ══════════════════════════════════════════════════════
+// bans & appeals
 async function loadBans() {
   const bansBox = document.getElementById('bans-container');
   const appealsBox = document.getElementById('appeals-container');
@@ -1367,9 +1357,7 @@ async function resolveAppeal(userId, decision) {
   } catch(e) { alert('Failed: ' + e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  SUPPORT
-// ══════════════════════════════════════════════════════
+// support
 async function loadSupport() {
   const box = document.getElementById('support-container');
   if (!box) return;
@@ -1415,9 +1403,7 @@ async function resolveSupport(id) {
   } catch(e) { alert('Failed: ' + e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  SUBSCRIPTIONS
-// ══════════════════════════════════════════════════════
+// subscriptions
 async function loadSubs() {
   const box = document.getElementById('subs-container');
   if (!box) return;
@@ -1465,9 +1451,7 @@ async function quickGrant(uid, plan) {
   } catch(e) { alert('Error: '+e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  PROOFS
-// ══════════════════════════════════════════════════════
+// proofs
 async function loadProofs() {
   const box = document.getElementById('proofs-container');
   if (!box) return;
@@ -1526,9 +1510,7 @@ async function reviewProof(proofId, status) {
   } catch(e) { alert('Failed: ' + e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  PROMO LINKS
-// ══════════════════════════════════════════════════════
+// promo links
 async function loadPromoLinks() {
   const box = document.getElementById('promolinks-container');
   if (!box) return;
@@ -1608,9 +1590,7 @@ async function deleteLink(code) {
   } catch(e) { alert(e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  PAPERS
-// ══════════════════════════════════════════════════════
+// papers
 async function loadPapers() {
   const box = document.getElementById('papers-container');
   if (!box) return;
@@ -1647,9 +1627,7 @@ async function deletePaper(id) {
   } catch(e) { alert('Failed: ' + e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  AMBASSADORS
-// ══════════════════════════════════════════════════════
+// ambassadors
 function ambEsc(s) {
   return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -1775,9 +1753,7 @@ async function deleteAmb(id, email) {
   } catch(e) { alert('Failed: '+e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  PUSH / NOTIFICATIONS
-// ══════════════════════════════════════════════════════
+// push / notifications
 function loadPushPage() {
   loadVapid();
   loadAdminNotifs();
@@ -2067,9 +2043,7 @@ async function sendTestPush() {
   } catch(e) { s.style.color='var(--red)'; s.textContent='Error: '+e.message; }
 }
 
-// ══════════════════════════════════════════════════════
-//  CHATS
-// ══════════════════════════════════════════════════════
+// chats
 async function loadChats() {
   const box = document.getElementById('chats-container');
   if (!box) return;
@@ -2095,9 +2069,7 @@ async function loadChats() {
   } catch(e) { box.innerHTML = errBox(e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  FILES
-// ══════════════════════════════════════════════════════
+// files
 async function loadFiles() {
   const box = document.getElementById('files-container');
   if (!box) return;
@@ -2122,9 +2094,7 @@ async function loadFiles() {
   } catch(e) { box.innerHTML = errBox(e.message); }
 }
 
-// ══════════════════════════════════════════════════════
-//  DATA SYNC
-// ══════════════════════════════════════════════════════
+// data sync
 async function loadDataFiles() {
   const box = document.getElementById('datafiles-container');
   if (!box) return;
@@ -2254,9 +2224,7 @@ async function loadWishlist() {
   } catch(e) {}
 }
 
-// ══════════════════════════════════════════════════════
-//  GLOBAL SYNC / BOT
-// ══════════════════════════════════════════════════════
+// global sync / bot
 async function doSync() {
   try {
     const r = await api('/api/admin/sync', { method:'POST' });

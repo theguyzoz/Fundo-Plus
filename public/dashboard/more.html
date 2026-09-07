@@ -17,7 +17,7 @@
     }
     body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-    /* ── Sidebar ── */
+    /* sidebar */
     .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 228px; background: var(--surf); border-right: 1px solid var(--brd); display: flex; flex-direction: column; padding: 0 0 1rem; z-index: 60; box-shadow: var(--sh); transition: transform .25s cubic-bezier(.4,0,.2,1); }
     .sb-logo { display: flex; align-items: center; gap: 9px; padding: 18px 16px 14px; border-bottom: 1px solid var(--brd); font-size: 1.05rem; font-weight: 900; color: var(--acc); }
     .sb-section { font-size: .65rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; padding: 14px 16px 4px; }
@@ -30,7 +30,7 @@
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.3); z-index: 55; backdrop-filter: blur(2px); }
     .sidebar-overlay.show { display: block; }
 
-    /* ── Topbar ── */
+    /* topbar */
     .topbar { position: fixed; top: 0; left: 228px; right: 0; height: 56px; background: #ffffffee; backdrop-filter: blur(10px); border-bottom: 1px solid var(--brd); display: flex; align-items: center; padding: 0 20px; gap: 12px; z-index: 50; box-shadow: var(--sh); }
     .topbar-title { font-size: .95rem; font-weight: 800; color: var(--txt); }
     .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -38,18 +38,18 @@
     .ham { display: none; background: 0 0; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--txt); flex-shrink: 0; }
     .ham:hover { background: var(--bg); }
 
-    /* ── Layout ── */
+    /* layout */
     .main { margin-left: 228px; margin-top: 56px; padding: 28px 24px; min-height: calc(100vh - 56px); }
 
-    /* ── Page header ── */
+    /* page header */
     .ph { margin-bottom: 28px; }
     .ph h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: -.4px; color: var(--txt); }
     .ph p { font-size: .84rem; color: var(--mut); margin-top: 4px; }
 
-    /* ── Section label ── */
+    /* section label */
     .section-label { font-size: .7rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; }
 
-    /* ── Tool flashcard grid ── */
+    /* tool flashcard grid */
     .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
 
     .tool-card {
@@ -114,11 +114,11 @@
     .tool-arrow { display: flex; align-items: center; justify-content: flex-end; margin-top: 4px; }
     .tool-arrow span { font-size: .78rem; font-weight: 700; color: var(--acc); display: flex; align-items: center; gap: 4px; }
 
-    /* ── Coming soon cards ── */
+    /* coming soon cards */
     .tool-card.soon { opacity: .55; pointer-events: none; }
     .tool-card.soon .tool-badge { background: #f1f5f9; color: var(--mut); }
 
-    /* ── Responsive ── */
+    /* responsive */
     @media (max-width: 900px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: none; }
@@ -134,7 +134,7 @@
 <body>
   <div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
 
-  <!-- ── Sidebar ── -->
+  <!-- sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sb-logo">
       <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
@@ -220,7 +220,7 @@
     </div>
   </nav>
 
-  <!-- ── Topbar ── -->
+  <!-- topbar -->
   <header class="topbar">
     <button class="ham" onclick="toggleSb()" aria-label="Menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -234,7 +234,7 @@
     </div>
   </header>
 
-  <!-- ── Main ── -->
+  <!-- main -->
   <main class="main">
     <div class="ph">
       <h1>Tools &amp; Features</h1>

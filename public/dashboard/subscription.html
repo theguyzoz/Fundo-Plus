@@ -333,7 +333,7 @@
       }).join('');
     }
 
-    // ── Buy plan with balance ───────────────────────────────────────────
+    // buy plan with balance
     async function buyPlan(plan) {
       try {
         const d = await api('POST', '/api/subscription/activate', { plan });
@@ -345,7 +345,7 @@
       }
     }
 
-    // ── Top up ──────────────────────────────────────────────────────────
+    // top up
     function openTopup() {
       const remaining = state.remainingTopupDollars;
       if (parseFloat(remaining) < 1) {
@@ -433,7 +433,7 @@
       box.innerHTML = `<div class="s-title">${ok ? 'Payment complete' : 'Payment not completed'}</div><div class="s-sub">${msg}</div>`;
     }
 
-    // ── Withdraw ────────────────────────────────────────────────────────
+    // withdraw
     function openWithdraw() {
       const wd = state.withdrawalDollars;
       if (parseFloat(wd) < 1) { alert('Your withdrawal balance is below $1.00. Top up first.'); return; }

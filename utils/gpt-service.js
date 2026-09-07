@@ -1,4 +1,4 @@
-// utils/gpt-service.js — GPT-4O proxy service for Fundo Plus
+// utils/gpt-service.js - GPT-4O proxy service for Fundo Plus
 
 /**
  * GPT-4O Chat via deepenglish.com proxy

@@ -72,7 +72,7 @@ export async function createPayment({ amount, method, phone, reference, descript
   const resultUrl = `${base}/api/paynow/update`;
   const amountStr = parseFloat(amount).toFixed(2);
 
-  // Field order MUST match this exactly — it determines the hash concatenation order.
+  // Field order MUST match this exactly - it determines the hash concatenation order.
   const fields = {
     resulturl:      resultUrl,
     returnurl:      returnUrl,

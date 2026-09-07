@@ -1,4 +1,4 @@
-// utils/update-store.js — Manages app update.json and APK in Supabase Storage
+// utils/update-store.js - Manages app update.json and APK in Supabase Storage
 // update.json shape: { version: "2.13.2", notes: "What's new", force: false, apkUrl: "<public url>" }
 // The DroidScript app fetches GET /api/app/update and compares versions.
 
@@ -46,7 +46,7 @@ async function ensureBucket() {
   _bucketReady = true;
 }
 
-// ── Upload update.json ──────────────────────────────────────────────────────
+// upload update.json
 export async function uploadUpdateJson(jsonBuffer) {
   const sb = getClient();
   if (!sb) throw new Error('Supabase not configured');
@@ -70,7 +70,7 @@ export async function uploadUpdateJson(jsonBuffer) {
   return { publicUrl: pub.publicUrl, version: parsed.version };
 }
 
-// ── Upload APK file ─────────────────────────────────────────────────────────
+// upload apk file
 export async function uploadApk(apkBuffer, originalName) {
   const sb = getClient();
   if (!sb) throw new Error('Supabase not configured');
@@ -88,7 +88,7 @@ export async function uploadApk(apkBuffer, originalName) {
   return pub.publicUrl;
 }
 
-// ── Fetch current update.json from Supabase ─────────────────────────────────
+// fetch current update.json from supabase
 export async function fetchUpdateJson() {
   const sb = getClient();
   if (!sb) return null;

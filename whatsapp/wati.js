@@ -1,8 +1,8 @@
-// whatsapp/wati.js — WATI.io API client for Fundo Plus
+// whatsapp/wati.js - WATI.io API client for Fundo Plus
 // All outbound calls to WATI go through here.
 
 const WATI_BASE  = process.env.WATI_API_ENDPOINT; // e.g. https://live-server-XXXXX.wati.io
-const WATI_TOKEN = process.env.WATI_API_TOKEN;     // Bearer token from WATI dashboard
+const WATI_TOKEN = process.env.WATI_API_TOKEN; // Bearer token from WATI dashboard
 
 if (!WATI_BASE || !WATI_TOKEN) {
   console.warn('⚠️  WATI_API_ENDPOINT or WATI_API_TOKEN not set — WhatsApp features disabled.');
@@ -20,7 +20,7 @@ function normalisePhone(phone) {
   return String(phone).replace(/\D/g, '');
 }
 
-// ── Send a plain text message ─────────────────────────────────────────────
+// send a plain text message
 export async function sendText(phone, message) {
   const url = `${WATI_BASE}/api/v1/sendSessionMessage/${normalisePhone(phone)}`;
   const res  = await fetch(url, {
@@ -33,7 +33,7 @@ export async function sendText(phone, message) {
   return json;
 }
 
-// ── Send interactive buttons (max 3 buttons in WATI) ─────────────────────
+// send interactive buttons (max 3 buttons in wati)
 // buttons = [{ text: 'Button label' }, ...]
 export async function sendButtons(phone, bodyText, buttons) {
   const url = `${WATI_BASE}/api/v1/sendInteractiveButtonsMessage?whatsappNumber=${normalisePhone(phone)}`;
@@ -51,7 +51,7 @@ export async function sendButtons(phone, bodyText, buttons) {
   return json;
 }
 
-// ── Send a list message (for numbered resource lists) ─────────────────────
+// send a list message (for numbered resource lists)
 // sections = [{ title, rows: [{ id, title, description }] }]
 export async function sendList(phone, bodyText, buttonText, sections) {
   const url = `${WATI_BASE}/api/v1/sendInteractiveListMessage?whatsappNumber=${normalisePhone(phone)}`;
@@ -70,7 +70,7 @@ export async function sendList(phone, bodyText, buttonText, sections) {
   return json;
 }
 
-// ── Send a document/file by URL ───────────────────────────────────────────
+// send a document/file by url
 export async function sendDocument(phone, fileUrl, filename, caption) {
   const url = `${WATI_BASE}/api/v1/sendFileMessage?whatsappNumber=${normalisePhone(phone)}`;
   const payload = {

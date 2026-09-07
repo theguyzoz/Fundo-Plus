@@ -1,4 +1,4 @@
-// whatsapp/chat.js — Chat with Fundo AI (WATI edition)
+// whatsapp/chat.js - Chat with Fundo AI (WATI edition)
 
 import { sendText }      from './wa.js';
 import { gpt4oChat }     from '../utils/gpt-service.js';
@@ -80,7 +80,7 @@ export async function handleChat(phone, text) {
           const pdfBuf  = fs.readFileSync(outPath);
           fs.unlinkSync(outPath);
 
-          // WATI needs a URL — upload to a public temp path if possible,
+          // WATI needs a URL - upload to a public temp path if possible,
           // otherwise fall back to sending the text content
           const BASE     = process.env.WEBSITE_URL || 'https://fundaplus.up.railway.app';
           const filename = `${trigger.title.replace(/[^a-zA-Z0-9 ]/g, '').trim() || 'document'}.pdf`;

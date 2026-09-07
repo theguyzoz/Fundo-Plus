@@ -1,8 +1,8 @@
-// app/main.js — App main API routes
-// GET /api/app/me        — user profile + usage + limits
-// GET /api/app/papers    — list past papers
-// GET /api/app/papers/:id/download — get download URL for a paper
-// POST /api/app/logout   — handled in auth.js (re-exported here for convenience)
+// app/main.js - App main API routes
+// GET /api/app/me - user profile + usage + limits
+// GET /api/app/papers - list past papers
+// GET /api/app/papers/:id/download - get download URL for a paper
+// POST /api/app/logout - handled in auth.js (re-exported here for convenience)
 
 import { Router } from 'express';
 import {
@@ -17,7 +17,7 @@ import { requireAppAuth } from './auth.js';
 
 const router = Router();
 
-// ── GET /api/app/me ────────────────────────────────────────────────────────
+// get /api/app/me
 // Returns user profile, current plan, usage today, and limits.
 router.get('/me', requireAppAuth, (req, res) => {
   const uid     = req.user.id;
@@ -54,14 +54,14 @@ router.get('/me', requireAppAuth, (req, res) => {
   });
 });
 
-// ── GET /api/app/papers ────────────────────────────────────────────────────
+// get /api/app/papers
 router.get('/papers', requireAppAuth, (req, res) => {
   const raw    = listPapersLocal();
   const papers = Array.isArray(raw) ? raw : (raw && raw.papers ? raw.papers : []);
   res.json({ ok: true, papers });
 });
 
-// ── GET /api/app/papers/:id/download ─────────────────────────────────────
+// get /api/app/papers/:id/download
 // Checks the paper-download limit then returns the URL.
 router.get('/papers/:id/download', requireAppAuth, (req, res) => {
   const uid    = req.user.id;
@@ -86,7 +86,7 @@ router.get('/papers/:id/download', requireAppAuth, (req, res) => {
   res.json({ ok: true, url });
 });
 
-// ── Shared sanitise helper ─────────────────────────────────────────────────
+// shared sanitise helper
 function sanitize(user) {
   if (!user) return null;
   const { passwordHash, pendingToken, pendingOtp, otpCreatedAt, ...safe } = user;

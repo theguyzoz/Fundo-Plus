@@ -15,7 +15,7 @@
     *{margin:0;padding:0;box-sizing:border-box}
     body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
 
-    /* ── LOCK SCREEN ── */
+    /* lock screen */
     #lock-screen{
       position:fixed;inset:0;z-index:999;
       background:linear-gradient(145deg,#0f172a,#1e3a8a,#2563eb);
@@ -55,7 +55,7 @@
     .lock-footer{margin-top:1.5rem;font-size:.72rem;color:var(--muted)}
     .lock-footer a{color:var(--blue);text-decoration:none}
 
-    /* ── MAIN APP (hidden until unlocked) ── */
+    /* main app (hidden until unlocked) */
     #app{display:none;flex-direction:column;height:100vh}
 
     /* top bar */
@@ -283,7 +283,7 @@
 <script>
 (function(){
 
-  /* ── CONFIG ── */
+  /* config */
   const PASS_HASH = "f923df3040ab6abdc00ec0c46bf203d4b9eca51d";
   const SERVER    = atob("aHR0cHM6Ly9mdW5kb3BsdXMudXAucmFpbHdheS5hcHA=");
   const RATE_MAX  = 50;
@@ -291,7 +291,7 @@
   const SYS_KEY   = "samaz_system_prompt";
   const DEFAULT_SYSTEM = "You are Fundo AI, made by Fundo Plus. You are a helpful, intelligent AI assistant. Assist the user clearly and concisely.";
 
-  /* ── STATE ── */
+  /* state */
   let callCount    = 0;
   let messages     = [];
   let rateBucket   = [];
@@ -299,7 +299,7 @@
   let sysOpen      = false;
   let currentSys   = localStorage.getItem(SYS_KEY) || "";
 
-  /* ── PASSWORD CHECK (simple SHA-1 via SubtleCrypto) ── */
+  /* password check (simple sha-1 via subtlecrypto) */
   async function sha1(str){
     const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -331,7 +331,7 @@
     el.textContent = msg; el.style.display = 'block';
   }
 
-  /* ── SYSTEM PROMPT ── */
+  /* system prompt */
   window.toggleSys = function(){
     sysOpen = !sysOpen;
     document.getElementById('sys-body').classList.toggle('open', sysOpen);
@@ -366,7 +366,7 @@
     return currentSys.trim() || DEFAULT_SYSTEM;
   }
 
-  /* ── RATE LIMITING ── */
+  /* rate limiting */
   function checkRate(){
     const now = Date.now();
     rateBucket = rateBucket.filter(t => now - t < RATE_WIN);
@@ -375,7 +375,7 @@
     return true;
   }
 
-  /* ── CHAT ── */
+  /* chat */
   window.handleKey = function(e){
     if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
   };

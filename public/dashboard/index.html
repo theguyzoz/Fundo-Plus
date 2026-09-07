@@ -23,7 +23,7 @@
     }
     body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-    /* ── Sidebar ── */
+    /* sidebar */
     .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 228px; background: var(--surf); border-right: 1px solid var(--brd); display: flex; flex-direction: column; padding: 0 0 1rem; z-index: 60; box-shadow: var(--sh); transition: transform .25s cubic-bezier(.4,0,.2,1); }
     .sb-logo { display: flex; align-items: center; gap: 9px; padding: 18px 16px 14px; border-bottom: 1px solid var(--brd); font-size: 1.05rem; font-weight: 900; color: var(--acc); }
     .sb-section { font-size: .65rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; padding: 14px 16px 4px; }
@@ -34,11 +34,11 @@
     .nav-item.active svg { opacity: 1; }
     .sb-bottom { margin-top: auto; border-top: 1px solid var(--brd); padding-top: 8px; }
 
-    /* ── Overlay ── */
+    /* overlay */
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.3); z-index: 55; backdrop-filter: blur(2px); }
     .sidebar-overlay.show { display: block; }
 
-    /* ── Topbar ── */
+    /* topbar */
     .topbar { position: fixed; top: 0; left: 228px; right: 0; height: 56px; background: #ffffffee; backdrop-filter: blur(10px); border-bottom: 1px solid var(--brd); display: flex; align-items: center; padding: 0 20px; gap: 12px; z-index: 50; box-shadow: var(--sh); }
     .topbar-title { font-size: .95rem; font-weight: 800; color: var(--txt); }
     .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -46,14 +46,14 @@
     .ham { display: none; background: 0 0; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--txt); flex-shrink: 0; }
     .ham:hover { background: var(--bg); }
 
-    /* ── Notification bell ── */
+    /* notification bell */
     .notif-bell-wrap { position: relative; display: flex; align-items: center; }
     .notif-bell { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--mut); display: flex; align-items: center; justify-content: center; transition: .12s; }
     .notif-bell:hover { background: var(--bg); color: var(--acc); }
     .notif-dot { position: absolute; top: 2px; right: 2px; background: #dc2626; color: #fff; border-radius: 99px; font-size: .6rem; font-weight: 900; padding: 1px 5px; min-width: 16px; text-align: center; display: none; border: 1.5px solid #fff; }
     .notif-dot.show { display: block; }
 
-    /* ── Notification drawer (opens when bell clicked) ── */
+    /* notification drawer (opens when bell clicked) */
     #notif-drawer { display: none; position: fixed; top: 60px; right: 14px; width: min(340px, calc(100vw - 28px)); background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 200; overflow: hidden; }
     #notif-drawer.open { display: flex; flex-direction: column; }
     .nd-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid #f1f5f9; }
@@ -74,7 +74,7 @@
     .nd-item-time { font-size: .67rem; color: #94a3b8; margin-top: 4px; }
     .nd-empty { text-align: center; padding: 28px; color: #94a3b8; font-size: .82rem; }
 
-    /* ── Notification popup card ── */
+    /* notification popup card */
     #notif-popup-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.35); backdrop-filter: blur(3px); z-index: 400; align-items: center; justify-content: center; }
     #notif-popup-overlay.open { display: flex; }
     .notif-popup-card {
@@ -91,16 +91,16 @@
     .npc-footer { padding: 10px 18px 14px; display: flex; justify-content: flex-end; }
     .npc-ok { padding: 8px 22px; background: var(--acc); color: #fff; border: none; border-radius: 9px; font-weight: 800; font-size: .82rem; cursor: pointer; }
 
-    /* ── Main layout ── */
+    /* main layout */
     .main { margin-left: 228px; margin-top: 56px; padding: 24px; min-height: calc(100vh - 56px); }
     .warn-banner { background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; display: none; align-items: center; gap: 10px; font-size: .83rem; color: #92400e; }
     .warn-banner a { color: #d97706; font-weight: 700; text-decoration: none; margin-left: 4px; }
     .panel { display: none; }
     .panel.active { display: block; }
 
-    /* ── Stat cards ── */
+    /* stat cards */
     .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 14px; margin-bottom: 20px; }
-    /* ── Dashboard gauge cards ── */
+    /* dashboard gauge cards */
     .dash-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
     .dash-card {
       background: var(--surf);
@@ -136,18 +136,18 @@
     .cta-card h3 { font-size: .95rem; font-weight: 800; margin-bottom: 5px; }
     .cta-card p { font-size: .82rem; color: var(--mut); margin-bottom: 12px; }
 
-    /* ── Chat ── */
+    /* chat */
     
     .typing { color: var(--mut); font-style: italic; font-size: .82rem; }
 
-    /* ── Cards / forms ── */
+    /* cards / forms */
     .card-box { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 20px; box-shadow: var(--sh); }
     .card-box h3 { font-size: .95rem; font-weight: 800; margin-bottom: 6px; }
     .card-box p { font-size: .82rem; color: var(--mut); margin-bottom: 12px; }
     textarea { width: 100%; min-height: 120px; border: 1.5px solid var(--brd); border-radius: 9px; padding: 10px; font-size: .86rem; color: var(--txt); resize: vertical; outline: 0; background: var(--bg); font-family: inherit; margin-bottom: 10px; }
     textarea:focus { border-color: var(--acc); }
 
-    /* ── Quiz top bar ── */
+    /* quiz top bar */
     .quiz-top { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
     .quiz-top .fg { display: flex; flex-direction: column; gap: 4px; }
     .quiz-top label { font-size: .72rem; font-weight: 700; color: var(--mut); }
@@ -156,14 +156,14 @@
     .upload-btn-label:hover { border-color: var(--acc); color: var(--acc); }
     .upload-btn-label.has-file { border-color: var(--grn); color: var(--grn); background: #f0fdf4; }
 
-    /* ── Buttons ── */
+    /* buttons */
     .btn-acc { padding: 8px 20px; background: var(--acc); border: none; border-radius: 8px; color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer; }
     .btn-acc:hover { background: var(--acc2); }
     .btn-acc:disabled { opacity: .5; cursor: not-allowed; }
     .btn-out { padding: 8px 18px; background: #fff; border: 1.5px solid var(--brd); border-radius: 8px; color: var(--mut); font-weight: 700; font-size: .85rem; cursor: pointer; }
     .btn-out:hover { border-color: var(--acc); color: var(--acc); }
 
-    /* ── Quiz question cards ── */
+    /* quiz question cards */
     .q-card { background: var(--surf); border: 1px solid var(--brd); border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
     .q-num { font-size: .7rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
     .q-text { font-weight: 700; margin-bottom: 10px; font-size: .9rem; line-height: 1.5; }
@@ -182,12 +182,12 @@
     .score-label { font-size: .85rem; color: var(--grn); font-weight: 700; margin-top: 4px; }
     .quiz-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
 
-    /* ── Page header ── */
+    /* page header */
     .page-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
     .page-title { font-size: 1.3rem; font-weight: 900; letter-spacing: -.4px; }
     .page-sub { font-size: .82rem; color: var(--mut); margin-top: 3px; }
 
-    /* ── Filters / search ── */
+    /* filters / search */
     .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
     .filter-btn { padding: 6px 14px; border: 1.5px solid var(--brd); border-radius: 20px; background: var(--surf); cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--mut); transition: .12s; }
     .filter-btn.active, .filter-btn:hover { border-color: var(--acc); color: var(--acc); background: #eff6ff; }
@@ -195,7 +195,7 @@
     .search-bar input { flex: 1; padding: 9px 14px; border: 1.5px solid var(--brd); border-radius: 9px; font-size: .86rem; outline: 0; background: var(--surf); color: var(--txt); }
     .search-bar input:focus { border-color: var(--acc); }
 
-    /* ── Resources grid ── */
+    /* resources grid */
     .resources-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 16px; }
     .res-card { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 16px; box-shadow: var(--sh); display: flex; flex-direction: column; gap: 8px; transition: .15s; }
     .res-card:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(37,99,235,.1); }
@@ -212,13 +212,13 @@
     .tag { display: inline-block; padding: 2px 7px; border-radius: 99px; font-size: .67rem; font-weight: 700; background: #f1f5f9; color: var(--mut); }
     .empty { text-align: center; padding: 50px 20px; color: var(--mut); }
 
-    /* ── Pairing ── */
+    /* pairing */
     .pair-box { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 24px; max-width: 520px; box-shadow: var(--sh); }
     .pair-box p { font-size: .85rem; color: var(--mut); margin: .4rem 0 1.1rem; line-height: 1.6; }
     .pair-link-row { display: flex; gap: 6px; margin-top: 10px; }
     .pair-link-row input { flex: 1; border: 1.5px solid var(--brd); border-radius: 8px; padding: 8px 12px; font-size: .8rem; color: var(--txt); outline: 0; background: var(--bg); font-family: monospace; }
 
-    /* ── PDF Modal ── */
+    /* pdf modal */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
     .modal-bg.open { display: flex; }
     .modal { background: var(--surf); border-radius: 14px; width: min(900px,100%); height: min(92vh,760px); display: flex; flex-direction: column; overflow: hidden; }
@@ -240,7 +240,7 @@
     .pdf-error { color: #f87171; font-size: .85rem; padding: 40px; text-align: center; }
     iframe { flex: 1; border: none; width: 100%; background: #525659; }
 
-    /* ── Responsive ── */
+    /* responsive */
     @media (max-width: 900px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: none; }
@@ -268,7 +268,7 @@
 <body>
   <div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
 
-  <!-- ── Sidebar ── -->
+  <!-- sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sb-logo">
       <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
@@ -387,7 +387,7 @@
     </div>
   </nav>
 
-  <!-- ── Topbar ── -->
+  <!-- topbar -->
   <header class="topbar">
     <button class="ham" onclick="toggleSb()" aria-label="Menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -443,7 +443,7 @@
     </div>
   </div>
 
-  <!-- ── Main panels ── -->
+  <!-- main panels -->
   <main class="main">
     
     <div class="warn-banner" id="pair-banner">
@@ -1646,7 +1646,7 @@ Format with clear ## headings. Be thorough and educational.`;
 
     init().then(() => checkHashPanel());
 
-    // Poll ban status every 30s — redirect immediately if account gets suspended
+    // Poll ban status every 30s - redirect immediately if account gets suspended
     setInterval(async () => {
       try {
         const r = await apiFetch('/api/ban-status');
@@ -1656,16 +1656,14 @@ Format with clear ## headings. Be thorough and educational.`;
       } catch {}
     }, 30000);
 
-    // ── apiFetch: thin wrapper with session token ────────────────────────
+    // apifetch: thin wrapper with session token
     async function apiFetch(url, opts = {}) {
       const headers = { 'x-session-token': token, ...(opts.headers || {}) };
       if (opts.body && typeof opts.body === 'string') headers['Content-Type'] = 'application/json';
       return fetch(url, { ...opts, headers });
     }
 
-    // ══════════════════════════════════════════════════════
-    //  NOTIFICATION SYSTEM
-    // ══════════════════════════════════════════════════════
+    // notification system
     let _notifData   = [];
     let _popupQueue  = [];
     let _popupActive = false;

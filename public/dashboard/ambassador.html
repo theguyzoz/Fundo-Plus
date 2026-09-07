@@ -9,7 +9,7 @@
     *,::after,::before{box-sizing:border-box;margin:0;padding:0}
     :root{--bg:#f0f4ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--amb:#1d4ed8;--amb-bg:#eff6ff;--amb-brd:#bfdbfe;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
     body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
-    /* ── Sidebar ── */
+    /* sidebar */
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:0 0 1rem;z-index:60;box-shadow:var(--sh);transition:transform .25s cubic-bezier(.4,0,.2,1)}
     .sb-logo{display:flex;align-items:center;gap:9px;padding:18px 16px 14px;border-bottom:1px solid var(--brd);font-size:1.05rem;font-weight:900;color:var(--acc)}
     .sb-section{font-size:.65rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;padding:14px 16px 4px}
@@ -27,37 +27,37 @@
       .main{margin-left:0!important}
       .ham{display:flex!important}
     }
-    /* ── Topbar ── */
+    /* topbar */
     .topbar{position:fixed;top:0;left:228px;right:0;height:56px;background:#ffffffee;backdrop-filter:blur(10px);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:50;box-shadow:var(--sh)}
     .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt)}
     .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
     .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;flex-shrink:0}
     .ham{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--txt)}
-    /* ── Main ── */
+    /* main */
     .main{margin-left:228px;margin-top:56px;padding:28px 24px;min-height:calc(100vh - 56px)}
-    /* ── Hero banner ── */
+    /* hero banner */
     .amb-hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 50%,#3b82f6 100%);border-radius:20px;padding:32px 28px;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:28px;position:relative;overflow:hidden}
     .amb-hero::before{content:'★';position:absolute;right:24px;top:50%;transform:translateY(-50%);font-size:9rem;opacity:.06;line-height:1}
     .amb-hero-icon{width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0}
     .amb-hero-text h1{font-size:1.5rem;font-weight:900;letter-spacing:-.3px}
     .amb-hero-text p{font-size:.86rem;opacity:.85;margin-top:5px;max-width:480px}
     .amb-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:4px 12px;font-size:.72rem;font-weight:800;margin-top:10px}
-    /* ── Stat cards ── */
+    /* stat cards */
     .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:28px}
     .stat-card{background:var(--surf);border:1.5px solid var(--brd);border-radius:14px;padding:18px 16px;box-shadow:var(--sh)}
     .stat-card.accent{border-color:var(--amb-brd);background:var(--amb-bg)}
     .stat-val{font-size:2rem;font-weight:900;color:var(--acc);line-height:1}
     .stat-val.green{color:var(--grn)}
     .stat-label{font-size:.73rem;color:var(--mut);margin-top:4px;font-weight:600}
-    /* ── Section tabs ── */
+    /* section tabs */
     .section-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
     .stab{padding:7px 16px;border-radius:99px;border:1.5px solid var(--brd);background:var(--surf);font-size:.8rem;font-weight:700;color:var(--mut);cursor:pointer;transition:.12s}
     .stab.on{border-color:var(--acc);background:var(--amb-bg);color:var(--acc)}
-    /* ── Cards / panels ── */
+    /* cards / panels */
     .panel{background:var(--surf);border:1.5px solid var(--brd);border-radius:16px;padding:22px;box-shadow:var(--sh);margin-bottom:20px}
     .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
     .panel-title{font-size:1rem;font-weight:800}
-    /* ── Exam cards ── */
+    /* exam cards */
     .exam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
     .exam-card{background:var(--surf);border:1.5px solid var(--brd);border-radius:14px;padding:18px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:12px}
     .exam-card:hover{border-color:var(--amb-brd)}
@@ -67,19 +67,19 @@
     .pill-blue{background:var(--amb-bg);color:var(--acc);border:1px solid var(--amb-brd)}
     .pill-green{background:#dcfce7;color:var(--grn);border:1px solid #bbf7d0}
     .pill-grey{background:#f1f5f9;color:var(--mut)}
-    /* ── Buttons ── */
+    /* buttons */
     .btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.12s}
     .btn-primary{background:var(--acc);color:#fff}.btn-primary:hover{background:var(--acc2)}
     .btn-ghost{background:var(--bg);color:var(--mut);border:1.5px solid var(--brd)}.btn-ghost:hover{border-color:var(--acc);color:var(--acc);background:var(--amb-bg)}
     .btn-danger{background:#fef2f2;color:var(--red);border:1.5px solid #fecaca}.btn-danger:hover{background:#fecaca}
     .btn-sm{padding:5px 12px;font-size:.75rem}
-    /* ── Form ── */
+    /* form */
     .form-group{margin-bottom:14px}
     .form-label{font-size:.78rem;font-weight:700;color:var(--mut);margin-bottom:5px;display:block}
     .form-input{width:100%;padding:9px 12px;border:1.5px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--txt);font-size:.88rem;transition:.12s}
     .form-input:focus{outline:none;border-color:var(--acc);background:var(--surf)}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    /* ── Leaderboard ── */
+    /* leaderboard */
     .lb-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd)}
     .lb-row:last-child{border-bottom:none}
     .lb-rank{width:28px;height:28px;border-radius:50%;background:var(--amb-bg);color:var(--acc);font-size:.78rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -88,12 +88,12 @@
     .lb-rank.bronze{background:#fef3c7;color:#92400e}
     .lb-name{flex:1;font-size:.86rem;font-weight:700}
     .lb-score{font-size:.82rem;font-weight:800;color:var(--acc)}
-    /* ── Announcements ── */
+    /* announcements */
     .ann-item{padding:14px 0;border-bottom:1px solid var(--brd)}
     .ann-item:last-child{border-bottom:none}
     .ann-title{font-size:.88rem;font-weight:800;margin-bottom:3px}
     .ann-body{font-size:.82rem;color:var(--mut)}
-    /* ── Modal ── */
+    /* modal */
     .modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(4px)}
     .modal-bg.open{display:flex}
     .modal{background:var(--surf);border-radius:16px;width:100%;max-width:560px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
@@ -102,24 +102,24 @@
     .modal-close{background:0 0;border:none;cursor:pointer;font-size:1.3rem;color:var(--mut);padding:4px 8px;border-radius:6px;line-height:1}
     .modal-close:hover{background:var(--bg)}
     .modal-body{padding:22px}
-    /* ── Empty ── */
+    /* empty */
     .empty{text-align:center;padding:50px 20px}
     .empty-icon{font-size:3rem;margin-bottom:12px}
     .empty h3{font-size:.95rem;font-weight:800;color:var(--mut);margin-bottom:4px}
     .empty p{font-size:.82rem;color:var(--mut)}
-    /* ── Progress ring ── */
+    /* progress ring */
     .progress-ring{position:relative;width:80px;height:80px}
     .progress-ring circle{fill:none;stroke-width:7;transform-origin:50% 50%;transform:rotate(-90deg)}
     .progress-ring .track{stroke:#e2e8f5}
     .progress-ring .fill{stroke:var(--acc);stroke-linecap:round;transition:stroke-dashoffset .4s}
     .ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;color:var(--acc)}
-    /* ── Perks ── */
+    /* perks */
     .perks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
     .perk-card{background:var(--amb-bg);border:1.5px solid var(--amb-brd);border-radius:12px;padding:18px}
     .perk-icon{font-size:1.8rem;margin-bottom:8px}
     .perk-title{font-size:.88rem;font-weight:800;color:var(--acc);margin-bottom:4px}
     .perk-desc{font-size:.78rem;color:var(--mut)}
-    /* ── Spinner ── */
+    /* spinner */
     .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite;vertical-align:middle}
     @keyframes sp{to{transform:rotate(360deg)}}
     .hidden{display:none!important}
@@ -445,7 +445,7 @@ function toggleSb() { document.getElementById('sidebar').classList.toggle('open'
 function closeSb() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
 async function doLogout() { try { await api('POST', '/api/auth/logout'); } catch {} localStorage.clear(); location.href = '/login'; }
 
-// ── Tab system ──────────────────────────────────────────────────────────
+// tab system
 const TABS = ['exams', 'analytics', 'referrals', 'perks', 'announcements'];
 let myReferralLink = '';
 
@@ -460,7 +460,7 @@ function switchTab(name) {
   history.replaceState(null, '', `/~/ambassador#${name}`);
 }
 
-// ── Stats + Referral Link ────────────────────────────────────────────────
+// stats + referral link
 async function loadStats() {
   try {
     const d = await api('GET', '/api/ambassador/me');
@@ -476,7 +476,7 @@ async function loadStats() {
   } catch (e) { console.error(e); }
 }
 
-// ── Referral Link Actions ────────────────────────────────────────────────
+// referral link actions
 async function copyRefLink() {
   if (!myReferralLink) return;
   try {
@@ -499,7 +499,7 @@ function shareRefLink() {
   }
 }
 
-// ── Referrals Tab ────────────────────────────────────────────────────────
+// referrals tab
 async function loadReferrals() {
   const el = document.getElementById('referrals-list');
   const badge = document.getElementById('ref-total-badge');
@@ -526,7 +526,7 @@ async function loadReferrals() {
   } catch (e) { el.innerHTML = `<div style="color:var(--red);padding:16px">${e.message}</div>`; }
 }
 
-// ── Exams ───────────────────────────────────────────────────────────────
+// exams
 async function loadExams() {
   const el = document.getElementById('exams-list');
   try {
@@ -571,7 +571,7 @@ function renderExamCard(ex) {
   </div>`;
 }
 
-// ── Create / Edit Exam ──────────────────────────────────────────────────
+// create / edit exam
 function openCreateExam() {
   document.getElementById('exam-modal-title').textContent = "Create Ambassador's Test";
   ['em-id','em-title','em-subject','em-level','em-sched','em-duration','em-desc','em-err'].forEach(id => {
@@ -632,7 +632,7 @@ async function deleteExam(id) {
   } catch (e) { alert(e.message); }
 }
 
-// ── Questions ───────────────────────────────────────────────────────────
+// questions
 function openAddQuestion(examId) {
   ['qm-text','qm-a','qm-b','qm-c','qm-d','qm-expl','qm-err'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
@@ -676,7 +676,7 @@ async function viewQuestions(examId) {
   } catch (e) { alert(e.message); }
 }
 
-// ── Analytics ───────────────────────────────────────────────────────────
+// analytics
 function populateAnalytics() {
   const sel = document.getElementById('lb-exam-select');
   sel.innerHTML = '<option value="">Choose a test…</option>' + myExams.map(ex =>
@@ -726,7 +726,7 @@ async function loadLeaderboard(examId) {
   } catch (e) { el.innerHTML = `<div style="color:var(--red);padding:16px">${e.message}</div>`; }
 }
 
-// ── Community Post ──────────────────────────────────────────────────────
+// community post
 async function postAnnouncement() {
   const text = document.getElementById('ann-text').value.trim();
   const res = document.getElementById('ann-result');
@@ -759,7 +759,7 @@ async function loadRecentPosts() {
 
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// ── Init ─────────────────────────────────────────────────────────────────
+// init
 (async () => {
   if (!tok) { location.href = '/login'; return; }
   try {

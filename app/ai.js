@@ -1,5 +1,5 @@
-// app/ai.js — App AI chat route
-// POST /api/app/chat  { message }
+// app/ai.js - App AI chat route
+// POST /api/app/chat { message }
 // Enforces daily aiMsg limit per plan. Stops the request when limit is hit.
 
 import { Router } from 'express';
@@ -41,7 +41,7 @@ function pushHistory(uid, role, content) {
   while (h.length > MAX_TURNS * 2) h.splice(0, 2);
 }
 
-// ── POST /api/app/chat ─────────────────────────────────────────────────────
+// post /api/app/chat
 router.post('/chat', requireAppAuth, async (req, res) => {
   const { message } = req.body || {};
   if (!message || !message.trim()) return res.status(400).json({ error: 'No message' });
@@ -51,7 +51,7 @@ router.post('/chat', requireAppAuth, async (req, res) => {
   const limits   = getPlanLimits(uid, isLinked);
   const usage    = getFullUsage(uid);
 
-  // ── Limit check ──────────────────────────────────────────────────────────
+  // limit check
   const aiLimit = limits.aiMsg === 'unlimited' ? Infinity : Number(limits.aiMsg);
   if (isFinite(aiLimit) && (usage.chat || 0) >= aiLimit) {
     return res.status(429).json({
@@ -60,7 +60,7 @@ router.post('/chat', requireAppAuth, async (req, res) => {
     });
   }
 
-  // ── Build messages array ──────────────────────────────────────────────────
+  // build messages array
   const history  = getHistory(uid);
   const messages = [
     ...history,
@@ -96,7 +96,7 @@ router.post('/chat', requireAppAuth, async (req, res) => {
   }
 });
 
-// ── POST /api/app/chat/clear — reset in-memory history for this user ───────
+// post /api/app/chat/clear - reset in-memory history for this user
 router.post('/chat/clear', requireAppAuth, (req, res) => {
   histories.delete(req.user.id);
   res.json({ ok: true });

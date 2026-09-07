@@ -1,4 +1,4 @@
-// utils/vision.js — Image analysis using Tesseract.js (OCR only)
+// utils/vision.js - Image analysis using Tesseract.js (OCR only)
 // Uses tesseract.js for local text/OCR extraction from images
 
 import Tesseract from 'tesseract.js';

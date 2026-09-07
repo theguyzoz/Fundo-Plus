@@ -1,5 +1,5 @@
-// store.js — Persistent store: JIDs, usage, images, docs, messages, papers, wishlist
-// No Firebase dependency — uses local JSON files: webusers.json, store.json, wa.json
+// store.js - Persistent store: JIDs, usage, images, docs, messages, papers, wishlist
+// No Firebase dependency - uses local JSON files: webusers.json, store.json, wa.json
 import fs   from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,7 +12,7 @@ async function getSupabaseData() {
   return _supabaseData;
 }
 
-// ── Immediate Supabase backup engine (money safety) ────────────────────────
+// immediate supabase backup engine (money safety)
 // Every money mutation writes its JSON file synchronously, then schedules an
 // immediate Supabase upload so a redeploy/crash mid-transaction can't lose
 // (or replay) funds. Rapid writes are coalesced by a tiny debounce, and
@@ -57,7 +57,7 @@ export function flushMoneyBackup() {
 const __dirname      = path.dirname(fileURLToPath(import.meta.url));
 export const DATA_DIR = path.join(__dirname, 'data');
 
-// ── File paths ─────────────────────────────────────────────────────────────
+// file paths
 const WEBUSERS_FILE  = path.join(DATA_DIR, 'webusers.json');
 const STORE_FILE     = path.join(DATA_DIR, 'store.json');
 const WA_FILE        = path.join(DATA_DIR, 'wa.json');
@@ -77,17 +77,17 @@ const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
 if (!fs.existsSync(DATA_DIR))   fs.mkdirSync(DATA_DIR,   { recursive: true });
 if (!fs.existsSync(PROOFS_DIR)) fs.mkdirSync(PROOFS_DIR, { recursive: true });
 
-// ── Plan definitions ────────────────────────────────────────────────────────
+// plan definitions
 export const PLANS = {
   free: {
     name: 'Free',
     price: 0,
-    aiMsg:         { unlinked: 15, linked: 30 },  // per day
-    projects:      3,    // total forever (not per day)
-    studySessions: 3,    // per day (skills sessions opened)
-    pdfExports:    5,    // per day
-    quizzes:       3,    // per day
-    paperDl:       4,    // per 6 hours
+    aiMsg:         { unlinked: 15, linked: 30 }, // per day
+    projects:      3, // total forever (not per day)
+    studySessions: 3, // per day (skills sessions opened)
+    pdfExports:    5, // per day
+    quizzes:       3, // per day
+    paperDl:       4, // per 6 hours
   },
   lite: {
     name: 'Lite',
@@ -121,14 +121,14 @@ export const PLANS = {
   },
 };
 
-// ── Legacy limits (kept for WA bot compat) ─────────────────────────────────
+// legacy limits (kept for wa bot compat)
 export const DAILY_CHAT_LIMIT   = 25;
 export const DAILY_IMAGE_LIMIT  = 15;
 export const DAILY_PDF_LIMIT    = 5;
 export const PAPER_UPLOAD_LIMIT = 3;
 export const MAX_PAPERS_BYTES   = 800 * 1024 * 1024; // 800 MB for papers
 
-// ── Generic file helpers ───────────────────────────────────────────────────
+// generic file helpers
 function readJson(fp, def) {
   try { if (fs.existsSync(fp)) return JSON.parse(fs.readFileSync(fp,'utf8')); } catch {}
   return def;
@@ -139,9 +139,7 @@ function writeJson(fp, data) {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Subscriptions
-// ══════════════════════════════════════════════════════════════════════════
+// subscriptions
 let subsData = readJson(SUBS_FILE, { subscriptions: {} });
 function saveSubs() { writeJson(SUBS_FILE, subsData); scheduleMoneyBackup(); }
 
@@ -191,7 +189,7 @@ export function setUserSubscription(userId, plan, adminId = 'admin') {
 export function getAllSubscriptions() { return subsData.subscriptions; }
 export function getUserSubscription(userId) { return subsData.subscriptions[userId] || null; }
 
-// ── Payment proofs ─────────────────────────────────────────────────────────
+// payment proofs
 let proofMeta = readJson(path.join(DATA_DIR, 'proofmeta.json'), { proofs: [] });
 function saveProofMeta() { writeJson(path.join(DATA_DIR, 'proofmeta.json'), proofMeta); }
 
@@ -200,7 +198,7 @@ export function getUserPendingProof(userId) {
   return proofMeta.proofs.find(p => p.userId === userId && p.status === 'pending') || null;
 }
 
-// Save proof — uploads straight to Supabase, no local file kept
+// Save proof - uploads straight to Supabase, no local file kept
 export async function savePaymentProof(userId, plan, imageBuffer, ext) {
   // Block if user already has a pending proof
   const existing = getUserPendingProof(userId);
@@ -231,7 +229,7 @@ export async function savePaymentProof(userId, plan, imageBuffer, ext) {
     size: imageBuffer.length,
     status: 'pending', // pending | approved | rejected
     submittedAt: new Date().toISOString(),
-    supabasePath,       // path in Supabase bucket
+    supabasePath, // path in Supabase bucket
     reviewedAt: null,
     reviewedBy: null,
   };
@@ -245,7 +243,7 @@ export function getAllProofs()             { return proofMeta.proofs; }
 export function getPendingProofs()        { return proofMeta.proofs.filter(p => p.status === 'pending'); }
 export function getProofFilePath(filename){ return path.join(PROOFS_DIR, filename); }
 
-// Review proof — deletes from Supabase after decision (approved or rejected)
+// Review proof - deletes from Supabase after decision (approved or rejected)
 export async function reviewProof(proofId, status, adminId) {
   const p = proofMeta.proofs.find(x => x.id === proofId);
   if (!p) return false;
@@ -281,23 +279,23 @@ export async function reviewProof(proofId, status, adminId) {
 
 export function getUserProofs(userId) { return proofMeta.proofs.filter(p => p.userId === userId); }
 
-// ── Virtual balance, fees & withdrawals (USD cents) ────────────────────────
+// virtual balance, fees & withdrawals (usd cents)
 // Money is stored as integer USD cents. Every amount is computed and validated
-// SERVER-SIDE — the client can never set a credited/debited amount directly.
+// SERVER-SIDE - the client can never set a credited/debited amount directly.
 // Plan prices, fees and caps all originate here, not from the browser.
 
-export const MAX_BALANCE_CENTS  = 1000;   // $10.00 USD — wallet hard cap
-export const MIN_TOPUP_CENTS    = 100;    // $1.00 minimum top-up
-export const MIN_WITHDRAW_CENTS = 100;    // $1.00 minimum withdrawal
-export const TRANSACTION_FEE_PCT = 5;     // 5% per cash-out transaction
-export const FEE_ON_DEPOSIT     = false;  // deposits credited in full; fee applies on withdrawal
+export const MAX_BALANCE_CENTS  = 1000; // $10.00 USD - wallet hard cap
+export const MIN_TOPUP_CENTS    = 100; // $1.00 minimum top-up
+export const MIN_WITHDRAW_CENTS = 100; // $1.00 minimum withdrawal
+export const TRANSACTION_FEE_PCT = 5; // 5% per cash-out transaction
+export const FEE_ON_DEPOSIT     = false; // deposits credited in full; fee applies on withdrawal
 
 // Fee in cents (floor, so we never over-charge).
 export function feeCents(amountCents) {
   return Math.floor((amountCents * TRANSACTION_FEE_PCT) / 100);
 }
 
-// Parse/validate a client-supplied USD amount string/number → integer cents.
+// Parse/validate a client-supplied USD amount string/number -> integer cents.
 // Returns null if invalid. Rejects NaN, negatives, zero, >2 decimals, absurd values.
 export function sanitizeCents(input) {
   if (typeof input === 'string' && !input.trim()) return null;
@@ -358,7 +356,7 @@ export function getBalanceTransactions(userId, limit = 50) {
   return balancesData.transactions.filter(t => t.userId === userId).slice(-limit).reverse();
 }
 
-// ── Withdrawals ─────────────────────────────────────────────────────────────
+// withdrawals
 let withdrawalsData = readJson(WITHDRAWALS_FILE, { withdrawals: [] });
 function saveWithdrawals() { writeJson(WITHDRAWALS_FILE, withdrawalsData); scheduleMoneyBackup(); }
 
@@ -382,7 +380,7 @@ export function requestWithdrawal(userId, amountCents, phone = '') {
   const fee  = feeCents(amountCents);
   const net  = amountCents - fee;
 
-  // Atomic debit (fails if insufficient — prevents races/double-spend)
+  // Atomic debit (fails if insufficient - prevents races/double-spend)
   const adj = adjustUserBalance(userId, -amountCents, `Withdrawal (fee $${(fee/100).toFixed(2)})`);
   if (!adj.ok) return { ok: false, error: adj.error };
 
@@ -415,7 +413,7 @@ export function updateWithdrawalStatus(id, status, adminId = 'admin') {
   const w = withdrawalsData.withdrawals.find(x => x.id === id);
   if (!w) return false;
   if (status === 'failed' && w.status === 'pending') {
-    // Refund the wallet if a payout fails — money must not vanish.
+    // Refund the wallet if a payout fails - money must not vanish.
     adjustUserBalance(w.userId, w.amountCents, `Withdrawal failed — refund (${id})`);
   }
   w.status = status;
@@ -425,7 +423,7 @@ export function updateWithdrawalStatus(id, status, adminId = 'admin') {
   return true;
 }
 
-// ── Pending Paynow top-ups (polled until confirmed) ─────────────────────────
+// pending paynow top-ups (polled until confirmed)
 let pendingData = readJson(PENDING_FILE, { pending: {} });
 function savePending() { writeJson(PENDING_FILE, pendingData); scheduleMoneyBackup(); }
 
@@ -473,7 +471,7 @@ export function finalizeDeposit(reference, paynowReference = null) {
   const credit = gross - fee;
 
   const adj = adjustUserBalance(pend.userId, credit, `Paynow top-up (ref ${reference})${fee ? ` — fee $${(fee/100).toFixed(2)}` : ''}`);
-  // If the cap would be exceeded (shouldn't happen — validated at initiation),
+  // If the cap would be exceeded (shouldn't happen - validated at initiation),
   // credit only up to the cap and record the difference safely.
   if (!adj.ok && adj.error.includes('maximum')) {
     const room = MAX_BALANCE_CENTS - getUserBalance(pend.userId);
@@ -522,9 +520,7 @@ export function reloadMoneyFromDisk() {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  webusers.json — Web user accounts
-// ══════════════════════════════════════════════════════════════════════════
+// webusers.json - web user accounts
 let webUsersData = readJson(WEBUSERS_FILE, { users: {} });
 function saveWebUsers() { writeJson(WEBUSERS_FILE, webUsersData); }
 
@@ -624,17 +620,13 @@ export function findWebUserByJid(jid) { return Object.values(webUsersData.users)
 export function findWebUserByToken(token) { return Object.entries(webUsersData.users).find(([,u])=>u.pendingToken===token)||null; }
 export function getAllWebUsers() { return webUsersData.users; }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  store.json — Pairing / connection info
-// ══════════════════════════════════════════════════════════════════════════
+// store.json - pairing / connection info
 let storeData = readJson(STORE_FILE, { pairInfo:{} });
 function saveStore() { writeJson(STORE_FILE, storeData); }
 export function getPairInfo()     { return storeData.pairInfo||{}; }
 export function savePairInfo(data){ storeData.pairInfo={...storeData.pairInfo,...data,updatedAt:new Date().toISOString()}; saveStore(); }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  wa.json — Known WhatsApp JIDs
-// ══════════════════════════════════════════════════════════════════════════
+// wa.json - known whatsapp jids
 let waData = readJson(WA_FILE, { knownJids:[] });
 function saveWa() { writeJson(WA_FILE, waData); }
 export const knownJids = new Set(waData.knownJids||[]);
@@ -643,7 +635,7 @@ export function trackJid(jid) {
   if (!knownJids.has(jid)) { knownJids.add(jid); waData.knownJids=[...knownJids]; saveWa(); console.log(`📒 New contact: ${jid.split('@')[0]}`); }
 }
 
-// ── Usage tracking — extended for plan limits ──────────────────────────────
+// usage tracking - extended for plan limits
 let usageData = readJson(USAGE_FILE, {});
 function saveUsage() { writeJson(USAGE_FILE, usageData); }
 function todayKey() { return new Date().toISOString().slice(0,10); }
@@ -713,7 +705,7 @@ export function getUsage(uid) {
 
 export function getFullUsage(uid) { return getEntry(uid); }
 
-// ── Image Queue ────────────────────────────────────────────────────────────
+// image queue
 let imageStore = readJson(IMAGES_FILE, { queue:[] });
 function saveImages() { writeJson(IMAGES_FILE, imageStore); }
 export function addImageJob(jid,prompt,model){ const job={id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,jid,prompt,model:model||'Deliberate',status:'pending',startedAt:Date.now()}; imageStore.queue.push(job); saveImages(); return job; }
@@ -722,7 +714,7 @@ export function getQueuePosition(jid) { const active=imageStore.queue.filter(j=>
 export function updateImageJob(id,updates){ const job=imageStore.queue.find(j=>j.id===id); if(job){Object.assign(job,updates);saveImages();} return job; }
 export function cleanImageQueue(){ const hr=Date.now()-3600_000; imageStore.queue=imageStore.queue.filter(j=>(j.status==='done'||j.status==='failed')?j.startedAt>hr:true); saveImages(); }
 
-// ── Doc Jobs ───────────────────────────────────────────────────────────────
+// doc jobs
 let docStore = readJson(DOC_FILE, { jobs:[] });
 function saveDocStore() { writeJson(DOC_FILE, docStore); }
 export function createDocJob(jid,type,title,remoteJobId){ const job={id:remoteJobId,jid,type,title,status:'processing',downloadUrl:null,error:null,requestedAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; docStore.jobs.unshift(job); if(docStore.jobs.length>200) docStore.jobs=docStore.jobs.slice(0,200); saveDocStore(); return job; }
@@ -731,14 +723,14 @@ export function getDocJob(id)             { return docStore.jobs.find(j=>j.id===
 export function getDocJobsByJid(jid,n=10) { return docStore.jobs.filter(j=>j.jid===jid).slice(0,n); }
 export function getAllDocJobs(n=50)        { return docStore.jobs.slice(0,n); }
 
-// ── Messages per JID ───────────────────────────────────────────────────────
+// messages per jid
 let msgStore = readJson(MESSAGES_FILE, {});
 function saveMsgStore() { writeJson(MESSAGES_FILE, msgStore); }
 export function recordMessage(jid,role,text){ if(!msgStore[jid]) msgStore[jid]=[]; msgStore[jid].push({role,text:text.slice(0,500),ts:Date.now()}); if(msgStore[jid].length>100) msgStore[jid]=msgStore[jid].slice(-100); saveMsgStore(); }
 export function getMessages(jid,limit=50)  { return (msgStore[jid]||[]).slice(-limit); }
 export function getAllMessageCounts()       { return Object.entries(msgStore).map(([jid,msgs])=>({jid,count:msgs.length})); }
 
-// ── Past Papers ────────────────────────────────────────────────────────────
+// past papers
 let papersStore = readJson(PAPERS_FILE, { papers:[],totalBytes:0 });
 function savePapers() { writeJson(PAPERS_FILE, papersStore); }
 export function addPaper(meta){ papersStore.papers.unshift({id:`p-${Date.now()}`,...meta,uploadedAt:new Date().toISOString()}); papersStore.totalBytes=(papersStore.totalBytes||0)+(meta.size||0); savePapers(); return papersStore.papers[0]; }
@@ -757,15 +749,13 @@ export function reloadPapersFromDisk() {
   }
 }
 
-// ── Wishlist ───────────────────────────────────────────────────────────────
+// wishlist
 let wishlist = readJson(WISHLIST_FILE, { upgrade:0,voters:[] });
 function saveWishlist() { writeJson(WISHLIST_FILE, wishlist); }
 export function addWishlistVote(uid){ if(wishlist.voters.includes(uid)) return wishlist.upgrade; wishlist.voters.push(uid); wishlist.upgrade++; saveWishlist(); return wishlist.upgrade; }
 export function getWishlistCount()  { return wishlist.upgrade||0; }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Ban system
-// ══════════════════════════════════════════════════════════════════════════
+// ban system
 const BANS_FILE = path.join(DATA_DIR, 'bans.json');
 let bansData = readJson(BANS_FILE, { bans: {} });
 function saveBans() { writeJson(BANS_FILE, bansData); }
@@ -810,9 +800,7 @@ export function resolveAppeal(userId, decision) {
   return true;
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Support messages
-// ══════════════════════════════════════════════════════════════════════════
+// support messages
 let supportData = readJson(SUPPORT_FILE, { messages: [] });
 function saveSupport() { writeJson(SUPPORT_FILE, supportData); }
 
@@ -836,9 +824,7 @@ export function resolveSupportMessage(id) {
   return !!m;
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Community messages
-// ══════════════════════════════════════════════════════════════════════════
+// community messages
 const COMMUNITY_FILE  = path.join(DATA_DIR, 'community.json');
 const COMMUNITY_LIMIT = 5000;
 
@@ -962,9 +948,7 @@ export function getCommunityUserIndex() {
   return []; // routes.js will handle this using getAllWebUsers
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Promo / Free-Premium Links
-// ══════════════════════════════════════════════════════════════════════════
+// promo / free-premium links
 const PROMO_FILE = path.join(DATA_DIR, 'promo_links.json');
 let promoData = readJson(PROMO_FILE, { links: {} });
 function savePromo() { writeJson(PROMO_FILE, promoData); }
@@ -1039,9 +1023,7 @@ export function redeemPromoLink(code, userId) {
   return { ok: true, plan: link.plan };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  ZIMSEC — Exams, Questions, Results  (JSON-backed)
-// ═══════════════════════════════════════════════════════════════════════════
+// zimsec - exams, questions, results (json-backed)
 
 const ZIMSEC_EXAMS_FILE     = path.join(DATA_DIR, 'zimsec-exams.json');
 const ZIMSEC_QUESTIONS_FILE = path.join(DATA_DIR, 'zimsec-questions.json');
@@ -1054,7 +1036,7 @@ function saveZimsecExams(d)     { fs.mkdirSync(DATA_DIR,{recursive:true}); fs.wr
 function saveZimsecQuestions(d) { fs.mkdirSync(DATA_DIR,{recursive:true}); fs.writeFileSync(ZIMSEC_QUESTIONS_FILE, JSON.stringify(d, null, 2)); }
 function saveZimsecResults(d)   { fs.mkdirSync(DATA_DIR,{recursive:true}); fs.writeFileSync(ZIMSEC_RESULTS_FILE,   JSON.stringify(d, null, 2)); }
 
-// ── Exams ──────────────────────────────────────────────────────────────────
+// exams
 export function getAllZimsecExams() { return loadZimsecExams().exams; }
 
 export function getZimsecExam(id) {
@@ -1113,7 +1095,7 @@ export function deleteZimsecExam(id) {
   return true;
 }
 
-// ── Questions ──────────────────────────────────────────────────────────────
+// questions
 export function getAllZimsecQuestions(examId) {
   const d = loadZimsecQuestions();
   return (d.questions || []).filter(q => q.examId === examId).sort((a,b) => (a.order||0)-(b.order||0));
@@ -1130,7 +1112,7 @@ export function createZimsecQuestion({ examId, text, type, options, answer, expl
     id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     examId, text, type: type || 'mcq',
     options: options || [],
-    answer,                    // correct option letter/index for mcq; model answer text for sa
+    answer, // correct option letter/index for mcq; model answer text for sa
     explanation: explanation || '',
     marks: parseInt(marks) || 1,
     order: parseInt(order) || d.questions.filter(x => x.examId === examId).length,
@@ -1165,7 +1147,7 @@ export function deleteZimsecQuestionsByExam(examId) {
   saveZimsecQuestions(d);
 }
 
-// ── Results ────────────────────────────────────────────────────────────────
+// results
 export function getAllZimsecResults() { return loadZimsecResults().results || []; }
 
 export function getUserZimsecResults(userId) {
@@ -1214,7 +1196,7 @@ export function getZimsecLeaderboard(examId, limit = 50) {
     .slice(0, limit);
 }
 
-// ── Parse .txt exam file into questions ────────────────────────────────────
+// parse .txt exam file into questions
 export function parseZimsecTxt(content) {
   const lines = content.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
   const questions = [];
@@ -1230,7 +1212,7 @@ export function parseZimsecTxt(content) {
     } else if (cur && /^ANS\s*:/i.test(line)) {
       cur.answer = line.replace(/^ANS\s*:\s*/i,'').trim().toUpperCase();
     } else if (cur && cur.type === 'mcq') {
-      // Options: "A: text  B: text  C: text  D: text" on one line or separate "A: text"
+      // Options: "A: text B: text C: text D: text" on one line or separate "A: text"
       const parts = line.split(/(?=[A-D]\s*:)/i);
       parts.forEach(p => {
         const m = p.match(/^([A-D])\s*:\s*(.+)/i);
@@ -1244,7 +1226,7 @@ export function parseZimsecTxt(content) {
   return questions;
 }
 
-// ── Exam unlock (subscriber self-serve, 3-day window) ─────────────────────────
+// exam unlock (subscriber self-serve, 3-day window)
 // Stored in usage.json per user: examUnlocks: { examId: { unlockedAt } }
 
 const EXAM_WINDOW_MS = 3 * 24 * 3600 * 1000; // 3 days
@@ -1275,9 +1257,7 @@ export function getExamWindowExpiry(uid, examId) {
   return new Date(new Date(unlock.unlockedAt).getTime() + EXAM_WINDOW_MS).toISOString();
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Notifications
-// ══════════════════════════════════════════════════════════════════════════
+// notifications
 const NOTIFICATIONS_FILE  = path.join(DATA_DIR, 'notifications.json');
 const NOTIF_READS_FILE    = path.join(DATA_DIR, 'notif_reads.json');
 const PUSH_SUBS_FILE      = path.join(DATA_DIR, 'push_subscriptions.json');
@@ -1287,7 +1267,7 @@ function saveNotifications(d) { writeJson(NOTIFICATIONS_FILE, d); }
 function loadNotifReads()     { return readJson(NOTIF_READS_FILE, { reads: {} }); }
 function saveNotifReads(d)    { writeJson(NOTIF_READS_FILE, d); }
 
-// Push subscriptions — keyed by userId, value is array of subscription objects
+// Push subscriptions - keyed by userId, value is array of subscription objects
 function loadPushSubs() { return readJson(PUSH_SUBS_FILE, { subs: {} }); }
 function savePushSubs(d) { writeJson(PUSH_SUBS_FILE, d); }
 
@@ -1331,12 +1311,12 @@ export function createNotification({ type, title, description, bgImage, target, 
   const d = loadNotifications();
   const notif = {
     id:           'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    type:         type || 'silent',           // 'silent' | 'popup'
+    type:         type || 'silent', // 'silent' | 'popup'
     title:        title || '',
     description:  description || '',
-    bgImage:      bgImage || null,            // null = default (white)
-    target:       target || 'all',            // 'all' | 'single' | 'multiple'
-    targetEmails: targetEmails || [],         // used when target !== 'all'
+    bgImage:      bgImage || null, // null = default (white)
+    target:       target || 'all', // 'all' | 'single' | 'multiple'
+    targetEmails: targetEmails || [], // used when target !== 'all'
     createdAt:    new Date().toISOString(),
     active:       true,
   };
@@ -1390,9 +1370,7 @@ export function getUnreadNotificationsForUser(userId, userEmail) {
   return visible.filter(n => !read.has(n.id));
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  AMBASSADORS  (JSON-backed)
-// ══════════════════════════════════════════════════════════════════════════
+// ambassadors (json-backed)
 
 const AMBASSADORS_FILE = path.join(DATA_DIR, 'ambassadors.json');
 function loadAmbassadors() { return readJson(AMBASSADORS_FILE, { ambassadors: [] }); }
@@ -1456,7 +1434,7 @@ export function isAmbassador(emailOrId) {
   return d.ambassadors.some(a => a.active && (a.email.toLowerCase() === emailOrId.toLowerCase() || a.id === emailOrId));
 }
 
-// Ambassador exams — stored separately so they show "Ambassador's Test" branding
+// Ambassador exams - stored separately so they show "Ambassador's Test" branding
 // They use the same zimsec-exams store but tagged with createdBy = 'ambassador:<userId>'
 // Grace window = 7 days (vs 3 days for admin exams)
 export const AMBASSADOR_EXAM_WINDOW_MS = 7 * 24 * 3600 * 1000;
@@ -1477,9 +1455,7 @@ export function isAmbassadorExamWindowOpen(uid, examId) {
   return Date.now() - new Date(unlock.unlockedAt).getTime() < AMBASSADOR_EXAM_WINDOW_MS;
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  AMBASSADOR REFERRALS
-// ══════════════════════════════════════════════════════════════════════════
+// ambassador referrals
 
 /** Generate a short unique referral code for an ambassador */
 function genRefCode(email) {
@@ -1586,14 +1562,12 @@ export function getAmbassadorsAdminOverview() {
   });
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Messenger — DMs stored server-side until delivered, then deleted
-//  Community messages stored in community.json (already exists above)
-//  Individual chat history stored in localStorage on client only
-// ══════════════════════════════════════════════════════════════════════════
+// Messenger - DMs stored server-side until delivered, then deleted
+// Community messages stored in community.json (already exists above)
+// Individual chat history stored in localStorage on client only
 const MESSENGER_FILE = path.join(DATA_DIR, 'messenger.json');
 // { settings: { [userId]: { username, bio, profilePublic, profilePicUrl, bgType, bgUrl, blocked: [userId] } },
-//   pending: [ { id, from, to, text, sentAt, expiresAt, readAt } ] }
+// pending: [ { id, from, to, text, sentAt, expiresAt, readAt } ] }
 let messengerData = readJson(MESSENGER_FILE, { settings: {}, pending: [], acks: [], verified: {}, previews: {} });
 if (!Array.isArray(messengerData.acks)) messengerData.acks = [];
 if (!Array.isArray(messengerData.pending)) messengerData.pending = [];
@@ -1614,7 +1588,7 @@ export function pruneExpiredMessages() {
   if (messengerData.pending.length !== before) saveMessenger();
 }
 
-// ── Messenger Settings ──────────────────────────────────────────────────
+// messenger settings
 export function getMessengerSettings(userId) {
   return messengerData.settings[userId] || {
     username: '', bio: '', profilePublic: false, profilePicUrl: '',
@@ -1701,7 +1675,7 @@ export function getSupportCard() {
   return u ? publicMessengerCard(u) : null;
 }
 
-// ── Search users by name or email (all users are searchable) ─────────────
+// search users by name or email (all users are searchable)
 export function searchPublicUsers(query) {
   query = (query || '').toLowerCase().trim();
   if (!query) return [];
@@ -1743,7 +1717,7 @@ export function getUserInfoBulk(userIds) {
   });
 }
 
-// ── Pending messages (server stores until recipient fetches) ─────────────
+// pending messages (server stores until recipient fetches)
 export function storePendingMessage({ from, to, text, clientId, replyText, replyName, replyId, media }) {
   const msg = {
     id: `msg-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
@@ -1760,7 +1734,7 @@ export function storePendingMessage({ from, to, text, clientId, replyText, reply
       size: Number(media.size) || 0,
     } : null,
     sentAt: new Date().toISOString(),
-    status: 'sent',           // sent → delivered → read
+    status: 'sent', // sent -> delivered -> read
     expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
   };
   messengerData.pending.push(msg);
@@ -1927,10 +1901,8 @@ export function countPendingBySender(toUserId) {
   return counts;
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Startup reload — re-read remaining module-level stores from disk after the
-//  Supabase pull, so restored data is visible in memory (not just on disk).
-// ══════════════════════════════════════════════════════════════════════════
+// Startup reload - re-read remaining module-level stores from disk after the
+// Supabase pull, so restored data is visible in memory (not just on disk).
 export function reloadRemainingFromDisk() {
   const freshProof = readJson(path.join(DATA_DIR, 'proofmeta.json'), null);
   if (freshProof && Array.isArray(freshProof.proofs)) {
@@ -2001,10 +1973,8 @@ export function reloadRemainingFromDisk() {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  Recent logins — IN-MEMORY ONLY (deliberately not persisted / no Supabase).
-//  A rolling log of the last N successful web logins, for admin visibility.
-// ══════════════════════════════════════════════════════════════════════════
+// Recent logins - IN-MEMORY ONLY (deliberately not persisted / no Supabase).
+// A rolling log of the last N successful web logins, for admin visibility.
 const MAX_LOGINS = 300;
 let loginLog = []; // [{ id, userId, email, phone, name, at, ip, ua }]
 

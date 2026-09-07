@@ -1,4 +1,4 @@
-// whatsapp/main.js — Fundo Plus WhatsApp Message Orchestrator (Facebook Cloud API)
+// whatsapp/main.js - Fundo Plus WhatsApp Message Orchestrator (Facebook Cloud API)
 // Called by the /api/wa/webhook POST route in bot.js
 // Facebook sends a webhook payload for every inbound message.
 
@@ -9,9 +9,9 @@ import { handleResources, initResourceSession }             from './resources.js
 import { handleChat, clearChatHistory }                     from './chat.js';
 import { sendText }                                         from './wa.js';
 
-// ── Parse Facebook Cloud API webhook payload → { phone, text } ───────────
+// parse facebook cloud api webhook payload -> { phone, text }
 // Facebook sends entries like:
-//   body.entry[0].changes[0].value.messages[0]
+// body.entry[0].changes[0].value.messages[0]
 export function parseFBWebhook(body) {
   try {
     const entry   = body.entry?.[0];
@@ -45,7 +45,7 @@ export function parseFBWebhook(body) {
   }
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────
+// main handler
 export async function handleMessage(body) {
   const { phone, text } = parseFBWebhook(body);
 
@@ -59,7 +59,7 @@ export async function handleMessage(body) {
     return;
   }
 
-  // ── New user — start auth ─────────────────────────────────────────────
+  // new user - start auth
   if (isNewUser(phone)) {
     setSession(phone, { phone, mode: 'auth', auth: { step: 'ask_email' }, userId: null, data: {} });
     await startAuth(phone);
@@ -69,13 +69,13 @@ export async function handleMessage(body) {
   const session = getSession(phone);
   const mode    = session?.mode || 'auth';
 
-  // ── Auth flow ─────────────────────────────────────────────────────────
+  // auth flow
   if (mode === 'auth') {
     await handleAuth(phone, text, session);
     return;
   }
 
-  // ── Return-to-menu trigger (type 0 / "menu") ──────────────────────────
+  // return-to-menu trigger (type 0 / "menu")
   if (isMenuTrigger(text)) {
     if (mode === 'chat') clearChatHistory(phone);
     setSession(phone, { ...session, mode: 'menu', data: {} });
@@ -83,7 +83,7 @@ export async function handleMessage(body) {
     return;
   }
 
-  // ── Menu mode: handle button / text selection ─────────────────────────
+  // menu mode: handle button / text selection
   if (mode === 'menu') {
     const t = text.toLowerCase();
 
@@ -103,12 +103,12 @@ export async function handleMessage(body) {
       return;
     }
 
-    // Unrecognised input — re-show menu
+    // Unrecognised input - re-show menu
     await sendMainMenu(phone);
     return;
   }
 
-  // ── Resources mode ────────────────────────────────────────────────────
+  // resources mode
   if (mode === 'resources') {
     const data    = session.data || initResourceSession();
     const updated = await handleResources(phone, text, data);
@@ -116,7 +116,7 @@ export async function handleMessage(body) {
     return;
   }
 
-  // ── Chat mode ─────────────────────────────────────────────────────────
+  // chat mode
   if (mode === 'chat') {
     await handleChat(phone, text);
     return;

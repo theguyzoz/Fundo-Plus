@@ -1,7 +1,7 @@
-// whatsapp/resources.js — Download Past Papers flow (WATI edition)
+// whatsapp/resources.js - Download Past Papers flow (WATI edition)
 // Mirrors the Baileys number-selection UX:
-//   ask_filter → show numbered list → user types number → send file link
-//   Type 0 at any point to return to menu.
+// ask_filter -> show numbered list -> user types number -> send file link
+// Type 0 at any point to return to menu.
 
 import { sendText, sendList } from './wa.js';
 import { listPapersLocal }    from '../store.js';
@@ -13,7 +13,7 @@ export function initResourceSession() {
   return { step: 'ask_filter', filter: null, page: 0, filtered: [] };
 }
 
-// ── Entry point ───────────────────────────────────────────────────────────
+// entry point
 export async function handleResources(phone, text, sessionData) {
   const step = sessionData.step;
 
@@ -24,7 +24,7 @@ export async function handleResources(phone, text, sessionData) {
   return showFilterMenu(phone, sessionData);
 }
 
-// ── Step 1: Show level filter ─────────────────────────────────────────────
+// step 1: show level filter
 async function showFilterMenu(phone, sessionData) {
   await sendText(phone,
     `📚 *Download Past Papers*\n\nSelect a level:\n\n1. O-Level\n2. A-Level\n3. Grade 7${RETURN_PROMPT}`
@@ -32,7 +32,7 @@ async function showFilterMenu(phone, sessionData) {
   return { ...sessionData, step: 'get_filter' };
 }
 
-// ── Step 2: Handle level choice ───────────────────────────────────────────
+// step 2: handle level choice
 async function handleFilterChoice(phone, text, sessionData) {
   const filterMap = { '1': 'olevel', '2': 'alevel', '3': 'g7' };
   const filter    = filterMap[text.trim()];
@@ -65,7 +65,7 @@ async function handleFilterChoice(phone, text, sessionData) {
   return updated;
 }
 
-// ── Step 3: Handle numbered selection ────────────────────────────────────
+// step 3: handle numbered selection
 async function handleListChoice(phone, text, sessionData) {
   const trimmed = text.trim();
 
@@ -98,7 +98,7 @@ async function handleListChoice(phone, text, sessionData) {
   return sessionData; // Stay on the list so they can download more
 }
 
-// ── Render the numbered list ──────────────────────────────────────────────
+// render the numbered list
 async function sendResourceList(phone, sessionData) {
   const { filtered, page, filter } = sessionData;
   const start     = page * PAGE_SIZE;
@@ -121,7 +121,7 @@ async function sendResourceList(phone, sessionData) {
   await sendText(phone, msg);
 }
 
-// ── Send file ─────────────────────────────────────────────────────────────
+// send file
 async function sendResourceFile(phone, paper) {
   const { sendDocument } = await import('./wa.js');
 
@@ -136,7 +136,7 @@ async function sendResourceFile(phone, paper) {
       return;
     }
 
-    // No public URL — send a fallback message
+    // No public URL - send a fallback message
     const BASE = process.env.WEBSITE_URL || 'https://fundaplus.up.railway.app';
     const link = `${BASE}/api/papers/file/${encodeURIComponent(paper.filename)}?mode=download`;
     await sendText(phone,

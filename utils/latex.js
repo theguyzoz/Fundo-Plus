@@ -1,4 +1,4 @@
-// utils/latex.js — LaTeX → PNG/SVG math visualiser using KaTeX
+// utils/latex.js - LaTeX -> PNG/SVG math visualiser using KaTeX
 // Renders LaTeX server-side to SVG, returns as base64 PNG via sharp
 
 import katex from 'katex';
@@ -58,7 +58,7 @@ export function renderLatex(latex, opts = {}) {
  */
 export function textToLatex(text) {
   return text
-    .replace(/\*\*/g, '^')               // ** → ^
+    .replace(/\*\*/g, '^') // ** -> ^
     .replace(/\bsqrt\(([^)]+)\)/g, '\\sqrt{$1}')
     .replace(/\bfrac\(([^,]+),([^)]+)\)/g, '\\frac{$1}{$2}')
     .replace(/\bsum\b/g, '\\sum')

@@ -1,4 +1,4 @@
-// utils/speech.js — Audio transcription using AssemblyAI free tier or Whisper via HF
+// utils/speech.js - Audio transcription using AssemblyAI free tier or Whisper via HF
 // Falls back gracefully if unavailable
 
 const HF_API = 'https://api-inference.huggingface.co/models';

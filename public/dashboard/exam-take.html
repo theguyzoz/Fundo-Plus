@@ -16,7 +16,7 @@
     }
     body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column}
 
-    /* ── Top exam bar ── */
+    /* top exam bar */
     .exambar{
       position:fixed;top:0;left:0;right:0;height:58px;
       background:#fff;border-bottom:1.5px solid var(--brd);
@@ -36,11 +36,11 @@
     @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
     .q-counter{font-size:.78rem;font-weight:700;color:var(--mut);white-space:nowrap}
 
-    /* ── Progress bar ── */
+    /* progress bar */
     .prog-strip{position:fixed;top:58px;left:0;right:0;height:4px;background:var(--brd);z-index:99}
     .prog-fill{height:100%;background:linear-gradient(90deg,var(--acc),#60a5fa);border-radius:0 2px 2px 0;transition:width .4s cubic-bezier(.4,0,.2,1)}
 
-    /* ── Main content ── */
+    /* main content */
     .main{margin-top:62px;flex:1;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px 48px}
     .q-wrap{width:100%;max-width:680px}
 
@@ -99,7 +99,7 @@
     .btn-danger{background:#fef2f2;color:var(--red);border:1.5px solid #fca5a5}.btn-danger:hover{background:#fee2e2}
     .skip-hint{font-size:.76rem;color:var(--mut);font-style:italic}
 
-    /* ── Result screen ── */
+    /* result screen */
     .result-wrap{text-align:center;padding:20px 0 36px}
     .big-score{font-size:4rem;font-weight:900;color:var(--acc);line-height:1}
     .grade-badge{display:inline-block;margin-top:16px;padding:9px 28px;border-radius:99px;font-size:1.4rem;font-weight:900}
@@ -117,12 +117,12 @@
     .ai-fb.partial{background:#fffbeb;border:1px solid #fcd34d;color:#92400e}
     .ai-fb.bad{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
 
-    /* ── Loading / error screens ── */
+    /* loading / error screens */
     .center-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;text-align:center;padding:20px}
     .spin{display:inline-block;width:36px;height:36px;border:3px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite}
     @keyframes sp{to{transform:rotate(360deg)}}
 
-    /* ── Blocked screen ── */
+    /* blocked screen */
     .blocked-card{background:#fff;border:2px solid #fca5a5;border-radius:20px;padding:40px 36px;max-width:460px;text-align:center}
     .blocked-card h2{font-size:1.2rem;font-weight:900;color:var(--red);margin-bottom:10px}
     .blocked-card p{font-size:.86rem;color:var(--mut);line-height:1.6}
@@ -163,7 +163,7 @@ const examId = params.get('id');
 let exam = null, questions = [], curIdx = 0, answers = {}, timerIv = null;
 let startedAt = null, examEndTs = null;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// helpers
 async function api(m, u, b) {
   const o = { method: m, headers: { 'x-session-token': tok } };
   if (b) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(b); }
@@ -182,7 +182,7 @@ function updateProgress() {
     questions.length ? `Q ${Math.min(curIdx + 1, questions.length)} / ${questions.length}` : '';
 }
 
-// ── Exit / Unload guard ───────────────────────────────────────────────────────
+// exit / unload guard
 let examActive = false;
 let exitBanned = false;
 let tabSwitchWarnings = 0;
@@ -227,7 +227,7 @@ function detachExitGuard() {
 function onBeforeUnload(e) {
   if (!examActive) return;
   markExitBanned(examId);
-  // Beacon to server — fires even during page unload
+  // Beacon to server - fires even during page unload
   navigator.sendBeacon && navigator.sendBeacon(
     `/api/zimsec/exams/${examId}/exit`,
     new Blob([JSON.stringify({})], {type:'application/json'})
@@ -261,7 +261,7 @@ function onVisibility() {
   }
 }
 
-// ── Timer ─────────────────────────────────────────────────────────────────────
+// timer
 function startTimer(durationMs) {
   const pill = document.getElementById('timer-pill');
   pill.style.display = 'inline-flex';
@@ -291,7 +291,7 @@ function startTimer(durationMs) {
   }, 500);
 }
 
-// ── Load exam ─────────────────────────────────────────────────────────────────
+// load exam
 async function loadExam() {
   if (!tok) { location.href = '/login'; return; }
   if (!examId) { showError('No exam ID specified.'); return; }
@@ -334,7 +334,7 @@ async function loadExam() {
   }
 }
 
-// ── Render current question ───────────────────────────────────────────────────
+// render current question
 const LETTERS = ['A','B','C','D','E'];
 
 function renderQuestion() {
@@ -413,7 +413,7 @@ function nextQuestion(qId, type) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── Submit confirm screen (final review before submitting) ───────────────────
+// submit confirm screen (final review before submitting)
 function renderSubmitConfirm() {
   const answered = Object.keys(answers).length;
   const unanswered = questions.length - answered;
@@ -435,13 +435,13 @@ function renderSubmitConfirm() {
   </div>`);
 }
 
-// ── Auto-submit when timer hits 0 ────────────────────────────────────────────
+// auto-submit when timer hits 0
 function autoSubmit() {
   setMain(`<div class="center-screen"><div class="spin"></div><p style="color:var(--mut)">Time's up! Submitting your answers…</p></div>`);
   doSubmit(true);
 }
 
-// ── Submit ────────────────────────────────────────────────────────────────────
+// submit
 async function doSubmit(auto = false) {
   detachExitGuard();
   clearInterval(timerIv);
@@ -471,7 +471,7 @@ async function doSubmit(auto = false) {
   }
 }
 
-// ── Result screen ─────────────────────────────────────────────────────────────
+// result screen
 function renderResult(d) {
   const pct = d.pct || 0;
   const grade = pct >= 75 ? 'A' : pct >= 60 ? 'B' : pct >= 50 ? 'C' : 'F';
@@ -528,7 +528,7 @@ function renderResult(d) {
   </div>`);
 }
 
-// ── Blocked / error screens ───────────────────────────────────────────────────
+// blocked / error screens
 function showBlocked(title, msg) {
   setMain(`<div class="center-screen">
     <div class="blocked-card">
@@ -547,7 +547,7 @@ function showError(msg) {
   </div>`);
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
+// boot
 if (!tok) { location.href = '/login'; } else { loadExam(); }
 </script>
 </body>

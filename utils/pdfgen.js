@@ -1,7 +1,7 @@
-// utils/pdfgen.js — Fundo Plus branded PDF generator
+// utils/pdfgen.js - Fundo Plus branded PDF generator
 // Cover: single white page, logo centred top, info in label/value rows
 // Content: renders stages 1-6 once; if under 12 pages, re-renders those same
-//          pages but with every bullet/short point EXPANDED into rich paragraphs.
+// pages but with every bullet/short point EXPANDED into rich paragraphs.
 import PDFDocument from 'pdfkit';
 import fs   from 'fs';
 import path from 'path';
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-// ── Brand colours ─────────────────────────────────────────────────────────────
+// brand colours
 const BRAND_NAVY   = '#0c1445';
 const BRAND_BLUE   = '#2952e3';
 const BRAND_PURPLE = '#7c3aed';
@@ -22,7 +22,7 @@ const MUTED        = '#6374a0';
 
 const LOGO_PATH = path.resolve(__dirname, '..', 'images', 'logo.png');
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// helpers
 function drawMixedLine(doc, line, opts = {}) {
   const parts = line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
   if (parts.length === 1) {
@@ -70,7 +70,7 @@ function wrapTextToLines(doc, text, maxWidth, fontSize) {
   return lines;
 }
 
-// ── Pixabay ───────────────────────────────────────────────────────────────────
+// pixabay
 function downloadBuffer(url) {
   return new Promise((resolve, reject) => {
     const proto = url.startsWith('https') ? https : http;
@@ -116,7 +116,7 @@ async function downloadImages(urls, outDir) {
   return paths;
 }
 
-// ── Table helpers ─────────────────────────────────────────────────────────────
+// table helpers
 function isTableSep(line) { return /^\|[\s\-:|]+\|/.test(line.trim()); }
 
 function parseTable(tableLines) {
@@ -127,7 +127,7 @@ function parseTable(tableLines) {
   return { headers: rows[0], rows: rows.slice(1) };
 }
 
-// ── Preprocess raw lines into tokens ─────────────────────────────────────────
+// preprocess raw lines into tokens
 function preprocessLines(rawLines) {
   const result = [];
   let i = 0;
@@ -150,10 +150,10 @@ function preprocessLines(rawLines) {
   return result;
 }
 
-// ── Expand a short bullet/point into a full rich paragraph ───────────────────
+// expand a short bullet/point into a full rich paragraph
 // e.g. "Work efficiency - work is made easier"
-// → "Work efficiency is a key aspect... This is important because work is made
-//    easier, which directly impacts... By applying this in Zimbabwe..."
+// -> "Work efficiency is a key aspect... This is important because work is made
+// easier, which directly impacts... By applying this in Zimbabwe..."
 function expandToRichParagraph(rawText, stageHeading, meta) {
   // Strip leading bullet/numbering chars
   const clean = rawText
@@ -196,7 +196,7 @@ function expandToRichParagraph(rawText, stageHeading, meta) {
   return `${opener} ${elaboration} ${closer}`;
 }
 
-// ── Cover Page ────────────────────────────────────────────────────────────────
+// cover page
 function drawCoverPage(doc, meta) {
   const W = doc.page.width;
   const H = doc.page.height;
@@ -267,7 +267,7 @@ function drawCoverPage(doc, meta) {
   doc.fillColor(TEXT_COLOR).fillOpacity(1);
 }
 
-// ── Inner page chrome ─────────────────────────────────────────────────────────
+// inner page chrome
 function drawInnerHeader(doc, meta) {
   const W = doc.page.width;
   doc.save();
@@ -295,7 +295,7 @@ function drawInnerFooter(doc, pageNum, totalPages, meta) {
   doc.fillColor(TEXT_COLOR);
 }
 
-// ── Table renderer ────────────────────────────────────────────────────────────
+// table renderer
 function drawTable(doc, tableData, MARGIN, CONTENT_W, BOT_Y) {
   const { headers, rows } = tableData;
   const colCount = headers.length;
@@ -328,7 +328,7 @@ function drawTable(doc, tableData, MARGIN, CONTENT_W, BOT_Y) {
   doc.fillColor(TEXT_COLOR);
 }
 
-// ── Image pair renderer ───────────────────────────────────────────────────────
+// image pair renderer
 function drawImagePair(doc, imgPaths, MARGIN, CONTENT_W, BOT_Y) {
   if (!imgPaths || imgPaths.length === 0) return;
   const GAP = 12, imgH = 160;
@@ -355,7 +355,7 @@ function drawImagePair(doc, imgPaths, MARGIN, CONTENT_W, BOT_Y) {
   doc.y = startY + imgH + 22; doc.x = MARGIN;
 }
 
-// ── Core line renderer (shared by both normal and expanded passes) ─────────────
+// core line renderer (shared by both normal and expanded passes)
 function renderTokenToDoc(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TOP_Y) {
   function ensureSpace(needed = 30) {
     if (doc.y + needed > BOT_Y) {
@@ -400,7 +400,7 @@ function renderTokenToDoc(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TOP_Y
     doc.moveDown(0.25);
     doc.fontSize(11).font('Helvetica').fillColor(TEXT_COLOR);
   } else if (/^(\-|\•|\*)?\s*$/.test(t)) {
-    // empty bullet — skip
+    // empty bullet - skip
   } else if (/^(\-|\•|\*)\s/.test(t)) {
     ensureSpace(24);
     const bullet = t.slice(2).trim();
@@ -438,7 +438,7 @@ function renderTokenToDoc(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TOP_Y
   }
 }
 
-// ── EXPANDED token renderer ───────────────────────────────────────────────────
+// expanded token renderer
 // Like renderTokenToDoc but bullets/short lines become full rich paragraphs.
 // Stage headings and long paragraphs pass through unchanged.
 function renderTokenExpanded(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TOP_Y, currentStageHeading) {
@@ -498,14 +498,14 @@ function renderTokenExpanded(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TO
     }
   }
 
-  // Long paragraphs (already detailed) — pass through as-is
+  // Long paragraphs (already detailed) - pass through as-is
   const wordCount = t.replace(/\*\*/g, '').split(/\s+/).length;
   if (wordCount > 20) {
     renderTokenToDoc(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TOP_Y);
     return;
   }
 
-  // Short non-bullet lines — expand them too if they look like a point
+  // Short non-bullet lines - expand them too if they look like a point
   if (wordCount >= 4 && wordCount <= 20 && !t.startsWith('#')) {
     const rich = expandToRichParagraph(t, currentStageHeading, coverMeta);
     if (rich) {
@@ -522,7 +522,7 @@ function renderTokenExpanded(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TO
   renderTokenToDoc(doc, token, MARGIN, CONTENT_W, BOT_Y, coverMeta, TOP_Y);
 }
 
-// ── Render all tokens (first pass — normal) ───────────────────────────────────
+// render all tokens (first pass - normal)
 function renderContentTokens(doc, tokens, coverMeta, MARGIN, CONTENT_W, TOP_Y, BOT_Y, imagePaths) {
   doc.addPage();
   drawInnerHeader(doc, coverMeta);
@@ -551,7 +551,7 @@ function renderContentTokens(doc, tokens, coverMeta, MARGIN, CONTENT_W, TOP_Y, B
   }
 }
 
-// ── Render all tokens EXPANDED (second pass — if under 12 pages) ─────────────
+// render all tokens expanded (second pass - if under 12 pages)
 // This re-renders the SAME content but with bullets/points blown up into paragraphs.
 // It replaces the short-form pages, not adds new duplicate stage headings.
 function renderContentExpanded(doc, tokens, coverMeta, MARGIN, CONTENT_W, TOP_Y, BOT_Y) {
@@ -574,7 +574,7 @@ function renderContentExpanded(doc, tokens, coverMeta, MARGIN, CONTENT_W, TOP_Y,
   }
 }
 
-// ── References page ───────────────────────────────────────────────────────────
+// references page
 function renderReferencesPage(doc, coverMeta, MARGIN, CONTENT_W, TOP_Y, BOT_Y) {
   doc.addPage();
   drawInnerHeader(doc, coverMeta);
@@ -661,7 +661,7 @@ function renderReferencesPage(doc, coverMeta, MARGIN, CONTENT_W, TOP_Y, BOT_Y) {
   }
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// main export
 export async function generatePdf(title, content, jobId, outDir, meta = {}, opts = {}) {
   const { pixabayKey } = opts;
 
@@ -686,20 +686,20 @@ export async function generatePdf(title, content, jobId, outDir, meta = {}, opts
       const BOT_Y     = doc.page.height - 52;
       const MIN_PAGES = Math.min(20, Math.max(6, parseInt(opts.minPages, 10) || 12));
 
-      // ── Page 1: Cover ─────────────────────────────────────────────────────
+      // page 1: cover
       drawCoverPage(doc, coverMeta);
 
-      // ── Pages 2+: Expanded content starts immediately after cover ─────────
+      // pages 2+: expanded content starts immediately after cover
       const rawLines = content.split('\n');
       const tokens   = preprocessLines(rawLines);
       renderContentExpanded(doc, tokens, coverMeta, MARGIN, CONTENT_W, TOP_Y, BOT_Y);
 
-      // ── If still under minimum, add references/integrity page(s) ──────────
+      // if still under minimum, add references/integrity page(s)
       while (doc.bufferedPageRange().count < MIN_PAGES) {
         renderReferencesPage(doc, coverMeta, MARGIN, CONTENT_W, TOP_Y, BOT_Y);
       }
 
-      // ── Footers on all inner pages ─────────────────────────────────────────
+      // footers on all inner pages
       const finalRange = doc.bufferedPageRange();
       const innerTotal = finalRange.count - 1;
       for (let i = 1; i < finalRange.count; i++) {

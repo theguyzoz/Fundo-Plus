@@ -1,9 +1,9 @@
-// whatsapp/auth.js — Login / Sign-up flow over WhatsApp (WATI edition)
+// whatsapp/auth.js - Login / Sign-up flow over WhatsApp (WATI edition)
 // Flow:
-//   1. Ask for email
-//   2a. Email found → ask password → verify → done
-//   2b. Email not found → offer login retry OR create account
-//   3. Create account: ask name → ask password → ask confirm password → create
+// 1. Ask for email
+// 2a. Email found -> ask password -> verify -> done
+// 2b. Email not found -> offer login retry OR create account
+// 3. Create account: ask name -> ask password -> ask confirm password -> create
 
 import { sendText, sendButtons } from './wa.js';
 import { setSession }            from './sessions.js';
@@ -13,7 +13,7 @@ import {
 
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://fundaplus.up.railway.app';
 
-// ── Entry point: called when mode === 'auth' ──────────────────────────────
+// entry point: called when mode === 'auth'
 export async function handleAuth(phone, text, session) {
   const step = session.auth?.step || 'ask_email';
 
@@ -29,14 +29,14 @@ export async function handleAuth(phone, text, session) {
   }
 }
 
-// ── Send the initial welcome + ask email ─────────────────────────────────
+// send the initial welcome + ask email
 export async function startAuth(phone) {
   await sendText(phone,
     `👋 *Welcome to Fundo Plus!*\n\nYour smart study companion for ZIMSEC O-Level & A-Level.\n\nPlease enter your *email address* to sign in, or type *NEW* to create a free account.`
   );
 }
 
-// ── Step 1: Received email ────────────────────────────────────────────────
+// step 1: received email
 async function askEmail(phone, text, session) {
   const trimmed = text.trim().toLowerCase();
 
@@ -61,7 +61,7 @@ async function askEmail(phone, text, session) {
 
   // Check if email exists in webusers
   const { store } = await import('../store.js');
-  // We use verifyLogin with wrong password to detect existence — 
+  // We use verifyLogin with wrong password to detect existence -
   // better: scan users directly via a helper
   const exists = await emailExistsInStore(trimmed);
 
@@ -80,7 +80,7 @@ async function askEmail(phone, text, session) {
   }
 }
 
-// ── Step 2a: Got password for existing account ────────────────────────────
+// step 2a: got password for existing account
 async function askPassword(phone, text, session) {
   const { email } = session.auth;
   const password  = text.trim();
@@ -104,7 +104,7 @@ async function askPassword(phone, text, session) {
   await sendMainMenu(phone);
 }
 
-// ── Step 2b: Email not found — button response ────────────────────────────
+// step 2b: email not found - button response
 async function emailNotFound(phone, text, session) {
   const t = text.trim().toLowerCase();
 
@@ -120,7 +120,7 @@ async function emailNotFound(phone, text, session) {
     return;
   }
 
-  // Fallback — show buttons again
+  // Fallback - show buttons again
   await sendButtons(phone,
     `Please choose an option:`,
     [
@@ -130,7 +130,7 @@ async function emailNotFound(phone, text, session) {
   );
 }
 
-// ── Step 3: Sign-up — collect name ───────────────────────────────────────
+// step 3: sign-up - collect name
 async function askName(phone, text, session) {
   const name = text.trim();
   if (!name || name.length < 2) {
@@ -141,7 +141,7 @@ async function askName(phone, text, session) {
   await sendText(phone, `👍 Hi *${name}*!\n\nNow enter your *email address*:`);
 }
 
-// ── Step 3b: Sign-up — collect email (if they started with NEW) ──────────
+// step 3b: sign-up - collect email (if they started with new)
 export async function handleSignupEmailStep(phone, text, session) {
   const trimmed = text.trim().toLowerCase();
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -163,7 +163,7 @@ export async function handleSignupEmailStep(phone, text, session) {
   await sendText(phone, `✅ Email set.\n\nNow choose a *password* (min 6 characters):`);
 }
 
-// ── Step 4: Sign-up — collect password ───────────────────────────────────
+// step 4: sign-up - collect password
 async function askSignupPass(phone, text, session) {
   // Handle the signup_email step inline
   if (session.auth.step === 'ask_signup_email') {
@@ -179,7 +179,7 @@ async function askSignupPass(phone, text, session) {
   await sendText(phone, `🔒 *Confirm your password* — type it again:`);
 }
 
-// ── Step 5: Sign-up — confirm password ───────────────────────────────────
+// step 5: sign-up - confirm password
 async function askConfirm(phone, text, session) {
   const { name, email, password } = session.auth;
 
@@ -203,7 +203,7 @@ async function askConfirm(phone, text, session) {
   await sendMainMenu(phone);
 }
 
-// ── Helper: check if an email exists in webusers ─────────────────────────
+// helper: check if an email exists in webusers
 async function emailExistsInStore(email) {
   const { getAllWebUsers } = await import('../store.js');
   const users = getAllWebUsers ? getAllWebUsers() : [];

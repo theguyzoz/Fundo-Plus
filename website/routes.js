@@ -1,4 +1,4 @@
-// website/routes.js — All web routes
+// website/routes.js - All web routes
 import express  from 'express';
 import fs       from 'fs';
 import path     from 'path';
@@ -89,8 +89,8 @@ import {
 } from '../utils/supabase-data.js';
 import webpush from 'web-push';
 
-// ── Web Push (VAPID) setup ─────────────────────────────────────────────────
-// Priority: env vars → data/vapid.json (set via admin) → hardcoded defaults.
+// web push (vapid) setup
+// Priority: env vars -> data/vapid.json (set via admin) -> hardcoded defaults.
 const VAPID_FILE = path.join(DATA_DIR, 'vapid.json');
 const VAPID_DEFAULT_PUBLIC  = 'BEPEHkkKDM0XGZVnCphAAq2IjX_V2kaVSOUfIEYBi2l33bAW9_GY4xbDS0WHAU5SOeceWuMrfTmtm3tHfc6izKs';
 const VAPID_DEFAULT_PRIVATE = 'K-4QFQ4WJ__l5zoQ5zZlqYcsyalMi1q3DtEesGhnbDI';
@@ -120,7 +120,7 @@ const SITE_BASE = () => (process.env.WEBSITE_URL || '').replace(/\/+$/, '');
 async function sendPushToSubscriptions(subscriptions, payload) {
   if (!subscriptions.length) return { sent: 0, failed: 0, errors: [] };
 
-  // Absolute URLs are REQUIRED by push services — relative icons/images fail.
+  // Absolute URLs are REQUIRED by push services - relative icons/images fail.
   const base = SITE_BASE();
   const abs = (p) => (p && /^https?:\/\//i.test(p) ? p : (base ? base + (p || '') : p));
 
@@ -129,9 +129,9 @@ async function sendPushToSubscriptions(subscriptions, payload) {
     body:        payload.body || '',
     icon:        abs(payload.icon || '/images/logo.png'),
     badge:       abs(payload.badge || '/images/logo.png'),
-    image:       abs(payload.image) || undefined,      // big banner image (Android/desktop)
+    image:       abs(payload.image) || undefined, // big banner image (Android/desktop)
     url:         payload.url || '/~/notifications',
-    tag:         payload.tag || ('notif-' + Date.now()), // unique tag → always re-shows
+    tag:         payload.tag || ('notif-' + Date.now()), // unique tag -> always re-shows
     renotify:    true,
     requireInteraction: false,
   };
@@ -146,7 +146,7 @@ async function sendPushToSubscriptions(subscriptions, payload) {
     if (r.status === 'rejected') {
       failed++;
       const reason = r.reason || {};
-      // 404/410 = stale subscription (browser revoked it) — safe to log & prune
+      // 404/410 = stale subscription (browser revoked it) - safe to log & prune
       const code = reason.statusCode || reason.code || '';
       errors.push({
         endpoint: (subscriptions[i]?.endpoint || '').slice(0, 80),
@@ -185,7 +185,7 @@ const PROJECTS_DIR = path.join(SKILLS_DIR, 'projects');
 
 const router = express.Router();
 
-// ── Multer for payment proofs (memory, 5 MB per file) ─────────────────────
+// multer for payment proofs (memory, 5 mb per file)
 const proofUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -195,7 +195,7 @@ const proofUpload = multer({
   }
 });
 
-// ── Multer for data file uploads (memory, 50 MB per file, JSON only) ───────
+// multer for data file uploads (memory, 50 mb per file, json only)
 const dataUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
@@ -205,7 +205,7 @@ const dataUpload = multer({
   }
 });
 
-// ── Multer for update.json upload (admin only, 1 MB max) ──────────────────
+// multer for update.json upload (admin only, 1 mb max)
 const updateJsonUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 1 * 1024 * 1024 },
@@ -215,7 +215,7 @@ const updateJsonUpload = multer({
   }
 });
 
-// ── Multer for APK upload (admin only, 100 MB max) ──────────────────────────
+// multer for apk upload (admin only, 100 mb max)
 const apkUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 },
@@ -237,7 +237,7 @@ const messengerMediaUpload = multer({
   }
 });
 
-// ── Ban guard helper ─────────────────────────────────────────────────────
+// ban guard helper
 function parseCookies(req) {
   const raw = req.headers.cookie || '';
   if (!raw.trim()) return {};
@@ -310,12 +310,10 @@ function pageGuardBan(req, res, next) {
   next();
 }
 
-// ═══════════════════════════════════════════════════════════════════
-//  PAGE ROUTES
-// ═══════════════════════════════════════════════════════════════════
+// page routes
 router.get('/login',       (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
 
-// Ambassador referral link — sets cookie then redirects to register tab
+// Ambassador referral link - sets cookie then redirects to register tab
 router.get('/join/:code', (req, res) => {
   const amb = getAmbassadorByCode(req.params.code);
   if (!amb) return res.redirect('/login?tab=register&ref_invalid=1');
@@ -347,8 +345,8 @@ router.get('/redeem',      pageGuardBan, (req, res) => res.sendFile(path.join(PU
 router.get('/banned',      (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'banned.html')));
 router.get('/samazed',     (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'samazed.html')));
 
-// Email verification is retired — everyone gets a free pass.
-// One-time: flip any legacy unverified accounts so old users can sign in.
+// no more email verification. anyone who signed up before this and never
+// verified gets let in too, so flip them once here
 try {
   const _raw = getAllWebUsers();
   const _users = Array.isArray(_raw) ? _raw : Object.values(_raw || {});
@@ -359,9 +357,7 @@ try {
   if (_fixed) console.log(`[Auth] Free pass: verified ${_fixed} legacy account(s)`);
 } catch (e) { console.warn('[Auth] free-pass migration skipped:', e.message); }
 
-// ═══════════════════════════════════════════════════════════════════
-//  AUTH API
-// ═══════════════════════════════════════════════════════════════════
+// auth api
 router.post('/api/auth/register', rateMw(registerIpLimit, clientIp, 'Too many sign-ups from this network. Try again later.'), async (req, res) => {
   const { email, phone, password, refCode: bodyRefCode } = req.body || {};
   if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
@@ -372,7 +368,7 @@ router.post('/api/auth/register', rateMw(registerIpLimit, clientIp, 'Too many si
   }
   const result = createUser({
     email: emailClean || undefined, phone: phone?.trim(), password,
-    emailVerified: true, // free pass — no email verification
+    emailVerified: true, // free pass - no email verification
   });
   if (!result.ok) return res.status(400).json({ error: result.error });
 
@@ -421,9 +417,7 @@ router.get('/api/auth/me', requireAuthAllowBanned, (req, res) => {
   res.json({ ok: true, user: sanitizeUser(req.user), banned: req.banned || false, isAmbassador: isAmb });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  ONBOARDING
-// ═══════════════════════════════════════════════════════════════════
+// onboarding
 router.post('/api/onboarding', requireAuth, (req, res) => {
   const { name, surname, age, school } = req.body || {};
   if (!name || !surname || !age || !school)
@@ -438,9 +432,7 @@ router.post('/api/onboarding', requireAuth, (req, res) => {
   res.json({ ok: true, user: sanitizeUser(updated) });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  DASHBOARD / USER API
-// ═══════════════════════════════════════════════════════════════════
+// dashboard / user api
 router.get('/api/me', requireAuth, (req, res) => {
   const user = req.user;
   let pairingStatus = 'none', daysLeft = null;
@@ -485,21 +477,17 @@ router.delete('/api/account', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  PAIRING LINK
-// ═══════════════════════════════════════════════════════════════════
+// pairing link
 router.post('/api/generate-link', requireAuth, (req, res) => {
   const token   = createVerifyToken(req.user.id);
   saveWebUser(req.user.id, { pendingToken: token });
-  // Include a special activation code prefix so the WA bot can distinguish verification msgs
+  // wa bot needs this prefix to know it's a verification msg
   const verifyMsg = `VERIFY:${token}`;
   const botLink   = `https://wa.me/263717129736?text=${encodeURIComponent(verifyMsg)}`;
   res.json({ token, verifyMsg, botLink, expiresInMinutes: 15 });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  SAMAZED PARTNER API — unlimited, rate-limited client-side
-// ═══════════════════════════════════════════════════════════════════
+// samazed partner api - unlimited, rate-limited client-side
 const samazedHistories = new Map();
 
 router.post('/api/samazed/chat', async (req, res) => {
@@ -525,9 +513,7 @@ router.post('/api/samazed/chat', async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  AI CHAT
-// ═══════════════════════════════════════════════════════════════════
+// ai chat
 router.post('/api/chat', requireOnboarded, async (req, res) => {
   const { message, stream: wantStream = false, prefs: rawPrefs = {} } = req.body || {};
   if (!message) return res.status(400).json({ error: 'No message' });
@@ -732,9 +718,7 @@ function parseQuizFromAI(rawText, style) {
   return questions;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-//  RESOURCES / PAPERS
-// ═══════════════════════════════════════════════════════════════════
+// resources / papers
 router.get('/api/resources', requireAuth, (req, res) => {
   res.json({ papers: listPapersLocal() });
 });
@@ -748,11 +732,9 @@ router.get('/api/papers', requireOnboarded, (req, res) => {
 });
 
 // NOTE: /api/papers/file/:filename and /api/papers/preview/:filename are handled
-// by bot.js AFTER this router — it has Supabase fallback + local caching.
+// by bot.js AFTER this router - it has Supabase fallback + local caching.
 
-// ═══════════════════════════════════════════════════════════════════
-//  TOOLS
-// ═══════════════════════════════════════════════════════════════════
+// tools
 router.post('/api/tools/pdf', requireOnboarded, async (req, res) => {
   const uid = req.user.id;
   const isLinked = !!req.user.jid;
@@ -805,9 +787,7 @@ router.post('/api/tools/imagine', requireOnboarded, async (req, res) => {
   res.status(503).json({ error: 'Image generation unavailable: ' + lastErr.slice(0, 200) });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  SKILLS & STUDY (usage tracked)
-// ═══════════════════════════════════════════════════════════════════
+// skills & study (usage tracked)
 router.get('/api/skills/syllabuses', (req, res) => {
   try {
     if (!fs.existsSync(SYLLABUS_DIR)) return res.json({ ok: true, syllabuses: [] });
@@ -848,7 +828,7 @@ router.post('/api/skills/session', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Project generator (counts project usage, not pdf exports) ─────────────
+// project generator (counts project usage, not pdf exports)
 router.post('/api/skills/project', requireAuth, async (req, res) => {
   const uid = req.user.id;
   const isLinked = !!req.user.jid;
@@ -898,16 +878,14 @@ router.get('/api/skills/project-template', (req, res) => {
   res.json({ ok: true, template: `# Project Title\n\n## Subject\n## Level\n## Objectives\n## Key Concepts\n## Worked Examples\n## Practice Questions\n## Study Tips\n` });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  PROJECT GENERATOR — /api/skills/project-gen
-//  Generates a 10+ page ZIMSEC academic project PDF, saves it with
-//  a token-protected download URL that expires after 1 hour.
-// ═══════════════════════════════════════════════════════════════════
+// PROJECT GENERATOR - /api/skills/project-gen
+// Generates a 10+ page ZIMSEC academic project PDF, saves it with
+// a token-protected download URL that expires after 1 hour.
 
 // Add this near the top of routes.js with other imports:
 // import crypto from 'crypto';
 
-// In-memory map of download tokens → { filePath, expiresAt }
+// In-memory map of download tokens -> { filePath, expiresAt }
 // (Survives server restarts only as long as process is alive)
 const pendingDownloads = new Map();
 
@@ -922,7 +900,7 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// ── Skills/project reference content ─────────────────────────────────────────
+// skills/project reference content
 function loadProjectSkills() {
   const bits = [];
   // ZIMSEC guide
@@ -938,7 +916,7 @@ function loadProjectSkills() {
   return bits.join('\n\n');
 }
 
-// ── Build AI system prompt ────────────────────────────────────────────────────
+// build ai system prompt
 function buildProjectSystemPrompt(skillsText) {
   return `You are an expert academic project writer for Zimbabwean students (ZIMSEC curriculum).
 Your task is to write a comprehensive, high-quality academic project following the ZIMSEC 6-stage project structure.
@@ -964,7 +942,7 @@ FORMAT RULES:
 ${skillsText ? `\nREFERENCE MATERIAL:\n${skillsText}` : ''}`;
 }
 
-// ── POST /api/skills/project-gen ──────────────────────────────────────────────
+// post /api/skills/project-gen
 router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
   const uid      = req.user.id;
   const isLinked = !!req.user.jid;
@@ -987,10 +965,10 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
   if (!district) return res.status(400).json({ error: 'District/city is required' });
 
   try {
-    // ── Load skills reference ──────────────────────────────────────────────────
+    // load skills reference
     const skillsText = loadProjectSkills();
 
-    // ── Build AI prompt ────────────────────────────────────────────────────────
+    // build ai prompt
     const systemPrompt = buildProjectSystemPrompt(skillsText);
     const userPrompt = [
       `Write a full ZIMSEC academic project with the following details:`,
@@ -1008,7 +986,7 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
       `Write the complete project following all 6 ZIMSEC stages. Be comprehensive and detailed. Minimum 2,500 words. Use Zimbabwe-specific examples, data, and references throughout.`,
     ].filter(l => l !== null && l !== undefined).join('\n');
 
-    // ── Call GPT service ───────────────────────────────────────────────────────
+    // call gpt service
     const { gpt4oChat } = await import('../utils/gpt-service.js');
     const gptResult = await gpt4oChat({
       systemInstruction: systemPrompt,
@@ -1023,13 +1001,13 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
 
     const content = gptResult.answer;
 
-    // ── Save markdown copy ──────────────────────────────────────────────────────
+    // save markdown copy
     if (!fs.existsSync(PROJECTS_DIR)) fs.mkdirSync(PROJECTS_DIR, { recursive: true });
     const mdFilename = `${Date.now()}-${student.replace(/[^a-z0-9]/gi,'-').slice(0,20)}.md`;
     fs.writeFileSync(path.join(PROJECTS_DIR, mdFilename), content, 'utf8');
     incrementProjectUsage(uid);
 
-    // ── Generate PDF ───────────────────────────────────────────────────────────
+    // generate pdf
     const { generatePdf } = await import('../utils/pdfgen.js');
     const { v4: uuidv4 }  = await import('uuid');
     const outDir  = path.join(__dirname, '..', 'temp', 'projects');
@@ -1040,7 +1018,7 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
     const pdfOpts = { pixabayKey: process.env.PIXABAY_KEY || '' };
     const fp     = await generatePdf(title, content, jobId, outDir, meta, pdfOpts);
 
-    // ── Create expiring download token ─────────────────────────────────────────
+    // create expiring download token
     const { randomBytes } = await import('crypto');
     const dlToken  = randomBytes(32).toString('hex');
     const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
@@ -1064,7 +1042,7 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
   }
 });
 
-// ── GET /api/skills/project-download/:token ────────────────────────────────────
+// get /api/skills/project-download/:token
 // Token-protected, 1-hour expiring PDF download endpoint
 router.get('/api/skills/project-download/:token', (req, res) => {
   const { token } = req.params;
@@ -1113,7 +1091,7 @@ router.get('/api/skills/project-download/:token', (req, res) => {
   const buf = fs.readFileSync(entry.filePath);
   res.send(buf);
 
-  // Clean up file after download (optional — also cleaned by the interval)
+  // Clean up file after download (optional - also cleaned by the interval)
   setTimeout(() => {
     try { fs.unlinkSync(entry.filePath); } catch {}
     pendingDownloads.delete(token);
@@ -1122,7 +1100,7 @@ router.get('/api/skills/project-download/:token', (req, res) => {
 
 
 
-// ── GET /api/skills/project-preview/:token ─────────────────────────────────────
+// get /api/skills/project-preview/:token
 // Serves the PDF inline (for embedding in <iframe>)
 router.get('/api/skills/project-preview/:token', (req, res) => {
   const { token } = req.params;
@@ -1173,9 +1151,7 @@ router.get('/api/ai/pdf/:token', (req, res) => {
   res.send(buf);
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  SUBSCRIPTION
-// ═══════════════════════════════════════════════════════════════════
+// subscription
 router.get('/api/subscription', requireAuth, (req, res) => {
   const uid  = req.user.id;
   const plan = getUserPlan(uid);
@@ -1201,9 +1177,7 @@ router.get('/api/subscription', requireAuth, (req, res) => {
   });
 });
 
-// ══════════════════════════════════════════════════════════════════════════
-//  WALLET — top up via Paynow, buy plans with balance, withdraw (5% fee)
-// ══════════════════════════════════════════════════════════════════════════
+// wallet - top up via paynow, buy plans with balance, withdraw (5% fee)
 
 // Rate-limit money endpoints (defense against scripting / brute-force)
 const moneyLimiter = rateLimit({
@@ -1212,7 +1186,7 @@ const moneyLimiter = rateLimit({
 });
 
 // Step 1: initiate a Paynow TOP-UP (adds money to the virtual wallet).
-// The amount is validated and capped server-side — never trust the client.
+// The amount is validated and capped server-side - never trust the client.
 router.post('/api/topup', requireAuth, moneyLimiter, async (req, res) => {
   const uid = req.user.id;
   const { amount, method, phone } = req.body || {};
@@ -1247,7 +1221,7 @@ router.post('/api/topup', requireAuth, moneyLimiter, async (req, res) => {
 
     savePendingDeposit({ reference, userId: uid, amountCents: cents, pollUrl: pay.pollUrl, method: method || 'ecocash', phone: phone || '' });
 
-    await flushMoneyBackup(); // persist the pending deposit BEFORE returning — else a crash could lose the in-flight payment
+    await flushMoneyBackup(); // persist the pending deposit BEFORE returning - else a crash could lose the in-flight payment
 
     res.json({
       ok: true, reference, amountDollars: (cents/100).toFixed(2),
@@ -1262,9 +1236,9 @@ router.post('/api/topup', requireAuth, moneyLimiter, async (req, res) => {
   }
 });
 
-// Step 2: Paynow status-update webhook — credits the wallet on confirmation.
-// Awaits the durable Supabase backup BEFORE ACKing, so Paynow won't consider the
-// update lost if we crash immediately after — and the credit can't be lost.
+// Step 2: Paynow status-update webhook - credits the wallet on confirmation.
+// wait for the supabase backup before acking. if we crash right after this,
+// paynow will retry and we still have the money credited
 router.post('/api/paynow/update', async (req, res) => {
   const params = req.body || {};
   if (!verifyUpdate(params)) return res.status(400).send('Invalid hash');
@@ -1273,7 +1247,7 @@ router.post('/api/paynow/update', async (req, res) => {
   const reference = params.reference || '';
   const paynowRef = params.paynowreference || '';
 
-  if (!getPendingDeposit(reference)) return res.send('OK'); // unknown/already processed — ACK
+  if (!getPendingDeposit(reference)) return res.send('OK'); // unknown/already processed - ACK
 
   if (status === 'paid' || status === 'awaiting delivery') {
     finalizeDeposit(reference, paynowRef);
@@ -1319,7 +1293,7 @@ router.get('/api/subscription/poll', requireAuth, async (req, res) => {
   return res.json({ status: 'pending' });
 });
 
-// Buy a plan using virtual balance (no direct Paynow → subscription).
+// Buy a plan using virtual balance (no direct Paynow -> subscription).
 router.post('/api/subscription/activate', requireAuth, moneyLimiter, async (req, res) => {
   const uid  = req.user.id;
   const { plan } = req.body || {};
@@ -1389,9 +1363,7 @@ router.get('/api/billing/status', requireAuth, (req, res) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  COMMUNITY
-// ═══════════════════════════════════════════════════════════════════
+// community
 
 // IMPORTANT: specific sub-routes MUST come before /:id wildcard routes
 
@@ -1473,9 +1445,7 @@ router.delete('/api/community/:id', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  MESSENGER
-// ═══════════════════════════════════════════════════════════════════
+// messenger
 
 // Prune expired pending messages on startup + every hour
 pruneExpiredMessages();
@@ -1493,7 +1463,7 @@ function messengerErr(res, err) {
   res.status(500).json({ ok: false, error: 'Messenger load failed: ' + err.message });
 }
 
-// GET /api/messenger/settings — get my messenger settings
+// GET /api/messenger/settings - get my messenger settings
 router.get('/api/messenger/settings', requireAuth, async (req, res) => {
   try {
     const result = await withTimeout(() => {
@@ -1504,7 +1474,7 @@ router.get('/api/messenger/settings', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// PATCH /api/messenger/settings — update settings
+// PATCH /api/messenger/settings - update settings
 router.patch('/api/messenger/settings', requireAuth, async (req, res) => {
   try {
     const result = await withTimeout(() => {
@@ -1539,7 +1509,7 @@ router.post('/api/messenger/unblock/:targetId', requireAuth, async (req, res) =>
   } catch (err) { messengerErr(res, err); }
 });
 
-// GET /api/messenger/search?q=...  — search public users
+// GET /api/messenger/search?q=... - search public users
 router.get('/api/messenger/search', requireAuth, async (req, res) => {
   try {
     const results = await withTimeout(() => searchPublicUsers(req.query.q || ''));
@@ -1556,7 +1526,7 @@ router.get('/api/messenger/user-by-email', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// POST /api/messenger/user-info  body: { ids: [userId, ...] }
+// POST /api/messenger/user-info body: { ids: [userId, ...] }
 router.post('/api/messenger/user-info', requireAuth, async (req, res) => {
   try {
     const ids = (req.body?.ids || []).slice(0, 50);
@@ -1565,7 +1535,7 @@ router.post('/api/messenger/user-info', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// POST /api/messenger/send  — store a pending DM + real-time emit
+// POST /api/messenger/send - store a pending DM + real-time emit
 router.post('/api/messenger/media', requireAuth, (req, res) => {
   messengerMediaUpload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
@@ -1691,7 +1661,7 @@ router.post('/api/messenger/send', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// GET /api/messenger/drain — fetch and delete pending messages for me
+// GET /api/messenger/drain - fetch and delete pending messages for me
 router.get('/api/messenger/drain', requireAuth, async (req, res) => {
   try {
     const msgs = await withTimeout(() => drainPendingMessages(req.user.id));
@@ -1710,7 +1680,7 @@ router.get('/api/messenger/drain', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// POST /api/messenger/mark-read/:fromId — mark messages from user as read
+// POST /api/messenger/mark-read/:fromId - mark messages from user as read
 router.post('/api/messenger/mark-read/:fromId', requireAuth, async (req, res) => {
   try {
     await withTimeout(() => markMessagesRead(req.params.fromId, req.user.id));
@@ -1726,7 +1696,7 @@ router.post('/api/messenger/mark-read/:fromId', requireAuth, async (req, res) =>
   } catch (err) { messengerErr(res, err); }
 });
 
-// GET /api/messenger/acks — delivery/read receipts for my outbound DMs
+// GET /api/messenger/acks - delivery/read receipts for my outbound DMs
 router.get('/api/messenger/acks', requireAuth, async (req, res) => {
   try {
     const acks = await withTimeout(() => drainMessengerAcks(req.user.id));
@@ -1750,7 +1720,7 @@ router.get('/api/messenger/presence', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// GET /api/messenger/pending-count — badge count
+// GET /api/messenger/pending-count - badge count
 router.get('/api/messenger/pending-count', requireAuth, async (req, res) => {
   try {
     const result = await withTimeout(() => {
@@ -1762,7 +1732,7 @@ router.get('/api/messenger/pending-count', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// GET /api/messenger/me — my full user info (name, email, id)
+// GET /api/messenger/me - my full user info (name, email, id)
 router.get('/api/messenger/me', requireAuth, async (req, res) => {
   try {
     const result = await withTimeout(() => {
@@ -1787,9 +1757,7 @@ router.get('/api/messenger/me', requireAuth, async (req, res) => {
   } catch (err) { messengerErr(res, err); }
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  SUPPORT (save messages to store)
-// ═══════════════════════════════════════════════════════════════════
+// support (save messages to store)
 router.post('/api/support', (req, res) => {
   let { name, email, subject, message, category } = req.body || {};
   if (!message) return res.status(400).json({ error: 'Message is required' });
@@ -1812,18 +1780,14 @@ router.post('/api/support', (req, res) => {
   res.json({ ok: true, id: msg.id });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  WISHLIST
-// ═══════════════════════════════════════════════════════════════════
+// wishlist
 router.post('/api/wishlist', requireAuth, (req, res) => {
   const count = addWishlistVote(req.user.id);
   res.json({ ok: true, count });
 });
 router.get('/api/wishlist', (req, res) => res.json({ count: getWishlistCount() }));
 
-// ═══════════════════════════════════════════════════════════════════
-//  BAN / APPEAL
-// ═══════════════════════════════════════════════════════════════════
+// ban / appeal
 router.get('/api/ban-status', requireAuthAllowBanned, (req, res) => {
   const ban = getBan(req.user.id);
   if (!ban) return res.json({ banned: false });
@@ -1841,9 +1805,7 @@ router.post('/api/appeal', requireAuthAllowBanned, (req, res) => {
   res.json({ ok: true });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  PROFILE
-// ═══════════════════════════════════════════════════════════════════
+// profile
 router.post('/api/profile/update', requireAuth, (req, res) => {
   const { name, surname, age, school } = req.body || {};
   if (!name || !surname || !age || !school) return res.status(400).json({ error: 'All fields required' });
@@ -1862,9 +1824,7 @@ router.post('/api/profile/change-password', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  AI ONBOARDING VALIDATION
-// ═══════════════════════════════════════════════════════════════════
+// ai onboarding validation
 router.post('/api/onboarding/validate', requireAuth, async (req, res) => {
   const { name, surname, school } = req.body || {};
   if (!name || !surname || !school) return res.status(400).json({ error: 'name, surname, school required' });
@@ -1897,7 +1857,7 @@ Respond ONLY with valid JSON:
   } catch { res.json({ valid: true }); }
 });
 
-// ── Sitemap ───────────────────────────────────────────────────────
+// sitemap
 router.get('/sitemap.xml', (req, res) => {
   const base  = (process.env.WEBSITE_URL || `https://${req.headers.host}`).replace(/\/+$/, '');
   const today = new Date().toISOString().slice(0, 10);
@@ -1907,9 +1867,7 @@ router.get('/sitemap.xml', (req, res) => {
   res.send(xml);
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  ADMIN API
-// ═══════════════════════════════════════════════════════════════════
+// admin api
 const ADMIN_PASS = 'smarttech@#2';
 
 function requireAdmin(req, res, next) {
@@ -1978,7 +1936,7 @@ router.post('/api/admin/grant-sub', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Admin: withdrawals ─────────────────────────────────────────────────────
+// admin: withdrawals
 router.get('/api/admin/withdrawals', requireAdmin, (req, res) => {
   res.json({ ok: true, withdrawals: getAllWithdrawals() });
 });
@@ -1993,7 +1951,7 @@ router.post('/api/admin/withdrawal/:id/complete', requireAdmin, async (req, res)
   res.json({ ok: true, withdrawal: getWithdrawal(req.params.id) });
 });
 
-// Mark a withdrawal as failed — refunds the wallet (money must not vanish)
+// Mark a withdrawal as failed - refunds the wallet (money must not vanish)
 router.post('/api/admin/withdrawal/:id/fail', requireAdmin, async (req, res) => {
   const w = getWithdrawal(req.params.id);
   if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
@@ -2039,7 +1997,7 @@ router.post('/api/admin/appeal/:userId/:decision', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Missing admin routes ──────────────────────────────────────────
+// missing admin routes
 
 // User search (used by admin dashboard instead of /api/admin/users)
 router.get('/api/admin/users/search', requireAdmin, (req, res) => {
@@ -2080,7 +2038,7 @@ router.get('/api/admin/users/search', requireAdmin, (req, res) => {
   res.json({ users: enriched });
 });
 
-// ── Admin: upload a notification/announcement image → returns a public URL ──
+// admin: upload a notification/announcement image -> returns a public url
 router.post('/api/admin/notifications/upload-image', requireAdmin, proofUpload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
   const extRaw = (req.file.mimetype.split('/')[1] || 'jpg').toLowerCase().replace('jpeg', 'jpg');
@@ -2116,13 +2074,13 @@ router.get('/api/admin/server', requireAdmin, async (req, res) => {
   });
 });
 
-// ── Admin: recent logins (in-memory only) ─────────────────────────────────
+// admin: recent logins (in-memory only)
 router.get('/api/admin/logins', requireAdmin, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 100, 300);
   res.json({ ok: true, count: getLoginCount(), logins: getRecentLogins(limit) });
 });
 
-// ── Admin: VAPID (web-push keys) management ────────────────────────────────
+// admin: vapid (web-push keys) management
 router.get('/api/admin/vapid', requireAdmin, (req, res) => {
   res.json({
     ok: true,
@@ -2135,8 +2093,8 @@ router.get('/api/admin/vapid', requireAdmin, (req, res) => {
 
 router.post('/api/admin/vapid/generate', requireAdmin, (req, res) => {
   // Generate a fresh VAPID keypair and persist it to data/vapid.json.
-  // ⚠️ Rotating keys INVALIDATES all existing push subscriptions — browsers
-  // must re-subscribe (toggle notifications off → on) to receive pushes again.
+  // Rotating keys INVALIDATES all existing push subscriptions - browsers
+  // must re-subscribe (toggle notifications off -> on) to receive pushes again.
   const keys = webpush.generateVAPIDKeys();
   vapidKeys = { publicKey: keys.publicKey, privateKey: keys.privateKey, source: 'custom' };
   try {
@@ -2222,7 +2180,7 @@ router.delete('/api/admin/papers/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Admin: Upload update.json ──────────────────────────────────────────────
+// admin: upload update.json
 router.post('/api/admin/update/upload-json', requireAdmin,
   updateJsonUpload.single('updateJson'),
   async (req, res) => {
@@ -2236,7 +2194,7 @@ router.post('/api/admin/update/upload-json', requireAdmin,
   }
 );
 
-// ── Admin: Upload APK ───────────────────────────────────────────────────────
+// admin: upload apk
 router.post('/api/admin/update/upload-apk', requireAdmin,
   apkUpload.single('apkFile'),
   async (req, res) => {
@@ -2250,7 +2208,7 @@ router.post('/api/admin/update/upload-apk', requireAdmin,
   }
 );
 
-// ── Admin: Get current update info ─────────────────────────────────────────
+// admin: get current update info
 router.get('/api/admin/update/info', requireAdmin, async (req, res) => {
   try {
     const info = await fetchUpdateJson();
@@ -2261,7 +2219,7 @@ router.get('/api/admin/update/info', requireAdmin, async (req, res) => {
   }
 });
 
-// ── Public: App fetches update info (no auth required) ─────────────────────
+// public: app fetches update info (no auth required)
 // The DroidScript app hits this on startup and compares its local version.json
 router.get('/api/app/update', async (req, res) => {
   try {
@@ -2273,7 +2231,7 @@ router.get('/api/app/update', async (req, res) => {
   }
 });
 
-// Sync — push all data files to Supabase
+// Sync - push all data files to Supabase
 router.post('/api/admin/sync', requireAdmin, async (req, res) => {
   try {
     const { syncToSupabase } = await import('../utils/supabase-data.js');
@@ -2284,9 +2242,7 @@ router.post('/api/admin/sync', requireAdmin, async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  PROMO LINKS (Admin)
-// ═══════════════════════════════════════════════════════════════════
+// promo links (admin)
 
 // List all promo links
 router.get('/api/admin/promo-links', requireAdmin, (req, res) => {
@@ -2299,7 +2255,7 @@ router.post('/api/admin/promo-links', requireAdmin, (req, res) => {
   if (!plan) return res.status(400).json({ error: 'plan required' });
   try {
     const link = createPromoLink({ plan, maxUses, expiresAt, note });
-    // Async sync to Supabase — don't await
+    // Async sync to Supabase - don't await
     import('../utils/supabase-data.js').then(m => m.uploadDataFile('promo_links.json')).catch(() => {});
     res.json({ ok: true, link });
   } catch (e) {
@@ -2323,9 +2279,7 @@ router.delete('/api/admin/promo-links/:code', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  PROMO REDEEM (Public — called after login/signup)
-// ═══════════════════════════════════════════════════════════════════
+// promo redeem (public - called after login/signup)
 
 // Check if a promo code is valid (public, no auth needed)
 router.get('/api/promo/:code/check', (req, res) => {
@@ -2349,16 +2303,14 @@ router.post('/api/promo/:code/redeem', requireAuth, (req, res) => {
   res.json({ ok: true, plan: result.plan });
 });
 
-// ── Helper ────────────────────────────────────────────────────────
+// helper
 function sanitizeUser(user) {
   if (!user) return null;
   const { passwordHash, pendingToken, pendingOtp, otpCreatedAt, ...safe } = user;
   return safe;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-//  DATA FILE MANAGEMENT (Admin)
-// ═══════════════════════════════════════════════════════════════════
+// data file management (admin)
 
 // List all managed files: local presence + size + Supabase presence
 router.get('/api/admin/data/status', requireAdmin, async (req, res) => {
@@ -2494,7 +2446,7 @@ router.delete('/api/admin/data/:name', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── /api/config — expose public env vars to frontend ─────────────────────────
+// /api/config - expose public env vars to frontend
 router.get('/api/config', (req, res) => {
   res.json({
     supabaseUrl:     process.env.SUPABASE_URL     || '',
@@ -2502,7 +2454,7 @@ router.get('/api/config', (req, res) => {
   });
 });
 
-// ── Admin: upload + parse a .txt exam file, bulk-create exam + questions ──────
+// admin: upload + parse a .txt exam file, bulk-create exam + questions
 router.post('/api/admin/zimsec/upload-txt', requireAdmin, (req, res) => {
   try {
     const { title, subject, level, year, description, scheduledAt, durationMins, txtContent } = req.body || {};
@@ -2544,7 +2496,7 @@ router.post('/api/admin/zimsec/upload-txt', requireAdmin, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Admin: get short answer question and AI-mark it ──────────────────────────
+// admin: get short answer question and ai-mark it
 router.post('/api/admin/zimsec/ai-mark', requireAdmin, async (req, res) => {
   try {
     const { question, modelAnswer, studentAnswer } = req.body || {};
@@ -2564,12 +2516,10 @@ router.post('/api/admin/zimsec/ai-mark', requireAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ═══════════════════════════════════════════════════════════════════
-//  ZIMSEC — Exams
-// ═══════════════════════════════════════════════════════════════════
+// zimsec - exams
 
 // List all exams (requires auth)
-// POST /api/zimsec/exams/:id/unlock — subscriber unlocks a 3-day exam window
+// POST /api/zimsec/exams/:id/unlock - subscriber unlocks a 3-day exam window
 router.post('/api/zimsec/exams/:id/unlock', requireOnboarded, (req, res) => {
   const uid  = req.user.id;
   const plan = req.user.plan || getUserPlan(uid);
@@ -2579,7 +2529,7 @@ router.post('/api/zimsec/exams/:id/unlock', requireOnboarded, (req, res) => {
   const exam = getZimsecExam(req.params.id);
   if (!exam || !exam.active) return res.status(404).json({ error: 'Exam not found' });
 
-  // Already submitted — no point unlocking again
+  // Already submitted - no point unlocking again
   const existing = getUserZimsecResults(uid).find(r => r.examId === exam.id);
   if (existing) return res.status(403).json({ error: 'You have already submitted this exam.' });
 
@@ -2616,13 +2566,13 @@ router.get('/api/zimsec/exams/:id', requireOnboarded, (req, res) => {
   const exam = getZimsecExam(req.params.id);
   if (!exam || !exam.active) return res.status(404).json({ error: 'Exam not found' });
 
-  // ── Access check: scheduled window OR subscriber unlock window ─────────────
+  // access check: scheduled window or subscriber unlock window
   const uid  = req.user.id;
   const plan = req.user.plan || getUserPlan(uid);
   const now  = Date.now();
 
   if (exam.scheduledAt) {
-    // Scheduled exam — 60-min entry window logic
+    // Scheduled exam - 60-min entry window logic
     const startTs  = new Date(exam.scheduledAt).getTime();
     const entryEnd = startTs + 60 * 60_000;
     const examEnd  = startTs + (exam.durationMins || 60) * 60_000;
@@ -2635,7 +2585,7 @@ router.get('/api/zimsec/exams/:id', requireOnboarded, (req, res) => {
       if (now > examEnd)    return res.status(403).json({ error: 'Exam window has closed.' });
     }
   } else {
-    // No schedule — subscriber self-serve: must have an active 3-day unlock
+    // No schedule - subscriber self-serve: must have an active 3-day unlock
     if (plan === 'free') {
       return res.status(403).json({ error: 'Exam access requires a paid plan.', code: 'UPGRADE_REQUIRED' });
     }
@@ -2646,13 +2596,13 @@ router.get('/api/zimsec/exams/:id', requireOnboarded, (req, res) => {
     }
   }
 
-  // ── Exit-ban enforcement ─────────────────────────────────────────────────
+  // exit-ban enforcement
   const exitedExams = JSON.parse(req.user.exitedExams || '[]');
   if (exitedExams.includes(exam.id)) {
     return res.status(403).json({ error: 'You exited this exam during a previous attempt. Access has been permanently revoked.' });
   }
 
-  // ── One-attempt enforcement: block if already submitted ─────────────────
+  // one-attempt enforcement: block if already submitted
   const existing = getUserZimsecResults(req.user.id).find(r => r.examId === exam.id);
   if (existing) {
     return res.status(403).json({ error: 'You have already submitted this exam.' });
@@ -2666,7 +2616,7 @@ router.get('/api/zimsec/exams/:id', requireOnboarded, (req, res) => {
   res.json({ ok: true, exam, questions });
 });
 
-// ── Helper: AI mark a short answer question using GPT-4O ─────────────────────
+// helper: ai mark a short answer question using gpt-4o
 async function markShortAnswer(question, studentAnswer) {
   if (!studentAnswer?.trim()) {
     return { score: 0, feedback: 'No answer provided.' };
@@ -2734,17 +2684,17 @@ Respond ONLY with valid JSON on a single line (no markdown, no code fence):
   }
 }
 
-// Submit an exam attempt (requires auth) — supports MCQ + AI-marked short answers
+// Submit an exam attempt (requires auth) - supports MCQ + AI-marked short answers
 router.post('/api/zimsec/exams/:id/submit', requireOnboarded, async (req, res) => {
   try {
     const exam = getZimsecExam(req.params.id);
     if (!exam || !exam.active) return res.status(404).json({ error: 'Exam not found' });
 
-    // ── Server-side timing enforcement ──────────────────────────────────────
+    // server-side timing enforcement
     const now = Date.now();
     if (exam.scheduledAt) {
       const startTs = new Date(exam.scheduledAt).getTime();
-      // Entry window is 60 minutes; grace: allow submit up to 30s after the exam window closes
+      // 60 min window, but let them submit if they're a few secs late
       const examEnd = startTs + (exam.durationMins || 60) * 60_000 + 30_000;
       if (now < startTs) {
         return res.status(403).json({ error: 'Exam has not started yet.' });
@@ -2754,7 +2704,7 @@ router.post('/api/zimsec/exams/:id/submit', requireOnboarded, async (req, res) =
       }
     }
 
-    // ── Self-serve unlock window validation ─────────────────────────────────
+    // self-serve unlock window validation
     if (!exam.scheduledAt) {
       const uid = req.user.id;
       const plan = req.user.plan || getUserPlan(uid);
@@ -2766,13 +2716,13 @@ router.post('/api/zimsec/exams/:id/submit', requireOnboarded, async (req, res) =
       }
     }
 
-    // ── Exit-ban enforcement ─────────────────────────────────────────────────
+    // exit-ban enforcement
     const exitedExams = JSON.parse(req.user.exitedExams || '[]');
     if (exitedExams.includes(exam.id)) {
       return res.status(403).json({ error: 'You exited this exam during a previous attempt.' });
     }
 
-    // ── One-attempt enforcement ──────────────────────────────────────────────
+    // one-attempt enforcement
     const existing = getUserZimsecResults(req.user.id).find(r => r.examId === exam.id);
     if (existing) {
       return res.status(403).json({ error: 'You have already submitted this exam.' });
@@ -2841,13 +2791,13 @@ router.post('/api/zimsec/exams/:id/submit', requireOnboarded, async (req, res) =
 });
 
 
-// Record exam exit — permanently bans user from re-entering
+// Record exam exit - permanently bans user from re-entering
 router.post('/api/zimsec/exams/:id/exit', requireAuth, async (req, res) => {
   try {
     const exam = getZimsecExam(req.params.id);
     if (!exam) return res.status(404).json({ error: 'Exam not found' });
 
-    // Only ban if they haven't already submitted
+    // skip ban if they already submitted
     const existing = getUserZimsecResults(req.user.id).find(r => r.examId === exam.id);
     if (existing) return res.json({ ok: true, message: 'Already submitted, no ban needed.' });
 
@@ -2898,7 +2848,7 @@ router.get('/api/zimsec/leaderboard/named', requireAuth, (req, res) => {
   res.json({ ok: true, leaderboard: named });
 });
 
-// ── Admin ZIMSEC routes ───────────────────────────────────────────────────
+// admin zimsec routes
 
 // Admin: list all exams (including inactive)
 router.get('/api/admin/zimsec/exams', requireAdmin, (req, res) => {
@@ -2984,22 +2934,16 @@ router.delete('/api/admin/zimsec/results/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ══════════════════════════════════════════════════════════════════════════
-//  NOTIFICATIONS — page + API routes
-// ══════════════════════════════════════════════════════════════════════════
+// notifications - page + api routes
 
-// Admin page
-router.get('/admin/notifications', (req, res) =>
-  res.sendFile(path.join(PUBLIC_DIR, 'notifications.html'))
-)
 
-// ── Push subscription endpoints ────────────────────────────────────────────
+// push subscription endpoints
 router.get('/api/push/vapid-public-key', (req, res) => {
   res.json({ key: VAPID_PUBLIC() });
 });
 
 router.post('/api/push/subscribe', requireAuth, (req, res) => {
-  // NOTE: use req.user (set by requireAuth) — previously getSessionUser(req)
+  // NOTE: use req.user (set by requireAuth) - previously getSessionUser(req)
   // was passed the req object instead of a token, returned null, and threw,
   // so subscriptions were never saved (the "enabled but no push" bug).
   const user = req.user;
@@ -3024,7 +2968,7 @@ router.get('/~/notifications', requireAuth, (req, res) =>
   res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'notifications.html'))
 );
 
-// ── Admin: CRUD ───────────────────────────────────────────────────────────
+// admin: crud
 router.get('/api/admin/notifications', requireAdmin, (req, res) => {
   res.json({ ok: true, notifications: getAllNotifications() });
 });
@@ -3060,7 +3004,7 @@ router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
         body:  description || '',
         icon:  '/images/logo.png',
         badge: '/images/logo.png',
-        image: bgImage || undefined,   // big banner image in the push notification
+        image: bgImage || undefined, // big banner image in the push notification
         url:   '/~/notifications',
       });
       push.sent = result.sent;
@@ -3075,7 +3019,7 @@ router.post('/api/admin/notifications', requireAdmin, async (req, res) => {
   import('../utils/supabase-data.js').then(m => m.uploadDataFile('notifications.json')).catch(() => {});
 });
 
-// ── Admin: send a TEST push to all subscribers (diagnostic) ────────────────
+// admin: send a test push to all subscribers (diagnostic)
 router.post('/api/admin/notifications/test', requireAdmin, async (req, res) => {
   const { title, body, image } = req.body || {};
   const subscriptions = getAllPushSubscriptions();
@@ -3125,7 +3069,7 @@ router.get('/api/admin/pixabay-search', requireAdmin, async (req, res) => {
   }
 });
 
-// ── User-facing: get my notifications + unread count ─────────────────────
+// user-facing: get my notifications + unread count
 router.get('/api/notifications', requireAuth, (req, res) => {
   const uid   = req.user.id;
   const email = req.user.email;
@@ -3136,7 +3080,7 @@ router.get('/api/notifications', requireAuth, (req, res) => {
   res.json({ ok: true, notifications: result, unread });
 });
 
-// ── User-facing: mark one or all as read ─────────────────────────────────
+// user-facing: mark one or all as read
 router.post('/api/notifications/read', requireAuth, (req, res) => {
   const uid = req.user.id;
   const { notifId, all } = req.body || {};
@@ -3151,9 +3095,7 @@ router.post('/api/notifications/read', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ══════════════════════════════════════════════════════════════════════════
-//  AMBASSADOR — Admin CRUD
-// ══════════════════════════════════════════════════════════════════════════
+// ambassador - admin crud
 
 // Serve ambassador dashboard page
 router.get('/~/ambassador', requireAuth, (req, res) => {
@@ -3203,7 +3145,7 @@ router.delete('/api/admin/ambassadors/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Ambassador Self Routes ────────────────────────────────────────────────
+// ambassador self routes
 
 function requireAmbassador(req, res, next) {
   if (!req.user) return res.status(401).json({ error: 'Unauthorised' });

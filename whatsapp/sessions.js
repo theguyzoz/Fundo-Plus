@@ -1,6 +1,6 @@
-// whatsapp/sessions.js — In-memory session state for Fundo Plus (WATI edition)
+// whatsapp/sessions.js - In-memory session state for Fundo Plus (WATI edition)
 
-const sessions = new Map();           // phone → session object
+const sessions = new Map(); // phone -> session object
 const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const timers   = new Map();
 
@@ -39,7 +39,7 @@ function resetTimer(phone) {
   const handle = setTimeout(() => {
     sessions.delete(phone);
     timers.delete(phone);
-    // Session expired silently — user will restart on next message
+    // Session expired silently - user will restart on next message
   }, SESSION_TIMEOUT_MS);
   timers.set(phone, handle);
 }

@@ -1,4 +1,4 @@
-// website/auth.js — Session-based auth middleware (no Firebase)
+// website/auth.js - Session-based auth middleware (no Firebase)
 // Web sessions are held in-memory AND persisted to data/sessions.json so that
 // Supabase can restore them across redeploys.
 import crypto from 'crypto';
@@ -9,7 +9,7 @@ import { getWebUser, saveWebUser, isBanned, DATA_DIR } from '../store.js';
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const SESSION_TTL   = 7 * 24 * 3600 * 1000; // 7 days
 
-// ── Persistence helpers ────────────────────────────────────────────────────
+// persistence helpers
 function loadSessionsFromDisk() {
   try {
     if (!fs.existsSync(SESSIONS_FILE)) return new Map();
@@ -38,7 +38,7 @@ async function syncSessionsToSupabase() {
   } catch (e) { console.warn('[auth] Supabase sync sessions.json:', e.message); }
 }
 
-// ── In-memory session map (pre-populated from disk on boot) ───────────────
+// in-memory session map (pre-populated from disk on boot)
 const sessions = loadSessionsFromDisk();
 
 /** Re-read sessions.json from disk — call this after Supabase sync on startup
@@ -153,7 +153,7 @@ export function requireLinkedWhatsApp(req, res, next) {
         message: 'Your 14-day trial has ended. Please pair your WhatsApp to continue.',
       });
     }
-    // Still in grace — pass through with warning
+    // Still in grace - pass through with warning
     req.pairingWarning = { daysLeft, message: `Link your WhatsApp within ${daysLeft} day(s) to keep full access.` };
   }
   next();

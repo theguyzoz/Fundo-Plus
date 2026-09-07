@@ -17,7 +17,7 @@
     }
     body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-    /* ── Sidebar (mirrored from main dash) ── */
+    /* sidebar (mirrored from main dash) */
     .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 228px; background: var(--surf); border-right: 1px solid var(--brd); display: flex; flex-direction: column; padding: 0 0 1rem; z-index: 60; box-shadow: var(--sh); transition: transform .25s cubic-bezier(.4,0,.2,1); }
     .sb-logo { display: flex; align-items: center; gap: 9px; padding: 18px 16px 14px; border-bottom: 1px solid var(--brd); font-size: 1.05rem; font-weight: 900; color: var(--acc); }
     .sb-section { font-size: .65rem; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .1em; padding: 14px 16px 4px; }
@@ -30,7 +30,7 @@
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.3); z-index: 55; backdrop-filter: blur(2px); }
     .sidebar-overlay.show { display: block; }
 
-    /* ── Topbar ── */
+    /* topbar */
     .topbar { position: fixed; top: 0; left: 228px; right: 0; height: 56px; background: #ffffffee; backdrop-filter: blur(10px); border-bottom: 1px solid var(--brd); display: flex; align-items: center; padding: 0 20px; gap: 12px; z-index: 50; box-shadow: var(--sh); }
     .topbar-title { font-size: .95rem; font-weight: 800; color: var(--txt); }
     .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -38,15 +38,15 @@
     .ham { display: none; background: 0 0; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--txt); flex-shrink: 0; }
     .ham:hover { background: var(--bg); }
 
-    /* ── Main ── */
+    /* main */
     .main { margin-left: 228px; margin-top: 56px; padding: 28px 24px; min-height: calc(100vh - 56px); }
 
-    /* ── Page header ── */
+    /* page header */
     .page-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; }
     .page-title { font-size: 1.3rem; font-weight: 900; letter-spacing: -.4px; }
     .page-sub { font-size: .82rem; color: var(--mut); margin-top: 3px; }
 
-    /* ── Push toggle card ── */
+    /* push toggle card */
     .push-card { background: var(--surf); border: 1px solid var(--brd); border-radius: var(--rad); padding: 18px 20px; box-shadow: var(--sh); margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .push-icon { width: 44px; height: 44px; background: linear-gradient(135deg,#eff6ff,#dbeafe); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .push-body { flex: 1; min-width: 200px; }
@@ -57,7 +57,7 @@
     .push-status.denied  { background: #fee2e2; color: #dc2626; }
     .push-status.default { background: #f1f5f9; color: var(--mut); }
 
-    /* ── Toggle switch ── */
+    /* toggle switch */
     .toggle-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .toggle-label { font-size: .8rem; font-weight: 700; color: var(--mut); }
     .toggle { position: relative; width: 46px; height: 26px; cursor: pointer; }
@@ -67,7 +67,7 @@
     .toggle input:checked + .slider { background: var(--acc); }
     .toggle input:checked + .slider::before { transform: translateX(20px); }
 
-    /* ── Filters ── */
+    /* filters */
     .filters-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
     .filter-btn { padding: 6px 14px; border: 1.5px solid var(--brd); border-radius: 20px; background: var(--surf); cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--mut); transition: .12s; }
     .filter-btn.active { border-color: var(--acc); color: var(--acc); background: #eff6ff; }
@@ -75,7 +75,7 @@
     .search-inp { margin-left: auto; padding: 7px 14px; border: 1.5px solid var(--brd); border-radius: 9px; font-size: .83rem; outline: 0; background: var(--surf); color: var(--txt); width: min(220px, 100%); }
     .search-inp:focus { border-color: var(--acc); }
 
-    /* ── Toolbar ── */
+    /* toolbar */
     .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
     .count-label { font-size: .8rem; color: var(--mut); font-weight: 600; }
     .btn-sm { padding: 6px 14px; border-radius: 8px; border: 1.5px solid var(--brd); background: var(--surf); color: var(--mut); font-size: .78rem; font-weight: 700; cursor: pointer; transition: .12s; }
@@ -83,7 +83,7 @@
     .btn-acc { padding: 6px 14px; border-radius: 8px; border: none; background: var(--acc); color: #fff; font-size: .78rem; font-weight: 700; cursor: pointer; transition: .12s; }
     .btn-acc:hover { background: var(--acc2); }
 
-    /* ── Notification cards ── */
+    /* notification cards */
     .notif-grid { display: flex; flex-direction: column; gap: 10px; }
     .notif-card {
       background: var(--surf); border: 1.5px solid var(--brd); border-radius: 14px;
@@ -113,13 +113,13 @@
     .nc-act-btn.read-btn { border-color: #bfdbfe; background: #eff6ff; color: var(--acc); }
     .unread-dot { width: 8px; height: 8px; background: var(--acc); border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
 
-    /* ── Empty state ── */
+    /* empty state */
     .empty-state { text-align: center; padding: 60px 20px; color: var(--mut); }
     .empty-state .e-icon { font-size: 3rem; margin-bottom: 14px; }
     .empty-state h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; color: var(--txt); }
     .empty-state p { font-size: .84rem; line-height: 1.6; }
 
-    /* ── Detail Modal ── */
+    /* detail modal */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 300; padding: 16px; backdrop-filter: blur(4px); }
     .modal-bg.open { display: flex; }
     .notif-modal { background: var(--surf); border-radius: 18px; width: min(420px, 100%); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: popIn .2s cubic-bezier(.175,.885,.32,1.275); }
@@ -135,10 +135,10 @@
     .nm-ok { padding: 9px 24px; background: var(--acc); color: #fff; border: none; border-radius: 9px; font-weight: 800; font-size: .85rem; cursor: pointer; }
     .nm-ok:hover { background: var(--acc2); }
 
-    /* ── Load more ── */
+    /* load more */
     .load-more-wrap { text-align: center; padding: 20px 0; }
 
-    /* ── Responsive ── */
+    /* responsive */
     @media (max-width: 900px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: none; }
@@ -159,7 +159,7 @@
 
 <div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
 
-<!-- ── Sidebar ── -->
+<!-- sidebar -->
 <nav class="sidebar" id="sidebar">
   <div class="sb-logo">
     <img src="/images/logo.png" width="26" height="26" alt="Fundo Plus" style="border-radius:8px">
@@ -246,7 +246,7 @@
   </div>
 </nav>
 
-<!-- ── Topbar ── -->
+<!-- topbar -->
 <header class="topbar">
   <button class="ham" onclick="toggleSb()" aria-label="Menu">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -262,7 +262,7 @@
   </div>
 </header>
 
-<!-- ── Detail Modal ── -->
+<!-- detail modal -->
 <div class="modal-bg" id="detail-modal">
   <div class="notif-modal">
     <div class="nm-bg" id="nm-bg">
@@ -281,7 +281,7 @@
   </div>
 </div>
 
-<!-- ── Main ── -->
+<!-- main -->
 <main class="main">
 
   <!-- Push notification card -->
@@ -355,7 +355,7 @@
   let _visibleCount = 20;
   let _currentModal = null;
 
-  // ── Auth ─────────────────────────────────────────────────────────────
+  // auth
   async function init() {
     if (!token) { location.href = '/login'; return; }
     try {
@@ -378,7 +378,7 @@
     return fetch(url, { ...opts, headers });
   }
 
-  // ── Notifications ─────────────────────────────────────────────────────
+  // notifications
   async function loadNotifications() {
     try {
       const r = await apiFetch('/api/notifications');
@@ -490,7 +490,7 @@
     renderList();
   }
 
-  // ── Mark read ─────────────────────────────────────────────────────────
+  // mark read
   async function markOne(id) {
     await apiFetch('/api/notifications/read', { method: 'POST', body: JSON.stringify({ notifId: id }) });
     await loadNotifications();
@@ -501,7 +501,7 @@
     await loadNotifications();
   }
 
-  // ── Modal ─────────────────────────────────────────────────────────────
+  // modal
   function openModal(id) {
     const n = _allNotifs.find(x => x.id === id);
     if (!n) return;
@@ -543,7 +543,7 @@
     if (e.target === document.getElementById('detail-modal')) closeModal();
   });
 
-  // ── Push notifications (Web Push via Service Worker) ─────────────────────
+  // push notifications (web push via service worker)
   const SW_PATH = '/sw.js';
 
   async function initPushState() {
@@ -606,7 +606,7 @@
     const toggle = document.getElementById('push-toggle');
 
     if (toggle.checked) {
-      // ── Enable push ──────────────────────────────────────────────────
+      // enable push
       setPushBadge('subscribing');
       try {
         const perm = await Notification.requestPermission();
@@ -640,7 +640,7 @@
         setPushBadge('default');
       }
     } else {
-      // ── Disable push ─────────────────────────────────────────────────
+      // disable push
       try {
         const sub = await getActiveSub();
         if (sub) {
@@ -666,18 +666,18 @@
     return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
   }
 
-  // ── Sidebar ───────────────────────────────────────────────────────────
+  // sidebar
   function toggleSb() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
   function closeSb()  { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
 
-  // ── Logout ────────────────────────────────────────────────────────────
+  // logout
   async function doLogout() {
     try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch {}
     localStorage.removeItem('fp_session'); sessionStorage.removeItem('fp_session');
     location.href = '/login';
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────
+  // helpers
   function escH(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }

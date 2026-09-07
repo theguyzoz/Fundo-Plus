@@ -1,10 +1,10 @@
-// whatsapp/wa.js — Facebook WhatsApp Cloud API client for Fundo Plus
-// Replaces wati.js — all outbound messages go through here.
+// whatsapp/wa.js - Facebook WhatsApp Cloud API client for Fundo Plus
+// Replaces wati.js - all outbound messages go through here.
 //
 // Required env vars:
-//   WA_PHONE_NUMBER_ID  — WhatsApp Phone Number ID from Meta developer console
-//   WA_ACCESS_TOKEN     — Permanent system user token (or temp token for dev)
-//   WA_VERIFY_TOKEN     — Any string you set in the Facebook webhook config
+// WA_PHONE_NUMBER_ID - WhatsApp Phone Number ID from Meta developer console
+// WA_ACCESS_TOKEN - Permanent system user token (or temp token for dev)
+// WA_VERIFY_TOKEN - Any string you set in the Facebook webhook config
 
 const BASE = 'https://graph.facebook.com/v21.0';
 
@@ -40,7 +40,7 @@ async function post(payload) {
   return json;
 }
 
-// ── Send a plain text message ─────────────────────────────────────────────
+// send a plain text message
 export async function sendText(phone, message) {
   return post({
     messaging_product: 'whatsapp',
@@ -50,7 +50,7 @@ export async function sendText(phone, message) {
   });
 }
 
-// ── Send interactive reply buttons (max 3) ────────────────────────────────
+// send interactive reply buttons (max 3)
 // buttons = [{ text: 'Label' }, ...]
 export async function sendButtons(phone, bodyText, buttons) {
   const payload = {
@@ -71,7 +71,7 @@ export async function sendButtons(phone, bodyText, buttons) {
   return post(payload);
 }
 
-// ── Send an interactive list message ─────────────────────────────────────
+// send an interactive list message
 // sections = [{ title, rows: [{ id, title, description }] }]
 export async function sendList(phone, bodyText, buttonText, sections) {
   return post({
@@ -89,7 +89,7 @@ export async function sendList(phone, bodyText, buttonText, sections) {
   });
 }
 
-// ── Send a document by URL ────────────────────────────────────────────────
+// send a document by url
 export async function sendDocument(phone, fileUrl, filename, caption) {
   return post({
     messaging_product: 'whatsapp',

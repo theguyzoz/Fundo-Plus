@@ -1,4 +1,4 @@
-// utils/media.js — Download media from WhatsApp messages
+// utils/media.js - Download media from WhatsApp messages
 import { downloadContentFromMessage } from '@whiskeysockets/baileys';
 
 export default async function downloadMedia(sock, msg) {

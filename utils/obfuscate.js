@@ -93,7 +93,7 @@ function minifyHTML(html) {
       (_, css) => `<style>${minifyCSS(css)}</style>`)
     .replace(/<script>([\s\S]*?)<\/script>/gi,
       (_, js)  => `<script>${minifyJS(js)}</script>`)
-    // Never collapse newlines inside <script> — that breaks ASI and template literals.
+    // Never collapse newlines inside <script> - that breaks ASI and template literals.
     .replace(/(<script>[\s\S]*?<\/script>)|([ \t]*\n[ \t]*)/gi, (m, script, nl) => script || '')
     .replace(/>\s{2,}</g, '> ')
     .replace(/\s{2,}</g, ' <')

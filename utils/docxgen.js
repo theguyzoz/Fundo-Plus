@@ -1,4 +1,4 @@
-// utils/docxgen.js — Simple DOCX generator using raw XML (no external service)
+// utils/docxgen.js - Simple DOCX generator using raw XML (no external service)
 import { Buffer } from 'buffer';
 
 // Minimal DOCX = a zip containing word/document.xml + rels + content types

@@ -1,7 +1,7 @@
-// app/index.js — Mount this in bot.js with:
-//   import { mountAppRoutes } from './app/index.js';
-//   mountAppRoutes(app);
-// Call mountAppRoutes(app) right after:  app.use('/', websiteRouter);
+// app/index.js - Mount this in bot.js with:
+// import { mountAppRoutes } from './app/index.js';
+// mountAppRoutes(app);
+// Call mountAppRoutes(app) right after: app.use('/', websiteRouter);
 
 import appAuthRouter from './auth.js';
 import appMainRouter from './main.js';
@@ -27,7 +27,7 @@ export function mountAppRoutes(app) {
     next();
   });
 
-  app.use('/api/app/auth', appAuthRouter);   // login, pending, poll, confirm, me, logout
-  app.use('/api/app',      appMainRouter);   // /me, /papers, /papers/:id/download
-  app.use('/api/app',      appAIRouter);     // /chat, /chat/clear
+  app.use('/api/app/auth', appAuthRouter); // login, pending, poll, confirm, me, logout
+  app.use('/api/app',      appMainRouter); // /me, /papers, /papers/:id/download
+  app.use('/api/app',      appAIRouter); // /chat, /chat/clear
 }

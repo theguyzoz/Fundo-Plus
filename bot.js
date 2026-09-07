@@ -1,4 +1,4 @@
-// bot.js — FundaPlus Web Server + API Routes v7 (No Firebase)
+// bot.js - FundaPlus Web Server + API Routes v7 (No Firebase)
 import express    from 'express';
 import http       from 'http';
 import { Server } from 'socket.io';
@@ -36,7 +36,7 @@ const TEMP_DIR   = path.join(__dirname, 'temp');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const PAPERS_DIR = path.join(__dirname, 'data', 'papers');
 const DASH_DIR   = path.join(PUBLIC_DIR, 'dashboard');
-// AUTH_FOLDER removed — Baileys auth no longer used
+// AUTH_FOLDER removed - Baileys auth no longer used
 
 [DATA_DIR, TEMP_DIR, path.join(TEMP_DIR,'docs'), DASH_DIR].forEach(d => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
@@ -47,7 +47,7 @@ app.set('trust proxy', 1);
 const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
 
-// ── Multer ─────────────────────────────────────────────────────────────────
+// multer
 const pdfUpload = multer({
   storage: multer.memoryStorage(),
   limits : { fileSize: 20 * 1024 * 1024 },
@@ -58,7 +58,7 @@ const pdfUpload = multer({
 });
 const anyUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20*1024*1024 } });
 
-// ── Middleware ─────────────────────────────────────────────────────────────
+// middleware
 app.use((req, res, next) => {
   const isMultipart = (req.headers['content-type'] || '').includes('multipart/form-data');
   const isFileRoute = (req.path.includes('/upload') && !req.path.includes('/upload-txt')) || req.path.startsWith('/api/admin/files/');
@@ -67,9 +67,10 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true }));
 app.use(obfuscateMiddleware(PUBLIC_DIR));
-// Block direct URL access to admin.html — only /fundopageadmin route serves it
+// no direct hits on admin.html, it only loads from the /fundopageadmin url
 app.use((req, res, next) => {
-  if (req.path.toLowerCase() === '/admin.html') return res.status(404).send('Not found');
+  const p = req.path.toLowerCase();
+  if (p === '/admin.html' || p === '/notifications.html') return res.status(404).send('Not found');
   next();
 });
 app.use(express.static(PUBLIC_DIR, {
@@ -96,26 +97,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// ── Bot state ──────────────────────────────────────────────────────────────
+// bot state
 global.botState = {
   startTime: Date.now(), messagesCount: 0, commandsCount: 0,
   connectedAt: null, phoneNumber: null, status: 'fb_cloud_api',
 };
 
-// ── Admin ──────────────────────────────────────────────────────────────────
+// admin
 const ADMIN_PASSWORD = 'smarttech@#2';
 const adminSessions  = new Set();
 function requireAdmin(req, res, next) {
   const token = req.headers['x-admin-token'] || req.query.token;
-  // Accept either a session token issued here OR the admin password itself
-  // (website/routes.js login returns the password as the token, and it is
-  // mounted first, so it wins the /api/admin/login request).
+  // takes the admin password or a session token. website routes.js is mounted
+  // first so its login wins on /api/admin/login
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
   if (token === ADMIN_PASSWORD || adminSessions.has(token)) return next();
   return res.status(401).json({ error: 'Unauthorized' });
 }
 
-// ── Cron jobs ──────────────────────────────────────────────────────────────
+// cron jobs
 let _syncReady = false;
 cron.schedule('*/2 * * * *', async () => { if (_syncReady) await syncToSupabase(); });
 cron.schedule('0 16 * * *', async () => {
@@ -141,15 +141,11 @@ cron.schedule('*/30 * * * *', () => {
   } catch {}
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  WEBSITE ROUTES (login, onboarding, dashboard API, AI chat, quiz)
-// ═══════════════════════════════════════════════════════════════════════════
+// website routes (login, onboarding, dashboard api, ai chat, quiz)
 app.use('/', websiteRouter);
 mountAppRoutes(app);
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  PUBLIC ROUTES
-// ═══════════════════════════════════════════════════════════════════════════
+// public routes
 app.get('/health', (req,res) => res.status(200).send('OK'));
 
 app.get('/api/status', async (req,res) => {
@@ -191,7 +187,7 @@ app.get('/api/resources', requireAuth, (req,res) => {
   res.json({ papers: listPapersLocal() });
 });
 
-// ─── Quiz upload (extract PDF text) ───────────────────────────────────────
+// quiz upload (extract pdf text)
 app.post('/api/quiz/upload', requireAuth, pdfUpload.single('file'), async (req,res) => {
   try {
     const file = req.file;
@@ -205,7 +201,7 @@ app.post('/api/quiz/upload', requireAuth, pdfUpload.single('file'), async (req,r
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// ─── Papers (feature routes) ───────────────────────────────────────────────
+// papers (feature routes)
 app.post('/api/papers/upload', requireAuth, pdfUpload.single('file'), async (req,res) => {
   try {
     const file = req.file;
@@ -245,12 +241,12 @@ app.post('/api/papers/public-upload', requireAuth, pdfUpload.single('file'), asy
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Proxy: download or preview a paper via server URL ─────────────────────
-// GET /api/papers/file/:filename?mode=download  → force download
-// GET /api/papers/file/:filename                → inline preview
-// ── Paper cache: tracks last-access per file, evicts after 30 min of inactivity ──
+// proxy: download or preview a paper via server url
+// GET /api/papers/file/:filename?mode=download -> force download
+// GET /api/papers/file/:filename -> inline preview
+// paper cache: tracks last-access per file, evicts after 30 min of inactivity
 const PAPER_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
-const paperLastAccess = new Map();       // filename → timestamp
+const paperLastAccess = new Map(); // filename -> timestamp
 
 function touchPaperCache(filename) {
   paperLastAccess.set(filename, Date.now());
@@ -277,8 +273,8 @@ function evictStalePaperCache() {
 // Check for stale files every 5 minutes
 setInterval(evictStalePaperCache, 5 * 60 * 1000);
 
-// GET /api/papers/file/:filename?mode=download  → force download
-// GET /api/papers/file/:filename                → inline preview
+// GET /api/papers/file/:filename?mode=download -> force download
+// GET /api/papers/file/:filename -> inline preview
 // On first request: fetches from Supabase, caches locally.
 // Cache evicted after 30 min of no requests for that file.
 app.get('/api/papers/file/:filename', requireAuthOrApp, async (req, res) => {
@@ -286,7 +282,7 @@ app.get('/api/papers/file/:filename', requireAuthOrApp, async (req, res) => {
   const mode      = req.query.mode === 'download' ? 'attachment' : 'inline';
   const localPath = path.join(PAPERS_DIR, filename);
 
-  // 1. Serve from local cache — reset inactivity timer on each hit
+  // 1. Serve from local cache - reset inactivity timer on each hit
   if (fs.existsSync(localPath)) {
     touchPaperCache(filename);
     res.setHeader('Content-Type', 'application/pdf');
@@ -329,8 +325,8 @@ app.get('/api/papers/file/:filename', requireAuthOrApp, async (req, res) => {
   }
 });
 
-// ── Public paper URL (server-owned, authenticated preview link) ───────────
-// GET /api/papers/:id/url  → returns { downloadUrl, previewUrl } using server's own URLs
+// public paper url (server-owned, authenticated preview link)
+// GET /api/papers/:id/url -> returns { downloadUrl, previewUrl } using server's own URLs
 app.get('/api/papers/:id/url', requireAuth, (req, res) => {
   const paper = listPapersLocal().find(p => p.id === req.params.id);
   if (!paper) return res.status(404).json({ error: 'Paper not found' });
@@ -344,9 +340,7 @@ app.get('/api/papers/:id/url', requireAuth, (req, res) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  FACEBOOK WHATSAPP CLOUD API WEBHOOK
-// ═══════════════════════════════════════════════════════════════════════════
+// facebook whatsapp cloud api webhook
 
 // Facebook sends a GET to verify the webhook endpoint on first setup.
 // Set Callback URL to: https://<your-domain>/api/wa/webhook
@@ -368,7 +362,7 @@ app.get('/api/wa/webhook', (req, res) => {
 
 // Facebook POSTs inbound messages here.
 app.post('/api/wa/webhook', async (req, res) => {
-  // Acknowledge immediately — Facebook expects a fast 200
+  // Acknowledge immediately - Facebook expects a fast 200
   res.sendStatus(200);
 
   try {
@@ -379,9 +373,7 @@ app.post('/api/wa/webhook', async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  ADMIN
-// ═══════════════════════════════════════════════════════════════════════════
+// admin
 app.post('/api/admin/login', (req,res) => {
   const { password } = req.body;
   if (!password || password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Invalid password' });
@@ -462,7 +454,7 @@ app.post('/api/admin/sync',    requireAdmin, async (req,res) => {
   catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Admin: User & Ban Management ───────────────────────────────────────────
+// admin: user & ban management
 app.get('/api/admin/users/search', requireAdmin, (req, res) => {
   const q = (req.query.q || '').toLowerCase().trim();
   const all = getAllWebUsers();
@@ -529,9 +521,7 @@ app.get('/api/admin/appeals', requireAdmin, (req, res) => {
 
 
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  PAGE ROUTES
-// ═══════════════════════════════════════════════════════════════════════════
+// page routes
 app.get('/',             (req,res) => res.sendFile(path.join(PUBLIC_DIR,'index.html')));
 app.get('/resources',    (req,res) => res.sendFile(path.join(PUBLIC_DIR,'resources.html')));
 app.get('/banned',       (req,res) => serveObfuscated(path.join(PUBLIC_DIR,'banned.html'))(req,res));
@@ -542,22 +532,21 @@ function sendAdminPage(req, res) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
 }
-app.get(['/fundopageadmin', '/fundopageadmin/', '/admin', '/admin/'], sendAdminPage);
+app.get(['/fundopageadmin', '/fundopageadmin/'], sendAdminPage);
 app.get('/redeem/:code', (req,res) => res.sendFile(path.join(PUBLIC_DIR,'redeem.html')));
-// Legacy redirect
+// old urls people may still have bookmarked
 app.get('/dashboard',    (req,res) => res.redirect('/~'));
 app.get('/ac',           (req,res) => res.redirect('/~/account'));
-// SPA catch-all
+// anything else = 404 page. no api here, that gets json below
 app.get('*', (req,res,next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(PUBLIC_DIR,'index.html'));
+  res.status(404).sendFile(path.join(PUBLIC_DIR,'404.html'));
 });
+app.use((req,res) => res.status(404).json({ error: 'Not found' }));
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  SOCKET.IO + MESSENGER REAL-TIME
-// ═══════════════════════════════════════════════════════════════════════════
-const messengerSockets = new Map(); // userId → Set of sockets
-const presenceCounts = new Map();   // userId → connection count
+// socket.io + messenger real-time
+const messengerSockets = new Map(); // userId -> Set of sockets
+const presenceCounts = new Map(); // userId -> connection count
 
 function presenceGoOnline(userId) {
   if (!userId) return;
@@ -599,7 +588,7 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   socket.emit('status', buildStatusPayload());
 
-  // ── Messenger real-time ────────────────────────────────────────────────
+  // messenger real-time
   socket.on('messenger:join', (userId) => {
     const uid = socket.authedUserId || userId;
     if (!uid) return;
@@ -700,14 +689,14 @@ export async function startWebServer(port) {
   console.log(`   SUPABASE_URL: ${process.env.SUPABASE_URL ? '✅ SET' : '⚠️  MISSING — sync disabled'}`);
   console.log(`   HF_TOKEN: ${process.env.HF_TOKEN ? '✅ SET' : '⚠️  MISSING — image gen disabled'}\n`);
   await syncFromSupabase();
-  reloadCommunityFromDisk();   // ✅ Re-read community.json now that Supabase has restored it
-  reloadWebUsersFromDisk();    // ✅ Re-read webusers.json — sessions auth depends on this
-  reloadMessengerFromDisk();   // ✅ Re-read messenger.json — pending messages and settings
-  reloadSessionsFromDisk();    // ✅ Re-read sessions.json — restores logged-in users
-  reloadPapersFromDisk();      // ✅ Re-read papers.json — restored papers visible in memory
-  reloadMoneyFromDisk();       // ✅ Re-read wallet/subscription files — restored balances visible
-  reloadRemainingFromDisk();   // ✅ Re-read bans, promo links, usage, wishlist, support, proofs, JIDs, etc.
-  _syncReady = true; // ✅ Only start pushing after we've pulled real data
+  reloadCommunityFromDisk(); // Re-read community.json now that Supabase has restored it
+  reloadWebUsersFromDisk(); // Re-read webusers.json - sessions auth depends on this
+  reloadMessengerFromDisk(); // Re-read messenger.json - pending messages and settings
+  reloadSessionsFromDisk(); // Re-read sessions.json - restores logged-in users
+  reloadPapersFromDisk(); // Re-read papers.json - restored papers visible in memory
+  reloadMoneyFromDisk(); // Re-read wallet/subscription files - restored balances visible
+  reloadRemainingFromDisk(); // Re-read bans, promo links, usage, wishlist, support, proofs, JIDs, etc.
+  _syncReady = true; // don't push anything until the first pull is done
   console.log('[Sync] ✅ Initial pull complete — cron sync now active');
   server.listen(port, '0.0.0.0', () => {
     console.log(`✅  FundaPlus on 0.0.0.0:${port}`);

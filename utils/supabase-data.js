@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { WebSocket } from 'ws';
 
-// Node 20 does not expose WebSocket globally — Supabase Realtime needs it.
+// Node 20 does not expose WebSocket globally - Supabase Realtime needs it.
 if (typeof globalThis.WebSocket === 'undefined') {
   globalThis.WebSocket = WebSocket;
 }
@@ -82,27 +82,27 @@ export const MANAGED_FILES = [
   'store.json', 'usage.json', 'images.json', 'pdf.json',
   'synced.json', 'premium.json', 'doc.json', 'messages.json',
   'papers.json', 'wishlist.json', 'community.json', 'messenger.json', 'promo_links.json',
-  // App sessions & app config — synced so they survive redeploys
+  // App sessions & app config - synced so they survive redeploys
   'app.json', 'sessions.json',
-  // ZIMSEC exam data — synced so exams/questions/results survive server crashes
+  // ZIMSEC exam data - synced so exams/questions/results survive server crashes
   'zimsec-exams.json', 'zimsec-questions.json', 'zimsec-results.json',
-  // Notifications & push subscriptions — survive redeploys
+  // Notifications & push subscriptions - survive redeploys
   'notifications.json', 'notif_reads.json', 'push_subscriptions.json',
-  // Ambassador system — referral links, referrals, exam perms
+  // Ambassador system - referral links, referrals, exam perms
   'ambassadors.json',
   // WhatsApp pairing state
   'wa.json',
   // Payment proof metadata
   'proofmeta.json',
-  // Wallet / money system — balances, in-flight top-ups, withdrawals
+  // Wallet / money system - balances, in-flight top-ups, withdrawals
   'balances.json', 'pending_deposits.json', 'withdrawals.json',
 ];
 
-// ── Dirty tracking ────────────────────────────────────────────────────────
+// dirty tracking
 // Stores a SHA-256 hash of each file as it was last pulled from Supabase
 // (or last successfully pushed). A file is only uploaded when its current
-// on-disk content differs from that hash — i.e., new data was written locally.
-const _pulledHashes = new Map(); // filename → sha256 hex
+// on-disk content differs from that hash - i.e., new data was written locally.
+const _pulledHashes = new Map(); // filename -> sha256 hex
 
 function sha256(text) {
   return crypto.createHash('sha256').update(text, 'utf8').digest('hex');
@@ -111,12 +111,12 @@ function sha256(text) {
 /** Returns true only if the on-disk file differs from its last-pulled hash. */
 function isDirty(filename) {
   const fp = path.join(DATA_DIR, filename);
-  if (!fs.existsSync(fp)) return false;         // nothing on disk → nothing to push
+  if (!fs.existsSync(fp)) return false; // nothing on disk -> nothing to push
   const current     = fs.readFileSync(fp, 'utf8');
   const currentHash = sha256(current);
   const pulledHash  = _pulledHashes.get(filename);
   if (pulledHash === undefined) {
-    // Never pulled — first deploy or file not yet in bucket.
+    // Never pulled - first deploy or file not yet in bucket.
     // Treat as dirty so real content gets pushed.
     return true;
   }
@@ -127,9 +127,8 @@ function isDirty(filename) {
 function markClean(filename, content) {
   _pulledHashes.set(filename, sha256(content));
 }
-// ─────────────────────────────────────────────────────────────────────────
 
-// ── Safety guard ──────────────────────────────────────────────────────────
+// safety guard
 const isEmpty = (v) => {
   if (!v || typeof v !== 'object') return true;
   return Object.values(v).every(x =>
@@ -138,7 +137,6 @@ const isEmpty = (v) => {
     (typeof x === 'object' && !Array.isArray(x) && Object.keys(x).length === 0)
   );
 };
-// ─────────────────────────────────────────────────────────────────────────
 
 export async function uploadDataFile(filename) {
   const sb = getClient(); if (!sb) return;
@@ -148,7 +146,7 @@ export async function uploadDataFile(filename) {
 
   const content = fs.readFileSync(fp, 'utf8');
 
-  // Never upload empty stubs — protects real Supabase data on fresh deploys.
+  // Never upload empty stubs - protects real Supabase data on fresh deploys.
   let parsed;
   try { parsed = JSON.parse(content); } catch { return; }
   if (isEmpty(parsed)) {
@@ -193,7 +191,7 @@ export async function downloadDataFile(filename) {
     const { data, error } = await sb.storage.from(BUCKET).download(filename);
     if (error) { console.log(`[Supabase:Data] ${filename} not in bucket (${error.message})`); return false; }
     const text = await data.text();
-    JSON.parse(text); // validate — throws if corrupt
+    JSON.parse(text); // validate - throws if corrupt
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(path.join(DATA_DIR, filename), text, 'utf8');
     markClean(filename, text); // record baseline hash so uploads only fire on new writes
@@ -272,7 +270,7 @@ export async function getDataStats() {
   return checkDataCapacity(0);
 }
 
-// ── ZIMSEC Exam Backup & Expiry Cleanup ──────────────────────────────────────
+// zimsec exam backup & expiry cleanup
 //
 // Uploads a snapshot of a single exam + its questions as a JSON backup to
 // Supabase Storage immediately after creation (crash-safe).
@@ -281,7 +279,6 @@ export async function getDataStats() {
 // Backup path in bucket: zimsec_backups/<examId>.json
 // This is separate from the main zimsec-exams.json/zimsec-questions.json files
 // so each exam has an independent, atomic snapshot for crash recovery.
-// ────────────────────────────────────────────────────────────────────────────
 
 const EXAM_BACKUP_PREFIX = 'zimsec_backups/';
 const EXAM_EXPIRY_GRACE_MS = 3 * 60 * 60 * 1000; // 3 hours after exam end
@@ -405,7 +402,7 @@ export async function purgeExpiredExamBackups() {
         const text    = await dl.text();
         const payload = JSON.parse(text);
         const endsAt  = payload?.exam?.examEndsAt;
-        if (!endsAt) continue; // no end time — leave it
+        if (!endsAt) continue; // no end time - leave it
 
         const endMs = new Date(endsAt).getTime();
         if (now > endMs + EXAM_EXPIRY_GRACE_MS) {
