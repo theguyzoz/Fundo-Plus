@@ -152,6 +152,34 @@
                                                 document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(t==='login'&&i===0)||(t==='register'&&i===1)));
                                                 hideErr();
                                                 }
+                                                function setMode(m) {
+                                                loginMode=m;
+                                                document.getElementById('f-email').style.display = m==='email'?'':'none';
+                                                document.getElementById('f-phone').style.display = m==='phone'?'':'none';
+                                                document.getElementById('mode-email').classList.toggle('active',m==='email');
+                                                document.getElementById('mode-phone').classList.toggle('active',m==='phone');
+                                                }
+                                                
+function showErr(msg){const el=document.getElementById('err');el.classList.remove('ok');el.textContent=msg;el.style.display='block';}
+                                                function showOk(msg){const el=document.getElementById('err');el.classList.add('ok');el.textContent=msg;el.style.display='block';}
+                                                function hideErr(){const el=document.getElementById('err');el.classList.remove('ok');el.style.display='none';}
+                                                
+async function doLogin(){
+                                                hideErr();
+                                                const pass=document.getElementById('l-pass').value;
+                                                const email=loginMode==='email'?document.getElementById('l-email').value.trim():'';
+                                                const phone=loginMode==='phone'?document.getElementById('l-phone').value.trim():'';
+                                                if(!pass||(loginMode==='email'&&!email)||(loginMode==='phone'&&!phone))return showErr('Please fill in all fields.');
+                                                const btn=document.getElementById('login-btn');btn.disabled=true;btn.textContent='Signing in…';
+                                                try{
+                                                const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,phone,password:pass})});
+                                                const d=await r.json();
+                                                if(!r.ok)return showErr(d.error||'Login failed');
+                                                localStorage.setItem('fp_session',d.token);localStorage.setItem('fp_user',JSON.stringify(d.user));
+                                                const redir=new URLSearchParams(window.location.search).get('redirect');
+                                                window.location.href=d.onboarded?(redir||'/~'):('/onboarding'+(redir?'?redirect='+encodeURIComponent(redir):''));
+                                                }catch(e){showErr('Network error.');}finally{btn.disabled=false;btn.textContent='Sign In';}
+                                                }
                                                 async function doRegister(){
                                                 hideErr();
                                                 const email=document.getElementById('r-email').value.trim();
