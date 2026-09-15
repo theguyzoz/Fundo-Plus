@@ -2,6 +2,7 @@
 import express  from 'express';
 import fs       from 'fs';
 import path     from 'path';
+import crypto   from 'crypto';
 import multer   from 'multer';
 import { fileURLToPath } from 'url';
 import {
@@ -334,6 +335,7 @@ router.get('/~/leaderboard', pageGuardBan, (req, res) => res.sendFile(path.join(
 router.get('/~/exam',       pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'exam.html')));
 router.get('/~/exam/take',  pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'exam-take.html')));
 router.get('/~/exam/:id',   pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'exam.html')));
+router.get('/~/quiz',       pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'quiz.html')));
 router.get('/ai',           pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'ai.html')));
 router.get('/about',       (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'about.html')));
 router.get('/terms',       (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'terms.html')));
@@ -643,6 +645,81 @@ router.post('/api/chat', requireOnboarded, async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Quiz Engine v2 — server-side sessions, robust parsing, real AI marking
+// ---------------------------------------------------------------------------
+const QUIZ_SESSION_TTL   = 3 * 3600 * 1000; // 3 hours
+const QUIZ_SESSIONS_FILE = path.join(DATA_DIR, 'quiz-sessions.json');
+const QUIZ_HISTORY_FILE  = path.join(DATA_DIR, 'quiz-history.json');
+const QUIZ_MAX_HISTORY   = 20;
+
+function loadQuizSessions() {
+  try {
+    if (!fs.existsSync(QUIZ_SESSIONS_FILE)) return {};
+    const all = JSON.parse(fs.readFileSync(QUIZ_SESSIONS_FILE, 'utf8')) || {};
+    const now = Date.now();
+    let dirty = false;
+    for (const [id, s] of Object.entries(all)) {
+      if (!s || now - (s.createdAt || 0) > QUIZ_SESSION_TTL) { delete all[id]; dirty = true; }
+    }
+    if (dirty) saveQuizSessions(all);
+    return all;
+  } catch { return {}; }
+}
+function saveQuizSessions(all) {
+  try { fs.writeFileSync(QUIZ_SESSIONS_FILE, JSON.stringify(all)); }
+  catch (e) { console.warn('[quiz] sessions write:', e.message); }
+}
+function loadQuizHistory() {
+  try {
+    if (!fs.existsSync(QUIZ_HISTORY_FILE)) return {};
+    return JSON.parse(fs.readFileSync(QUIZ_HISTORY_FILE, 'utf8')) || {};
+  } catch { return {}; }
+}
+function saveQuizHistory(all) {
+  try { fs.writeFileSync(QUIZ_HISTORY_FILE, JSON.stringify(all)); }
+  catch (e) { console.warn('[quiz] history write:', e.message); }
+}
+function recordQuizAttempt(uid, attempt) {
+  const all = loadQuizHistory();
+  const list = Array.isArray(all[uid]) ? all[uid] : [];
+  list.unshift({
+    id: 'qa_' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36),
+    ...attempt,
+    createdAt: new Date().toISOString(),
+  });
+  all[uid] = list.slice(0, QUIZ_MAX_HISTORY);
+  saveQuizHistory(all);
+}
+
+// ZIMSEC-style grades + XP
+function quizGradeFor(pct) {
+  if (pct >= 80) return 'A';
+  if (pct >= 70) return 'B';
+  if (pct >= 60) return 'C';
+  if (pct >= 50) return 'D';
+  if (pct >= 40) return 'E';
+  return 'U';
+}
+function quizXpFor(pct, earned) {
+  const base = Math.round(earned * 10);
+  const bonus = pct >= 80 ? 25 : pct >= 60 ? 15 : pct >= 40 ? 5 : 0;
+  return base + bonus;
+}
+
+const QUIZ_STYLES = ['mixed', 'mcq', 'short'];
+const QUIZ_DIFFICULTIES = ['mixed', 'easy', 'medium', 'hard'];
+
+function quizDifficultyLine(difficulty) {
+  switch (difficulty) {
+    case 'easy':   return 'Keep questions easy: recall of key facts and definitions, O-Level foundation level.';
+    case 'medium': return 'Mix of recall and understanding: explain, compare and apply concepts, standard O-Level exam level.';
+    case 'hard':   return 'Challenging: application, analysis and A-Level style reasoning. Include multi-step problems.';
+    default:       return 'Vary difficulty: start easy, build to exam-level, finish with one stretch question.';
+  }
+}
+
+// POST /api/quiz/generate — validated, difficulty-aware, answers kept server-side
 router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
   const uid = req.user.id;
   const isLinked = !!req.user.jid;
@@ -653,69 +730,254 @@ router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
     return res.status(429).json({ error: `Daily quiz limit reached (${limits.quizzes}). Upgrade for more.` });
   }
 
-  const { text, count = 10, style = 'mixed' } = req.body || {};
+  const body = req.body || {};
+  const text = typeof body.text === 'string' ? body.text.trim() : '';
+  let count = parseInt(body.count, 10);
+  if (!Number.isFinite(count)) count = 10;
+  count = Math.max(1, Math.min(20, count));
+  const style = QUIZ_STYLES.includes(body.style) ? body.style : 'mixed';
+  const difficulty = QUIZ_DIFFICULTIES.includes(body.difficulty) ? body.difficulty : 'mixed';
+  const subject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 80) : '';
+
   if (!text) return res.status(400).json({ error: 'No text provided' });
+  if (text.length < 20) return res.status(400).json({ error: 'Please paste more study material (or a fuller topic description).' });
 
   try {
-    const prompt = `You are a quiz generator for Zimbabwean students (ZIMSEC curriculum).
-Based on the following study material, generate exactly ${count} quiz questions.
-
-Style: ${style} (multiple-choice, short-answer, or mixed)
-
-For multiple-choice use this EXACT format:
-Q: [question]
-A) [option]
-B) [option]
-C) [option]
-D) [option]
-ANSWER: [correct letter]
-EXPLANATION: [clear explanation]
-
-For short-answer use:
-Q: [question]
-ANSWER: [model answer]
-EXPLANATION: [full explanation]
-
-Study material:
-${text.slice(0, 6000)}
-
-Generate ${count} questions now. Always include EXPLANATION for every question:`;
-
     const { gpt4oChat } = await import('../utils/gpt-service.js');
-    const result = await gpt4oChat({
-      systemInstruction: 'You are a quiz generator. Always include EXPLANATION for each question.',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 3000, temperature: 0.7,
-    });
-    if (!result.success) throw new Error(result.error);
-    const questions = parseQuizFromAI(result.answer, style);
+    const styleLine = style === 'mcq'
+      ? 'ALL questions must be multiple-choice with exactly 4 options (A-D).'
+      : style === 'short'
+        ? 'ALL questions must be short-answer (no options).'
+        : 'Mix multiple-choice (with exactly 4 options A-D) and short-answer questions.';
+
+    const buildPrompt = (strict) => [
+      'You are a quiz setter for Zimbabwean students (ZIMSEC O-Level / A-Level).',
+      `Based ONLY on the study material below, generate exactly ${count} quiz questions.`,
+      styleLine,
+      quizDifficultyLine(difficulty),
+      subject ? `Subject: ${subject}.` : '',
+      '',
+      'Reply with a JSON array ONLY (no markdown, no code fences, no commentary). Each item:',
+      '{"q":"question text","type":"mcq"|"short","options":["opt A","opt B","opt C","opt D"],"answer":"A"|"model answer text","explanation":"1-2 sentence explanation"}',
+      'Rules: mcq answer is the correct LETTER (A-D); short answer is the full model answer; every item MUST have an explanation.',
+      strict ? 'IMPORTANT: your last reply was not valid JSON. Reply with ONLY the raw JSON array this time.' : '',
+      '',
+      'Study material:',
+      text.slice(0, 6000),
+    ].filter(Boolean).join('\n');
+
+    let questions = [];
+    for (let attempt = 0; attempt < 2 && !questions.length; attempt++) {
+      const result = await gpt4oChat({
+        systemInstruction: 'You are a ZIMSEC quiz setter. You always reply with a raw JSON array of questions.',
+        messages: [{ role: 'user', content: buildPrompt(attempt === 1) }],
+        max_tokens: 4000, temperature: attempt === 1 ? 0.3 : 0.7,
+      });
+      if (!result.success) throw new Error(result.error || 'AI service failed');
+      questions = parseQuizFromAI(result.answer || '', style, count);
+    }
+    if (!questions.length) {
+      return res.status(502).json({ error: 'The AI returned an unreadable quiz. Please try again with more detailed material.' });
+    }
+
+    // stash full quiz (with answers) server-side; client only gets the paper
+    const quizId = 'qz_' + crypto.randomBytes(12).toString('hex');
+    const sessions = loadQuizSessions();
+    sessions[quizId] = {
+      id: quizId, userId: uid, createdAt: Date.now(),
+      subject, style, difficulty, count: questions.length, questions,
+    };
+    // prune: keep max 30 sessions per user
+    const mine = Object.values(sessions).filter(s => s.userId === uid).sort((a, b) => b.createdAt - a.createdAt);
+    for (const s of mine.slice(30)) delete sessions[s.id];
+    saveQuizSessions(sessions);
+
     incrementQuizUsage(uid);
-    res.json({ questions, raw: result.answer });
+    const paper = questions.map(q => ({ id: q.id, type: q.type, question: q.question, options: q.options }));
+    res.json({ quizId, subject, style, difficulty, count: paper.length, questions: paper });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-function parseQuizFromAI(rawText, style) {
-  const questions = [];
-  const text = typeof rawText === 'string' ? rawText : JSON.stringify(rawText || '');
-  if (!text.trim()) return [];
-  const blocks = text.split(/\n(?=Q:)/g);
-  for (const block of blocks) {
-    if (!block.trim().startsWith('Q:')) continue;
-    const lines = block.trim().split('\n');
-    const question = lines[0].replace(/^Q:\s*/, '').trim();
-    const options = {};
-    let answer = '', explanation = '';
-    for (const l of lines.slice(1)) {
-      if (/^A\)/.test(l)) options.A = l.slice(2).trim();
-      else if (/^B\)/.test(l)) options.B = l.slice(2).trim();
-      else if (/^C\)/.test(l)) options.C = l.slice(2).trim();
-      else if (/^D\)/.test(l)) options.D = l.slice(2).trim();
-      else if (/^ANSWER:/.test(l)) answer = l.replace('ANSWER:', '').trim();
-      else if (/^EXPLANATION:/.test(l)) explanation = l.replace('EXPLANATION:', '').trim();
+// POST /api/quiz/mark — real marking: MCQ exact-match + AI short-answer marking
+router.post('/api/quiz/mark', requireOnboarded, async (req, res) => {
+  try {
+    const { quizId, answers = {}, timeTaken = 0 } = req.body || {};
+    if (!quizId) return res.status(400).json({ error: 'quizId required' });
+    const sessions = loadQuizSessions();
+    const session = sessions[quizId];
+    if (!session || session.userId !== req.user.id) {
+      return res.status(404).json({ error: 'Quiz session expired or not found. Generate a new quiz.' });
     }
-    if (question) questions.push({ question, options, answer, explanation, type: Object.keys(options).length > 0 ? 'mcq' : 'short' });
+    const questions = session.questions || [];
+    if (!questions.length) return res.status(400).json({ error: 'Quiz has no questions.' });
+
+    // mark MCQ locally; collect short answers for batched AI marking
+    const breakdown = [];
+    const saJobs = [];
+    for (const q of questions) {
+      const given = answers[q.id];
+      if (q.type === 'mcq') {
+        const right = String(q.answer || '').trim().toUpperCase();
+        const picked = String(given ?? '').trim().toUpperCase();
+        const validPick = ['A', 'B', 'C', 'D'].includes(picked);
+        const correct = validPick && picked === right;
+        breakdown.push({
+          id: q.id, type: 'mcq', question: q.question, options: q.options,
+          given: validPick ? picked : null, correct, score: correct ? 1 : 0,
+          correctAnswer: right, explanation: q.explanation || '',
+        });
+      } else {
+        saJobs.push({ q, given: typeof given === 'string' ? given : '' });
+      }
+    }
+    // AI-mark short answers in parallel (helper never throws; score 0 on failure)
+    const saResults = await Promise.all(saJobs.map(async ({ q, given }) => {
+      const r = await markShortAnswer({ text: q.question, answer: q.answer }, given);
+      return {
+        id: q.id, type: 'short', question: q.question,
+        given: (given || '').trim(), correct: r.score >= 0.5, score: r.score,
+        correctAnswer: q.answer || '', explanation: q.explanation || '', feedback: r.feedback || '',
+      };
+    }));
+    breakdown.push(...saResults);
+    // restore original question order
+    const order = new Map(questions.map((q, i) => [q.id, i]));
+    breakdown.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+
+    const earned = breakdown.reduce((s, b) => s + (b.score || 0), 0);
+    const total = questions.length;
+    const rounded = Math.round(earned * 10) / 10;
+    const pct = total ? Math.round((earned / total) * 100) : 0;
+    const grade = quizGradeFor(pct);
+    const xp = quizXpFor(pct, earned);
+    const correct = breakdown.filter(b => b.correct).length;
+    const partial = breakdown.filter(b => b.type === 'short' && b.score > 0 && b.score < 1).length;
+    const skipped = breakdown.filter(b => !b.given).length;
+
+    recordQuizAttempt(req.user.id, {
+      quizId, subject: session.subject || '', style: session.style, difficulty: session.difficulty,
+      count: total, score: rounded, total, pct, grade, xp, timeTaken: parseInt(timeTaken, 10) || 0,
+    });
+
+    res.json({ ok: true, quizId, score: rounded, total, pct, grade, xp, correct, partial, skipped, breakdown });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/quiz/history — recent attempts for the logged-in user
+router.get('/api/quiz/history', requireAuth, (req, res) => {
+  const all = loadQuizHistory();
+  res.json({ attempts: (all[req.user.id] || []).slice(0, QUIZ_MAX_HISTORY) });
+});
+
+// Parse AI quiz output: JSON array first, then tolerant line-based formats.
+function parseQuizFromAI(rawText, style, wantCount = 10) {
+  const text = typeof rawText === 'string' ? rawText : JSON.stringify(rawText || '');
+  if (!text || !text.trim()) return [];
+  const fromJson = parseQuizJson(text);
+  if (fromJson.length) return normalizeQuiz(fromJson, wantCount);
+  const fromLines = parseQuizLines(text);
+  return normalizeQuiz(fromLines, wantCount);
+}
+
+function parseQuizJson(text) {
+  try {
+    let clean = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+    const start = clean.search(/[\[{]/);
+    if (start > 0) clean = clean.slice(start);
+    const parsed = JSON.parse(clean);
+    const arr = Array.isArray(parsed) ? parsed : parsed.questions || parsed.quiz || [];
+    if (!Array.isArray(arr)) return [];
+    return arr.map((it) => {
+      if (!it || typeof it !== 'object') return null;
+      const question = String(it.q ?? it.question ?? '').trim();
+      if (!question) return null;
+      const optsRaw = it.options;
+      const options = {};
+      if (Array.isArray(optsRaw)) {
+        ['A', 'B', 'C', 'D'].forEach((k, i) => { if (optsRaw[i] != null) options[k] = String(optsRaw[i]).trim(); });
+      } else if (optsRaw && typeof optsRaw === 'object') {
+        for (const k of ['A', 'B', 'C', 'D']) {
+          const v = optsRaw[k] ?? optsRaw[k.toLowerCase()];
+          if (v != null && String(v).trim()) options[k] = String(v).trim();
+        }
+      }
+      const hasOpts = Object.keys(options).length >= 2;
+      return {
+        question,
+        options: hasOpts ? options : {},
+        answer: String(it.answer ?? it.correct ?? '').trim(),
+        explanation: String(it.explanation ?? it.why ?? '').trim(),
+        type: hasOpts ? 'mcq' : 'short',
+      };
+    }).filter(Boolean);
+  } catch { return []; }
+}
+
+function parseQuizLines(text) {
+  // tolerant fallback: Q:/Question N:/numbered blocks, A)/A./A: options, Answer:/Correct: keys
+  const questions = [];
+  const lines = text.replace(/\r/g, '').split('\n');
+  let cur = null;
+  const push = () => { if (cur && cur.question) questions.push(cur); cur = null; };
+  const startQ = (l) => {
+    const m = l.match(/^(?:\*{0,2}Q(?:uestion)?\s*(?:\d+)?\*{0,2}\s*[:.\-])\s*(.+)/i)
+      || l.match(/^(?:\*{0,2}Question\s+\d+\*{0,2}\s*[:.\-])\s*(.+)/i)
+      || l.match(/^(\d{1,2})[.)]\s+(.{8,})/);
+    return m ? (m[2] !== undefined ? m[2] : m[1]).trim() : null;
+  };
+  for (const raw of lines) {
+    const l = raw.trim().replace(/\*\*/g, '').trim();
+    if (!l) continue;
+    const qText = startQ(l);
+    if (qText) { push(); cur = { question: qText, options: {}, answer: '', explanation: '', type: 'short' }; continue; }
+    if (!cur) continue;
+    let m;
+    if ((m = l.match(/^\(?([A-Da-d])\s*[).:]\s*(.+)/))) {
+      cur.options[m[1].toUpperCase()] = m[2].trim();
+      cur.type = 'mcq';
+    } else if ((m = l.match(/^(?:ANSWER|ANS|CORRECT(?:\s+ANSWER)?|KEY)\s*[:\-]\s*(.+)/i))) {
+      cur.answer = m[1].trim();
+    } else if ((m = l.match(/^(?:EXPLANATION|WHY|REASON)\s*[:\-]\s*(.+)/i))) {
+      cur.explanation = m[1].trim();
+    } else if (cur.question && !Object.keys(cur.options).length && !cur.answer) {
+      // continuation of a short-answer question stem
+      if (l.length < 300) cur.question += ' ' + l;
+    }
   }
+  push();
   return questions;
+}
+
+function normalizeQuiz(list, wantCount) {
+  const out = [];
+  const seen = new Set();
+  for (const q of list) {
+    if (out.length >= wantCount) break;
+    const question = String(q.question || '').replace(/^\d{1,2}[.)]\s*/, '').trim();
+    if (question.length < 5 || seen.has(question.toLowerCase())) continue;
+    seen.add(question.toLowerCase());
+    const options = {};
+    for (const k of ['A', 'B', 'C', 'D']) {
+      const v = q.options && q.options[k] != null ? String(q.options[k]).trim() : '';
+      if (v) options[k] = v.slice(0, 300);
+    }
+    const hasOpts = Object.keys(options).length >= 2;
+    let answer = String(q.answer || '').trim();
+    // normalize mcq letter answers like "B) Photosynthesis" or "(C)" -> "B"
+    const letter = answer.match(/^\(?([A-Da-d])\b/);
+    if (hasOpts && letter) answer = letter[1].toUpperCase();
+    if (hasOpts && !['A', 'B', 'C', 'D'].includes(answer)) continue; // unusable mcq
+    if (!hasOpts && !answer) continue; // short answer needs a model answer
+    out.push({
+      id: 'q' + (out.length + 1),
+      type: hasOpts ? 'mcq' : 'short',
+      question: question.slice(0, 600),
+      options,
+      answer: answer.slice(0, 600),
+      explanation: String(q.explanation || '').slice(0, 600),
+    });
+  }
+  return out;
 }
 
 // resources / papers

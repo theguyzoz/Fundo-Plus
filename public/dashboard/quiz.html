@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="apple-touch-icon" href="/images/logo.png">
+  <title>Quiz Studio — Fundo Plus</title>
+  <style>
+    *,::after,::before{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f6f8ff;--surf:#fff;--brd:#e2e8f5;--acc:#2563eb;--acc2:#1d4ed8;--grn:#16a34a;--red:#dc2626;--txt:#0f172a;--mut:#64748b;--rad:12px;--warn:#f59e0b;--sh:0 1px 3px rgba(37,99,235,.07),0 4px 20px rgba(37,99,235,.06)}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:0 0 1rem;z-index:60;box-shadow:var(--sh);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+    .sb-logo{display:flex;align-items:center;gap:9px;padding:18px 16px 14px;border-bottom:1px solid var(--brd);font-size:1.05rem;font-weight:900;color:var(--acc)}
+    .sb-section{font-size:.65rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;padding:14px 16px 4px}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:1px 8px;border-radius:9px;cursor:pointer;font-size:.86rem;color:var(--mut);font-weight:600;text-decoration:none;transition:.12s}
+    .nav-item:hover{background:#eff6ff;color:var(--acc)}
+    .nav-item.active{background:#eff6ff;color:var(--acc);font-weight:700}
+    .nav-item svg{flex-shrink:0;opacity:.8}
+    .sb-bottom{margin-top:auto;border-top:1px solid var(--brd);padding-top:8px}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.3);z-index:55;backdrop-filter:blur(2px)}
+    .sidebar-overlay.show{display:block}
+    .topbar{position:fixed;top:0;left:228px;right:0;height:56px;background:#ffffffee;backdrop-filter:blur(10px);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:50;box-shadow:var(--sh)}
+    .topbar-title{font-size:.95rem;font-weight:800;color:var(--txt)}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .avatar{width:32px;height:32px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;flex-shrink:0}
+    .ham{display:none;background:0 0;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--txt);flex-shrink:0}
+    .main{margin-left:228px;margin-top:56px;padding:28px 24px;min-height:calc(100vh - 56px);max-width:1060px}
+    .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+    .ph-left h1{font-size:1.35rem;font-weight:900;letter-spacing:-.3px}
+    .ph-left p{font-size:.82rem;color:var(--mut);margin-top:3px}
+    .back-link{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--mut);text-decoration:none;padding:6px 12px;border-radius:8px;border:1.5px solid var(--brd);background:var(--surf);transition:.12s;margin-bottom:16px}
+    .back-link:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}
+    .btn{padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-size:.84rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.12s}
+    .btn-blue{background:var(--acc);color:#fff}.btn-blue:hover{background:var(--acc2)}
+    .btn-green{background:#16a34a;color:#fff}.btn-green:hover{background:#15803d}
+    .btn-ghost{background:var(--surf);color:var(--mut);border:1.5px solid var(--brd)}.btn-ghost:hover{border-color:var(--acc);color:var(--acc);background:#eff6ff}
+    .btn[disabled]{opacity:.55;cursor:not-allowed;pointer-events:none}
+    .btn-block{width:100%;justify-content:center;padding:12px}
+    .card{background:var(--surf);border:1.5px solid var(--brd);border-radius:var(--rad);box-shadow:var(--sh);padding:22px}
+    .card h2{font-size:1rem;font-weight:800;margin-bottom:4px}
+    .card .sub{font-size:.8rem;color:var(--mut);margin-bottom:16px;line-height:1.5}
+    .setup-grid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+    .fg{margin-bottom:14px}
+    .fg label{display:block;font-size:.72rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .fg input[type=text],.fg textarea,.fg select{width:100%;border:1.5px solid var(--brd);border-radius:9px;padding:10px 12px;font-size:.87rem;font-family:inherit;outline:0;background:#fff;color:var(--txt)}
+    .fg textarea{min-height:150px;resize:vertical;line-height:1.55}
+    .fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--acc);box-shadow:0 0 0 3px #dbeafe}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .pills{display:flex;gap:7px;flex-wrap:wrap}
+    .pill{padding:7px 14px;border-radius:99px;border:1.5px solid var(--brd);background:#fff;font-size:.79rem;font-weight:700;color:var(--mut);cursor:pointer;transition:.12s;user-select:none}
+    .pill:hover{border-color:var(--acc);color:var(--acc)}
+    .pill.on{border-color:var(--acc);background:#eff6ff;color:var(--acc)}
+    .pdf-chip{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border-radius:9px;background:#f0fdf4;border:1px solid #86efac;font-size:.79rem;font-weight:700;color:#15803d}
+    .pdf-chip button{margin-left:auto;background:none;border:none;cursor:pointer;color:#15803d;font-size:.95rem;font-weight:900}
+    .hist-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--brd);font-size:.8rem}
+    .hist-item:last-child{border-bottom:none}
+    .grade-dot{min-width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.82rem;flex-shrink:0}
+    .g-A{background:#dcfce7;color:#15803d}.g-B{background:#dbeafe;color:#1d4ed8}.g-C{background:#fef9c3;color:#854d0e}.g-D{background:#ffedd5;color:#9a3412}.g-E{background:#ffe4e6;color:#9f1239}.g-U{background:#f1f5f9;color:var(--mut)}
+    .hist-meta{flex:1;min-width:0}
+    .hist-meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.8rem}
+    .hist-meta span{font-size:.72rem;color:var(--mut)}
+    .hist-score{font-weight:900;font-size:.85rem}
+    .howto{font-size:.8rem;color:var(--mut);line-height:1.7}
+    .howto b{color:var(--txt)}
+    .howto li{margin-bottom:6px;margin-left:18px}
+    /* quiz view */
+    .quiz-shell{max-width:720px;margin:0 auto}
+    .prog-wrap{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .timer-pill{font-size:.82rem;font-weight:800;background:#fffbeb;border:1px solid #fcd34d;color:#92400e;border-radius:8px;padding:5px 12px;white-space:nowrap}
+    .timer-pill.danger{background:#fef2f2;border-color:#fca5a5;color:var(--red)}
+    .prog-bar{flex:1;height:8px;background:#e8eefc;border-radius:99px;overflow:hidden}
+    .prog-fill{height:100%;background:linear-gradient(90deg,var(--acc),#60a5fa);border-radius:99px;transition:width .3s}
+    .prog-label{font-size:.76rem;font-weight:800;color:var(--mut);white-space:nowrap}
+    .dots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .dot{min-width:32px;height:32px;padding:0 8px;border-radius:9px;border:1.5px solid var(--brd);background:#fff;font-size:.78rem;font-weight:800;color:var(--mut);cursor:pointer;transition:.12s}
+    .dot.answered{background:#dcfce7;border-color:#86efac;color:#15803d}
+    .dot.cur{border-color:var(--acc);background:#eff6ff;color:var(--acc);box-shadow:0 0 0 3px #dbeafe}
+    .q-card{background:var(--surf);border:1.5px solid var(--brd);border-radius:16px;box-shadow:var(--sh);padding:26px;min-height:280px}
+    .q-kicker{font-size:.68rem;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+    .q-type{font-size:.66rem;background:#eff6ff;border:1px solid #bfdbfe;padding:2px 9px;border-radius:99px}
+    .q-text{font-size:1.02rem;font-weight:700;line-height:1.6;margin-bottom:18px}
+    .opts{display:flex;flex-direction:column;gap:9px}
+    .opt{display:flex;align-items:center;gap:12px;padding:12px 15px;border:1.5px solid var(--brd);border-radius:11px;cursor:pointer;font-size:.89rem;transition:.12s;background:#fff}
+    .opt:hover{border-color:var(--acc);background:#eff6ff}
+    .opt.sel{border-color:var(--acc);background:#eff6ff;box-shadow:0 0 0 3px #dbeafe}
+    .opt-key{width:26px;height:26px;border-radius:50%;background:var(--bg);border:1.5px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;flex-shrink:0}
+    .opt.sel .opt-key{background:var(--acc);border-color:var(--acc);color:#fff}
+    .opt kbd{margin-left:auto;font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:5px;padding:2px 7px;color:var(--mut);font-family:inherit}
+    .sa-input{width:100%;border:1.5px solid var(--brd);border-radius:11px;padding:13px;font-size:.9rem;font-family:inherit;resize:vertical;min-height:120px;outline:0;line-height:1.6;background:#fff}
+    .sa-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px #dbeafe}
+    .q-nav{display:flex;align-items:center;gap:10px;margin-top:20px}
+    .q-nav .spacer{flex:1}
+    .kbd-hint{font-size:.72rem;color:var(--mut);text-align:center;margin-top:14px}
+    .kbd-hint kbd{background:#fff;border:1px solid var(--brd);border-radius:5px;padding:1px 6px;font-family:inherit;font-size:.7rem}
+    /* results */
+    .score-hero{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+    .ring{position:relative;width:132px;height:132px;flex-shrink:0}
+    .ring svg{transform:rotate(-90deg)}
+    .ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .ring .pct b{font-size:1.7rem;font-weight:900}
+    .ring .pct span{font-size:.68rem;color:var(--mut);font-weight:700}
+    .score-meta h2{font-size:1.25rem;font-weight:900;margin-bottom:6px}
+    .grade-badge{display:inline-block;padding:5px 22px;border-radius:99px;font-size:1.15rem;font-weight:900;margin-right:8px}
+    .xp-pill{display:inline-block;padding:5px 14px;border-radius:99px;font-size:.82rem;font-weight:800;background:#fef3c7;color:#92400e}
+    .stat-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .stat-chip{font-size:.74rem;font-weight:800;padding:5px 12px;border-radius:99px;background:var(--bg);border:1px solid var(--brd);color:var(--mut)}
+    .stat-chip.ok{background:#f0fdf4;border-color:#86efac;color:#15803d}
+    .stat-chip.warn{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+    .stat-chip.bad{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+    .rev-card{background:var(--surf);border:1.5px solid var(--brd);border-radius:var(--rad);padding:18px;margin-bottom:12px}
+    .rev-card.correct{border-left:5px solid var(--grn)}
+    .rev-card.wrong{border-left:5px solid var(--red)}
+    .rev-card.partial{border-left:5px solid var(--warn)}
+    .rev-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .rev-badge{font-size:.68rem;font-weight:800;padding:3px 11px;border-radius:99px;white-space:nowrap}
+    .rev-badge.ok{background:#dcfce7;color:#15803d}
+    .rev-badge.no{background:#fee2e2;color:#991b1b}
+    .rev-badge.part{background:#fef3c7;color:#92400e}
+    .rev-badge.skip{background:#f1f5f9;color:var(--mut)}
+    .rev-q{font-size:.9rem;font-weight:700;margin-bottom:10px;line-height:1.55}
+    .rev-line{font-size:.82rem;line-height:1.6;margin-top:6px}
+    .rev-line .k{font-weight:800}
+    .fb-box{margin-top:10px;padding:10px 14px;border-radius:9px;font-size:.82rem;line-height:1.6;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+    .score-bar{height:6px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:10px}
+    .score-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--warn),var(--grn))}
+    .result-actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 26px}
+    .spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .65s linear infinite;vertical-align:-3px;margin-right:7px}
+    .spin.dark{border-color:var(--brd);border-top-color:var(--acc)}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .view{display:none}.view.on{display:block;animation:fade .25s}
+    @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .empty{text-align:center;padding:36px 16px;color:var(--mut)}
+    .empty h3{font-size:.9rem;font-weight:800;margin-bottom:4px}
+    .empty p{font-size:.8rem}
+    .quota-pill{font-size:.78rem;font-weight:800;padding:7px 14px;border-radius:99px;background:#eff6ff;border:1.5px solid #bfdbfe;color:var(--acc);align-self:center;white-space:nowrap}
+    .quota-pill.low{background:#fef2f2;border-color:#fca5a5;color:var(--red)}
+    @media(max-width:960px){.setup-grid{grid-template-columns:1fr}}
+    @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}.topbar{left:0}.main{margin-left:0}.ham{display:flex}}
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="overlay" onclick="closeSb()"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo"><img src="/images/logo.png" width="26" height="26" style="border-radius:8px" alt="">Fundo Plus</div>
+  <div class="sb-section">Main</div>
+  <a class="nav-item" href="/~/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</a>
+  <a class="nav-item" href="/~/#chat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Fundo AI Chat</a>
+  <div class="sb-section">Academics</div>
+  <a class="nav-item active" href="/~/quiz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Quiz Studio</a>
+  <a class="nav-item" href="/~/exam"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Exams</a>
+  <a class="nav-item" href="/~/leaderboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>Leaderboard</a>
+  <div class="sb-section">More</div>
+  <div id="amb-nav-item" style="display:none"><div class="sb-section" style="color:#2563eb">Ambassador Hub</div>
+  <a class="nav-item" href="/~/ambassador" style="color:#2563eb;font-weight:700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Ambassador Hub</a>
+  <a class="nav-item" href="/~/ambassador#exams"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>My Tests</a>
+  </div>
+  <a class="nav-item" href="/~/more"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</a>
+  <div class="sb-bottom">
+    <a class="nav-item" href="/me"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>My Profile</a>
+    <a class="nav-item" href="#" onclick="doLogout();return false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</a>
+  </div>
+</nav>
+<header class="topbar">
+  <button class="ham" onclick="toggleSb()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+  <span class="topbar-title">Quiz Studio</span>
+  <div class="topbar-right">
+    <div class="avatar" id="av">?</div>
+    <span style="font-size:.82rem;font-weight:700;color:var(--mut)" id="uname"></span>
+  </div>
+</header>
+
+<main class="main">
+  <a class="back-link" href="/~/">← Back to Home</a>
+  <div class="ph">
+    <div class="ph-left"><h1>Quiz Studio</h1><p>Generate ZIMSEC quizzes from your notes — marked by real AI with per-question feedback</p></div>
+    <span class="quota-pill" id="quota-pill" style="display:none"></span>
+  </div>
+
+  <!-- ============ SETUP VIEW ============ -->
+  <div class="view on" id="view-setup">
+    <div class="setup-grid">
+      <div class="card">
+        <h2>📝 New quiz</h2>
+        <p class="sub">Paste notes, describe a topic, or upload a PDF. Fundo AI sets the paper and marks it like a ZIMSEC examiner.</p>
+        <div class="fg">
+          <label>Subject (optional)</label>
+          <input type="text" id="qz-subject" list="qz-subjects" placeholder="e.g. Biology, Mathematics, History…" autocomplete="off">
+          <datalist id="qz-subjects">
+            <option value="Mathematics"></option><option value="English"></option><option value="Biology"></option>
+            <option value="Chemistry"></option><option value="Physics"></option><option value="Combined Science"></option>
+            <option value="History"></option><option value="Geography"></option><option value="Shona"></option>
+            <option value="Ndebele"></option><option value="Commerce"></option><option value="Accounts"></option>
+            <option value="Economics"></option><option value="Computer Science"></option><option value="Agriculture"></option>
+          </datalist>
+        </div>
+        <div class="fg">
+          <label>Study material / topic</label>
+          <textarea id="qz-text" placeholder="Paste your notes here, or describe a topic e.g. 'Photosynthesis — O-Level Biology: light-dependent and independent stages, factors affecting rate…'"></textarea>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label class="btn btn-ghost" style="padding:7px 14px;font-size:.78rem;cursor:pointer;margin:0">
+              📄 Upload PDF
+              <input type="file" id="qz-pdf" accept=".pdf" style="display:none" onchange="handlePdf(this)">
+            </label>
+            <span style="font-size:.74rem;color:var(--mut)" id="pdf-hint">PDF text is extracted and used as the source</span>
+          </div>
+          <div class="pdf-chip" id="pdf-chip" style="display:none">📄 <span id="pdf-chip-name"></span><button onclick="clearPdf()" title="Remove">✕</button></div>
+        </div>
+        <div class="fg">
+          <label>Question style</label>
+          <div class="pills" id="pills-style">
+            <span class="pill on" data-v="mixed">Mixed</span>
+            <span class="pill" data-v="mcq">Multiple choice</span>
+            <span class="pill" data-v="short">Short answer</span>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Difficulty</label>
+          <div class="pills" id="pills-diff">
+            <span class="pill on" data-v="mixed">Mixed</span>
+            <span class="pill" data-v="easy">Easy</span>
+            <span class="pill" data-v="medium">Medium</span>
+            <span class="pill" data-v="hard">Hard</span>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="fg">
+            <label>Questions</label>
+            <select id="qz-count"><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option></select>
+          </div>
+          <div class="fg">
+            <label>Timer</label>
+            <select id="qz-timer"><option value="0" selected>No timer</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option></select>
+          </div>
+        </div>
+        <button class="btn btn-blue btn-block" id="gen-btn" onclick="generateQuiz()">✨ Generate Quiz</button>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:18px">
+          <h2>How marking works</h2>
+          <p class="sub">No more free marks.</p>
+          <ul class="howto">
+            <li><b>Multiple choice</b> — marked instantly, exact match.</li>
+            <li><b>Short answers</b> — marked by AI like a ZIMSEC examiner, with <b>partial credit</b> and written feedback.</li>
+            <li><b>Grades</b> A–U plus XP for every attempt.</li>
+            <li><b>Retry missed</b> questions until you master them.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>Recent attempts</h2>
+          <p class="sub" id="hist-sub">Your last quizzes on this account.</p>
+          <div id="hist-list"><div class="empty"><span class="spin dark"></span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ QUIZ VIEW ============ -->
+  <div class="view" id="view-quiz">
+    <div class="quiz-shell">
+      <div class="prog-wrap">
+        <span class="timer-pill" id="qz-timer-pill" style="display:none">⏱ --:--</span>
+        <div class="prog-bar"><div class="prog-fill" id="qz-prog" style="width:0%"></div></div>
+        <span class="prog-label" id="qz-prog-label"></span>
+      </div>
+      <div class="dots" id="qz-dots"></div>
+      <div class="q-card">
+        <div class="q-kicker"><span id="qz-kicker">Question 1</span><span class="q-type" id="qz-type"></span></div>
+        <div class="q-text" id="qz-text-q"></div>
+        <div id="qz-answer"></div>
+        <div class="q-nav">
+          <button class="btn btn-ghost" id="qz-back" onclick="goQ(cur-1)">← Back</button>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" onclick="quitQuiz()">Quit</button>
+          <button class="btn btn-blue" id="qz-next" onclick="goQ(cur+1)">Next →</button>
+          <button class="btn btn-green" id="qz-submit" onclick="submitQuiz()" style="display:none">Submit ✓</button>
+        </div>
+      </div>
+      <div class="kbd-hint"><kbd>A</kbd>–<kbd>D</kbd> answer &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> move &nbsp;·&nbsp; <kbd>Enter</kbd> next</div>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS VIEW ============ -->
+  <div class="view" id="view-results">
+    <div class="card score-hero">
+      <div class="ring">
+        <svg width="132" height="132" viewBox="0 0 132 132">
+          <circle cx="66" cy="66" r="56" fill="none" stroke="#e8eefc" stroke-width="12"/>
+          <circle id="ring-fg" cx="66" cy="66" r="56" fill="none" stroke="#2563eb" stroke-width="12" stroke-linecap="round" stroke-dasharray="351.8" stroke-dashoffset="351.8" style="transition:stroke-dashoffset 1s"/>
+        </svg>
+        <div class="pct"><b id="res-pct">0%</b><span id="res-frac">0/0</span></div>
+      </div>
+      <div class="score-meta">
+        <h2 id="res-title">Quiz complete 🎉</h2>
+        <span class="grade-badge" id="res-grade">–</span><span class="xp-pill" id="res-xp">+0 XP</span>
+        <div class="stat-chips" id="res-chips"></div>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-blue" id="btn-retry" onclick="retryMissed()">↻ Retry missed</button>
+      <button class="btn btn-ghost" onclick="retakeQuiz()">⚡ New quiz, same material</button>
+      <button class="btn btn-ghost" onclick="showView('view-setup')">← Quiz setup</button>
+    </div>
+    <div id="res-review"></div>
+  </div>
+</main>
+
+<script>
+const tok = localStorage.getItem('fp_session');
+let me = null, pdfText = '', pdfName = '';
+let quizId = null, questions = [], answers = {}, cur = 0, startTs = 0, timerIv = null, timerEnd = 0, marking = false, lastResult = null;
+
+function esc(s){return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function api(m,u,b){
+  const o={method:m,headers:{'x-session-token':tok}};
+  if(b){o.headers['Content-Type']='application/json';o.body=JSON.stringify(b);}
+  const r=await fetch(u,o);const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||('Error '+r.status));
+  return d;
+}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show')}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show')}
+async function doLogout(){try{await api('POST','/api/auth/logout')}catch{}localStorage.clear();location.href='/login'}
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.getElementById(id).classList.add('on');window.scrollTo({top:0,behavior:'smooth'});}
+function pillVal(id){return document.querySelector('#'+id+' .pill.on')?.dataset.v || 'mixed';}
+document.querySelectorAll('.pills').forEach(p=>p.addEventListener('click',e=>{
+  const t=e.target.closest('.pill');if(!t)return;
+  p.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+}));
+
+/* ---------- history ---------- */
+async function loadHistory(){
+  const el=document.getElementById('hist-list');
+  try{
+    const d=await api('GET','/api/quiz/history');
+    const at=d.attempts||[];
+    if(!at.length){el.innerHTML='<div class="empty"><h3>No attempts yet</h3><p>Generate your first quiz above.</p></div>';return;}
+    const withPct=at.filter(a=>typeof a.pct==='number');
+    if(withPct.length){
+      const avg=Math.round(withPct.reduce((s,a)=>s+a.pct,0)/withPct.length);
+      const hs=document.getElementById('hist-sub');
+      if(hs)hs.textContent=`Your last ${at.length} quiz${at.length>1?'es':''} \u00B7 average ${avg}%`;
+    }
+    el.innerHTML=at.map(a=>`
+      <div class="hist-item">
+        <span class="grade-dot g-${esc(a.grade||'U')}">${esc(a.grade||'–')}</span>
+        <div class="hist-meta"><b>${esc(a.subject||'General quiz')}</b><span>${esc(fmtDate(a.createdAt))} · ${esc(a.count||a.total||0)} Qs · ${esc(a.difficulty||'mixed')}</span></div>
+        <span class="hist-score">${esc(a.score)}/${esc(a.total)}</span>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty"><h3>Could not load history</h3><p>'+esc(e.message)+'</p></div>';}
+}
+function fmtDate(iso){try{const d=new Date(iso);const t=Date.now()-d.getTime();if(t<3600e3)return Math.max(1,Math.round(t/60e3))+'m ago';if(t<86400e3)return Math.round(t/3600e3)+'h ago';return d.toLocaleDateString();}catch{return'';}}
+
+/* ---------- pdf ---------- */
+async function handlePdf(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  document.getElementById('pdf-hint').textContent='Extracting text…';
+  try{
+    const fd=new FormData();fd.append('file',f);
+    const r=await fetch('/api/quiz/upload',{method:'POST',headers:{'x-session-token':tok},body:fd});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.error||'Upload failed');
+    pdfText=d.text||'';pdfName=f.name;
+    document.getElementById('pdf-chip').style.display='flex';
+    document.getElementById('pdf-chip-name').textContent=f.name+(d.pageCount?` · ${d.pageCount}p`:'');
+    document.getElementById('pdf-hint').textContent='PDF attached — its text will be used as the source.';
+  }catch(e){
+    pdfText='';pdfName='';input.value='';
+    document.getElementById('pdf-hint').textContent='Upload failed: '+e.message;
+  }
+}
+function clearPdf(){
+  pdfText='';pdfName='';document.getElementById('qz-pdf').value='';
+  document.getElementById('pdf-chip').style.display='none';
+  document.getElementById('pdf-hint').textContent='PDF text is extracted and used as the source';
+}
+
+/* ---------- generate ---------- */
+async function generateQuiz(){
+  const typed=document.getElementById('qz-text').value.trim();
+  const text=pdfText||typed;
+  if(!text){alert('Paste study material, describe a topic, or upload a PDF first.');return;}
+  const btn=document.getElementById('gen-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Setting your paper…';
+  try{
+    const d=await api('POST','/api/quiz/generate',{
+      text,
+      subject:document.getElementById('qz-subject').value.trim(),
+      count:parseInt(document.getElementById('qz-count').value,10),
+      style:pillVal('pills-style'),
+      difficulty:pillVal('pills-diff'),
+    });
+    startQuiz(d);loadQuota();
+  }catch(e){alert(e.message);}
+  finally{btn.disabled=false;btn.innerHTML='✨ Generate Quiz';}
+}
+function retakeQuiz(){showView('view-setup');generateQuiz();}
+
+/* ---------- take quiz ---------- */
+function startQuiz(d){
+  quizId=d.quizId;questions=d.questions||[];answers={};cur=0;marking=false;lastResult=null;
+  startTs=Date.now();
+  const mins=parseInt(document.getElementById('qz-timer').value,10)||0;
+  clearInterval(timerIv);
+  const pill=document.getElementById('qz-timer-pill');
+  if(mins>0){
+    timerEnd=Date.now()+mins*60e3;pill.style.display='inline-flex';
+    timerIv=setInterval(()=>{
+      const diff=timerEnd-Date.now();
+      if(diff<=0){clearInterval(timerIv);pill.textContent="⏱ Time's up!";pill.classList.add('danger');submitQuiz(true);return;}
+      const m=Math.floor(diff/60e3),s=Math.floor((diff%60e3)/1e3);
+      pill.textContent=`⏱ ${m}:${String(s).padStart(2,'0')}`;
+      pill.classList.toggle('danger',diff<60e3);
+    },1000);
+  }else{pill.style.display='none';}
+  renderDots();renderQ();showView('view-quiz');
+}
+function quitQuiz(){
+  if(!confirm('Quit this quiz? Progress will be lost.'))return;
+  clearInterval(timerIv);showView('view-setup');loadHistory();
+}
+function renderDots(){
+  document.getElementById('qz-dots').innerHTML=questions.map((q,i)=>{
+    const a=answers[q.id];
+    const done=q.type==='mcq'?(a!=null&&a!==''):(typeof a==='string'&&a.trim()!=='');
+    return `<button class="dot${done?' answered':''}${i===cur?' cur':''}" onclick="goQ(${i})">${i+1}</button>`;
+  }).join('');
+  const done=questions.filter(q=>{const a=answers[q.id];return q.type==='mcq'?(a!=null&&a!==''):(typeof a==='string'&&a.trim()!=='');}).length;
+  document.getElementById('qz-prog').style.width=(questions.length?Math.round(done/questions.length*100):0)+'%';
+  document.getElementById('qz-prog-label').textContent=done+'/'+questions.length+' answered';
+}
+function renderQ(){
+  const q=questions[cur];if(!q)return;
+  document.getElementById('qz-kicker').textContent=`Question ${cur+1} of ${questions.length}`;
+  document.getElementById('qz-type').textContent=q.type==='mcq'?'Multiple choice':'Short answer';
+  document.getElementById('qz-text-q').textContent=q.question;
+  const box=document.getElementById('qz-answer');
+  if(q.type==='mcq'){
+    const keys=['A','B','C','D'].filter(k=>q.options&&q.options[k]);
+    box.innerHTML='<div class="opts">'+keys.map(k=>`
+      <div class="opt${answers[q.id]===k?' sel':''}" onclick="pick('${q.id}','${k}')">
+        <span class="opt-key">${k}</span><span>${esc(q.options[k])}</span><kbd>${k}</kbd>
+      </div>`).join('')+'</div>';
+  }else{
+    box.innerHTML=`<textarea class="sa-input" id="sa-now" placeholder="Write your answer…" oninput="typeSA('${q.id}',this.value)">${esc(answers[q.id]||'')}</textarea>`;
+  }
+  document.getElementById('qz-back').disabled=cur===0;
+  const last=cur===questions.length-1;
+  document.getElementById('qz-next').style.display=last?'none':'';
+  document.getElementById('qz-submit').style.display=last?'':'none';
+  renderDots();
+}
+function pick(qid,k){answers[qid]=k;renderQ();}
+function typeSA(qid,v){answers[qid]=v;renderDots();}
+function goQ(i){
+  if(i<0||i>=questions.length)return;
+  const ta=document.getElementById('sa-now');
+  if(ta&&questions[cur])answers[questions[cur].id]=ta.value;
+  cur=i;renderQ();
+}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('view-quiz').classList.contains('on')||marking)return;
+  if(/TEXTAREA|INPUT/.test(document.activeElement?.tagName||''))return;
+  const q=questions[cur];if(!q)return;
+  const k=e.key.toLowerCase();
+  if(q.type==='mcq'&&['a','b','c','d'].includes(k)&&q.options&&q.options[k.toUpperCase()]){pick(q.id,k.toUpperCase());}
+  else if(e.key==='ArrowRight'||e.key==='Enter'){e.preventDefault();goQ(cur+1);}
+  else if(e.key==='ArrowLeft'){goQ(cur-1);}
+});
+
+/* ---------- submit + real AI marking ---------- */
+async function submitQuiz(auto){
+  if(marking)return;
+  const ta=document.getElementById('sa-now');
+  if(ta&&questions[cur])answers[questions[cur].id]=ta.value;
+  const unanswered=questions.filter(q=>{const a=answers[q.id];return q.type==='mcq'?(a==null||a===''):!(typeof a==='string'&&a.trim());}).length;
+  if(unanswered>0&&!auto&&!confirm(`${unanswered} question${unanswered>1?'s':''} unanswered. Submit anyway?`))return;
+  marking=true;clearInterval(timerIv);
+  const btn=document.getElementById('qz-submit');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>AI is marking…';
+  try{
+    const d=await api('POST','/api/quiz/mark',{quizId,answers,timeTaken:Math.round((Date.now()-startTs)/1000)});
+    lastResult=d;renderResults(d);
+  }catch(e){alert('Marking failed: '+e.message);marking=false;btn.disabled=false;btn.textContent='Submit ✓';}
+}
+function ringColor(p){return p>=70?'#16a34a':p>=50?'#2563eb':p>=40?'#f59e0b':'#dc2626';}
+function renderResults(d){
+  marking=false;
+  document.getElementById('res-pct').textContent=d.pct+'%';
+  document.getElementById('res-frac').textContent=`${d.score}/${d.total} marks`;
+  document.getElementById('res-title').textContent=d.pct>=80?'Outstanding work! 🎉':d.pct>=60?'Good job — keep pushing 💪':d.pct>=40?'Fair — review and retry 📚':'Keep practising — you will get there 🌱';
+  const g=document.getElementById('res-grade');
+  g.textContent='Grade '+d.grade;g.className='grade-badge g-'+d.grade;
+  document.getElementById('res-xp').textContent='+'+d.xp+' XP';
+  document.getElementById('res-chips').innerHTML=
+    `<span class="stat-chip ok">✓ ${d.correct} correct</span>`+
+    (d.partial?`<span class="stat-chip warn">◐ ${d.partial} partial</span>`:'')+
+    (d.skipped?`<span class="stat-chip">○ ${d.skipped} skipped</span>`:'')+
+    `<span class="stat-chip bad">✕ ${d.total-d.correct-(d.skipped||0)} wrong</span>`;
+  const C=2*Math.PI*56,fg=document.getElementById('ring-fg');
+  fg.style.stroke=ringColor(d.pct);fg.style.strokeDashoffset=C;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{fg.style.strokeDashoffset=C*(1-d.pct/100);}));
+  document.getElementById('res-review').innerHTML=(d.breakdown||[]).map((b,i)=>{
+    const cls=b.type==='short'?(b.score>=0.99?'correct':b.score>0?'partial':'wrong'):(b.correct?'correct':'wrong');
+    const badge=!b.given?'<span class="rev-badge skip">SKIPPED</span>'
+      :b.type==='short'?(b.score>=0.99?'<span class="rev-badge ok">CORRECT</span>':b.score>0?`<span class="rev-badge part">${Math.round(b.score*100)}% PARTIAL</span>`:'<span class="rev-badge no">WRONG</span>')
+      :(b.correct?'<span class="rev-badge ok">CORRECT</span>':'<span class="rev-badge no">WRONG</span>');
+    let yours;
+    if(b.type==='mcq'){
+      yours=!b.given?'<div class="rev-line">You skipped this question.</div>'
+        :`<div class="rev-line"><span class="k">Your answer:</span> ${esc(b.given)} — ${esc((b.options&&b.options[b.given])||'')}</div>`;
+    }else{
+      yours=`<div class="rev-line"><span class="k">Your answer:</span> ${b.given?esc(b.given):'<i>— no answer —</i>'}</div>`;
+    }
+    return `<div class="rev-card ${cls}">
+      <div class="rev-head">${badge}<span style="font-size:.72rem;color:var(--mut);font-weight:800">Q${i+1} · ${b.type==='mcq'?'Multiple choice':'Short answer · AI marked'}</span></div>
+      <div class="rev-q">${esc(b.question)}</div>
+      ${yours}
+      <div class="rev-line"><span class="k">Correct answer:</span> ${b.type==='mcq'?esc(b.correctAnswer)+' — '+esc((b.options&&b.options[b.correctAnswer])||''):esc(b.correctAnswer)}</div>
+      ${b.explanation?`<div class="rev-line">💡 ${esc(b.explanation)}</div>`:''}
+      ${b.feedback?`<div class="fb-box">🤖 <b>Examiner feedback:</b> ${esc(b.feedback)}</div>`:''}
+      ${b.type==='short'?`<div class="score-bar"><i style="width:${Math.round((b.score||0)*100)}%"></i></div>`:''}
+    </div>`;
+  }).join('');
+  const missed=(d.breakdown||[]).filter(b=>!b.correct).length;
+  document.getElementById('btn-retry').style.display=missed?'':'none';
+  if(d.pct>=70)burstConfetti();
+  showView('view-results');loadHistory();
+}
+
+/* ---------- retry missed (self-test flashcards) ---------- */
+function retryMissed(){
+  if(!lastResult)return;
+  const missed=(lastResult.breakdown||[]).filter(b=>!b.correct);
+  if(!missed.length)return;
+  questions=missed.map((b,i)=>({id:'r'+(i+1),type:b.type,question:b.question,options:b.options||{}}));
+  answers={};cur=0;
+  // store answers locally for reveal (already revealed in review, so no leak)
+  window._retryKey={};missed.forEach((b,i)=>{window._retryKey['r'+(i+1)]=b;});
+  clearInterval(timerIv);document.getElementById('qz-timer-pill').style.display='none';
+  renderDots();renderQ();showView('view-quiz');
+  document.getElementById('qz-next').style.display='none';
+  const sb=document.getElementById('qz-submit');sb.style.display='';sb.textContent='Check answers ✓';sb.disabled=false;
+  sb.onclick=()=>revealRetry();
+  alert(`Practice round: ${missed.length} missed question${missed.length>1?'s':''}. Answers will be revealed for self-checking.`);
+}
+function revealRetry(){
+  const ta=document.getElementById('sa-now');
+  if(ta&&questions[cur])answers[questions[cur].id]=ta.value;
+  const cards=questions.map((q,i)=>{
+    const key=window._retryKey[q.id];const a=answers[q.id];
+    const yours=q.type==='mcq'?((a||'—')+(q.options[a]?' — '+q.options[a]:'')):(a||'— no answer —');
+    const right=q.type==='mcq'?(key.correctAnswer+' — '+(key.options[key.correctAnswer]||'')):key.correctAnswer;
+    return `<div class="rev-card ${q.type==='mcq'&&a===key.correctAnswer?'correct':'partial'}">
+      <div class="rev-head"><span class="rev-badge part">PRACTICE</span><span style="font-size:.72rem;color:var(--mut);font-weight:800">Q${i+1}</span></div>
+      <div class="rev-q">${esc(q.question)}</div>
+      <div class="rev-line"><span class="k">Your answer:</span> ${esc(yours)}</div>
+      <div class="rev-line"><span class="k">Correct answer:</span> ${esc(right)}</div>
+      ${key.explanation?`<div class="rev-line">💡 ${esc(key.explanation)}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('res-pct').textContent='✓';
+  document.getElementById('res-frac').textContent='practice round';
+  document.getElementById('res-title').textContent='Practice complete 📚';
+  const g=document.getElementById('res-grade');g.textContent='Retry';g.className='grade-badge g-C';
+  document.getElementById('res-xp').textContent='keep going 💪';
+  document.getElementById('res-chips').innerHTML='';
+  const C=2*Math.PI*56,fg=document.getElementById('ring-fg');
+  fg.style.stroke='#f59e0b';fg.style.strokeDashoffset=0;
+  document.getElementById('res-review').innerHTML=cards;
+  document.getElementById('btn-retry').style.display='none';
+  const sb=document.getElementById('qz-submit');sb.textContent='Submit ✓';sb.onclick=()=>submitQuiz(false);
+  showView('view-results');window.scrollTo({top:0});
+}
+
+/* ---------- quota + confetti ---------- */
+async function loadQuota(){
+  const el=document.getElementById('quota-pill');if(!el)return;
+  try{
+    const d=await api('GET','/api/me');
+    const lim=d.limits?.quizzes, used=d.usage?.quizzes||0;
+    el.style.display='';
+    if(lim==='unlimited'){el.textContent='\u2728 Unlimited quizzes';el.classList.remove('low');}
+    else{const left=Math.max(0,lim-used);el.textContent=`\u{1F4DD} ${left} of ${lim} quizzes left today`;el.classList.toggle('low',left===0);}
+  }catch{el.style.display='none';}
+}
+function burstConfetti(){
+  const colors=['#2563eb','#16a34a','#f59e0b','#dc2626','#8b5cf6','#ec4899'];
+  for(let i=0;i<70;i++){
+    const s=document.createElement('span');
+    const sz=6+Math.random()*8;
+    s.style.cssText=`position:fixed;top:-16px;left:${Math.random()*100}vw;width:${sz}px;height:${sz*(Math.random()>.5?1:.5)}px;background:${colors[i%colors.length]};z-index:999;border-radius:2px;pointer-events:none;transition:transform ${2+Math.random()*2}s cubic-bezier(.2,.7,.4,1),opacity 1s;transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(s);
+    requestAnimationFrame(()=>{s.style.transform=`translateY(${innerHeight+60}px) rotate(${720+Math.random()*720}deg)`;s.style.opacity='0';});
+    setTimeout(()=>s.remove(),4500);
+  }
+}
+
+/* ---------- init ---------- */
+(async()=>{
+  if(!tok){location.href='/login';return;}
+  try{
+    const d=await api('GET','/api/auth/me');
+    if(!d.ok){location.href='/login';return;}
+    me=d.user;
+    const n=me.name||me.email||'S';
+    document.getElementById('av').textContent=n[0].toUpperCase();
+    document.getElementById('uname').textContent=n;
+    if(d.isAmbassador||me.isAdmin){const el=document.getElementById('amb-nav-item');if(el)el.style.display='';}
+    loadHistory();loadQuota();
+  }catch{location.href='/login';}
+})();
+</script>
+</body>
+</html>

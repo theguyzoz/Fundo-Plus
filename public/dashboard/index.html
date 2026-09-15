@@ -289,6 +289,13 @@
       </svg>
       Fundo AI Chat
     </a>
+    <a class="nav-item" href="/~/quiz">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M9 11l3 3L22 4"/>
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+      </svg>
+      Quiz Studio
+    </a>
     <div class="sb-section">Resources</div>
     <a class="nav-item" href="#" onclick="return show('resources',this),false">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -613,8 +620,8 @@
 
     <div class="panel" id="panel-quiz">
       <div id="quiz-setup" class="card-box">
-        <h3>📝 Quiz Generator</h3>
-        <p>Paste notes, type a topic, or upload a PDF — Fundo AI generates a quiz with full answer explanations.</p>
+        <h3>📝 Quiz Generator <a href="/~/quiz" style="font-size:.72rem;font-weight:700;color:#2563eb;text-decoration:none;white-space:nowrap">Open Quiz Studio →</a></h3>
+        <p>Paste notes, type a topic, or upload a PDF — Fundo AI sets the paper and marks it like a ZIMSEC examiner.</p>
         <textarea id="quiz-text" placeholder="Paste your study material here, or describe a topic e.g. 'Photosynthesis O-Level Biology'…"></textarea>
         <div class="quiz-top">
           <div class="fg">
@@ -632,6 +639,15 @@
               <option value="mixed" selected>Mixed</option>
               <option value="mcq">Multiple Choice</option>
               <option value="short">Short Answer</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Difficulty</label>
+            <select id="quiz-diff">
+              <option value="mixed" selected>Mixed</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
             </select>
           </div>
           <div class="fg">
@@ -915,6 +931,9 @@
     const token = localStorage.getItem('fp_session');
     let chatCount = 0;
     let quizData = [];
+    let quizId = null;
+    let quizMarking = false;
+    function escHtml(s){return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
     let quizAns = {};
     let allResources = [];
     let resFilter = 'all';
@@ -978,7 +997,7 @@
       if (name === 'skills') initSkillsPanel();
     }
 
-    // Open panel from URL hash (e.g. /#quiz from more page)
+    // Open panel from URL hash (e.g. /~/#quiz deep links; full studio lives at /~/quiz)
     function checkHashPanel() {
       const hash = location.hash.replace('#', '');
       const validPanels = ['quiz', 'skills', 'resources', 'chat', 'pairing'];
@@ -1085,6 +1104,8 @@
       const text = pdfText || rawText;
       const count = document.getElementById('quiz-count').value;
       const style = document.getElementById('quiz-style').value;
+      const diffEl = document.getElementById('quiz-diff');
+      const difficulty = diffEl ? diffEl.value : 'mixed';
       if (!text) { alert('Paste study material or upload a PDF first.'); return; }
 
       const btn = document.getElementById('gen-btn');
@@ -1092,15 +1113,17 @@
       btn.textContent = 'Generating…';
 
       try {
-        const d = await api('POST', '/api/quiz/generate', { text, count: parseInt(count), style });
+        const d = await api('POST', '/api/quiz/generate', { text, count: parseInt(count), style, difficulty });
         quizData = d.questions || [];
+        quizId = d.quizId || null;
         quizAns = {};
         if (!quizData.length) { alert('No questions generated. Try more detailed material.'); return; }
         renderQs();
         document.getElementById('quiz-setup').style.display = 'none';
         document.getElementById('quiz-results').style.display = 'block';
         document.getElementById('score-card').style.display = 'none';
-        document.getElementById('mark-btn').style.display = '';
+        const mb = document.getElementById('mark-btn');
+        mb.style.display = ''; mb.disabled = false; mb.innerHTML = 'Submit &amp; See Answers';
       } catch (e) {
         alert('Failed: ' + (e.message || 'Error'));
       } finally {
@@ -1116,20 +1139,20 @@
           return `
             <div class="q-card" id="qc-${i}">
               <div class="q-num">Question ${i + 1} of ${quizData.length}</div>
-              <div class="q-text">${q.question}</div>
+              <div class="q-text">${escHtml(q.question)}</div>
               ${opts.map(([k, v]) => `
                 <div class="opt" id="op-${i}-${k}" onclick="pick(${i},'${k}')">
-                  <span class="opt-key">${k}</span>${v}
+                  <span class="opt-key">${escHtml(k)}</span>${escHtml(v)}
                 </div>`).join('')}
-              <div class="explanation" id="ex-${i}">💡 <strong>Explanation:</strong> ${q.explanation || 'See correct answer above.'}</div>
+              <div class="explanation" id="ex-${i}"></div>
             </div>`;
         }
         return `
           <div class="q-card" id="qc-${i}">
             <div class="q-num">Question ${i + 1} of ${quizData.length}</div>
-            <div class="q-text">${q.question}</div>
+            <div class="q-text">${escHtml(q.question)}</div>
             <input class="short-ans" id="sh-${i}" placeholder="Your answer…">
-            <div class="explanation" id="ex-${i}">✅ <strong>Model answer:</strong> ${q.answer || '—'}<br>💡 ${q.explanation || ''}</div>
+            <div class="explanation" id="ex-${i}"></div>
           </div>`;
       }).join('');
     }
@@ -1140,43 +1163,59 @@
       document.getElementById(`op-${qi}-${key}`)?.classList.add('selected');
     }
 
-    function markQuiz() {
-      let correct = 0;
-      const total = quizData.length;
-
+    async function markQuiz() {
+      if (quizMarking) return;
+      if (!quizId) { alert('Quiz session missing — please generate a new quiz.'); return; }
+      const payload = {};
       quizData.forEach((q, i) => {
-        const ex = document.getElementById(`ex-${i}`);
-        if (q.type === 'mcq') {
-          const chosen = quizAns[i];
-          const right = (q.answer || '').trim().toUpperCase();
-          document.querySelectorAll(`[id^="op-${i}-"]`).forEach(el => el.classList.remove('selected'));
-          if (chosen) {
-            document.getElementById(`op-${i}-${chosen}`)?.classList.add(chosen.toUpperCase() === right ? 'correct' : 'wrong');
-          }
-          if (right) document.getElementById(`op-${i}-${right}`)?.classList.add('correct');
-          if (chosen && chosen.toUpperCase() === right) correct++;
-        } else {
-          const ans = document.getElementById(`sh-${i}`)?.value.trim();
-          if (ans && ans.length > 0) correct++;
-        }
-        if (ex) ex.classList.add('show');
+        payload[q.id] = q.type === 'mcq'
+          ? (quizAns[i] || null)
+          : (document.getElementById(`sh-${i}`)?.value || '');
       });
-
-      document.getElementById('score-num').textContent = `${correct}/${total}`;
-      document.getElementById('score-card').style.display = 'block';
-      document.getElementById('score-card').scrollIntoView({ behavior: 'smooth' });
-      document.getElementById('mark-btn').style.display = 'none';
+      const btn = document.getElementById('mark-btn');
+      quizMarking = true; btn.disabled = true; btn.textContent = 'AI is marking…';
+      try {
+        const d = await api('POST', '/api/quiz/mark', { quizId, answers: payload });
+        const byId = {};
+        (d.breakdown || []).forEach(b => { byId[b.id] = b; });
+        quizData.forEach((q, i) => {
+          const b = byId[q.id];
+          if (!b) return;
+          const ex = document.getElementById(`ex-${i}`);
+          if (q.type === 'mcq') {
+            document.querySelectorAll(`[id^="op-${i}-"]`).forEach(el => el.classList.remove('selected'));
+            if (b.given) document.getElementById(`op-${i}-${b.given}`)?.classList.add(b.correct ? 'correct' : 'wrong');
+            if (b.correctAnswer) document.getElementById(`op-${i}-${b.correctAnswer}`)?.classList.add('correct');
+            if (ex) ex.innerHTML = `✅ <strong>Answer: ${escHtml(b.correctAnswer)}</strong><br>💡 ${escHtml(b.explanation || 'See correct answer above.')}`;
+          } else {
+            const pct = Math.round((b.score || 0) * 100);
+            if (ex) ex.innerHTML = `🤖 <strong>AI score: ${pct}%</strong>${b.feedback ? ' — ' + escHtml(b.feedback) : ''}<br>✅ <strong>Model answer:</strong> ${escHtml(b.correctAnswer || '—')}${b.explanation ? '<br>💡 ' + escHtml(b.explanation) : ''}`;
+          }
+          if (ex) ex.classList.add('show');
+        });
+        document.getElementById('score-num').textContent = `${d.score}/${d.total}`;
+        const lbl = document.querySelector('#score-card .score-label');
+        if (lbl) lbl.textContent = `Grade ${d.grade} · +${d.xp} XP ${d.pct >= 80 ? '🎉' : d.pct >= 50 ? '💪' : '📚'}`;
+        document.getElementById('score-card').style.display = 'block';
+        document.getElementById('score-card').scrollIntoView({ behavior: 'smooth' });
+        btn.style.display = 'none';
+      } catch (e) {
+        alert('Marking failed: ' + (e.message || 'Error'));
+        btn.disabled = false; btn.innerHTML = 'Submit &amp; See Answers';
+      } finally { quizMarking = false; }
     }
 
     function resetQuiz() {
       pdfText = '';
+      quizId = null; quizData = []; quizAns = {}; quizMarking = false;
       document.getElementById('quiz-text').value = '';
       document.getElementById('pdf-label-text').textContent = 'Upload PDF';
       document.getElementById('pdf-upload-label').classList.remove('has-file');
       document.getElementById('quiz-pdf').value = '';
       document.getElementById('quiz-setup').style.display = 'block';
       document.getElementById('quiz-results').style.display = 'none';
-      document.getElementById('mark-btn').style.display = '';
+      const mb = document.getElementById('mark-btn');
+      mb.style.display = ''; mb.disabled = false; mb.innerHTML = 'Submit &amp; See Answers';
     }
 
     function toggleUploadForm() {
