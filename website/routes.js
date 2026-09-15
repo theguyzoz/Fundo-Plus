@@ -36,10 +36,12 @@ import {
   getUserBalance, adjustUserBalance, getBalanceTransactions,
   savePendingDeposit, getPendingDeposit, getPendingDepositsForUser,
   deletePendingDeposit, finalizeDeposit, failDeposit,
-  getWithdrawalBalance, getRemainingTopupCapacity,
-  MAX_BALANCE_CENTS, MIN_TOPUP_CENTS, MIN_WITHDRAW_CENTS, TRANSACTION_FEE_PCT,
-  sanitizeCents, feeCents,
-  requestWithdrawal, getWithdrawals, getAllWithdrawals, getWithdrawal, updateWithdrawalStatus,
+  getRemainingTopupCapacity,
+  MAX_BALANCE_CENTS, MIN_TOPUP_CENTS,
+  sanitizeCents,
+  // project quota + credits
+  getProjectUsed, getProjectCredits, addProjectCredits, consumeProjectCredit,
+  PROJECT_CREDIT_CENTS, MAX_PROJECT_CREDITS, MAX_CREDIT_QTY,
   flushMoneyBackup,
   // recent logins (in-memory)
   recordLogin, getRecentLogins, getLoginCount,
@@ -1090,6 +1092,19 @@ router.post('/api/skills/session', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// Project quota gate: plan quota first (monthly for paid, lifetime for free),
+// then one purchased credit. Returns { ok, useCredit } - useCredit means the
+// caller must consume a credit AFTER the work succeeds (never charge on failure).
+function projectQuotaGate(uid, limits) {
+  const projUsed = getProjectUsed(uid);
+  if (limits.projects === 'unlimited' || projUsed < limits.projects) return { ok: true, useCredit: false };
+  if (getProjectCredits(uid) > 0) return { ok: true, useCredit: true };
+  return { ok: false, useCredit: false, projUsed };
+}
+function projectLimitError(limits) {
+  return `Project limit reached (${limits.projects}${limits.plan === 'free' ? ' lifetime' : '/month'}). Buy project credits (10c each) or upgrade for more.`;
+}
+
 // project generator (counts project usage, not pdf exports)
 router.post('/api/skills/project', requireAuth, async (req, res) => {
   const uid = req.user.id;
@@ -1097,10 +1112,10 @@ router.post('/api/skills/project', requireAuth, async (req, res) => {
   const limits = getPlanLimits(uid, isLinked);
   const usage  = getFullUsage(uid);
 
-  // Projects is lifetime total for free, daily reset for paid
-  const projUsed = usage.projectsTotal || 0;
-  if (limits.projects !== 'unlimited' && projUsed >= limits.projects) {
-    return res.status(429).json({ error: `Project limit reached (${limits.projects}). Upgrade for more.` });
+  // Monthly quota for paid plans (resets on the 1st), lifetime for free, then paid credits
+  const quota = projectQuotaGate(uid, limits);
+  if (!quota.ok) {
+    return res.status(429).json({ error: projectLimitError(limits), credits: getProjectCredits(uid) });
   }
 
   const { name, content, asPdf } = req.body || {};
@@ -1112,6 +1127,7 @@ router.post('/api/skills/project', requireAuth, async (req, res) => {
     const filepath = path.join(PROJECTS_DIR, filename);
     fs.writeFileSync(filepath, content, 'utf8');
     incrementProjectUsage(uid);
+    const creditUsed = quota.useCredit ? consumeProjectCredit(uid) : false;
 
     if (asPdf) {
       const { generatePdf } = await import('../utils/pdfgen.js');
@@ -1125,7 +1141,7 @@ router.post('/api/skills/project', requireAuth, async (req, res) => {
       res.send(buf);
       setTimeout(() => { try { fs.unlinkSync(fp); } catch {} }, 60_000);
     } else {
-      res.json({ ok: true, filename });
+      res.json({ ok: true, filename, creditUsed, creditsLeft: getProjectCredits(uid) });
     }
   } catch (e) {
     res.status(500).json({ error: 'Failed to save project' });
@@ -1211,11 +1227,11 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
   const limits   = getPlanLimits(uid, isLinked);
   const usage    = getFullUsage(uid);
 
-  // Check project usage limits
-  const projUsed = usage.projectsTotal || 0;
-  if (limits.projects !== 'unlimited' && projUsed >= limits.projects) {
+  // Monthly quota for paid plans (resets on the 1st), lifetime for free, then paid credits
+  const quota = projectQuotaGate(uid, limits);
+  if (!quota.ok) {
     return res.status(429).json({
-      error: `Project limit reached (${limits.projects}). Upgrade for more.`
+      error: projectLimitError(limits), credits: getProjectCredits(uid),
     });
   }
 
@@ -1268,6 +1284,7 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
     const mdFilename = `${Date.now()}-${student.replace(/[^a-z0-9]/gi,'-').slice(0,20)}.md`;
     fs.writeFileSync(path.join(PROJECTS_DIR, mdFilename), content, 'utf8');
     incrementProjectUsage(uid);
+    const creditUsed = quota.useCredit ? consumeProjectCredit(uid) : false;
 
     // generate pdf
     const { generatePdf } = await import('../utils/pdfgen.js');
@@ -1296,6 +1313,7 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
       preview: content,
       expiresAt,
       message: 'Project generated. Download link expires in 1 hour.',
+      creditUsed, creditsLeft: getProjectCredits(uid),
     });
 
   } catch (err) {
@@ -1427,19 +1445,18 @@ router.get('/api/subscription', requireAuth, (req, res) => {
     ok: true, plan, sub, limits, usage, plans: PLANS,
     balance: balanceCents,
     balanceDollars: (balanceCents / 100).toFixed(2),
-    withdrawalBalance: getWithdrawalBalance(uid),
-    withdrawalDollars: (getWithdrawalBalance(uid) / 100).toFixed(2),
     remainingTopup: getRemainingTopupCapacity(uid),
     remainingTopupDollars: (getRemainingTopupCapacity(uid) / 100).toFixed(2),
     maxBalanceDollars: (MAX_BALANCE_CENTS / 100).toFixed(2),
-    feePct: TRANSACTION_FEE_PCT,
+    projectCredits: getProjectCredits(uid),
+    projectCreditCents: PROJECT_CREDIT_CENTS,
+    maxProjectCredits: MAX_PROJECT_CREDITS,
     paynowConfigured: isPaynowConfigured(),
     pendingDeposit: pendingDeposits[0] || null,
-    withdrawals: getWithdrawals(uid),
   });
 });
 
-// wallet - top up via paynow, buy plans with balance, withdraw (5% fee)
+// wallet - top up via paynow, buy plans + project credits with balance (no withdrawals)
 
 // Rate-limit money endpoints (defense against scripting / brute-force)
 const moneyLimiter = rateLimit({
@@ -1579,48 +1596,45 @@ router.post('/api/subscription/activate', requireAuth, moneyLimiter, async (req,
   res.json({ ok: true, plan, balance: adj.balance, balanceDollars: (adj.balance/100).toFixed(2) });
 });
 
-// Request a withdrawal (5% fee, net paid out). Validated + atomic debit server-side.
-router.post('/api/withdraw', requireAuth, moneyLimiter, async (req, res) => {
+// Buy project credits with virtual balance: 10c per generation, any quantity.
+// Cost is computed SERVER-SIDE (qty x PROJECT_CREDIT_CENTS) - more gens = more $.
+router.post('/api/project-credits/buy', requireAuth, moneyLimiter, async (req, res) => {
   const uid = req.user.id;
-  const { amount, phone } = req.body || {};
-  const cents = sanitizeCents(amount);
-  if (!cents) return res.status(400).json({ error: 'Enter a valid USD amount (e.g. 3.00).' });
-
-  const result = requestWithdrawal(uid, cents, phone);
-  if (!result.ok) return res.status(400).json({ error: result.error });
-
-  await flushMoneyBackup(); // durable before confirming
-
-  const w = result.withdrawal;
-  res.json({
-    ok: true, withdrawal: w,
-    feeDollars: (w.feeCents/100).toFixed(2),
-    netDollars: (w.netCents/100).toFixed(2),
-    balance: getUserBalance(uid),
-  });
+  const qty = parseInt(req.body?.quantity, 10);
+  if (!Number.isFinite(qty) || qty < 1 || qty > MAX_CREDIT_QTY) {
+    return res.status(400).json({ error: `Choose 1 to ${MAX_CREDIT_QTY} generations.` });
+  }
+  const held = getProjectCredits(uid);
+  if (held + qty > MAX_PROJECT_CREDITS) {
+    return res.status(400).json({ error: `You already hold ${held} credits (max ${MAX_PROJECT_CREDITS}). Buy ${MAX_PROJECT_CREDITS - held} or fewer.` });
+  }
+  const cost = qty * PROJECT_CREDIT_CENTS;
+  const balance = getUserBalance(uid);
+  if (balance < cost) {
+    return res.status(400).json({ error: `Insufficient balance. ${qty} generation${qty > 1 ? 's' : ''} cost $${(cost/100).toFixed(2)} (have $${(balance/100).toFixed(2)}). Top up first.` });
+  }
+  const adj = adjustUserBalance(uid, -cost, `Project credits x${qty}`);
+  if (!adj.ok) return res.status(400).json({ error: adj.error });
+  const credits = addProjectCredits(uid, qty);
+  await flushMoneyBackup();
+  res.json({ ok: true, qty, costCents: cost, costDollars: (cost/100).toFixed(2),
+    balance: adj.balance, balanceDollars: (adj.balance/100).toFixed(2), credits });
 });
 
-// List my withdrawals
-router.get('/api/withdrawals', requireAuth, (req, res) => {
-  res.json({ ok: true, withdrawals: getWithdrawals(req.user.id) });
-});
-
-// Wallet status (balance + withdrawal balance + transactions + pending)
+// Wallet status (balance + credits + transactions + pending)
 router.get('/api/billing/status', requireAuth, (req, res) => {
   const uid = req.user.id;
   const balance = getUserBalance(uid);
   res.json({
     balance,
     balanceDollars: (balance/100).toFixed(2),
-    withdrawalBalance: getWithdrawalBalance(uid),
-    withdrawalDollars: (getWithdrawalBalance(uid)/100).toFixed(2),
     remainingTopup: getRemainingTopupCapacity(uid),
     remainingTopupDollars: (getRemainingTopupCapacity(uid)/100).toFixed(2),
-    feePct: TRANSACTION_FEE_PCT,
     maxBalanceDollars: (MAX_BALANCE_CENTS/100).toFixed(2),
+    projectCredits: getProjectCredits(uid),
+    projectCreditCents: PROJECT_CREDIT_CENTS,
     plan: getUserPlan(uid),
     transactions: getBalanceTransactions(uid, 20),
-    withdrawals: getWithdrawals(uid),
     pendingDeposits: getPendingDepositsForUser(uid).filter(p => p.status === 'pending'),
   });
 });
@@ -2198,29 +2212,22 @@ router.post('/api/admin/grant-sub', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// admin: withdrawals
-router.get('/api/admin/withdrawals', requireAdmin, (req, res) => {
-  res.json({ ok: true, withdrawals: getAllWithdrawals() });
-});
-
-// Mark a withdrawal as paid out (net amount sent to the user's mobile number)
-router.post('/api/admin/withdrawal/:id/complete', requireAdmin, async (req, res) => {
-  const w = getWithdrawal(req.params.id);
-  if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
-  if (w.status !== 'pending') return res.status(400).json({ error: `Already ${w.status}` });
-  updateWithdrawalStatus(req.params.id, 'paid', 'admin');
+// admin: top up a user's wallet balance (credit only, respects the $10 cap)
+router.post('/api/admin/topup', requireAdmin, async (req, res) => {
+  const { userId, email, amount, reason } = req.body || {};
+  let user = null;
+  if (userId) user = getWebUser(String(userId).trim());
+  if (!user && email) user = findUserByEmail(String(email).trim());
+  if (!user) return res.status(404).json({ error: 'User not found (provide userId or email).' });
+  const cents = sanitizeCents(amount);
+  if (!cents) return res.status(400).json({ error: 'Enter a valid USD amount (e.g. 2.50).' });
+  if (cents > MAX_BALANCE_CENTS) return res.status(400).json({ error: `Amount exceeds the $${(MAX_BALANCE_CENTS/100).toFixed(2)} wallet maximum.` });
+  const adj = adjustUserBalance(user.id, cents, (reason && String(reason).slice(0, 120)) || 'Admin top-up');
+  if (!adj.ok) return res.status(400).json({ error: adj.error });
   await flushMoneyBackup();
-  res.json({ ok: true, withdrawal: getWithdrawal(req.params.id) });
-});
-
-// Mark a withdrawal as failed - refunds the wallet (money must not vanish)
-router.post('/api/admin/withdrawal/:id/fail', requireAdmin, async (req, res) => {
-  const w = getWithdrawal(req.params.id);
-  if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
-  if (w.status !== 'pending') return res.status(400).json({ error: `Already ${w.status}` });
-  updateWithdrawalStatus(req.params.id, 'failed', 'admin');
-  await flushMoneyBackup();
-  res.json({ ok: true, withdrawal: getWithdrawal(req.params.id) });
+  res.json({ ok: true, userId: user.id, email: user.email || null,
+    creditedCents: cents, creditedDollars: (cents/100).toFixed(2),
+    balance: adj.balance, balanceDollars: (adj.balance/100).toFixed(2) });
 });
 
 // Resolve support message

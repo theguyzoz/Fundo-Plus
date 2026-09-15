@@ -529,6 +529,18 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
             <div id="grant-result" style="font-size:.8rem;margin-top:8px"></div>
           </div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+              <div><div class="card-title">Top Up Balance</div><div class="card-sub">Credit a user's wallet (respects the $10 cap)</div></div>
+            </div>
+            <div class="input-row">
+              <div class="field"><label>User ID or Email</label><input type="text" id="topup-uid" placeholder="User ID or email"></div>
+              <div class="field"><label>Amount (USD)</label><input type="number" id="topup-amount" placeholder="e.g. 2.50" min="0.01" step="0.01"></div>
+              <div class="field"><label>Reason (optional)</label><input type="text" id="topup-reason" placeholder="Admin top-up"></div>
+              <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="topupBalance()">Top up</button></div>
+            </div>
+            <div id="topup-result" style="font-size:.8rem;margin-top:8px"></div>
+          </div>
           <div class="card">
             <div class="card-header">
               <div><div class="card-title">Active Subscriptions</div></div>
@@ -1440,6 +1452,23 @@ async function grantSub() {
     resEl.style.color = r.ok ? 'var(--green)' : 'var(--red)';
     resEl.textContent = r.ok ? `✅ Granted ${plan} to ${uid}` : ('Error: ' + (d.error||'Failed'));
     if (r.ok) loadSubs();
+  } catch(e) { resEl.style.color='var(--red)'; resEl.textContent='Error: '+e.message; }
+}
+
+async function topupBalance() {
+  const id = document.getElementById('topup-uid').value.trim();
+  const amount = document.getElementById('topup-amount').value.trim();
+  const reason = document.getElementById('topup-reason').value.trim();
+  const resEl = document.getElementById('topup-result');
+  if (!id) { resEl.style.color = 'var(--yellow)'; resEl.textContent = '\u26a0 Enter a User ID or email'; return; }
+  if (!amount) { resEl.style.color = 'var(--yellow)'; resEl.textContent = '\u26a0 Enter an amount'; return; }
+  try {
+    const body = { amount, reason };
+    if (id.includes('@')) body.email = id; else body.userId = id;
+    const r = await api('/api/admin/topup', { method:'POST', body: JSON.stringify(body) });
+    const d = await r.json();
+    resEl.style.color = r.ok ? 'var(--green)' : 'var(--red)';
+    resEl.textContent = r.ok ? `\u2705 Credited $${d.creditedDollars} to ${d.email || d.userId} \u2014 new balance $${d.balanceDollars}` : ('Error: ' + (d.error||'Failed'));
   } catch(e) { resEl.style.color='var(--red)'; resEl.textContent='Error: '+e.message; }
 }
 

@@ -18,7 +18,7 @@ async function getSupabaseData() {
 // (or replay) funds. Rapid writes are coalesced by a tiny debounce, and
 // critical request handlers additionally AWAIT flushMoneyBackup() before
 // responding, so the caller only succeeds once state is durably saved.
-const MONEY_FILES = ['balances.json', 'pending_deposits.json', 'withdrawals.json', 'subscriptions.json'];
+const MONEY_FILES = ['balances.json', 'pending_deposits.json', 'subscriptions.json'];
 const MONEY_BACKUP_DEBOUNCE_MS = 100;
 
 let _moneyTimer   = null;
@@ -72,7 +72,6 @@ const PROOFS_DIR     = path.join(DATA_DIR, 'payment_proofs');
 const SUPPORT_FILE   = path.join(DATA_DIR, 'support.json');
 const BALANCES_FILE  = path.join(DATA_DIR, 'balances.json');
 const PENDING_FILE   = path.join(DATA_DIR, 'pending_deposits.json');
-const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
 
 if (!fs.existsSync(DATA_DIR))   fs.mkdirSync(DATA_DIR,   { recursive: true });
 if (!fs.existsSync(PROOFS_DIR)) fs.mkdirSync(PROOFS_DIR, { recursive: true });
@@ -83,7 +82,7 @@ export const PLANS = {
     name: 'Free',
     price: 0,
     aiMsg:         { unlinked: 15, linked: 30 }, // per day
-    projects:      3, // total forever (not per day)
+    projects:      3, // lifetime total (never resets)
     studySessions: 3, // per day (skills sessions opened)
     pdfExports:    5, // per day
     quizzes:       3, // per day
@@ -93,7 +92,7 @@ export const PLANS = {
     name: 'Lite',
     price: 2,
     aiMsg:         { unlinked: 70, linked: 70 },
-    projects:      8,
+    projects:      8, // per calendar month (resets on the 1st)
     studySessions: 8,
     pdfExports:    10,
     quizzes:       7,
@@ -103,7 +102,7 @@ export const PLANS = {
     name: 'Plus',
     price: 5,
     aiMsg:         { unlinked: 200, linked: 200 },
-    projects:      25,
+    projects:      25, // per calendar month (resets on the 1st)
     studySessions: 25,
     pdfExports:    30,
     quizzes:       20,
@@ -279,21 +278,20 @@ export async function reviewProof(proofId, status, adminId) {
 
 export function getUserProofs(userId) { return proofMeta.proofs.filter(p => p.userId === userId); }
 
-// virtual balance, fees & withdrawals (usd cents)
+// virtual balance & project credits (usd cents)
 // Money is stored as integer USD cents. Every amount is computed and validated
 // SERVER-SIDE - the client can never set a credited/debited amount directly.
-// Plan prices, fees and caps all originate here, not from the browser.
+// Plan prices and caps all originate here, not from the browser.
+// NOTE: withdrawals were permanently removed - wallet funds can only be spent
+// on plans and project credits. Top-ups are non-refundable (see Terms).
 
 export const MAX_BALANCE_CENTS  = 1000; // $10.00 USD - wallet hard cap
 export const MIN_TOPUP_CENTS    = 100; // $1.00 minimum top-up
-export const MIN_WITHDRAW_CENTS = 100; // $1.00 minimum withdrawal
-export const TRANSACTION_FEE_PCT = 5; // 5% per cash-out transaction
-export const FEE_ON_DEPOSIT     = false; // deposits credited in full; fee applies on withdrawal
 
-// Fee in cents (floor, so we never over-charge).
-export function feeCents(amountCents) {
-  return Math.floor((amountCents * TRANSACTION_FEE_PCT) / 100);
-}
+// Project credit packs: pay-per-generation beyond plan quota.
+export const PROJECT_CREDIT_CENTS = 10; // $0.10 per project generation
+export const MAX_PROJECT_CREDITS  = 100; // max credits a user can hold
+export const MAX_CREDIT_QTY       = 100; // max credits per single purchase
 
 // Parse/validate a client-supplied USD amount string/number -> integer cents.
 // Returns null if invalid. Rejects NaN, negatives, zero, >2 decimals, absurd values.
@@ -315,11 +313,26 @@ export function getUserBalance(userId) {
   return balancesData.balances[userId] || 0; // integer cents
 }
 
-// Net amount a user would receive if they cashed out their entire balance.
-// Always 5% below the virtual balance (the "withdrawal balance").
-export function getWithdrawalBalance(userId) {
-  const b = getUserBalance(userId);
-  return Math.max(0, b - feeCents(b));
+// Purchased project credits (never expire; spent after plan quota is exhausted).
+function creditsMap() {
+  if (!balancesData.credits || typeof balancesData.credits !== 'object') balancesData.credits = {};
+  return balancesData.credits;
+}
+export function getProjectCredits(userId) {
+  return creditsMap()[userId] || 0;
+}
+export function addProjectCredits(userId, n) {
+  const c = creditsMap();
+  c[userId] = Math.min(MAX_PROJECT_CREDITS, (c[userId] || 0) + Math.max(0, Math.floor(n)));
+  saveBalances();
+  return c[userId];
+}
+export function consumeProjectCredit(userId) {
+  const c = creditsMap();
+  if ((c[userId] || 0) < 1) return false;
+  c[userId]--;
+  saveBalances();
+  return true;
 }
 
 // How much more this wallet can hold before hitting the $10 cap.
@@ -356,73 +369,6 @@ export function getBalanceTransactions(userId, limit = 50) {
   return balancesData.transactions.filter(t => t.userId === userId).slice(-limit).reverse();
 }
 
-// withdrawals
-let withdrawalsData = readJson(WITHDRAWALS_FILE, { withdrawals: [] });
-function saveWithdrawals() { writeJson(WITHDRAWALS_FILE, withdrawalsData); scheduleMoneyBackup(); }
-
-/**
- * Request a withdrawal. VALIDATES everything server-side and debits the wallet
- * atomically so the money cannot be double-spent. Returns { ok, withdrawal, error }.
- * The 5% fee is applied here: net = amount - fee.
- */
-export function requestWithdrawal(userId, amountCents, phone = '') {
-  const balance = getUserBalance(userId);
-  if (amountCents < MIN_WITHDRAW_CENTS) {
-    return { ok: false, error: `Minimum withdrawal is $${(MIN_WITHDRAW_CENTS/100).toFixed(2)}.` };
-  }
-  if (amountCents > balance) {
-    return { ok: false, error: `Amount exceeds your balance ($${(balance/100).toFixed(2)}).` };
-  }
-  if (!/^0?7\d{8}$|^2637\d{8}$/.test(String(phone || '').replace(/\s+/g, ''))) {
-    return { ok: false, error: 'Enter a valid EcoCash/OneMoney mobile number.' };
-  }
-
-  const fee  = feeCents(amountCents);
-  const net  = amountCents - fee;
-
-  // Atomic debit (fails if insufficient - prevents races/double-spend)
-  const adj = adjustUserBalance(userId, -amountCents, `Withdrawal (fee $${(fee/100).toFixed(2)})`);
-  if (!adj.ok) return { ok: false, error: adj.error };
-
-  const w = {
-    id: `wd-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
-    userId,
-    phone: String(phone).replace(/\s+/g, ''),
-    amountCents,
-    feeCents: fee,
-    netCents: net,
-    status: 'pending', // pending | paid | failed
-    requestedAt: new Date().toISOString(),
-    processedAt: null,
-    processedBy: null,
-  };
-  withdrawalsData.withdrawals.unshift(w);
-  if (withdrawalsData.withdrawals.length > 2000) withdrawalsData.withdrawals = withdrawalsData.withdrawals.slice(0, 2000);
-  saveWithdrawals();
-  return { ok: true, withdrawal: w };
-}
-
-export function getWithdrawals(userId) {
-  return withdrawalsData.withdrawals.filter(w => w.userId === userId);
-}
-export function getAllWithdrawals() { return withdrawalsData.withdrawals; }
-export function getWithdrawal(id) {
-  return withdrawalsData.withdrawals.find(w => w.id === id) || null;
-}
-export function updateWithdrawalStatus(id, status, adminId = 'admin') {
-  const w = withdrawalsData.withdrawals.find(x => x.id === id);
-  if (!w) return false;
-  if (status === 'failed' && w.status === 'pending') {
-    // Refund the wallet if a payout fails - money must not vanish.
-    adjustUserBalance(w.userId, w.amountCents, `Withdrawal failed — refund (${id})`);
-  }
-  w.status = status;
-  w.processedAt = new Date().toISOString();
-  w.processedBy = adminId;
-  saveWithdrawals();
-  return true;
-}
-
 // pending paynow top-ups (polled until confirmed)
 let pendingData = readJson(PENDING_FILE, { pending: {} });
 function savePending() { writeJson(PENDING_FILE, pendingData); scheduleMoneyBackup(); }
@@ -455,7 +401,7 @@ export function deletePendingDeposit(reference) {
 
 /**
  * Finalize a pending top-up on payment confirmation (webhook OR poll).
- * Credits the wallet (minus deposit fee if FEE_ON_DEPOSIT) and enforces the
+ * Credits the wallet in full and enforces the
  * $10 cap. IDEMPOTENT — a second call returns { already: true } and never
  * double-credits. This is the key anti-fraud guard against replay attacks.
  */
@@ -467,10 +413,9 @@ export function finalizeDeposit(reference, paynowReference = null) {
   }
 
   const gross  = pend.amountCents;
-  const fee    = FEE_ON_DEPOSIT ? feeCents(gross) : 0;
-  const credit = gross - fee;
+  const credit = gross; // deposits are always credited in full - no fees
 
-  const adj = adjustUserBalance(pend.userId, credit, `Paynow top-up (ref ${reference})${fee ? ` — fee $${(fee/100).toFixed(2)}` : ''}`);
+  const adj = adjustUserBalance(pend.userId, credit, `Paynow top-up (ref ${reference})`);
   // If the cap would be exceeded (shouldn't happen - validated at initiation),
   // credit only up to the cap and record the difference safely.
   if (!adj.ok && adj.error.includes('maximum')) {
@@ -496,7 +441,7 @@ export function failDeposit(reference) {
 }
 
 /** Re-read all money files from disk — call after Supabase sync on startup so
- *  restored wallets/pending/withdrawals/subscriptions are visible in memory. */
+ *  restored wallets/pending/subscriptions are visible in memory. */
 export function reloadMoneyFromDisk() {
   const freshSubs = readJson(SUBS_FILE, null);
   if (freshSubs && freshSubs.subscriptions && typeof freshSubs.subscriptions === 'object') {
@@ -507,11 +452,6 @@ export function reloadMoneyFromDisk() {
   if (freshBal && freshBal.balances && typeof freshBal.balances === 'object') {
     balancesData = freshBal;
     console.log(`[store] ✅ Balances reloaded: ${Object.keys(balancesData.balances || {}).length} wallets`);
-  }
-  const freshWd = readJson(WITHDRAWALS_FILE, null);
-  if (freshWd && Array.isArray(freshWd.withdrawals)) {
-    withdrawalsData = freshWd;
-    console.log(`[store] ✅ Withdrawals reloaded: ${withdrawalsData.withdrawals.length}`);
   }
   const freshPend = readJson(PENDING_FILE, null);
   if (freshPend && freshPend.pending && typeof freshPend.pending === 'object') {
@@ -639,6 +579,7 @@ export function trackJid(jid) {
 let usageData = readJson(USAGE_FILE, {});
 function saveUsage() { writeJson(USAGE_FILE, usageData); }
 function todayKey() { return new Date().toISOString().slice(0,10); }
+function monthKey() { return new Date().toISOString().slice(0,7); } // YYYY-MM
 
 function getEntry(uid) {
   const today=todayKey();
@@ -646,15 +587,31 @@ function getEntry(uid) {
     usageData[uid]={
       date:today, chat:0, images:0, pdf:0, paperUploads:0,
       studySessions:0, quizzes:0, projectsTotal: usageData[uid]?.projectsTotal||0,
+      projectsMonth: usageData[uid]?.projectsMonth||'', projectsMonthly: usageData[uid]?.projectsMonthly||0,
       paperDlWindows: usageData[uid]?.paperDlWindows||[],
     };
+  }
+  // Monthly rollover: paid-plan project quota resets on the 1st of each month
+  const month=monthKey();
+  if (usageData[uid].projectsMonth!==month) {
+    usageData[uid].projectsMonth=month;
+    usageData[uid].projectsMonthly=0;
   }
   // Ensure new fields on existing entries
   if (usageData[uid].studySessions === undefined) usageData[uid].studySessions = 0;
   if (usageData[uid].quizzes      === undefined) usageData[uid].quizzes       = 0;
   if (usageData[uid].projectsTotal=== undefined) usageData[uid].projectsTotal = 0;
+  if (usageData[uid].projectsMonthly===undefined) usageData[uid].projectsMonthly=0;
+  if (usageData[uid].projectsMonth===undefined) usageData[uid].projectsMonth  = month;
   if (!Array.isArray(usageData[uid].paperDlWindows)) usageData[uid].paperDlWindows = [];
   return usageData[uid];
+}
+
+// Project quota consumed under the user's CURRENT plan rules:
+// free plan = lifetime total (never resets); paid plans = this calendar month.
+export function getProjectUsed(uid) {
+  const e = getEntry(uid);
+  return getUserPlan(uid) === 'free' ? (e.projectsTotal || 0) : (e.projectsMonthly || 0);
 }
 
 // Paper download windows: array of { windowStart, count }
@@ -689,14 +646,14 @@ export function incrementPdfUsage(uid)   { const e=getEntry(uid); e.pdf++;      
 export function incrementPaperUpload(uid){ const e=getEntry(uid); if(e.paperUploads>=PAPER_UPLOAD_LIMIT) return false; e.paperUploads++; saveUsage(); return true; }
 export function incrementStudySession(uid){ const e=getEntry(uid); e.studySessions++; saveUsage(); }
 export function incrementQuizUsage(uid)  { const e=getEntry(uid); e.quizzes++;      saveUsage(); }
-export function incrementProjectUsage(uid){ const e=getEntry(uid); e.projectsTotal++; saveUsage(); }
+export function incrementProjectUsage(uid){ const e=getEntry(uid); e.projectsTotal++; e.projectsMonthly=(e.projectsMonthly||0)+1; saveUsage(); }
 
 export function getUsage(uid) {
   const e = getEntry(uid);
   return {
     chat: e.chat, images: e.images, pdf: e.pdf||0,
     studySessions: e.studySessions||0, quizzes: e.quizzes||0,
-    projectsTotal: e.projectsTotal||0,
+    projectsTotal: e.projectsTotal||0, projectsMonthly: e.projectsMonthly||0, projectsMonth: e.projectsMonth||'',
     paperUploads: e.paperUploads||0,
     paperDlWindows: e.paperDlWindows||[],
     chatLimit: DAILY_CHAT_LIMIT, imageLimit: DAILY_IMAGE_LIMIT, pdfLimit: DAILY_PDF_LIMIT,

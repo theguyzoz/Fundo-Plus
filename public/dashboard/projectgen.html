@@ -496,6 +496,15 @@
       margin-bottom: 18px;
     }
     .info-box strong { color: #78350f; display: block; margin-bottom: 3px; }
+    .quota-banner {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px;
+      padding: 11px 16px; font-size: .8rem; color: #1e40af; margin-bottom: 16px; font-weight: 600;
+    }
+    .quota-banner a { color: #1d4ed8; font-weight: 800; text-decoration: none; white-space: nowrap; }
+    .quota-banner a:hover { text-decoration: underline; }
+    .quota-banner.low { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .quota-banner.low a { color: #dc2626; }
 
     @media (max-width: 600px) {
       .form-grid, .form-grid.three { grid-template-columns: 1fr; }
@@ -574,6 +583,12 @@
     <div class="info-box">
       <strong>📋 How it works</strong>
       Fill in the project details below. Our AI will generate a comprehensive 10+ page ZIMSEC-structured academic project and give you a <strong>download link that expires in 1 hour</strong>. Make sure to download your PDF promptly.
+    </div>
+
+    <!-- Quota banner -->
+    <div class="quota-banner" id="quota-banner" style="display:none">
+      <span id="quota-text">Loading quota…</span>
+      <a href="/~/subscription">Buy 10c credits →</a>
     </div>
 
     <!-- Form Card -->
@@ -812,6 +827,28 @@
       }, 1000);
     }
 
+    async function loadQuota() {
+      const bar = document.getElementById('quota-banner');
+      try {
+        const d = await api('GET', '/api/subscription');
+        const free = (d.plan || 'free') === 'free';
+        const lim = d.limits?.projects;
+        const used = free ? (d.usage?.projectsTotal ?? 0) : (d.usage?.projectsMonthly ?? 0);
+        const credits = d.projectCredits ?? 0;
+        let msg, low = false;
+        if (lim === 'unlimited' || lim === Infinity) {
+          msg = `\u2728 Unlimited plan projects${credits ? ` \u00b7 ${credits} \u26a1 credit${credits > 1 ? 's' : ''} banked` : ''}`;
+        } else {
+          const left = Math.max(0, lim - used);
+          msg = `\u{1F4CA} ${left} of ${lim} plan projects left${free ? ' (lifetime)' : ' this month'} \u00b7 ${credits} \u26a1 credit${credits === 1 ? '' : 's'}`;
+          low = left === 0 && credits === 0;
+        }
+        document.getElementById('quota-text').textContent = msg;
+        bar.classList.toggle('low', low);
+        bar.style.display = 'flex';
+      } catch { bar.style.display = 'none'; }
+    }
+
     async function generateProject() {
       const title    = document.getElementById('project-title').value.trim();
       const student  = document.getElementById('student-name').value.trim();
@@ -877,12 +914,16 @@
         startExpiryTimer();
         setStep(3);
         clearStatus();
+        loadQuota();
 
         document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       } catch (err) {
-        setStatus('error', `❌ ${err.message}`);
+        const hint = /project limit/i.test(err.message || '')
+          ? ` <a href="/~/subscription" style="color:#991b1b;font-weight:800">Buy 10c credits \u2192</a>` : '';
+        setStatus('error', `❌ ${err.message}${hint}`);
         setStep(1);
+        loadQuota();
       } finally {
         btn.disabled = false;
       }
@@ -925,6 +966,7 @@
 
     updatePreview();
     setStep(1);
+    loadQuota();
   </script>
 </body>
 </html>

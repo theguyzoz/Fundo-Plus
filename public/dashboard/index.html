@@ -1055,7 +1055,8 @@
         setBar('s-quizzes',  's-quizzes-max',  'bar-quizzes',  'pct-quizzes',  usg.quizzes        ?? 0, lim.quizzes);
         setBar('s-pdfs',     's-pdfs-max',     'bar-pdfs',     'pct-pdfs',     usg.pdf            ?? 0, lim.pdfExports);
         setBar('s-sessions', 's-sessions-max', 'bar-sessions', 'pct-sessions', usg.studySessions  ?? 0, lim.studySessions);
-        setBar('s-projects', 's-projects-max', 'bar-projects', 'pct-projects', usg.projectsTotal  ?? 0, lim.projects);
+        const projUsed = (d.plan || 'free') === 'free' ? (usg.projectsTotal ?? 0) : (usg.projectsMonthly ?? 0);
+        setBar('s-projects', 's-projects-max', 'bar-projects', 'pct-projects', projUsed, lim.projects);
         const dlCount = d.paperDlUsed != null ? d.paperDlUsed : ((usg.paperDlWindows && usg.paperDlWindows.length) ? (usg.paperDlWindows[usg.paperDlWindows.length-1]?.count ?? 0) : 0);
         setBar('s-dl',       's-dl-max',       'bar-dl',       'pct-dl',       dlCount,                 lim.paperDl);
 

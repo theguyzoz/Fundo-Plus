@@ -8,6 +8,8 @@ import { Router } from 'express';
 import {
   getPlanLimits,
   getFullUsage,
+  getProjectUsed,
+  getProjectCredits,
   canDownloadPaper,
   incrementPaperDl,
   listPapersLocal,
@@ -36,7 +38,8 @@ router.get('/me', requireAppAuth, (req, res) => {
     quiz:    raw.quizzes      || 0,
     paperDl: paperDlUsed,
     pdf:     raw.pdf          || 0,
-    projects: raw.projectsTotal || 0,
+    projects: getProjectUsed(uid),
+    projectCredits: getProjectCredits(uid),
   };
 
   res.json({

@@ -94,8 +94,8 @@ export const MANAGED_FILES = [
   'wa.json',
   // Payment proof metadata
   'proofmeta.json',
-  // Wallet / money system - balances, in-flight top-ups, withdrawals
-  'balances.json', 'pending_deposits.json', 'withdrawals.json',
+  // Wallet / money system - balances (+credits), in-flight top-ups, subscriptions
+  'balances.json', 'pending_deposits.json',
 ];
 
 // dirty tracking
