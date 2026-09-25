@@ -70,7 +70,7 @@ function pushHistory(uid, role, content) {
 }
 
 async function callGPT(system, messages, max_tokens = 1500) {
-  const result = await gpt4oChat({ systemInstruction: system, messages, temperature: 0.8, top_p: 0.95, top_k: 40, max_tokens });
+  const result = await gpt4oChat({ systemInstruction: system, messages, temperature: 0.8, top_p: 0.95, top_k: 40, max_tokens, timeoutMs: 60000 });
   if (!result.success) throw new Error(result.error || 'GPT failed');
   const reply = result.answer;
   if (!reply || typeof reply !== 'string' || !reply.trim()) throw new Error('Empty response');

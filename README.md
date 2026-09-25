@@ -94,9 +94,15 @@ PORT=3000
 WEBSITE_URL=https://your-domain.com
 ADMIN_PASSWORD=YourSecureAdminPassword
 
-# AI
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key   # optional fallback
+# AI — primary provider (GPT-OSS worker proxy) + optional Gemini fallback
+AI_PRIMARY_URL=https://openai.junioralive.workers.dev/v1/chat/completions
+AI_PRIMARY_MODEL=gpt-oss-120b
+AI_PROXY_KEY=your_proxy_key
+GEMINI_API_KEY=your_gemini_key        # fallback when primary is down (unset = offline mode instead)
+GEMINI_MODEL=gemini-2.0-flash
+AI_TIMEOUT_MS=60000                   # per-request timeout (quiz/marking use 25s, projects 90s)
+AI_BREAKER_FAILS=5                    # consecutive failures before fast-fail
+AI_BREAKER_COOLDOWN_MS=60000          # fast-fail window before retrying primary
 
 # Image generation (optional)
 HF_TOKEN=your_huggingface_token
@@ -118,6 +124,43 @@ SUPABASE_SERVICE_KEY=your_service_key
 ```bash
 node index.js
 ```
+
+---
+
+## 🛡️ AI resilience (offline mode)
+
+All AI features share one hardened client (`utils/gpt-service.js`): per-call
+timeouts, 1 retry on retryable errors, an automatic **Gemini fallback**, and a
+**circuit breaker** that fast-fails after 5 consecutive primary failures.
+`GET /api/ai/status` (public) reports provider health; the web UI shows an
+offline banner when `degraded: true`.
+
+When every provider is down, the app degrades instead of breaking:
+
+| Feature | Offline behaviour |
+|---|---|
+| Samazed / AI chat / WhatsApp | Friendly "AI offline" reply, no quota burned |
+| Quiz generation | Free fill-in-the-blank practice set from the notes (`utils/ai-fallback.js`) |
+| Short-answer marking | Keyword-overlap partial credit (never a silent 0) |
+| Project generation | HTTP 503, project quota untouched |
+| Onboarding validation | Fails open (accepts input) |
+
+---
+
+## 📚 Question bank (zero-AI quizzes)
+
+Curated ZIMSEC questions live in `bank/*.json` (shipped with the repo) and are
+served first — free, instant, and fully offline-capable:
+
+- `GET /api/quiz/bank` — subjects, topics and counts (never answers).
+- `POST /api/quiz/generate` accepts `source`: `auto` (bank first, AI tops up),
+  `bank` (bank only, no study text needed) or `ai` (previous behaviour).
+  Responses include `sources: {bank, ai, offline}` for the results screen.
+- Only AI-set questions consume daily quiz quota; bank and offline-practice
+  questions are free. Served bank ids are remembered per user to avoid repeats.
+- Grow the bank: `POST /api/admin/bank/import` (admin) with
+  `{subject, level?, questions[]}` — validated, deduped, persisted to
+  `bank/<subject>.json`. Stockpiler items use `source: 'ai-stockpile'`.
 
 ---
 

@@ -461,6 +461,9 @@
   <div class="content-area">
 
     <!-- Limit banner -->
+    <div class="limit-banner" id="ai-banner" style="display:none">
+      <span>⚠️ Fundo AI is in <b>offline mode</b> — replies may be slower or simpler than usual.</span>
+    </div>
     <div class="limit-banner" id="limit-banner">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span id="limit-text">Daily AI limit reached.</span>
@@ -535,6 +538,7 @@
       if (d.banned) { location.reload(); return; }
       currentUser = d.user;
       applyUser(d.user);
+      checkAiStatus();
       if (d.isAmbassador || d.user?.isAdmin) {
         const el = document.getElementById('amb-nav-item');
         if (el) el.style.display = '';
@@ -828,6 +832,7 @@
       } else if (!r.ok) {
         hideTyping();
         const d = await r.json().catch(() => ({}));
+        checkAiStatus();
         appendMsg('ai', '⚠️ ' + (d.error || 'Something went wrong. Please try again.'));
       } else if (useStream && r.body) {
         hideTyping();
@@ -877,6 +882,7 @@
       }
     } catch (err) {
       hideTyping();
+      checkAiStatus();
       appendMsg('ai', '⚠️ Network error. Please check your connection.');
     }
 
@@ -894,6 +900,14 @@
     const el = document.getElementById('limit-banner');
     document.getElementById('limit-text').textContent = msg;
     el.style.display = 'flex';
+  }
+
+  async function checkAiStatus() {
+    try {
+      const r = await fetch('/api/ai/status');
+      const d = await r.json();
+      document.getElementById('ai-banner').style.display = d.degraded ? 'flex' : 'none';
+    } catch {}
   }
 
   const inputEl = document.getElementById('msg-input');

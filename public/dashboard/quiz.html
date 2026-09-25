@@ -135,6 +135,7 @@
     .empty p{font-size:.8rem}
     .quota-pill{font-size:.78rem;font-weight:800;padding:7px 14px;border-radius:99px;background:#eff6ff;border:1.5px solid #bfdbfe;color:var(--acc);align-self:center;white-space:nowrap}
     .quota-pill.low{background:#fef2f2;border-color:#fca5a5;color:var(--red)}
+    .offline-note{display:block;background:#fffbeb;border:1.5px solid #fcd34d;color:#92400e;font-size:.8rem;font-weight:700;padding:9px 14px;border-radius:10px;margin:0 0 14px}
     @media(max-width:960px){.setup-grid{grid-template-columns:1fr}}
     @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}.topbar{left:0}.main{margin-left:0}.ham{display:flex}}
   </style>
@@ -176,13 +177,14 @@
     <div class="ph-left"><h1>Quiz Studio</h1><p>Generate ZIMSEC quizzes from your notes — marked by real AI with per-question feedback</p></div>
     <span class="quota-pill" id="quota-pill" style="display:none"></span>
   </div>
+  <div class="offline-note" id="offline-note" style="display:none"></div>
 
   <!-- ============ SETUP VIEW ============ -->
   <div class="view on" id="view-setup">
     <div class="setup-grid">
       <div class="card">
         <h2>📝 New quiz</h2>
-        <p class="sub">Paste notes, describe a topic, or upload a PDF. Fundo AI sets the paper and marks it like a ZIMSEC examiner.</p>
+        <p class="sub">Pick a bank subject for instant free questions, or paste notes for an AI-set paper — marked like a ZIMSEC examiner.</p>
         <div class="fg">
           <label>Subject (optional)</label>
           <input type="text" id="qz-subject" list="qz-subjects" placeholder="e.g. Biology, Mathematics, History…" autocomplete="off">
@@ -193,6 +195,10 @@
             <option value="Ndebele"></option><option value="Commerce"></option><option value="Accounts"></option>
             <option value="Economics"></option><option value="Computer Science"></option><option value="Agriculture"></option>
           </datalist>
+        </div>
+        <div class="fg" id="fg-topic" style="display:none">
+          <label>Bank topic</label>
+          <select id="qz-topic"><option value="">All topics</option></select>
         </div>
         <div class="fg">
           <label>Study material / topic</label>
@@ -222,6 +228,15 @@
             <span class="pill" data-v="medium">Medium</span>
             <span class="pill" data-v="hard">Hard</span>
           </div>
+        </div>
+        <div class="fg">
+          <label>Question source</label>
+          <div class="pills" id="pills-source">
+            <span class="pill on" data-v="auto">Auto (bank first)</span>
+            <span class="pill" data-v="bank">Bank only</span>
+            <span class="pill" data-v="ai">AI only</span>
+          </div>
+          <div style="font-size:.74rem;color:var(--mut);margin-top:6px" id="bank-hint"></div>
         </div>
         <div class="row2">
           <div class="fg">
@@ -379,17 +394,25 @@ function clearPdf(){
 async function generateQuiz(){
   const typed=document.getElementById('qz-text').value.trim();
   const text=pdfText||typed;
-  if(!text){alert('Paste study material, describe a topic, or upload a PDF first.');return;}
+  const subject=document.getElementById('qz-subject').value.trim();
+  const topic=document.getElementById('qz-topic').value;
+  const source=pillVal('pills-source');
+  const count=parseInt(document.getElementById('qz-count').value,10);
+  if(!text&&!bankCovers(subject,topic,count,pillVal('pills-style'),source)){alert('Paste study material, describe a topic, or upload a PDF first — or pick Bank only for a bank subject.');return;}
   const btn=document.getElementById('gen-btn');
   btn.disabled=true;btn.innerHTML='<span class="spin"></span>Setting your paper…';
   try{
     const d=await api('POST','/api/quiz/generate',{
       text,
-      subject:document.getElementById('qz-subject').value.trim(),
-      count:parseInt(document.getElementById('qz-count').value,10),
+      subject,
+      topic,
+      source,
+      count,
       style:pillVal('pills-style'),
       difficulty:pillVal('pills-diff'),
     });
+    lastSources=d.sources||null;
+    if(d.notice){const n=document.getElementById('offline-note');n.textContent='⚠️ '+d.notice;n.style.display='';}else{document.getElementById('offline-note').style.display='none';}
     startQuiz(d);loadQuota();
   }catch(e){alert(e.message);}
   finally{btn.disabled=false;btn.innerHTML='✨ Generate Quiz';}
@@ -493,6 +516,7 @@ function renderResults(d){
   g.textContent='Grade '+d.grade;g.className='grade-badge g-'+d.grade;
   document.getElementById('res-xp').textContent='+'+d.xp+' XP';
   document.getElementById('res-chips').innerHTML=
+    (lastSources&&(lastSources.bank>0||lastSources.offline>0)?`<span class="stat-chip">📚 ${lastSources.bank} bank${lastSources.ai?` · ✨ ${lastSources.ai} AI`:''}${lastSources.offline?` · 📝 ${lastSources.offline} practice`:''}</span>`:'')+
     `<span class="stat-chip ok">✓ ${d.correct} correct</span>`+
     (d.partial?`<span class="stat-chip warn">◐ ${d.partial} partial</span>`:'')+
     (d.skipped?`<span class="stat-chip">○ ${d.skipped} skipped</span>`:'')+
@@ -596,6 +620,48 @@ function burstConfetti(){
   }
 }
 
+async function checkAiStatus(){
+  try{
+    const r=await fetch('/api/ai/status');const d=await r.json();
+    if(d.degraded){const n=document.getElementById('offline-note');n.textContent='⚠️ AI is in offline mode — quizzes will be fill-in-the-blank practice sets until it recovers.';n.style.display='';}
+  }catch{}
+}
+
+let bankMeta=[], lastSources=null;
+async function loadBankMeta(){
+  try{
+    const d=await api('GET','/api/quiz/bank');
+    bankMeta=d.subjects||[];
+    const dl=document.getElementById('qz-subjects');
+    const have=new Set([...dl.querySelectorAll('option')].map(o=>o.value.toLowerCase()));
+    for(const s of bankMeta){ if(!have.has(s.subject.toLowerCase())){ const o=document.createElement('option'); o.value=s.subject; dl.appendChild(o); } }
+    document.getElementById('qz-subject').addEventListener('input', onSubjectInput);
+    onSubjectInput();
+  }catch{}
+}
+function bankSubjectMeta(name){
+  const n=(name||'').trim().toLowerCase();
+  return bankMeta.find(s=>s.subject.toLowerCase()===n)||null;
+}
+function onSubjectInput(){
+  const m=bankSubjectMeta(document.getElementById('qz-subject').value);
+  const fg=document.getElementById('fg-topic'), sel=document.getElementById('qz-topic'), hint=document.getElementById('bank-hint');
+  if(!m){ fg.style.display='none'; sel.value=''; hint.textContent=''; return; }
+  sel.innerHTML='<option value="">All topics</option>'+m.topics.map(t=>`<option value="${esc(t.topic)}">${esc(t.topic)} (${t.total})</option>`).join('');
+  fg.style.display='';
+  hint.textContent=`📚 ${m.total} bank questions for ${m.subject} — bank questions are free, instant, and work even when AI is down.`;
+}
+function bankCovers(subject,topic,count,style,source){
+  if(source==='bank') return true;
+  if(source!=='auto') return false;
+  const m=bankSubjectMeta(subject);
+  if(!m) return false;
+  const topics=topic?m.topics.filter(t=>t.topic.toLowerCase()===String(topic).toLowerCase()):m.topics;
+  let avail=0;
+  for(const t of topics) avail+= style==='mcq'?t.mcq : style==='short'?t.short : t.total;
+  return avail>=count;
+}
+
 /* ---------- init ---------- */
 (async()=>{
   if(!tok){location.href='/login';return;}
@@ -607,7 +673,7 @@ function burstConfetti(){
     document.getElementById('av').textContent=n[0].toUpperCase();
     document.getElementById('uname').textContent=n;
     if(d.isAmbassador||me.isAdmin){const el=document.getElementById('amb-nav-item');if(el)el.style.display='';}
-    loadHistory();loadQuota();
+    loadHistory();loadQuota();checkAiStatus();loadBankMeta();
   }catch{location.href='/login';}
 })();
 </script>

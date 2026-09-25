@@ -60,6 +60,7 @@ export async function handleChat(phone, text) {
       messages,
       max_tokens: 1024,
       temperature: 0.8,
+      timeoutMs: 60000,
     });
 
     if (!result.success) throw new Error(result.error || 'AI unavailable');

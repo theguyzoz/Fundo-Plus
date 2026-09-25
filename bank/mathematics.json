@@ -1,0 +1,270 @@
+{
+  "subject": "Mathematics",
+  "level": "O-Level",
+  "questions": [
+    {
+      "id": "mat-num-01",
+      "topic": "Number",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "3/4 written as a decimal is",
+      "options": { "A": "0.34", "B": "0.75", "C": "7.5", "D": "0.43" },
+      "answer": "B",
+      "explanation": "3 ÷ 4 = 0.75.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-num-02",
+      "topic": "Number",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "The HCF of 12 and 18 is",
+      "options": { "A": "3", "B": "6", "C": "9", "D": "36" },
+      "answer": "B",
+      "explanation": "Factors of 12: 1, 2, 3, 4, 6, 12; of 18: 1, 2, 3, 6, 9, 18. The highest common factor is 6.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-num-03",
+      "topic": "Number",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "0.00045 in standard form is",
+      "options": { "A": "4.5 × 10⁻⁴", "B": "4.5 × 10⁻³", "C": "45 × 10⁻⁵", "D": "4.5 × 10⁴" },
+      "answer": "A",
+      "explanation": "0.00045 = 4.5 ÷ 10000 = 4.5 × 10⁻⁴.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-alg-01",
+      "topic": "Algebra",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "If x + 5 = 12, then x =",
+      "options": { "A": "7", "B": "17", "C": "60", "D": "5" },
+      "answer": "A",
+      "explanation": "x = 12 − 5 = 7.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-alg-02",
+      "topic": "Algebra",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Expand 3(x + 4).",
+      "options": { "A": "3x + 4", "B": "3x + 12", "C": "x + 12", "D": "3x + 7" },
+      "answer": "B",
+      "explanation": "3 × x + 3 × 4 = 3x + 12.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-alg-03",
+      "topic": "Algebra",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "Factorise x² − 9.",
+      "options": { "A": "(x − 3)(x − 3)", "B": "(x + 3)(x + 3)", "C": "(x − 3)(x + 3)", "D": "(x − 9)(x + 1)" },
+      "answer": "C",
+      "explanation": "Difference of two squares: x² − 9 = (x − 3)(x + 3).",
+      "source": "curated"
+    },
+    {
+      "id": "mat-geo-01",
+      "topic": "Geometry",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "Angles on a straight line add up to",
+      "options": { "A": "90°", "B": "180°", "C": "270°", "D": "360°" },
+      "answer": "B",
+      "explanation": "Angles on a straight line sum to 180°.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-geo-02",
+      "topic": "Geometry",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Each interior angle of a regular hexagon is",
+      "options": { "A": "120°", "B": "108°", "C": "135°", "D": "150°" },
+      "answer": "A",
+      "explanation": "(6 − 2) × 180° ÷ 6 = 120°.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-men-01",
+      "topic": "Mensuration",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "The area of a circle of radius 7 cm is (take π = 22/7)",
+      "options": { "A": "44 cm²", "B": "154 cm²", "C": "22 cm²", "D": "308 cm²" },
+      "answer": "B",
+      "explanation": "A = πr² = 22/7 × 7 × 7 = 154 cm².",
+      "source": "curated"
+    },
+    {
+      "id": "mat-men-02",
+      "topic": "Mensuration",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "The volume of a cuboid 5 cm by 4 cm by 3 cm is",
+      "options": { "A": "12 cm³", "B": "47 cm³", "C": "60 cm³", "D": "94 cm³" },
+      "answer": "C",
+      "explanation": "V = l × w × h = 5 × 4 × 3 = 60 cm³.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-trig-01",
+      "topic": "Trigonometry",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "sin 30° =",
+      "options": { "A": "0", "B": "1/2", "C": "√3/2", "D": "1" },
+      "answer": "B",
+      "explanation": "sin 30° = 1/2 (opposite over hypotenuse in a half-equilateral triangle).",
+      "source": "curated"
+    },
+    {
+      "id": "mat-trig-02",
+      "topic": "Trigonometry",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "In a right-angled triangle, opposite = 3 and hypotenuse = 5. sin θ =",
+      "options": { "A": "3/5", "B": "4/5", "C": "3/4", "D": "5/3" },
+      "answer": "A",
+      "explanation": "sin θ = opposite ÷ hypotenuse = 3/5.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-stat-01",
+      "topic": "Statistics",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "The mean of 2, 4, 6 and 8 is",
+      "options": { "A": "4", "B": "5", "C": "6", "D": "20" },
+      "answer": "B",
+      "explanation": "(2 + 4 + 6 + 8) ÷ 4 = 20 ÷ 4 = 5.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-stat-02",
+      "topic": "Statistics",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "The median of 3, 7, 9, 11 and 15 is",
+      "options": { "A": "7", "B": "9", "C": "11", "D": "8" },
+      "answer": "B",
+      "explanation": "The middle value of the five ordered numbers is 9.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-sets-01",
+      "topic": "Sets",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "n(ξ) = 30, n(A) = 18, n(B) = 15 and n(A ∩ B) = 8. Find n(A ∪ B)′.",
+      "options": { "A": "5", "B": "7", "C": "23", "D": "25" },
+      "answer": "A",
+      "explanation": "n(A ∪ B) = 18 + 15 − 8 = 25, so the number outside both sets is 30 − 25 = 5.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-graph-01",
+      "topic": "Graphs",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "The gradient of the line y = 3x − 2 is",
+      "options": { "A": "3", "B": "−2", "C": "2", "D": "1/3" },
+      "answer": "A",
+      "explanation": "In y = mx + c the gradient is m = 3.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-num-s1",
+      "topic": "Number",
+      "type": "short",
+      "difficulty": "easy",
+      "question": "Express 45% as a fraction in its lowest terms.",
+      "options": {},
+      "answer": "9/20",
+      "explanation": "45/100 simplifies to 9/20.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-alg-s1",
+      "topic": "Algebra",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "Solve 2x − 3 = 11.",
+      "options": {},
+      "answer": "x = 7",
+      "explanation": "2x = 14, so x = 7.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-geo-s1",
+      "topic": "Geometry",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "Two angles of a triangle are 50° and 60°. Find the third angle.",
+      "options": {},
+      "answer": "70°",
+      "explanation": "180° − 50° − 60° = 70°.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-men-s1",
+      "topic": "Mensuration",
+      "type": "short",
+      "difficulty": "hard",
+      "question": "A rectangle is 12 cm long and 5 cm wide. Find the length of its diagonal.",
+      "options": {},
+      "answer": "13 cm",
+      "explanation": "√(12² + 5²) = √(144 + 25) = √169 = 13 cm (Pythagoras).",
+      "source": "curated"
+    },
+    {
+      "id": "mat-stat-s1",
+      "topic": "Statistics",
+      "type": "short",
+      "difficulty": "easy",
+      "question": "Find the mode of 1, 3, 3, 5, 7, 3 and 9.",
+      "options": {},
+      "answer": "3",
+      "explanation": "3 appears most often (three times).",
+      "source": "curated"
+    },
+    {
+      "id": "mat-trig-s1",
+      "topic": "Trigonometry",
+      "type": "short",
+      "difficulty": "hard",
+      "question": "If cos θ = 0.5 and θ is acute, find θ.",
+      "options": {},
+      "answer": "60°",
+      "explanation": "cos 60° = 0.5.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-num-s2",
+      "topic": "Number",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "Increase $200 by 15%.",
+      "options": {},
+      "answer": "$230",
+      "explanation": "$200 × 1.15 = $230.",
+      "source": "curated"
+    },
+    {
+      "id": "mat-alg-s2",
+      "topic": "Algebra",
+      "type": "short",
+      "difficulty": "hard",
+      "question": "Make t the subject of v = u + at.",
+      "options": {},
+      "answer": "t = (v − u)/a",
+      "explanation": "at = v − u, so t = (v − u)/a.",
+      "source": "curated"
+    }
+  ]
+}

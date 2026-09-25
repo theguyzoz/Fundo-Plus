@@ -73,9 +73,13 @@ router.post('/chat', requireAppAuth, async (req, res) => {
       messages,
       temperature: 0.8,
       max_tokens: 1500,
+      timeoutMs: 60000,
     });
 
-    if (!result.success) throw new Error(result.error || 'GPT failed');
+    if (!result.success) {
+      if (result.aiDown) return res.status(503).json({ error: 'Fundo AI is offline right now — please try again shortly. Your message quota was not used.', aiDown: true });
+      throw new Error(result.error || 'GPT failed');
+    }
 
     const reply = (result.answer || '').trim();
     if (!reply) throw new Error('Empty response');

@@ -1,0 +1,270 @@
+{
+  "subject": "Biology",
+  "level": "O-Level",
+  "questions": [
+    {
+      "id": "bio-cells-01",
+      "topic": "Cells",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "Which structure controls the movement of substances into and out of the cell?",
+      "options": { "A": "Cell wall", "B": "Cell membrane", "C": "Cytoplasm", "D": "Large vacuole" },
+      "answer": "B",
+      "explanation": "The cell membrane is partially permeable and controls which substances enter or leave the cell.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-cells-02",
+      "topic": "Cells",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Which organelle releases energy from glucose during aerobic respiration?",
+      "options": { "A": "Chloroplast", "B": "Nucleus", "C": "Mitochondrion", "D": "Ribosome" },
+      "answer": "C",
+      "explanation": "Mitochondria are the site of aerobic respiration, releasing energy from glucose.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-cells-03",
+      "topic": "Cells",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "A plant cell placed in distilled water becomes turgid. This is because",
+      "options": { "A": "water leaves the cell by osmosis", "B": "water enters the cell by osmosis and the wall resists further expansion", "C": "the cytoplasm pulls away from the wall", "D": "the cell membrane dissolves" },
+      "answer": "B",
+      "explanation": "Water moves in by osmosis; the inelastic cell wall pushes back, making the cell firm (turgid) instead of bursting.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-photo-01",
+      "topic": "Photosynthesis",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "Which pair of raw materials is needed for photosynthesis?",
+      "options": { "A": "Glucose and oxygen", "B": "Carbon dioxide and water", "C": "Chlorophyll and glucose", "D": "Oxygen and water" },
+      "answer": "B",
+      "explanation": "Photosynthesis uses carbon dioxide and water to make glucose, releasing oxygen.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-photo-02",
+      "topic": "Photosynthesis",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "When testing a leaf for starch, it is boiled in ethanol in order to",
+      "options": { "A": "kill the leaf cells", "B": "remove the chlorophyll", "C": "soften the leaf", "D": "stop photosynthesis" },
+      "answer": "B",
+      "explanation": "Boiling in ethanol removes chlorophyll so that the iodine colour change can be seen clearly.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-enz-01",
+      "topic": "Enzymes",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "The optimum pH for the stomach enzyme pepsin is about",
+      "options": { "A": "pH 2", "B": "pH 7", "C": "pH 9", "D": "pH 12" },
+      "answer": "A",
+      "explanation": "Pepsin works best in the acidic conditions of the stomach, around pH 2.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-diet-01",
+      "topic": "Nutrition",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "A deficiency of vitamin C causes",
+      "options": { "A": "rickets", "B": "scurvy", "C": "anaemia", "D": "night blindness" },
+      "answer": "B",
+      "explanation": "Scurvy (bleeding gums, slow healing) is caused by lack of vitamin C; rickets is vitamin D deficiency.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-trans-01",
+      "topic": "Transport",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Which blood vessel carries oxygenated blood from the lungs to the heart?",
+      "options": { "A": "Pulmonary artery", "B": "Pulmonary vein", "C": "Aorta", "D": "Vena cava" },
+      "answer": "B",
+      "explanation": "The pulmonary vein is the only vein carrying oxygenated blood — from the lungs to the left atrium.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-resp-01",
+      "topic": "Respiration",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "Which is the word equation for aerobic respiration?",
+      "options": { "A": "Glucose to lactic acid + energy", "B": "Glucose + oxygen to carbon dioxide + water + energy", "C": "Glucose to ethanol + carbon dioxide + energy", "D": "Carbon dioxide + water to glucose + oxygen" },
+      "answer": "B",
+      "explanation": "Aerobic respiration needs oxygen and releases carbon dioxide, water and energy.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-resp-02",
+      "topic": "Respiration",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "Anaerobic respiration in yeast produces",
+      "options": { "A": "lactic acid only", "B": "ethanol and carbon dioxide", "C": "glucose and oxygen", "D": "water and energy only" },
+      "answer": "B",
+      "explanation": "Yeast ferments glucose into ethanol and carbon dioxide; muscles produce lactic acid instead.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-eco-01",
+      "topic": "Ecology",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "In a food chain, the producer is the organism that",
+      "options": { "A": "breaks down dead matter", "B": "captures light energy to make food", "C": "eats herbivores", "D": "eats producers" },
+      "answer": "B",
+      "explanation": "Producers (green plants) convert light energy into chemical energy stored in food.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-eco-02",
+      "topic": "Ecology",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Which group returns mineral nutrients from dead organisms to the soil?",
+      "options": { "A": "Producers", "B": "Decomposers", "C": "Herbivores", "D": "Carnivores" },
+      "answer": "B",
+      "explanation": "Decomposers (bacteria and fungi) break down dead matter, recycling nutrients into the soil.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-coord-01",
+      "topic": "Coordination",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Which hormone lowers the blood glucose level?",
+      "options": { "A": "Adrenalin", "B": "Insulin", "C": "Thyroxine", "D": "Oestrogen" },
+      "answer": "B",
+      "explanation": "Insulin, secreted by the pancreas, lowers blood glucose by promoting its uptake and storage.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-repro-01",
+      "topic": "Reproduction",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "Where does fertilisation take place in humans?",
+      "options": { "A": "Ovary", "B": "Uterus", "C": "Oviduct", "D": "Vagina" },
+      "answer": "C",
+      "explanation": "Sperm meets the egg in the oviduct; the embryo then travels to implant in the uterus.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-health-01",
+      "topic": "Health",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Which of these diseases is caused by a virus?",
+      "options": { "A": "Malaria", "B": "Cholera", "C": "HIV/AIDS", "D": "Tuberculosis" },
+      "answer": "C",
+      "explanation": "HIV/AIDS is viral; malaria is caused by Plasmodium (a protist), while cholera and TB are bacterial.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-excr-01",
+      "topic": "Excretion",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "Filtration of blood in the kidney happens in the",
+      "options": { "A": "glomerulus", "B": "loop of Henle", "C": "collecting duct", "D": "ureter" },
+      "answer": "A",
+      "explanation": "High pressure in the glomerulus forces water, salts, glucose and urea into the Bowman's capsule.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-cells-s1",
+      "topic": "Cells",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "State TWO structural differences between a plant cell and an animal cell.",
+      "options": {},
+      "answer": "Plant cells have a cell wall and chloroplasts, which animal cells lack; plant cells have a large permanent vacuole while animal cells have only small temporary vacuoles.",
+      "explanation": "Accept any two: cell wall, chloroplasts, large permanent vacuole (plant only).",
+      "source": "curated"
+    },
+    {
+      "id": "bio-photo-s1",
+      "topic": "Photosynthesis",
+      "type": "short",
+      "difficulty": "hard",
+      "question": "A student increases light intensity but the rate of photosynthesis stops rising. Explain why.",
+      "options": {},
+      "answer": "Another factor, such as carbon dioxide concentration or temperature, has become the limiting factor.",
+      "explanation": "Once light is no longer limiting, whichever factor is in shortest supply caps the rate.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-enz-s1",
+      "topic": "Enzymes",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "Explain why an enzyme is denatured at high temperatures.",
+      "options": {},
+      "answer": "Heat breaks the bonds holding the enzyme's shape, so the active site changes shape and the substrate no longer fits.",
+      "explanation": "Denaturation is the loss of the specific 3D shape, so the enzyme-substrate complex cannot form.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-trans-s1",
+      "topic": "Transport",
+      "type": "short",
+      "difficulty": "hard",
+      "question": "Explain TWO ways in which red blood cells are adapted to carry oxygen.",
+      "options": {},
+      "answer": "They are biconcave discs with a large surface area for diffusion; they have no nucleus, leaving more space for haemoglobin.",
+      "explanation": "Also accept: thin membrane for a short diffusion distance; haemoglobin binds oxygen.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-eco-s1",
+      "topic": "Ecology",
+      "type": "short",
+      "difficulty": "easy",
+      "question": "Define the term ecosystem.",
+      "options": {},
+      "answer": "A community of living organisms interacting with each other and their non-living environment.",
+      "explanation": "Must include both the living (biotic) and the non-living (abiotic) parts.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-repro-s1",
+      "topic": "Reproduction",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "State TWO methods of contraception.",
+      "options": {},
+      "answer": "Any two from: condom, contraceptive pill, injection, implant, intra-uterine device, abstinence.",
+      "explanation": "Accept any two recognised methods of contraception.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-resp-s1",
+      "topic": "Respiration",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "State TWO uses of the energy released by respiration in the human body.",
+      "options": {},
+      "answer": "Any two from: muscle contraction, growth and cell division, maintaining body temperature, active transport.",
+      "explanation": "Respiration energy powers all energy-requiring processes in cells.",
+      "source": "curated"
+    },
+    {
+      "id": "bio-health-s1",
+      "topic": "Health",
+      "type": "short",
+      "difficulty": "easy",
+      "question": "State TWO ways by which cholera can be prevented.",
+      "options": {},
+      "answer": "Any two from: drinking clean or boiled water, proper sanitation and latrines, washing hands, cooking food thoroughly.",
+      "explanation": "Cholera spreads through contaminated water and food.",
+      "source": "curated"
+    }
+  ]
+}

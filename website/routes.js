@@ -494,6 +494,14 @@ router.post('/api/generate-link', requireAuth, (req, res) => {
 // samazed partner api - unlimited, rate-limited client-side
 const samazedHistories = new Map();
 
+// AI provider health (public, never burns credits or quota)
+router.get('/api/ai/status', async (req, res) => {
+  try {
+    const { getAiStatus } = await import('../utils/gpt-service.js');
+    res.json({ ok: true, ...getAiStatus() });
+  } catch (e) { res.json({ ok: true, degraded: true, error: 'status unavailable' }); }
+});
+
 router.post('/api/samazed/chat', async (req, res) => {
   const { messages, system } = req.body || {};
   if (!messages || !Array.isArray(messages) || messages.length === 0)
@@ -509,8 +517,12 @@ router.post('/api/samazed/chat', async (req, res) => {
       messages: messages.slice(-20).map(m => ({ role: m.role, content: m.content })),
       temperature: 0.8,
       max_tokens: 1500,
+      timeoutMs: 60000,
     });
-    if (!result.success) return res.status(502).json({ error: result.error || 'AI service error' });
+    if (!result.success) {
+      if (result.aiDown) return res.status(503).json({ error: 'Fundo AI is offline right now — please try again shortly.', aiDown: true });
+      return res.status(502).json({ error: result.error || 'AI service error' });
+    }
     res.json({ reply: result.answer });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -721,7 +733,15 @@ function quizDifficultyLine(difficulty) {
   }
 }
 
-// POST /api/quiz/generate — validated, difficulty-aware, answers kept server-side
+// GET /api/quiz/bank — question-bank metadata (subjects, topics, counts; never answers)
+router.get('/api/quiz/bank', requireOnboarded, async (req, res) => {
+  try {
+    const bank = await import('../utils/question-bank.js');
+    res.json({ ok: true, subjects: bank.getBankMeta() });
+  } catch (e) { res.json({ ok: true, subjects: [] }); }
+});
+
+// POST /api/quiz/generate — bank-first (free), AI top-up, offline fallback; answers kept server-side
 router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
   const uid = req.user.id;
   const isLinked = !!req.user.jid;
@@ -740,9 +760,29 @@ router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
   const style = QUIZ_STYLES.includes(body.style) ? body.style : 'mixed';
   const difficulty = QUIZ_DIFFICULTIES.includes(body.difficulty) ? body.difficulty : 'mixed';
   const subject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 80) : '';
+  const topic = typeof body.topic === 'string' ? body.topic.trim().slice(0, 80) : '';
+  const source = ['auto', 'bank', 'ai'].includes(body.source) ? body.source : 'auto';
 
-  if (!text) return res.status(400).json({ error: 'No text provided' });
-  if (text.length < 20) return res.status(400).json({ error: 'Please paste more study material (or a fuller topic description).' });
+  // Question bank first: free, instant, works with AI fully down.
+  let bankMod = null, bankQs = [], bankSubject = null;
+  try {
+    bankMod = await import('../utils/question-bank.js');
+    bankSubject = bankMod.matchSubject(subject);
+    if (source !== 'ai' && bankSubject) {
+      bankQs = bankMod.pickQuestions({ subject: bankSubject, topic, count, style, difficulty, uid });
+    }
+  } catch (e) { console.warn('[quiz] bank unavailable:', e.message); bankQs = []; }
+
+  const needAI = source === 'ai' || (source === 'auto' && bankQs.length < count);
+  if (source === 'bank' && !bankQs.length) {
+    return res.status(404).json({ error: bankSubject
+      ? `No bank questions match (${bankSubject}${topic ? ' / ' + topic : ''}, ${style}). Try AI mode or another topic.`
+      : `No question bank for "${subject || 'this subject'}" yet — try AI mode, or pick Biology, Mathematics or English.` });
+  }
+  if (needAI) {
+    if (!text) return res.status(400).json({ error: 'No text provided' });
+    if (text.length < 20) return res.status(400).json({ error: 'Please paste more study material (or a fuller topic description).' });
+  }
 
   try {
     const { gpt4oChat } = await import('../utils/gpt-service.js');
@@ -752,9 +792,9 @@ router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
         ? 'ALL questions must be short-answer (no options).'
         : 'Mix multiple-choice (with exactly 4 options A-D) and short-answer questions.';
 
-    const buildPrompt = (strict) => [
+    const buildPrompt = (strict, n) => [
       'You are a quiz setter for Zimbabwean students (ZIMSEC O-Level / A-Level).',
-      `Based ONLY on the study material below, generate exactly ${count} quiz questions.`,
+      `Based ONLY on the study material below, generate exactly ${n} quiz questions.`,
       styleLine,
       quizDifficultyLine(difficulty),
       subject ? `Subject: ${subject}.` : '',
@@ -768,16 +808,42 @@ router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
       text.slice(0, 6000),
     ].filter(Boolean).join('\n');
 
-    let questions = [];
-    for (let attempt = 0; attempt < 2 && !questions.length; attempt++) {
-      const result = await gpt4oChat({
-        systemInstruction: 'You are a ZIMSEC quiz setter. You always reply with a raw JSON array of questions.',
-        messages: [{ role: 'user', content: buildPrompt(attempt === 1) }],
-        max_tokens: 4000, temperature: attempt === 1 ? 0.3 : 0.7,
-      });
-      if (!result.success) throw new Error(result.error || 'AI service failed');
-      questions = parseQuizFromAI(result.answer || '', style, count);
+    let aiQuestions = [];
+    let offlineNotice = '';
+    let aiUsed = false;
+    const needCount = count - bankQs.length;
+    if (needAI && needCount > 0) {
+      try {
+        for (let attempt = 0; attempt < 2 && !aiQuestions.length; attempt++) {
+          const result = await gpt4oChat({
+            systemInstruction: 'You are a ZIMSEC quiz setter. You always reply with a raw JSON array of questions.',
+            messages: [{ role: 'user', content: buildPrompt(attempt === 1, needCount) }],
+            max_tokens: 4000, temperature: attempt === 1 ? 0.3 : 0.7,
+            timeoutMs: 25000,
+          });
+          if (!result.success) throw new Error(result.error || 'AI service failed');
+          aiQuestions = parseQuizFromAI(result.answer || '', style, needCount);
+        }
+        if (aiQuestions.length) aiUsed = true;
+      } catch (aiErr) {
+        // AI down: top up with an offline fill-in-the-blank set (free, no quota).
+        const { generateQuizOffline } = await import('../utils/ai-fallback.js');
+        aiQuestions = generateQuizOffline(text, needCount, style).questions;
+        if (!aiQuestions.length && !bankQs.length) throw aiErr;
+        offlineNotice = !bankQs.length
+          ? 'AI offline — this is a fill-in-the-blank practice set built from your notes.'
+          : aiQuestions.length
+            ? `AI offline — ${bankQs.length} bank questions topped up with practice questions from your notes.`
+            : `AI offline — serving ${bankQs.length} bank questions (top-up unavailable).`;
+      }
     }
+    // Combine + interleave bank and fresh questions, then re-number.
+    const questions = [...bankQs, ...aiQuestions];
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+    questions.forEach((q, i) => { q.id = 'q' + (i + 1); });
     if (!questions.length) {
       return res.status(502).json({ error: 'The AI returned an unreadable quiz. Please try again with more detailed material.' });
     }
@@ -785,18 +851,28 @@ router.post('/api/quiz/generate', requireOnboarded, async (req, res) => {
     // stash full quiz (with answers) server-side; client only gets the paper
     const quizId = 'qz_' + crypto.randomBytes(12).toString('hex');
     const sessions = loadQuizSessions();
+    const sources = { bank: bankQs.length, ai: aiUsed ? aiQuestions.length : 0,
+      offline: (!aiUsed ? aiQuestions.length : 0) };
     sessions[quizId] = {
       id: quizId, userId: uid, createdAt: Date.now(),
-      subject, style, difficulty, count: questions.length, questions,
+      subject, topic, source, sources, style, difficulty, count: questions.length, questions,
     };
     // prune: keep max 30 sessions per user
     const mine = Object.values(sessions).filter(s => s.userId === uid).sort((a, b) => b.createdAt - a.createdAt);
     for (const s of mine.slice(30)) delete sessions[s.id];
     saveQuizSessions(sessions);
 
-    incrementQuizUsage(uid);
+    if (aiUsed) incrementQuizUsage(uid); // bank + offline practice are free
+    if (bankMod && bankQs.length) {
+      try { bankMod.recordServed(uid, bankQs.map((q) => q.bankId)); } catch {}
+    }
+    const notice = offlineNotice ||
+      (source === 'bank' && bankQs.length < count
+        ? `Bank has ${bankQs.length} question${bankQs.length === 1 ? '' : 's'} for this selection — try AI mode for a full paper.`
+        : '');
     const paper = questions.map(q => ({ id: q.id, type: q.type, question: q.question, options: q.options }));
-    res.json({ quizId, subject, style, difficulty, count: paper.length, questions: paper });
+    res.json({ quizId, subject, style, difficulty, count: paper.length, questions: paper, sources,
+      ...(notice ? { notice, ...(offlineNotice ? { offline: true } : {}) } : {}) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -832,7 +908,7 @@ router.post('/api/quiz/mark', requireOnboarded, async (req, res) => {
         saJobs.push({ q, given: typeof given === 'string' ? given : '' });
       }
     }
-    // AI-mark short answers in parallel (helper never throws; score 0 on failure)
+    // AI-mark short answers in parallel (helper never throws; offline keyword marking when AI is down)
     const saResults = await Promise.all(saJobs.map(async ({ q, given }) => {
       const r = await markShortAnswer({ text: q.question, answer: q.answer }, given);
       return {
@@ -1271,9 +1347,14 @@ router.post('/api/skills/project-gen', requireAuth, async (req, res) => {
       message: userPrompt,
       max_tokens: 4096,
       temperature: 0.72,
+      timeoutMs: 90000,
     });
 
     if (!gptResult.success) {
+      if (gptResult.aiDown) {
+        // No quota consumed — the job never started.
+        return res.status(503).json({ error: 'AI is temporarily down. Your project quota was not used — please retry shortly.' });
+      }
       throw new Error(gptResult.error || 'AI generation failed');
     }
 
@@ -2123,7 +2204,7 @@ Respond ONLY with valid JSON:
     const result = await gpt4oChat({
       systemInstruction: 'You are a form validator. Always respond with valid JSON only.',
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 300, temperature: 0.1,
+      max_tokens: 300, temperature: 0.1, timeoutMs: 15000,
     });
     if (!result.success) return res.json({ valid: true });
     let parsed;
@@ -2163,6 +2244,18 @@ router.post('/api/admin/login', (req, res) => {
   const { password } = req.body || {};
   if (password === ADMIN_PASS) return res.json({ ok: true, token: password });
   res.status(401).json({ error: 'Invalid password' });
+});
+
+// POST /api/admin/bank/import — append questions to the bank {subject, level?, questions[]}
+router.post('/api/admin/bank/import', requireAdmin, async (req, res) => {
+  try {
+    const bank = await import('../utils/question-bank.js');
+    const { subject, level, questions } = req.body || {};
+    if (!subject || !Array.isArray(questions) || !questions.length) {
+      return res.status(400).json({ error: 'subject and non-empty questions[] required' });
+    }
+    res.json({ ok: true, ...bank.addQuestions(subject, level, questions) });
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 router.get('/api/admin/users', requireAdmin, (req, res) => {
@@ -2921,16 +3014,18 @@ ${studentAnswer}
 Respond ONLY with valid JSON on a single line (no markdown, no code fence):
 {"score": 0.85, "feedback": "Brief 1-2 sentence marking feedback explaining the score and any gaps"}`;
 
+    const { markShortAnswerLocal } = await import('../utils/ai-fallback.js');
     const result = await gpt4oChat({
       systemInstruction: systemPrompt,
       message: userPrompt,
       temperature: 0.3,
       max_tokens: 400,
+      timeoutMs: 25000,
     });
 
     if (!result.success) {
       console.error('[ZIMSEC] GPT marking failed:', result.error);
-      return { score: 0, feedback: `Marking error: ${result.error}. Answer flagged for manual review.` };
+      return { ...markShortAnswerLocal(question.answer, studentAnswer) };
     }
 
     // Parse JSON response from GPT
@@ -2940,7 +3035,7 @@ Respond ONLY with valid JSON on a single line (no markdown, no code fence):
       parsed = JSON.parse(clean);
     } catch (parseErr) {
       console.error('[ZIMSEC] Failed to parse GPT response:', result.answer.slice(0, 100));
-      return { score: 0, feedback: 'Marking error: invalid response format. Answer flagged for manual review.' };
+      return { ...markShortAnswerLocal(question.answer, studentAnswer) };
     }
 
     const score = Math.max(0, Math.min(1, parseFloat(parsed.score) || 0));
@@ -2949,7 +3044,12 @@ Respond ONLY with valid JSON on a single line (no markdown, no code fence):
     return { score, feedback };
   } catch (err) {
     console.error('[ZIMSEC] Short answer marking error:', err.message);
-    return { score: 0, feedback: `Marking error: ${err.message.slice(0, 80)}. Answer flagged for manual review.` };
+    try {
+      const { markShortAnswerLocal } = await import('../utils/ai-fallback.js');
+      return { ...markShortAnswerLocal(question.answer, studentAnswer) };
+    } catch {
+      return { score: 0, feedback: `Marking error: ${err.message.slice(0, 80)}. Answer flagged for manual review.` };
+    }
   }
 }
 

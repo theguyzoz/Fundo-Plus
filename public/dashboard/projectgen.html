@@ -586,6 +586,9 @@
     </div>
 
     <!-- Quota banner -->
+    <div class="quota-banner low" id="ai-banner" style="display:none">
+      <span>⚠️ AI is in <b>offline mode</b> — project generation is paused until it recovers. Your quota is safe.</span>
+    </div>
     <div class="quota-banner" id="quota-banner" style="display:none">
       <span id="quota-text">Loading quota…</span>
       <a href="/~/subscription">Buy 10c credits →</a>
@@ -784,6 +787,14 @@
       return r.json();
     }
 
+    async function checkAiStatus() {
+      try {
+        const r = await fetch('/api/ai/status');
+        const d = await r.json();
+        document.getElementById('ai-banner').style.display = d.degraded ? '' : 'none';
+      } catch {}
+    }
+
     function setStatus(type, text) {
       const bar = document.getElementById('status-bar');
       bar.className = `status show ${type}`;
@@ -919,6 +930,7 @@
         document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       } catch (err) {
+        if (/temporarily down|offline/i.test(err.message || '')) { const b = document.getElementById('ai-banner'); if (b) b.style.display = ''; }
         const hint = /project limit/i.test(err.message || '')
           ? ` <a href="/~/subscription" style="color:#991b1b;font-weight:800">Buy 10c credits \u2192</a>` : '';
         setStatus('error', `❌ ${err.message}${hint}`);
@@ -967,6 +979,7 @@
     updatePreview();
     setStep(1);
     loadQuota();
+    checkAiStatus();
   </script>
 </body>
 </html>

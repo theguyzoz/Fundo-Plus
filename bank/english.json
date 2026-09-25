@@ -1,0 +1,138 @@
+{
+  "subject": "English",
+  "level": "O-Level",
+  "questions": [
+    {
+      "id": "eng-gr-01",
+      "topic": "Grammar",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "She ___ to school every day.",
+      "options": { "A": "go", "B": "goes", "C": "going", "D": "gone" },
+      "answer": "B",
+      "explanation": "Third-person singular in the present tense takes -s: she goes.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-gr-02",
+      "topic": "Grammar",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "The past tense of 'write' is",
+      "options": { "A": "writed", "B": "wrote", "C": "written", "D": "writing" },
+      "answer": "B",
+      "explanation": "'Wrote' is the simple past; 'written' is the past participle.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-gr-03",
+      "topic": "Grammar",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "Neither of the boys ___ present.",
+      "options": { "A": "were", "B": "was", "C": "are", "D": "be" },
+      "answer": "B",
+      "explanation": "'Neither' is singular, so it takes the singular verb 'was'.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-gr-04",
+      "topic": "Grammar",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "He has lived here ___ 2019.",
+      "options": { "A": "for", "B": "since", "C": "from", "D": "by" },
+      "answer": "B",
+      "explanation": "'Since' is used with a point in time; 'for' is used with a period of time.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-voc-01",
+      "topic": "Vocabulary",
+      "type": "mcq",
+      "difficulty": "easy",
+      "question": "A synonym of 'happy' is",
+      "options": { "A": "gloomy", "B": "joyful", "C": "angry", "D": "tired" },
+      "answer": "B",
+      "explanation": "Joyful means the same as happy; the rest are opposites or unrelated.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-voc-02",
+      "topic": "Vocabulary",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "An antonym of 'ancient' is",
+      "options": { "A": "old", "B": "modern", "C": "antique", "D": "aged" },
+      "answer": "B",
+      "explanation": "Modern is the opposite of ancient; old, antique and aged are synonyms.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-voc-03",
+      "topic": "Vocabulary",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "'Benevolent' means",
+      "options": { "A": "cruel", "B": "kind and generous", "C": "wealthy", "D": "strict" },
+      "answer": "B",
+      "explanation": "Benevolent means kind and generous — wishing to do good.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-idm-01",
+      "topic": "Idioms",
+      "type": "mcq",
+      "difficulty": "medium",
+      "question": "'To bite the dust' means to",
+      "options": { "A": "eat dirt", "B": "suffer defeat", "C": "work hard", "D": "take a rest" },
+      "answer": "B",
+      "explanation": "To bite the dust means to fail or suffer defeat.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-gr-05",
+      "topic": "Grammar",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "He said, 'I am tired.' In reported speech: He said that he ___ tired.",
+      "options": { "A": "is", "B": "was", "C": "has been", "D": "will be" },
+      "answer": "B",
+      "explanation": "In reported speech the tense shifts one step back: am becomes was.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-voc-04",
+      "topic": "Vocabulary",
+      "type": "mcq",
+      "difficulty": "hard",
+      "question": "The plural of 'analysis' is",
+      "options": { "A": "analysises", "B": "analyses", "C": "analysies", "D": "analysis'" },
+      "answer": "B",
+      "explanation": "Nouns ending in -sis change to -ses: analysis becomes analyses.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-gr-s1",
+      "topic": "Grammar",
+      "type": "short",
+      "difficulty": "easy",
+      "question": "Rewrite in the plural: 'The child is playing.'",
+      "options": {},
+      "answer": "The children are playing.",
+      "explanation": "child becomes children, and the verb becomes plural: are.",
+      "source": "curated"
+    },
+    {
+      "id": "eng-voc-s1",
+      "topic": "Vocabulary",
+      "type": "short",
+      "difficulty": "medium",
+      "question": "Give the noun form of 'decide'.",
+      "options": {},
+      "answer": "decision",
+      "explanation": "decide becomes decision, as in 'to make a decision'.",
+      "source": "curated"
+    }
+  ]
+}
