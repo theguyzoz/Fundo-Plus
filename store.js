@@ -125,7 +125,7 @@ export const DAILY_CHAT_LIMIT   = 25;
 export const DAILY_IMAGE_LIMIT  = 15;
 export const DAILY_PDF_LIMIT    = 5;
 export const PAPER_UPLOAD_LIMIT = 3;
-export const MAX_PAPERS_BYTES   = 800 * 1024 * 1024; // 800 MB for papers
+export const MAX_PAPERS_BYTES   = (parseInt(process.env.MAX_PAPERS_MB || '3072', 10)) * 1024 * 1024; // default 3 GB for papers
 
 // generic file helpers
 function readJson(fp, def) {

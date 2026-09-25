@@ -254,8 +254,16 @@ function touchPaperCache(filename) {
 
 function evictStalePaperCache() {
   const now = Date.now();
+  let byFile = new Map();
+  try { byFile = new Map(listPapersLocal().map(p => [p.filename, p])); } catch (e) { /* keep empty */ }
   for (const [filename, lastAccess] of paperLastAccess.entries()) {
     if (now - lastAccess >= PAPER_CACHE_TTL) {
+      // NEVER delete the local copy unless a remote backup exists — otherwise the file is lost forever.
+      const paper = byFile.get(filename);
+      if (!paper || !paper.publicUrl) {
+        paperLastAccess.delete(filename);
+        continue;
+      }
       const localPath = path.join(PAPERS_DIR, filename);
       try {
         if (fs.existsSync(localPath)) {
