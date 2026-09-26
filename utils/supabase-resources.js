@@ -11,10 +11,12 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const URL  = process.env.SUPABASE_RESOURCES_URL;
-const KEY  =
-  process.env.SUPABASE_RESOURCES_SERVICE_KEY  ||
+const SERVICE_KEY = process.env.SUPABASE_RESOURCES_SERVICE_KEY || '';
+const ANON_KEY =
   process.env.SUPABASE_RESOURCES_ANON_KEY     ||
-  process.env.SUPABASE_RESOURCES_KEY;
+  process.env.SUPABASE_RESOURCES_KEY          || '';
+const KEY = SERVICE_KEY || ANON_KEY;
+const KEY_TYPE = SERVICE_KEY ? 'service' : (ANON_KEY ? 'anon' : 'none');
 const BUCKET = process.env.SUPABASE_RESOURCES_BUCKET || 'resources';
 
 const LIMIT_BYTES = 800 * 1024 * 1024; // 800 MB hard cap
@@ -40,8 +42,9 @@ let _bucketReady = false;
 async function ensureBucket() {
   if (_bucketReady) return;
   const sb = getClient(); if (!sb) return;
+  if (KEY_TYPE !== 'service') { _bucketReady = true; return; }
   const { error } = await sb.storage.createBucket(BUCKET, { public: true });
-  if (error && !error.message.includes('already exists'))
+  if (error && !String(error.message || '').includes('already exists'))
     console.warn(`[Supabase:Resources] createBucket:`, error.message);
   _bucketReady = true;
 }
@@ -92,6 +95,20 @@ export async function uploadResource(filename, buffer, mimetype = 'application/p
 
   const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(filename);
   console.log(`[Supabase:Resources] ✅ Uploaded: ${filename} (${Math.round(buffer.length / 1024)} KB) — ${cap.usedMB} MB used`);
+  return pub.publicUrl;
+}
+
+export async function backfillResource(filename, buffer, mimetype = 'application/pdf') {
+  const sb = getClient();
+  if (!sb) throw new Error('Supabase Resources not configured');
+  await ensureBucket();
+  const { error } = await sb.storage.from(BUCKET).upload(filename, buffer, {
+    contentType: mimetype,
+    upsert: true,
+  });
+  if (error) throw new Error(error.message);
+  const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(filename);
+  console.log(`[Supabase:Resources] ✅ Backfilled: ${filename} (${Math.round(buffer.length / 1024)} KB)`);
   return pub.publicUrl;
 }
 

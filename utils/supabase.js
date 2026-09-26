@@ -10,10 +10,12 @@ export {
 
 export {
   uploadResource       as uploadPaper,
+  backfillResource     as backfillPaper,
   deleteResource       as deletePaper,
   listResources        as listPapers,
   getResourceUrl,
   getResourcesStats,
+  getResourcesConfig,
   checkResourcesCapacity,
 } from './supabase-resources.js';
 

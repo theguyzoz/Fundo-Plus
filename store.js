@@ -692,6 +692,7 @@ let papersStore = readJson(PAPERS_FILE, { papers:[],totalBytes:0 });
 function savePapers() { writeJson(PAPERS_FILE, papersStore); }
 export function addPaper(meta){ papersStore.papers.unshift({id:`p-${Date.now()}`,...meta,uploadedAt:new Date().toISOString()}); papersStore.totalBytes=(papersStore.totalBytes||0)+(meta.size||0); savePapers(); return papersStore.papers[0]; }
 export function removePaper(id){ const idx=papersStore.papers.findIndex(p=>p.id===id); if(idx===-1) return false; papersStore.totalBytes=Math.max(0,(papersStore.totalBytes||0)-(papersStore.papers[idx].size||0)); papersStore.papers.splice(idx,1); savePapers(); return true; }
+export function updatePaper(id,patch){ const p=papersStore.papers.find(p=>p.id===id); if(!p) return null; Object.assign(p,patch); savePapers(); return p; }
 export function listPapersLocal()     { return papersStore.papers; }
 export function getPapersTotalBytes() { return papersStore.totalBytes||0; }
 export function getPaperById(id)      { return papersStore.papers.find(p=>p.id===id)||null; }

@@ -10,7 +10,7 @@ import {
   deleteWebUser, findWebUserByToken, listPapersLocal,
   getPapersTotalBytes, MAX_PAPERS_BYTES, addWishlistVote,
   getWishlistCount, incrementPaperUpload, PAPER_UPLOAD_LIMIT,
-  addPaper, removePaper, getAllWebUsers,
+  addPaper, removePaper, updatePaper, getAllWebUsers,
   banUser, unbanUser, getBan, getAllBans, isBanned,
   submitAppeal, resolveAppeal, hashPassword,
   addCommunityMessage, getCommunityMessages,
@@ -345,6 +345,7 @@ router.get('/community',   pageGuardBan, (req, res) => res.redirect('/messenger'
 router.get('/messenger',   pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'messenger.html')));
 router.get('/support',     pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'support.html')));
 router.get('/resources',   pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'resources.html')));
+router.get('/library',     pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'library.html')));
 router.get('/redeem',      pageGuardBan, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'redeem.html')));
 router.get('/banned',      (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'banned.html')));
 router.get('/samazed',     (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'samazed.html')));
@@ -2535,11 +2536,77 @@ router.get('/api/admin/papers', requireAdmin, (req, res) => {
   res.json({ papers: listPapersLocal() });
 });
 
-// Delete a paper (admin)
-router.delete('/api/admin/papers/:id', requireAdmin, (req, res) => {
-  const ok = removePaper(req.params.id);
-  if (!ok) return res.status(404).json({ error: 'Not found' });
+// Delete a paper (admin) — removes record, local file and cloud copy
+router.delete('/api/admin/papers/:id', requireAdmin, async (req, res) => {
+  const paper = listPapersLocal().find(p => p.id === req.params.id);
+  if (!paper) return res.status(404).json({ error: 'Not found' });
+  try {
+    const lp = path.join(DATA_DIR, 'papers', path.basename(paper.filename || ''));
+    if (paper.filename && fs.existsSync(lp)) fs.unlinkSync(lp);
+  } catch {}
+  try {
+    const { deleteResource } = await import('../utils/supabase-resources.js');
+    if (paper.filename) await deleteResource(paper.filename);
+  } catch {}
+  removePaper(req.params.id);
   res.json({ ok: true });
+});
+
+// Storage diagnostics (admin)
+router.get('/api/admin/storage-status', requireAdmin, async (req, res) => {
+  const papers = listPapersLocal();
+  const papersDir = path.join(DATA_DIR, 'papers');
+  let missingLocal = 0;
+  for (const p of papers) {
+    if (!p.filename || !fs.existsSync(path.join(papersDir, path.basename(p.filename)))) missingLocal++;
+  }
+  let cloud = { configured: false };
+  try {
+    const { getResourcesConfig, getResourcesStats } = await import('../utils/supabase-resources.js');
+    const cfg = getResourcesConfig();
+    const stats = await getResourcesStats().catch(() => null);
+    cloud = { configured: cfg.urlSet && cfg.keyType !== 'none', keyType: cfg.keyType, bucket: cfg.bucket, stats };
+  } catch (e) {
+    cloud = { configured: false, error: e.message };
+  }
+  res.json({
+    local: { totalBytes: getPapersTotalBytes(), limitBytes: MAX_PAPERS_BYTES, papers: papers.length,
+      withPublicUrl: papers.filter(p => p.publicUrl).length, missingLocal },
+    cloud,
+  });
+});
+
+// Per-paper health (admin) — no downloads, safe to poll
+router.get('/api/admin/papers/health', requireAdmin, (req, res) => {
+  const papersDir = path.join(DATA_DIR, 'papers');
+  res.json({ papers: listPapersLocal().map(p => ({
+    id: p.id,
+    title: p.originalName || p.filename,
+    size: p.size || 0,
+    localExists: !!(p.filename && fs.existsSync(path.join(papersDir, path.basename(p.filename)))),
+    hasPublicUrl: !!p.publicUrl,
+  })) });
+});
+
+// Backfill local files missing a cloud copy (admin)
+router.post('/api/admin/papers/backfill', requireAdmin, async (req, res) => {
+  const papersDir = path.join(DATA_DIR, 'papers');
+  const pending = listPapersLocal().filter(p =>
+    !p.publicUrl && p.filename && fs.existsSync(path.join(papersDir, path.basename(p.filename))));
+  const { backfillResource } = await import('../utils/supabase-resources.js');
+  let done = 0;
+  const failed = [];
+  for (const p of pending) {
+    try {
+      const buf = fs.readFileSync(path.join(papersDir, path.basename(p.filename)));
+      const url = await backfillResource(p.filename, buf, 'application/pdf');
+      updatePaper(p.id, { publicUrl: url, backedUp: true, storageError: '' });
+      done++;
+    } catch (e) {
+      failed.push({ id: p.id, title: p.originalName, error: e.message });
+    }
+  }
+  res.json({ ok: true, pending: pending.length, done, failed });
 });
 
 // admin: upload update.json

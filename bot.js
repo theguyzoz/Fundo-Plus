@@ -213,9 +213,9 @@ app.post('/api/papers/upload', requireAuth, pdfUpload.single('file'), async (req
     const filename = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.\-_]/g,'_')}`;
     if (!fs.existsSync(PAPERS_DIR)) fs.mkdirSync(PAPERS_DIR, { recursive: true });
     fs.writeFileSync(path.join(PAPERS_DIR, filename), file.buffer);
-    let publicUrl = '';
-    try { publicUrl = await uploadPaper(filename, file.buffer, file.mimetype); } catch(e) { console.warn('[Papers]', e.message); }
-    const paper = addPaper({ filename, originalName: file.originalname, size: file.size,
+    let publicUrl = '', storageError = '';
+    try { publicUrl = await uploadPaper(filename, file.buffer, file.mimetype); } catch(e) { storageError = e.message; console.error('[Papers] Supabase backup FAILED for', filename, '-', e.message); }
+    const paper = addPaper({ filename, originalName: file.originalname, size: file.size, backedUp: !!publicUrl, storageError,
       uploadedBy: req.user.id, publicUrl,
       subject: req.body.subject||'General', description: req.body.description||'' });
     res.json({ ok: true, paper });
