@@ -387,6 +387,10 @@ tbody tr:hover td{background:var(--surface2)}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           Data Sync
         </button>
+        <button class="nav-item" data-page="storage" onclick="showPage('storage')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          Storage
+        </button>
         <button class="nav-item" data-page="wishlist" onclick="showPage('wishlist')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           Wishlist
@@ -612,6 +616,37 @@ tbody tr:hover td{background:var(--surface2)}
               </div>
             </div>
             <div id="papers-container"><div class="loading-row">Loading…</div></div>
+          </div>
+        </div>
+
+        <!-- storage -->
+        <div class="page" id="page-storage">
+          <div class="stat-grid" id="st-grid" style="margin-bottom:14px">
+            <div class="stat-card blue"><div class="stat-val" id="st-papers">—</div><div class="stat-label">Papers</div></div>
+            <div class="stat-card green"><div class="stat-val" id="st-backed">—</div><div class="stat-label">Backed up</div></div>
+            <div class="stat-card yellow"><div class="stat-val" id="st-missing">—</div><div class="stat-label">Missing local</div></div>
+            <div class="stat-card purple"><div class="stat-val" id="st-cloud">—</div><div class="stat-label">Cloud used</div></div>
+            <div class="stat-card cyan"><div class="stat-val" id="st-cstat">—</div><div class="stat-label">Cloud status</div></div>
+          </div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+              <div><div class="card-title">Local Disk</div><div class="card-sub" id="st-local-sub">—</div></div>
+              <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadStorage()">Refresh</button></div>
+            </div>
+            <div style="height:10px;background:var(--surface2);border-radius:99px;overflow:hidden"><div id="st-local-bar" style="height:100%;width:0;background:var(--green);border-radius:99px;transition:width .3s"></div></div>
+            <div id="st-local-txt" style="font-size:.78rem;color:var(--text2);margin-top:8px">—</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Cloud Backup (Supabase)</div><div class="card-sub" id="st-cloud-sub">—</div></div>
+              <div class="card-actions">
+                <button class="btn btn-ghost btn-sm" onclick="loadStorage()">Refresh</button>
+                <button class="btn btn-primary btn-sm" id="st-backfill-btn" onclick="runBackfill()">Backfill missing</button>
+              </div>
+            </div>
+            <div style="height:10px;background:var(--surface2);border-radius:99px;overflow:hidden"><div id="st-cloud-bar" style="height:100%;width:0;background:#7c3aed;border-radius:99px;transition:width .3s"></div></div>
+            <div id="st-cloud-txt" style="font-size:.78rem;color:var(--text2);margin-top:8px">—</div>
+            <div id="st-backfill-result" style="font-size:.8rem;margin-top:10px"></div>
           </div>
         </div>
 
@@ -939,7 +974,7 @@ var PAGE_TITLES = {
   overview:'Overview', users:'Users', logins:'Recent Logins', bans:'Bans & Appeals',
   support:'Support', subs:'Subscriptions', proofs:'Payment Proofs', freelinks:'Promo Links',
   papers:'Papers', ambassadors:'Ambassadors', push:'Notifications', chats:'Chats',
-  files:'Data Files', datafiles:'Data Sync', wishlist:'Wishlist'
+  files:'Data Files', datafiles:'Data Sync', wishlist:'Wishlist', storage:'Storage'
 };
 
 function doLogin() { return doLoginAsync(); }
@@ -997,7 +1032,7 @@ function getLoader(p) {
     overview: loadOverview, users: loadUsers, logins: loadLogins, bans: loadBans,
     support: loadSupport, subs: loadSubs, proofs: loadProofs, freelinks: loadPromoLinks,
     papers: loadPapers, ambassadors: loadAmbassadors, push: loadPushPage,
-    chats: loadChats, files: loadFiles, datafiles: loadDataFiles, wishlist: loadWishlist
+    chats: loadChats, files: loadFiles, datafiles: loadDataFiles, wishlist: loadWishlist, storage: loadStorage
   };
   return map[p];
 }
@@ -1620,6 +1655,52 @@ async function deleteLink(code) {
 }
 
 // papers
+async function loadStorage() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  try {
+    const r = await api('/api/admin/storage-status', { timeout: 30000 });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ('server error ' + r.status));
+    const L = d.local || {}, C = d.cloud || {}, S = (C.stats) || {};
+    set('st-papers', L.papers != null ? L.papers : '—');
+    set('st-backed', L.withPublicUrl != null ? L.withPublicUrl : '—');
+    set('st-missing', L.missingLocal != null ? L.missingLocal : '—');
+    const lpct = L.limitBytes ? Math.min(100, Math.round(L.totalBytes / L.limitBytes * 100)) : 0;
+    set('st-local-sub', fmtBytes(L.totalBytes) + ' of ' + fmtBytes(L.limitBytes));
+    set('st-local-txt', (L.totalBytes/1048576).toFixed(1) + ' MB used (' + lpct + '% of ' + (L.limitBytes/1073741824).toFixed(1) + ' GB cap)');
+    document.getElementById('st-local-bar').style.width = lpct + '%';
+    const cok = !!C.configured;
+    set('st-cstat', cok ? 'Connected' : 'Not configured');
+    set('st-cloud', (S.usedMB != null ? S.usedMB : '—') + ' MB');
+    set('st-cloud-sub', cok ? ('bucket: ' + (C.bucket || '?') + ' · key: ' + (C.keyType || '?')) : (C.error || 'storage disabled — check server env'));
+    const cpct = S.pct != null ? S.pct : 0;
+    set('st-cloud-txt', cok ? (S.usedMB + ' MB used of ' + S.limitMB + ' MB (' + cpct + '%)') : '—');
+    document.getElementById('st-cloud-bar').style.width = cpct + '%';
+  } catch (e) {
+    set('st-cloud-sub', 'check failed: ' + e.message);
+  }
+}
+
+async function runBackfill() {
+  const btn = document.getElementById('st-backfill-btn');
+  const out = document.getElementById('st-backfill-result');
+  btn.disabled = true;
+  btn.textContent = 'Backfilling…';
+  out.textContent = '';
+  try {
+    const r = await api('/api/admin/papers/backfill', { method: 'POST', timeout: 600000 });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ('server error ' + r.status));
+    out.innerHTML = '<span style="color:var(--green)">Backed up ' + d.done + ' of ' + d.pending + '.</span>' +
+      (d.failed && d.failed.length ? '<br><span style="color:var(--red)">Failed: ' + d.failed.length + ' — ' + (d.failed[0].error || '') + '</span>' : '');
+    loadStorage();
+  } catch (e) {
+    out.innerHTML = '<span style="color:var(--red)">Backfill failed: ' + e.message + '</span>';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Backfill missing';
+}
+
 async function loadPapers() {
   const box = document.getElementById('papers-container');
   if (!box) return;

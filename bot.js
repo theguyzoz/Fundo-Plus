@@ -117,15 +117,15 @@ function requireAdmin(req, res, next) {
 
 // cron jobs
 let _syncReady = false;
-cron.schedule('*/2 * * * *', async () => { if (_syncReady) await syncToSupabase(); });
+cron.schedule('*/2 * * * *', async () => { try { if (_syncReady) await syncToSupabase(); } catch (e) { console.warn('[Sync] periodic sync failed:', e.message); } });
 cron.schedule('0 16 * * *', async () => {
   try {
     const { papersKeepAlivePing } = await import('./utils/supabase-resources.js');
     await papersKeepAlivePing();
   } catch (e) { console.warn('[KeepAlive] 16:00 ping failed:', e.message); }
 }, { timezone: 'Africa/Harare' });
-cron.schedule('0 * * * *',   cleanTokens);
-cron.schedule('0 * * * *',   cleanTokens);
+cron.schedule('0 * * * *',   () => { try { cleanTokens(); } catch (e) { console.warn('[Tokens] clean failed:', e.message); } });
+cron.schedule('0 * * * *',   () => { try { cleanTokens(); } catch (e) { console.warn('[Tokens] clean failed:', e.message); } });
 cron.schedule('*/30 * * * *', () => {
   try {
     const now = Date.now();
@@ -279,7 +279,7 @@ function evictStalePaperCache() {
 }
 
 // Check for stale files every 5 minutes
-setInterval(evictStalePaperCache, 5 * 60 * 1000);
+setInterval(() => { try { evictStalePaperCache(); } catch (e) { console.warn('[Papers] evict sweep failed:', e.message); } }, 5 * 60 * 1000);
 
 // GET /api/papers/file/:filename?mode=download -> force download
 // GET /api/papers/file/:filename -> inline preview

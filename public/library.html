@@ -9,14 +9,16 @@
 *,::after,::before{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f4f6fc;--surf:#fff;--brd:#e3e8f4;--acc:#2563eb;--acc2:#1d4ed8;--acc-soft:#eff4ff;--txt:#0f172a;--mut:#64748b;--ok:#16a34a;--err:#dc2626;--rad:14px;--sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px rgba(37,99,235,.07)}
 body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
-.topbar{background:var(--surf);border-bottom:1px solid var(--brd);padding:0 20px;height:60px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30}
-.brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:900;font-size:1rem;color:var(--txt)}
+svg{display:block;flex-shrink:0}
+.topbar{background:var(--surf);border-bottom:1px solid var(--brd);padding:0 20px;min-height:60px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:900;font-size:1rem;color:var(--txt);white-space:nowrap}
 .brand img{border-radius:9px}
 .brand small{font-weight:600;color:var(--mut);font-size:.78rem}
 .top-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
-.btn{padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:.83rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.13s;font-family:inherit}
+.btn{padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:.83rem;font-weight:700;display:inline-flex;align-items:center;gap:7px;text-decoration:none;transition:.13s;font-family:inherit;white-space:nowrap}
 .btn-p{background:var(--acc);color:#fff}
 .btn-p:hover{background:var(--acc2)}
+.btn-p:disabled{opacity:.65;cursor:default}
 .btn-out{background:var(--surf);color:var(--acc);border:1.5px solid var(--acc)}
 .btn-out:hover{background:var(--acc-soft)}
 .btn-ghost{background:transparent;color:var(--mut)}
@@ -27,7 +29,8 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
 .folder{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-size:.87rem;font-weight:600;color:var(--txt);font-family:inherit;text-align:left;transition:.12s}
 .folder:hover{background:#f1f4fa}
 .folder.active{background:var(--acc-soft);color:var(--acc)}
-.folder .fic{font-size:1.05rem;width:24px;text-align:center}
+.folder .fic{display:flex;color:var(--mut)}
+.folder.active .fic{color:var(--acc)}
 .folder .cnt{margin-left:auto;font-size:.72rem;font-weight:800;background:#eef1f7;color:var(--mut);border-radius:99px;padding:2px 9px}
 .folder.active .cnt{background:var(--acc);color:#fff}
 .side .hint{font-size:.75rem;color:var(--mut);padding:10px;line-height:1.5;border-top:1px solid var(--brd);margin-top:10px}
@@ -37,32 +40,33 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
 .lib-sub{font-size:.85rem;color:var(--mut);margin-top:4px}
 .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
 .toolbar input,.toolbar select{padding:10px 14px;border:1.5px solid var(--brd);border-radius:10px;font-size:.87rem;outline:0;background:var(--surf);color:var(--txt);font-family:inherit}
-.toolbar input{flex:1;min-width:200px}
+.toolbar input{flex:1;min-width:180px}
 .toolbar input:focus,.toolbar select:focus{border-color:var(--acc)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rad);box-shadow:var(--sh);padding:16px;display:flex;flex-direction:column;gap:10px;transition:transform .14s,box-shadow .14s}
 .card:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(37,99,235,.12)}
 .card-top{display:flex;gap:11px;align-items:flex-start}
-.picon{width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,#fee2e2,#fecaca);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.picon{width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,#fee2e2,#fecaca);display:flex;align-items:center;justify-content:center;color:#dc2626;flex-shrink:0}
 .card-title{font-size:.9rem;font-weight:800;line-height:1.35;word-break:break-word}
-.card-meta{font-size:.73rem;color:var(--mut);display:flex;gap:7px;flex-wrap:wrap;margin-top:5px}
+.card-meta{font-size:.73rem;color:var(--mut);display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.card-meta .mitem{display:inline-flex;align-items:center;gap:4px}
 .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:.68rem;font-weight:700;background:#f1f5f9;color:var(--mut)}
 .pill.lv{background:var(--acc-soft);color:var(--acc)}
 .card-desc{font-size:.78rem;color:var(--mut);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-actions{display:flex;gap:8px;margin-top:auto}
 .dl-btn{position:relative;overflow:hidden;flex:1;justify-content:center}
 .dl-btn .bar{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.28);transition:width .15s}
-.dl-btn .lbl{position:relative;z-index:1}
+.dl-btn .lbl{position:relative;z-index:1;display:inline-flex;align-items:center;gap:7px}
 .view-btn{flex:1;justify-content:center}
 .empty{text-align:center;padding:70px 20px;color:var(--mut);grid-column:1/-1}
-.empty .eicon{font-size:3rem;margin-bottom:12px}
+.empty .eicon{display:flex;justify-content:center;margin-bottom:14px;color:#b6c2d8}
 .count-line{font-size:.8rem;color:var(--mut);margin-bottom:14px}
 .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.62);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
 .modal-bg.open{display:flex}
 .modal{background:var(--surf);border-radius:16px;width:min(920px,100%);height:min(90vh,720px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.3)}
 .modal-hdr{padding:13px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px}
 .modal-title{font-weight:800;font-size:.92rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.mx{background:0 0;border:none;cursor:pointer;font-size:1.15rem;color:var(--mut);padding:5px 8px;border-radius:7px}
+.mx{background:0 0;border:none;cursor:pointer;color:var(--mut);padding:6px;border-radius:7px;display:flex}
 .mx:hover{background:var(--bg)}
 .modal iframe{flex:1;border:none;width:100%;background:#525659}
 #toasts{position:fixed;bottom:22px;right:22px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:min(360px,90vw)}
@@ -86,7 +90,33 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
 .up-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),#60a5fa);border-radius:99px;transition:width .15s}
 .drop{border:1.5px dashed var(--brd);border-radius:10px;padding:20px;text-align:center;cursor:pointer;font-size:.84rem;color:var(--mut);transition:.13s}
 .drop:hover{border-color:var(--acc);background:var(--acc-soft)}
-@media(max-width:860px){.layout{flex-direction:column}.side{width:100%;position:static}.side .folders{display:grid;grid-template-columns:1fr 1fr}.up-grid{grid-template-columns:1fr}}
+.drop .dicon{display:flex;justify-content:center;margin-bottom:8px;color:var(--acc)}
+@media(max-width:920px){
+.layout{flex-direction:column;padding:16px 12px 60px}
+.side{width:100%;position:static;padding:10px}
+.side h3{padding:4px 8px 8px}
+.side .folders{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.folder{flex-shrink:0;width:auto;border:1.5px solid var(--brd);padding:8px 12px;font-size:.8rem}
+.folder .cnt{margin-left:6px}
+.side .hint{display:none}
+.lib-title{font-size:1.25rem}
+.grid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+}
+@media(max-width:600px){
+.topbar{padding:0 12px;gap:8px}
+.brand{font-size:.88rem}
+.brand small{display:none}
+.btn{padding:8px 12px;font-size:.78rem}
+.grid{grid-template-columns:1fr}
+.toolbar input{flex:1 1 100%}
+.toolbar select{flex:1;min-width:0}
+.up-grid{grid-template-columns:1fr}
+.modal-bg{padding:0}
+.modal{width:100%;height:100dvh;border-radius:0}
+#toasts{left:12px;right:12px;bottom:12px;max-width:none}
+.card-actions{flex-direction:row}
+.empty{padding:50px 16px}
+}
 </style>
 </head>
 <body>
@@ -95,7 +125,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
   <div class="top-actions">
     <a class="btn btn-ghost" href="/dashboard">Dashboard</a>
     <a class="btn btn-ghost" href="/resources">Resources</a>
-    <button class="btn btn-p" id="shareBtn">+ Share Paper</button>
+    <button class="btn btn-p" id="shareBtn"></button>
   </div>
 </header>
 
@@ -120,7 +150,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
       </div>
       <div class="fg"><label>Description</label><textarea id="upDesc" rows="2" placeholder="Short description of the paper..."></textarea></div>
       <div class="fg"><label>PDF file *</label>
-        <div class="drop" id="dropZone">Click to choose a PDF<span id="upFileName" style="display:block;color:var(--acc);font-weight:700;margin-top:4px"></span></div>
+        <div class="drop" id="dropZone"><span class="dicon" id="dropIcon"></span><span>Click to choose a PDF</span><span id="upFileName" style="display:block;color:var(--acc);font-weight:700;margin-top:4px"></span></div>
         <input type="file" id="upFile" accept=".pdf,application/pdf" style="display:none">
       </div>
       <div class="up-bar" id="upBar"><i></i></div>
@@ -139,7 +169,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
       <select id="sortSel"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="az">Title A–Z</option><option value="size">Largest first</option></select>
     </div>
     <div class="count-line" id="countLine"></div>
-    <div class="grid" id="grid"><div class="empty"><div class="eicon">📚</div><p>Loading library...</p></div></div>
+    <div class="grid" id="grid"></div>
   </section>
 </div>
 
@@ -148,7 +178,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
     <div class="modal-hdr">
       <span class="modal-title" id="modalTitle">Preview</span>
       <button class="btn btn-p" id="modalDl" style="padding:7px 14px">Download</button>
-      <button class="mx" id="modalX">✕</button>
+      <button class="mx" id="modalX"></button>
     </div>
     <iframe id="pdfFrame" title="PDF Preview"></iframe>
   </div>
@@ -160,15 +190,35 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
 const _token = localStorage.getItem('fp_session');
 if (!_token) window.location.replace('/login');
 
+const P_GRID = '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>';
+const P_FILE = '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>';
+const P_CLIP = '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>';
+const P_BOOK = '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>';
+const P_AWARD = '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>';
+const P_FOLDER = '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>';
+const P_EYE = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+const P_DL = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>';
+const P_CAL = '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>';
+const P_DB = '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>';
+const P_INBOX = '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>';
+const P_ALERT = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+const P_UP = '<polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>';
+const P_X = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+const P_PLUS = '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>';
+
+function icon(p, s, w) {
+  return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+}
+
 const FOLDERS = [
-  { id: 'all',    label: 'All Papers',           icon: '📚' },
-  { id: 'o-past', label: 'O Level Past Papers',  icon: '📝' },
-  { id: 'o-spec', label: 'O Level Specimen',     icon: '📋' },
-  { id: 'a-past', label: 'A Level Past Papers',  icon: '📝' },
-  { id: 'a-spec', label: 'A Level Specimen',     icon: '📋' },
-  { id: 'g7',     label: 'Grade 7',              icon: '🎒' },
-  { id: 'hexco',  label: 'HEXCO',                icon: '🎓' },
-  { id: 'other',  label: 'Other',                icon: '📁' }
+  { id: 'all',    label: 'All Papers',           icon: P_GRID },
+  { id: 'o-past', label: 'O Level Past Papers',  icon: P_FILE },
+  { id: 'o-spec', label: 'O Level Specimen',     icon: P_CLIP },
+  { id: 'a-past', label: 'A Level Past Papers',  icon: P_FILE },
+  { id: 'a-spec', label: 'A Level Specimen',     icon: P_CLIP },
+  { id: 'g7',     label: 'Grade 7',              icon: P_BOOK },
+  { id: 'hexco',  label: 'HEXCO',                icon: P_AWARD },
+  { id: 'other',  label: 'Other',                icon: P_FOLDER }
 ];
 
 let _papers = [], _folder = 'all', _modalPaper = null;
@@ -225,7 +275,12 @@ async function api(path, opts) {
   return res;
 }
 
+function gridEmpty(path, msg) {
+  document.getElementById('grid').innerHTML = '<div class="empty"><div class="eicon">' + icon(path, 52, 1.4) + '</div><p>' + msg + '</p></div>';
+}
+
 async function loadLibrary() {
+  gridEmpty(P_INBOX, 'Loading library...');
   try {
     const res = await api('/api/papers');
     const d = await res.json();
@@ -235,7 +290,7 @@ async function loadLibrary() {
     renderGrid();
     document.getElementById('libHint').textContent = _papers.length + ' papers in the library. Pick a folder or search to find what you need.';
   } catch (e) {
-    document.getElementById('grid').innerHTML = '<div class="empty"><div class="eicon">😕</div><p>Could not load the library: ' + esc(e.message) + '</p></div>';
+    gridEmpty(P_ALERT, 'Could not load the library: ' + esc(e.message));
   }
 }
 
@@ -253,7 +308,7 @@ function renderFolders() {
   FOLDERS.forEach(f => {
     const b = document.createElement('button');
     b.className = 'folder' + (_folder === f.id ? ' active' : '');
-    b.innerHTML = '<span class="fic">' + f.icon + '</span><span>' + esc(f.label) + '</span><span class="cnt">' + (counts[f.id] || 0) + '</span>';
+    b.innerHTML = '<span class="fic">' + icon(f.icon, 19) + '</span><span>' + esc(f.label) + '</span><span class="cnt">' + (counts[f.id] || 0) + '</span>';
     b.addEventListener('click', () => { _folder = f.id; renderFolders(); renderGrid(); });
     box.appendChild(b);
   });
@@ -287,7 +342,7 @@ function renderGrid() {
   document.getElementById('folderSub').textContent = list.length + ' paper' + (list.length === 1 ? '' : 's');
   document.getElementById('countLine').textContent = list.length ? ('Showing ' + list.length + ' of ' + _papers.length + ' papers') : '';
   if (!list.length) {
-    g.innerHTML = '<div class="empty"><div class="eicon">📭</div><p>Nothing here yet. Try another folder or share the first paper.</p></div>';
+    gridEmpty(P_INBOX, 'Nothing here yet. Try another folder or share the first paper.');
     return;
   }
   g.innerHTML = '';
@@ -296,18 +351,18 @@ function renderGrid() {
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML =
-      '<div class="card-top"><div class="picon">📄</div><div style="flex:1;min-width:0">' +
+      '<div class="card-top"><div class="picon">' + icon(P_FILE, 22) + '</div><div style="flex:1;min-width:0">' +
       '<div class="card-title">' + esc(name) + '</div>' +
       '<div class="card-meta">' +
       (p.level ? '<span class="pill lv">' + esc(p.level) + '</span>' : '') +
       (p.subject ? '<span class="pill">' + esc(p.subject) + '</span>' : '') +
-      (p.year ? '<span>🗓 ' + esc(p.year) + '</span>' : '') +
-      (p.size ? '<span>💾 ' + fmtSize(p.size) + '</span>' : '') +
+      (p.year ? '<span class="mitem">' + icon(P_CAL, 12) + esc(p.year) + '</span>' : '') +
+      (p.size ? '<span class="mitem">' + icon(P_DB, 12) + fmtSize(p.size) + '</span>' : '') +
       '</div></div></div>' +
       (p.description ? '<div class="card-desc">' + esc(p.description) + '</div>' : '') +
       '<div class="card-actions">' +
-      '<button class="btn btn-out view-btn">👁 Preview</button>' +
-      '<button class="btn btn-p dl-btn"><span class="bar"></span><span class="lbl">⬇ Download</span></button>' +
+      '<button class="btn btn-out view-btn">' + icon(P_EYE, 15) + '<span>Preview</span></button>' +
+      '<button class="btn btn-p dl-btn"><span class="bar"></span><span class="lbl">' + icon(P_DL, 15) + '<span>Download</span></span></button>' +
       '</div>';
     card.querySelector('.view-btn').addEventListener('click', () => openPreview(p));
     const dlBtn = card.querySelector('.dl-btn');
@@ -321,7 +376,7 @@ async function downloadPaper(p, btn) {
   const bar = btn ? btn.querySelector('.bar') : null;
   const lbl = btn ? btn.querySelector('.lbl') : null;
   const ft = dlToast('Downloading ' + name);
-  if (btn) { btn.disabled = true; if (lbl) lbl.textContent = 'Starting...'; }
+  if (btn) { btn.disabled = true; if (lbl) lbl.lastChild.textContent = 'Starting...'; }
   try {
     const res = await api('/api/papers/file/' + encodeURIComponent(p.filename) + '?mode=download');
     if (!res.ok) throw new Error(res.status === 404 ? 'file not found on server' : 'server error ' + res.status);
@@ -336,7 +391,7 @@ async function downloadPaper(p, btn) {
       got += r.value.length;
       const pct = total ? Math.round(got / total * 100) : 0;
       if (bar) bar.style.width = (total ? pct : (got % 100)) + '%';
-      if (lbl) lbl.textContent = total ? (pct + '%') : (fmtSize(got));
+      if (lbl) lbl.lastChild.textContent = total ? (pct + '%') : fmtSize(got);
       ft.progress(total ? pct : 50);
     }
     const blob = new Blob(chunks, { type: 'application/pdf' });
@@ -347,11 +402,11 @@ async function downloadPaper(p, btn) {
     a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
     ft.done(true, 'Saved ' + name);
-    if (lbl) lbl.textContent = '⬇ Download';
+    if (lbl) lbl.lastChild.textContent = 'Download';
     if (bar) bar.style.width = '0';
   } catch (e) {
     ft.done(false, 'Download failed: ' + e.message);
-    if (lbl) lbl.textContent = 'Retry';
+    if (lbl) lbl.lastChild.textContent = 'Retry';
     if (bar) bar.style.width = '0';
   }
   if (btn) btn.disabled = false;
@@ -370,6 +425,9 @@ function closePreview() {
   _modalPaper = null;
 }
 
+document.getElementById('shareBtn').innerHTML = icon(P_PLUS, 15) + '<span>Share Paper</span>';
+document.getElementById('dropIcon').innerHTML = icon(P_UP, 30, 1.6);
+document.getElementById('modalX').innerHTML = icon(P_X, 18);
 document.getElementById('modalX').addEventListener('click', closePreview);
 document.getElementById('modalDl').addEventListener('click', () => { if (_modalPaper) downloadPaper(_modalPaper, null); });
 document.getElementById('pdfModal').addEventListener('click', e => { if (e.target === e.currentTarget) closePreview(); });
