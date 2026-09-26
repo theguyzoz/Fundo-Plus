@@ -23,7 +23,11 @@ const LIMIT_BYTES = 800 * 1024 * 1024; // 800 MB hard cap
 
 if (!URL)  console.error('[Supabase:Resources] ❌ SUPABASE_RESOURCES_URL not set — storage disabled');
 else if (!KEY) console.error('[Supabase:Resources] ❌ No key found. Set SUPABASE_RESOURCES_SERVICE_KEY — storage disabled');
-else console.log(`[Supabase:Resources] ✅ Configured — ${URL.slice(0, 45)} | bucket: ${BUCKET}`);
+else console.log(`[Supabase:Resources] ✅ Configured — ${URL.slice(0, 45)} | bucket: ${BUCKET} | key: ${KEY_TYPE}`);
+
+export function getResourcesConfig() {
+  return { urlSet: !!URL, keyType: KEY_TYPE, bucket: BUCKET };
+}
 
 let _client = null;
 function getClient() {
