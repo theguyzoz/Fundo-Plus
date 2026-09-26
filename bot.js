@@ -231,10 +231,10 @@ app.post('/api/papers/public-upload', requireAuth, pdfUpload.single('file'), asy
     const filename = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.\-_]/g,'_')}`;
     if (!fs.existsSync(PAPERS_DIR)) fs.mkdirSync(PAPERS_DIR, { recursive: true });
     fs.writeFileSync(path.join(PAPERS_DIR, filename), file.buffer);
-    let publicUrl = '';
-    try { publicUrl = await uploadPaper(filename, file.buffer, file.mimetype); } catch(e) { console.warn('[PublicUpload] Supabase skipped:', e.message); }
+    let publicUrl = '', storageError = '';
+    try { publicUrl = await uploadPaper(filename, file.buffer, file.mimetype); } catch(e) { storageError = e.message; console.error('[PublicUpload] Supabase backup FAILED for', filename, '-', e.message); }
     const paper = addPaper({ filename, originalName: req.body.title||file.originalname,
-      size: file.size, uploadedBy: req.user?.id||'web', publicUrl,
+      size: file.size, uploadedBy: req.user?.id||'web', publicUrl, backedUp: !!publicUrl, storageError,
       subject: req.body.subject||'General', description: req.body.description||'',
       level: req.body.level||'', year: req.body.year||'' });
     res.json({ ok: true, paper });
