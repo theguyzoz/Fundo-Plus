@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/png" href="/images/logo.png">
-<title>FundaPlus Admin</title>
+<title>Fundo Plus Admin</title>
 <style>
 *,::after,::before{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -282,8 +282,8 @@ tbody tr:hover td{background:var(--surface2)}
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
-      <img src="/images/logo.png" alt="FundaPlus">
-      <span>FundaPlus Admin</span>
+      <img src="/images/logo.png" alt="Fundo Plus">
+      <span>Fundo Plus Admin</span>
     </div>
     <div class="auth-title">Sign in</div>
     <div class="auth-sub">Admin access only</div>
@@ -307,7 +307,7 @@ tbody tr:hover td{background:var(--surface2)}
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
         <img src="/images/logo.png" alt="">
-        <span>FundaPlus</span>
+        <span>Fundo Plus</span>
       </div>
 
       <div class="sidebar-section">
@@ -2145,7 +2145,7 @@ async function sendTestPush() {
   const s = document.getElementById('vapid-status');
   s.style.color='var(--text2)'; s.textContent='Sending test push…';
   try {
-    const r = await api('/api/admin/notifications/test', { method:'POST', body: JSON.stringify({ title:'🔔 FundaPlus Test', body:'Push notifications are working!' }) });
+    const r = await api('/api/admin/notifications/test', { method:'POST', body: JSON.stringify({ title:'🔔 Fundo Plus Test', body:'Push notifications are working!' }) });
     const d = await r.json();
     if (d.message) { s.style.color='var(--yellow)'; s.textContent=d.message; return; }
     if (d.failed === 0) { s.style.color='var(--green)'; s.textContent='✅ Sent to '+d.sent+' subscriber(s).'; }

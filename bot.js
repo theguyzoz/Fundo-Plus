@@ -1,4 +1,4 @@
-// bot.js - FundaPlus Web Server + API Routes v7 (No Firebase)
+// bot.js - Fundo Plus Web Server + API Routes v7 (No Firebase)
 import express    from 'express';
 import http       from 'http';
 import { Server } from 'socket.io';
@@ -707,7 +707,7 @@ export async function startWebServer(port) {
   _syncReady = true; // don't push anything until the first pull is done
   console.log('[Sync] ✅ Initial pull complete — cron sync now active');
   server.listen(port, '0.0.0.0', () => {
-    console.log(`✅  FundaPlus on 0.0.0.0:${port}`);
+    console.log(`✅  Fundo Plus on 0.0.0.0:${port}`);
     console.log(`🌐  Home       → http://localhost:${port}/`);
     console.log(`🔐  Login      → http://localhost:${port}/login`);
     console.log(`📋  Dashboard  → http://localhost:${port}/~`);
