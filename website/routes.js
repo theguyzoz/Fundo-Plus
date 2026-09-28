@@ -2562,10 +2562,10 @@ router.get('/api/admin/storage-status', requireAdmin, async (req, res) => {
   }
   let cloud = { configured: false };
   try {
-    const { getResourcesConfig, getResourcesStats } = await import('../utils/supabase-resources.js');
+    const { getResourcesConfig, getResourcesStats, getKeyDiagnostics } = await import('../utils/supabase-resources.js');
     const cfg = getResourcesConfig();
     const stats = await getResourcesStats().catch(() => null);
-    cloud = { configured: cfg.urlSet && cfg.keyType !== 'none', keyType: cfg.keyType, bucket: cfg.bucket, stats };
+    cloud = { configured: cfg.urlSet && cfg.keyType !== 'none', keyType: cfg.keyType, bucket: cfg.bucket, stats, keyDiag: getKeyDiagnostics() };
   } catch (e) {
     cloud = { configured: false, error: e.message };
   }

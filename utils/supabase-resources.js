@@ -29,6 +29,30 @@ export function getResourcesConfig() {
   return { urlSet: !!URL, keyType: KEY_TYPE, bucket: BUCKET };
 }
 
+// Safe key inspection for diagnostics: reports only non-secret claims
+// (role + project ref) so admin can verify URL/key pairing.
+export function getKeyDiagnostics() {
+  const out = { keyType: KEY_TYPE, format: 'none', role: null, keyRef: null,
+    urlRef: null, refMatch: null, expired: null, keyLength: (KEY || '').length };
+  try {
+    const m = (URL || '').match(/^https?:\/\/([^.:\/]+)/);
+    out.urlRef = m ? m[1] : null;
+    if (!KEY) return out;
+    if (KEY.startsWith('sb_')) { out.format = 'opaque'; return out; }
+    const parts = KEY.split('.');
+    if (parts.length !== 3 || !parts[1]) { out.format = 'malformed'; return out; }
+    out.format = 'jwt';
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    out.role = payload.role || null;
+    out.keyRef = payload.ref || null;
+    out.refMatch = !!(out.keyRef && out.urlRef && out.keyRef === out.urlRef);
+    out.expired = typeof payload.exp === 'number' ? (payload.exp * 1000 < Date.now()) : null;
+  } catch {
+    if (out.format === 'none') out.format = 'undecodable';
+  }
+  return out;
+}
+
 let _client = null;
 function getClient() {
   if (_client) return _client;
