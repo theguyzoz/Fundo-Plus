@@ -53,6 +53,25 @@ export function getKeyDiagnostics() {
   return out;
 }
 
+export async function probeCloudWrite() {
+  const out = { keyValidService: null, keyCheckError: null, uploadProbe: null, uploadError: null };
+  const sb = getClient();
+  if (!sb) { out.fatal = 'Supabase Resources not configured'; return out; }
+  try {
+    const { error } = await sb.auth.admin.listUsers({ page: 1, perPage: 1 });
+    out.keyValidService = !error;
+    out.keyCheckError = error ? error.message : null;
+  } catch (e) { out.keyValidService = false; out.keyCheckError = e.message; }
+  try {
+    const name = `_diag/probe-${Date.now()}.txt`;
+    const { error } = await sb.storage.from(BUCKET).upload(name, Buffer.from('probe'), { contentType: 'text/plain', upsert: true });
+    out.uploadProbe = !error;
+    out.uploadError = error ? error.message : null;
+    if (!error) await sb.storage.from(BUCKET).remove([name]).catch(() => {});
+  } catch (e) { out.uploadProbe = false; out.uploadError = e.message; }
+  return out;
+}
+
 let _client = null;
 function getClient() {
   if (_client) return _client;

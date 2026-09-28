@@ -2609,6 +2609,16 @@ router.post('/api/admin/papers/backfill', requireAdmin, async (req, res) => {
   res.json({ ok: true, pending: pending.length, done, failed });
 });
 
+router.post('/api/admin/storage-probe', requireAdmin, async (req, res) => {
+  try {
+    const { probeCloudWrite, getKeyDiagnostics } = await import('../utils/supabase-resources.js');
+    const probe = await probeCloudWrite();
+    res.json({ ...probe, keyDiag: getKeyDiagnostics() });
+  } catch (e) {
+    res.json({ fatal: e.message });
+  }
+});
+
 // admin: upload update.json
 router.post('/api/admin/update/upload-json', requireAdmin,
   updateJsonUpload.single('updateJson'),
