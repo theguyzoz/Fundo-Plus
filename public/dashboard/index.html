@@ -485,18 +485,18 @@
 
       <a class="home-wallet" href="/~/subscription" id="home-wallet">
         <div>
-          <div class="hw-label">Current balance</div>
-          <div class="hw-bal" id="home-balance">$0.00</div>
-          <div class="hw-sub" id="home-wallet-plan">Tap to deposit or buy a plan</div>
+          <div class="hw-label">Current plan</div>
+          <div class="hw-bal" id="home-wallet-plan">Free plan</div>
+          <div class="hw-sub">Tap to view plans</div>
         </div>
-        <span class="hw-cta">Deposit →</span>
+        <span class="hw-cta">View plans →</span>
       </a>
 
       <div class="notice-row">
         <a class="notice" href="/ai"><b>Fundo AI</b><span>Ask anything — ZIMSEC help, worked examples, quizzes.</span></a>
         <a class="notice" href="/messenger"><b>Messenger</b><span>Lounge, Support, and DMs. Share notes as PDF or DOCX.</span></a>
         <a class="notice" href="/~/exam"><b>Exams</b><span>Sit timed tests and track your leaderboard.</span></a>
-        <a class="notice" href="/~/subscription"><b>Top up</b><span>Wallet max $10. Deposit, then buy Lite / Plus / Pro.</span></a>
+        <a class="notice" href="/~/subscription"><b>Plans</b><span>Compare Lite / Plus / Pro and upgrade.</span></a>
       </div>
 
       <div class="dash-head">Today's usage — used / limit</div>
@@ -1038,10 +1038,8 @@
 
         const lim = d.limits || {};
         const usg = d.usage  || {};
-        const hwBal = document.getElementById('home-balance');
-        if (hwBal) hwBal.textContent = '$' + (d.balanceDollars != null ? d.balanceDollars : '0.00');
         const hwPlan = document.getElementById('home-wallet-plan');
-        if (hwPlan) hwPlan.textContent = ((d.plan || 'free').charAt(0).toUpperCase() + (d.plan || 'free').slice(1)) + ' plan · tap to deposit';
+        if (hwPlan) hwPlan.textContent = ((d.plan || 'free').charAt(0).toUpperCase() + (d.plan || 'free').slice(1)) + ' plan';
 
         function fmtLim(v) { return (v === Infinity || v === 'unlimited' || v === 'Infinity') ? '∞' : (v ?? '?'); }
         function setBar(valId, maxId, barId, pctId, used, limit) {
